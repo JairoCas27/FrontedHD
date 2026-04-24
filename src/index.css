@@ -1,0 +1,113 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+
+:root {
+    --up-primary: #2D163D;
+    --up-primary-light: #4A2563;
+    --up-secondary: #7D4896;
+    --up-accent: #B48CC4;
+    --up-background: #FAFAFC;
+    --up-surface-variant: #F3EBF5;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    background-color: var(--up-background);
+    color: var(--up-primary);
+    scroll-behavior: smooth;
+    overflow-x: hidden;
+}
+
+/* --- COLORES PERSONALIZADOS --- */
+.text-up-primary { color: var(--up-primary) !important; }
+.text-up-primary-light { color: var(--up-primary-light) !important; }
+.text-up-secondary { color: var(--up-secondary) !important; }
+.text-up-accent { color: var(--up-accent) !important; }
+
+.bg-up-primary { background-color: var(--up-primary) !important; }
+.bg-up-secondary { background-color: var(--up-secondary) !important; }
+.bg-up-surface { background-color: #FFFFFF !important; }
+.bg-up-surface-variant { background-color: var(--up-surface-variant) !important; }
+
+/* --- EFECTOS DE FONDOS --- */
+.glass-nav {
+    background-color: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    transition: all 0.4s ease;
+}
+
+.hero-gradient {
+    background: linear-gradient(135deg, rgba(45, 22, 61, 0.92) 0%, rgba(125, 72, 150, 0.85) 100%);
+}
+
+.cta-gradient {
+    background: linear-gradient(135deg, var(--up-primary) 0%, var(--up-secondary) 100%);
+}
+
+/* --- MEJORES HOVERS (Rebote suave y resplandor) --- */
+.hover-lift { 
+  /* Usamos cubic-bezier para un efecto de "rebote" elástico */
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.4s ease; 
+}
+.hover-lift:hover { 
+    transform: translateY(-8px) scale(1.02); 
+    box-shadow: 0 20px 40px rgba(125, 72, 150, 0.15) !important; 
+}
+
+.btn-glow { transition: all 0.3s ease; }
+.btn-glow:hover {
+    box-shadow: 0 0 25px rgba(180, 140, 196, 0.6) !important;
+    transform: translateY(-3px);
+}
+
+.icon-rotate-hover { transition: transform 0.5s ease; }
+.card:hover .icon-rotate-hover { transform: rotate(15deg) scale(1.2); }
+
+/* --- ANIMACIONES DE CARGA (Para el inicio) --- */
+.animate-fade-in-up {
+    opacity: 0;
+    animation: fadeInUp 1s cubic-bezier(0.2, 5, 0.2, 2) forwards;
+}
+
+.animate-float { animation: float 5s ease-in-out infinite; }
+.animate-pulse-soft { animation: pulseSoft 6s ease-in-out infinite; }
+
+/* --- REVELADO AL HACER SCROLL (Magia nueva) --- */
+.reveal {
+    opacity: 0;
+    transform: translateY(50px);
+    transition: all 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.reveal.active {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.reveal-left { transform: translateX(-50px); }
+.reveal-right { transform: translateX(50px); }
+
+/* Retrasos para cascadas */
+.delay-100 { animation-delay: 100ms; transition-delay: 100ms; }
+.delay-200 { animation-delay: 200ms; transition-delay: 200ms; }
+.delay-300 { animation-delay: 300ms; transition-delay: 300ms; }
+.delay-400 { transition-delay: 400ms; }
+
+/* --- KEYFRAMES --- */
+@keyframes fadeInUp {
+    0% { opacity: 0; transform: translateY(30px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+}
+
+@keyframes pulseSoft {
+    0%, 100% { transform: scale(1) translate(30%, -30%); opacity: 0.2; }
+    50% { transform: scale(1.1) translate(30%, -30%); opacity: 0.3; }
+}
+
+.rounded-4 { border-radius: 1.5rem !important; }
+.rounded-5 { border-radius: 3rem !important; }
