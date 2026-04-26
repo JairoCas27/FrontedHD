@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { Link } from 'react-router-dom';
 
 const App = () => {
     // Efecto para activar las animaciones cuando el usuario hace scroll
@@ -37,12 +38,12 @@ const App = () => {
                 <a href="#" className="d-flex align-items-center text-decoration-none hover-lift">
                 <img src="src/images/logo.png" alt="Urban Park Logo" style={{ height: '64px', width: 'auto', objectFit: 'contain' }} />
                 </a>
-                
+
                 <div className="d-none d-md-flex align-items-center gap-4">
-                <a className="fw-bold text-decoration-none text-up-primary border-bottom border-2 border-dark pb-1 hover-lift" style={{ transformOrigin: 'center' }} href="App.jsx">Inicio</a>
-                <a className="fw-medium text-decoration-none text-up-primary-light" href="Nosotros.jsx" style={{ transition: 'color 0.3s' }} onMouseOver={(e) => e.target.style.color = 'var(--up-secondary)'} onMouseOut={(e) => e.target.style.color = 'var(--up-primary-light)'}>Nosotros</a>
-                <a className="fw-medium text-decoration-none text-up-primary-light" href="#" style={{ transition: 'color 0.3s' }} onMouseOver={(e) => e.target.style.color = 'var(--up-secondary)'} onMouseOut={(e) => e.target.style.color = 'var(--up-primary-light)'}>Servicios</a>
-                <a className="fw-medium text-decoration-none text-up-primary-light" href="#" style={{ transition: 'color 0.3s' }} onMouseOver={(e) => e.target.style.color = 'var(--up-secondary)'} onMouseOut={(e) => e.target.style.color = 'var(--up-primary-light)'}>Contacto</a>
+                    <Link className="fw-bold text-decoration-none text-up-primary border-bottom border-2 border-dark pb-1 hover-lift" style={{ transformOrigin: 'center' }} to="/">Inicio</Link>
+                    <Link className="fw-medium text-decoration-none text-up-primary-light hover-lift" to="/nosotros" style={{ transition: 'color 0.3s' }} onMouseOver={(e) => e.target.style.color = 'var(--up-secondary)'} onMouseOut={(e) => e.target.style.color = 'var(--up-primary-light)'}>Nosotros</Link>
+                    <Link className="fw-medium text-decoration-none text-up-primary-light hover-lift" to="/servicios" style={{ transition: 'color 0.3s' }} onMouseOver={(e) => e.target.style.color = 'var(--up-secondary)'} onMouseOut={(e) => e.target.style.color = 'var(--up-primary-light)'}>Servicios</Link>
+                    <Link className="fw-medium text-decoration-none text-up-primary-light hover-lift" to="/contacto" style={{ transition: 'color 0.3s' }} onMouseOver={(e) => e.target.style.color = 'var(--up-secondary)'} onMouseOut={(e) => e.target.style.color = 'var(--up-primary-light)'}>Contacto</Link>
                 </div>
                 
                 <button className="btn text-white rounded-pill px-4 fw-bold shadow-sm btn-glow bg-up-primary" style={{ paddingBlock: '10px' }}>
