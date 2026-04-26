@@ -1,5 +1,5 @@
 import './App.css'
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'animate.css'; // Para las transiciones que agregamos
 
@@ -30,20 +30,71 @@ function App() {
         <Route path="/forgot-password" element={<ForgotPassword />} />
 
         {/* 6. Manejo de Error 404 */}
-        <Route 
-          path="*" 
+        <Route
+          path="*"
           element={
             <div className="d-flex align-items-center justify-content-center vh-100 bg-light">
               <div className="text-center">
+
                 <h1 className="display-1 fw-bold text-muted">404</h1>
-                <p className="fs-3"><span className="text-danger">Opps!</span> Página no encontrada.</p>
+                <p className="fs-3">
+                  <span className="text-danger">Opps!</span> Página no encontrada.
+                </p>
                 <p className="lead">La página que buscas no existe.</p>
-                <a href="/home" className="btn btn-primary" style={{ backgroundColor: '#1e1b4b', border: 'none' }}>
+
+                <a
+                  href="/home"
+                  className="btn btn-primary mb-4"
+                  style={{ backgroundColor: '#1e1b4b', border: 'none' }}
+                >
                   Volver al Inicio
                 </a>
+
+                {/* Enlaces rápidos */}
+                <div className="d-none d-md-flex justify-content-center gap-4 mt-3">
+                  <Link
+                    className="fw-bold text-decoration-none"
+                    to="/"
+                  >
+                    Inicio
+                  </Link>
+
+                  <Link
+                    className="text-decoration-none"
+                    to="/nosotros"
+                  >
+                    Nosotros
+                  </Link>
+
+                  <Link
+                    className="text-decoration-none"
+                    to="/servicios"
+                  >
+                    Servicios
+                  </Link>
+
+                  <Link
+                    className="text-decoration-none"
+                    to="/contacto"
+                  >
+                    Contacto
+                  </Link>
+                </div>
+
+                {/* Botón de inicio de sesión */}
+                <div className="mt-4">
+                  <Link
+                    to="/login"
+                    className="btn text-white rounded-pill px-4 fw-bold shadow-sm"
+                    style={{ backgroundColor: '#1e1b4b' }}
+                  >
+                    Iniciar Sesión
+                  </Link>
+                </div>
+
               </div>
             </div>
-          } 
+          }
         />
 
       </Routes>
