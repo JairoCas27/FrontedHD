@@ -1,7 +1,7 @@
 import React from 'react';
 import Logo1 from '../images/Logo1.png';
 
-const Sidebar = () => {
+const Sidebar = ({ activePage, setActivePage }) => {
     // Lista de opciones del menú principal
     const menuItems = [
         { id: 'dashboard', name: 'Dashboard' },
@@ -19,19 +19,39 @@ const Sidebar = () => {
     };
 
     return (
-        <aside className="bg-up-primary text-white" style={{ width: '280px', minHeight: '100vh' }}>
+        <aside className="bg-up-primary text-white" style={{ width: '280px', minHeight: '100vh', display: 'flex',
+            flexDirection: 'column'}}>
             {/* Logo */}
             <div className="p-4 border-bottom border-light border-opacity-25">
                 <img src={Logo1} alt="Logo UrbanPark" className="w-75" />
             </div>
 
             {/* Menú de navegación del sidebar*/}
-            <nav className="p-3">
+            <nav className="p-3 flex-grow-1">
                 {menuItems.map(item => (
                     <button
                         key={item.id}
-                        className="w-100 text-start px-3 py-2 mb-2 border-0 rounded-3 bg-transparent text-white-50"
+                        onClick={() => setActivePage(item.id)}
+                        className={`w-100 text-start px-3 py-2 mb-2 border-0 rounded-3 ${
+                            activePage === item.id
+                                ? 'bg-up-secondary text-white'
+                                : 'bg-transparent text-white-50'
+                        }`}
+                        
                         style={{ transition: 'all 0.3s' }}
+
+                        onMouseEnter={(e) => {
+                            if (activePage !== item.id) {
+                                e.currentTarget.style.backgroundColor = 'rgba(255,255,255,0.1)';
+                                e.currentTarget.style.color = 'white';
+                            }
+                        }}
+                        onMouseLeave={(e) => {
+                            if (activePage !== item.id) {
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                                e.currentTarget.style.color = 'rgba(255,255,255,0.5)';
+                            }
+                        }}
                     >
                         <span className="fw-medium">{item.name}</span>
                     </button>

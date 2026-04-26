@@ -17,6 +17,43 @@
     background-color: var(--up-secondary) !important;
 }
 
-.text-white-50 {
-    color: rgba(255, 255, 255, 0.5) !important;
+.bg-up-fourth {
+    background-color: var(--up-fourth) !important;
+}
+
+.bg-up-accent {
+    background-color: var(--up-accent) !important;
+}
+
+.bg-up-surface-variant {
+    background-color: var(--up-surface-variant) !important;
+}
+
+.text-up-primary {
+    color: var(--up-primary) !important;
+}
+
+.text-up-primary-light {
+    color: var(--up-primary-light) !important;
+}
+
+.text-up-secondary {
+    color: var(--up-secondary) !important;
+}
+
+.text-up-accent {
+    color: var(--up-accent) !important;
+}
+
+.hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
+}
+
+.hover-bg-white-10:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
 }
