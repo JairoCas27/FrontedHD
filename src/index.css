@@ -1,0 +1,22 @@
+:root {
+    --up-primary: #2D163D;
+    --up-primary-light: #5D6D7E;
+    --up-secondary: #B48CC4;
+    --up-third: #a72929;
+    --up-fourth: #294ba7;
+    --up-accent: #29a73e;
+    --up-surface-variant: #F5F5F5;
+    --up-background: #FAFAFA;
+}
+
+.bg-up-primary {
+    background-color: var(--up-primary) !important;
+}
+
+.bg-up-secondary {
+    background-color: var(--up-secondary) !important;
+}
+
+.text-white-50 {
+    color: rgba(255, 255, 255, 0.5) !important;
+}
