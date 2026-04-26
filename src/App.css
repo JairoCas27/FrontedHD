@@ -1,0 +1,32 @@
+:root {
+    --primary-dark: #1e1b4b;
+    --bg-light: #f8fafc;
+    --accent-green: #10b981;
+    --accent-red: #ef4444;
+    --text-main: #1e293b;
+}
+
+body {
+    margin: 0;
+    font-family: 'Inter', sans-serif;
+    background-color: var(--bg-light);
+}
+
+.app-container {
+    display: flex;
+    min-height: 100vh;
+}
+
+.main-content {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+/* Sidebar lateral */
+.sidebar {
+    width: 260px;
+    background-color: var(--primary-dark);
+    color: white;
+    padding: 1.5rem;
+}

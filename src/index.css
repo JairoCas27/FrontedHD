@@ -1,5 +1,4 @@
 :root {
-
   --sidebar-bg: #1e1b4b;     
   --sidebar-active: #2d2a6e;  
   --accent-green: #10b981;    
@@ -156,4 +155,61 @@ body {
   background-color: rgba(180, 140, 196, 0.1);
   border: 1px solid rgba(180, 140, 196, 0.3);
   color: var(--up-secondary);
+    --up-primary: #2D163D;
+    --up-primary-light: #5D6D7E;
+    --up-secondary: #B48CC4;
+    --up-third: #a72929;
+    --up-fourth: #294ba7;
+    --up-accent: #29a73e;
+    --up-surface-variant: #F5F5F5;
+    --up-background: #FAFAFA;
+}
+
+.bg-up-primary {
+    background-color: var(--up-primary) !important;
+}
+
+.bg-up-secondary {
+    background-color: var(--up-secondary) !important;
+}
+
+.bg-up-fourth {
+    background-color: var(--up-fourth) !important;
+}
+
+.bg-up-accent {
+    background-color: var(--up-accent) !important;
+}
+
+.bg-up-surface-variant {
+    background-color: var(--up-surface-variant) !important;
+}
+
+.text-up-primary {
+    color: var(--up-primary) !important;
+}
+
+.text-up-primary-light {
+    color: var(--up-primary-light) !important;
+}
+
+.text-up-secondary {
+    color: var(--up-secondary) !important;
+}
+
+.text-up-accent {
+    color: var(--up-accent) !important;
+}
+
+.hover-lift {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.hover-lift:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1) !important;
+}
+
+.hover-bg-white-10:hover {
+    background-color: rgba(255, 255, 255, 0.1) !important;
 }
