@@ -1,43 +1,61 @@
 import { useState } from "react";
-import { FiCreditCard, FiCalendar, FiTrendingUp, FiAlertCircle, FiCheck, FiMoreVertical, FiDownload, FiTrash2, FiBell } from "react-icons/fi";
-import { Card, Button, Table, Row, Col, Badge, Dropdown } from "react-bootstrap";
+import { FiCreditCard, FiCalendar, FiTrendingUp, FiAlertCircle, FiCheck, FiMoreVertical, FiDownload, FiTrash2, FiBell, FiInfo } from "react-icons/fi";
+import { Card, Button, Table, Row, Col, Badge, Dropdown, Modal } from "react-bootstrap";
 
 export default function Suscripciones() {
-  // --- ESTADO DE FACTURACIÓN ---
+  // --- ESTADOS ---
   const [facturas, setFacturas] = useState([
     { id: "INV-001", cliente: "Urban Park - Puente Piedra", plan: "Premium", monto: "S/ 450.00", fecha: "20/04/2026", estado: "Pagado" },
     { id: "INV-002", cliente: "Residencial Arboleda - Los Olivos", plan: "Básico", monto: "S/ 150.00", fecha: "25/04/2026", estado: "Pendiente" },
     { id: "INV-003", cliente: "Villa Sol - Puente Piedra", plan: "Pro", monto: "S/ 300.00", fecha: "15/04/2026", estado: "Vencido" },
   ]);
 
+  // Estados para Modales
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [selectedFactura, setSelectedFactura] = useState(null);
+  const [modalConfig, setModalConfig] = useState({ title: "", message: "", type: "info" });
+
   // --- FUNCIONES DE ACCIÓN ---
 
-  // Simular descarga de reporte
+  const handleShowStatus = (title, message, type = "info") => {
+    setModalConfig({ title, message, type });
+    setShowStatusModal(true);
+  };
+
   const handleDownloadReport = () => {
-    const confirmDownload = window.confirm("¿Desea generar y descargar el reporte financiero del mes de Abril 2026?");
-    if (confirmDownload) {
-      alert("Generando archivo PDF/Excel... La descarga comenzará en breve.");
-    }
+    handleShowStatus(
+      "Reporte Generado", 
+      "El reporte financiero del mes de Abril 2026 se ha compilado con éxito. La descarga iniciará automáticamente.",
+      "success"
+    );
   };
 
-  // Marcar como pagado
   const marcarComoPagado = (id) => {
-    setFacturas(facturas.map(f => 
-      f.id === id ? { ...f, estado: "Pagado" } : f
-    ));
-    alert(`El recibo ${id} ha sido actualizado a 'Pagado'`);
+    setFacturas(facturas.map(f => f.id === id ? { ...f, estado: "Pagado" } : f));
+    handleShowStatus(
+      "Pago Actualizado", 
+      `El recibo ${id} ha sido registrado como pagado en la base de datos global.`,
+      "success"
+    );
   };
 
-  // Notificar al cliente
   const notificarCliente = (cliente) => {
-    alert(`Se ha enviado una notificación de cobro por correo y WhatsApp a: ${cliente}`);
+    handleShowStatus(
+      "Notificación Enviada", 
+      `Se ha enviado un recordatorio de pago vía Correo y WhatsApp al administrador de: ${cliente}`,
+      "primary"
+    );
   };
 
-  // Eliminar recibo
-  const eliminarRecibo = (id) => {
-    if (window.confirm(`¿Está seguro de eliminar el registro ${id}?`)) {
-      setFacturas(facturas.filter(f => f.id !== id));
-    }
+  const confirmEliminar = (factura) => {
+    setSelectedFactura(factura);
+    setShowConfirmModal(true);
+  };
+
+  const executeEliminar = () => {
+    setFacturas(facturas.filter(f => f.id !== selectedFactura.id));
+    setShowConfirmModal(false);
   };
 
   return (
@@ -156,7 +174,7 @@ export default function Suscripciones() {
                           <FiBell className="text-primary" /> Notificar Cliente
                         </Dropdown.Item>
                         <Dropdown.Divider />
-                        <Dropdown.Item onClick={() => eliminarRecibo(f.id)} className="d-flex align-items-center gap-2 py-2 text-danger">
+                        <Dropdown.Item onClick={() => confirmEliminar(f)} className="d-flex align-items-center gap-2 py-2 text-danger">
                           <FiTrash2 /> Eliminar Registro
                         </Dropdown.Item>
                       </Dropdown.Menu>
@@ -164,15 +182,43 @@ export default function Suscripciones() {
                   </td>
                 </tr>
               ))}
-              {facturas.length === 0 && (
-                <tr>
-                  <td colSpan="6" className="text-center py-5 text-muted">No hay registros de facturación.</td>
-                </tr>
-              )}
             </tbody>
           </Table>
         </Card.Body>
       </Card>
+
+      {/* MODAL DE NOTIFICACIÓN / ESTADO */}
+      <Modal show={showStatusModal} onHide={() => setShowStatusModal(false)} centered size="sm">
+        <Modal.Body className="p-4 text-center">
+          <div className={`mb-3 text-${modalConfig.type}`}>
+            {modalConfig.type === "success" ? <FiCheck size={50} /> : <FiInfo size={50} />}
+          </div>
+          <h5 className="fw-bold">{modalConfig.title}</h5>
+          <p className="text-muted small">{modalConfig.message}</p>
+          <Button variant="dark" className="w-100 mt-3 rounded-3" onClick={() => setShowStatusModal(false)}>
+            Entendido
+          </Button>
+        </Modal.Body>
+      </Modal>
+
+      {/* MODAL DE CONFIRMACIÓN DE ELIMINACIÓN */}
+      <Modal show={showConfirmModal} onHide={() => setShowConfirmModal(false)} centered size="sm">
+        <Modal.Body className="p-4 text-center">
+          <div className="mb-3 text-danger">
+            <FiTrash2 size={50} />
+          </div>
+          <h5 className="fw-bold">¿Eliminar registro?</h5>
+          <p className="text-muted small">Esta acción borrará el historial de facturación de <b>{selectedFactura?.id}</b> permanentemente.</p>
+          <div className="d-flex gap-2 mt-4">
+            <Button variant="light" className="w-100 fw-bold border" onClick={() => setShowConfirmModal(false)}>
+              Cancelar
+            </Button>
+            <Button variant="danger" className="w-100 fw-bold" onClick={executeEliminar}>
+              Eliminar
+            </Button>
+          </div>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 }

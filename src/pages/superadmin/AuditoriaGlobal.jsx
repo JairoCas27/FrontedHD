@@ -1,8 +1,9 @@
 import { useState } from "react";
-import { FiActivity, FiShield, FiUser, FiHome, FiDollarSign, FiSearch, FiFilter, FiTrash2, FiClock, FiX } from "react-icons/fi";
-import { Card, Table, Button, Badge, Form, InputGroup, Row, Col } from "react-bootstrap";
+import { FiActivity, FiShield, FiUser, FiHome, FiDollarSign, FiSearch, FiFilter, FiTrash2, FiClock, FiX, FiAlertTriangle } from "react-icons/fi";
+import { Card, Table, Button, Badge, Form, InputGroup, Row, Col, Modal } from "react-bootstrap";
 
 export default function AuditoriaGlobal() {
+  // --- ESTADO DE LOGS ---
   const [logs, setLogs] = useState([
     { id: 1, usuario: "Bradd (SuperAdmin)", accion: "Creación de Condominio", detalle: "Jerarquía Residencial I - Puente Piedra", fecha: "2026-04-27", hora: "10:30 AM", tipo: "Sistema", icono: <FiHome /> },
     { id: 2, usuario: "Sistema", accion: "Pago Recibido", detalle: "Mensualidad Urban Park - S/ 450.00", fecha: "2026-04-27", hora: "09:15 AM", tipo: "Financiero", icono: <FiDollarSign /> },
@@ -12,9 +13,14 @@ export default function AuditoriaGlobal() {
 
   const [filtroTexto, setFiltroTexto] = useState("");
   const [filtroFecha, setFiltroFecha] = useState("");
+  
+  // Estado para el Modal de Confirmación
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
 
-  const handleLimpiarLogs = () => {
-    if (window.confirm("¿Desea vaciar el historial?")) setLogs([]);
+  // --- FUNCIONALIDADES ---
+  const handleExecuteLimpiar = () => {
+    setLogs([]);
+    setShowConfirmModal(false);
   };
 
   const getStyleTipo = (tipo) => {
@@ -47,7 +53,7 @@ export default function AuditoriaGlobal() {
         </div>
         <Button 
           variant="outline-danger" 
-          onClick={handleLimpiarLogs}
+          onClick={() => setShowConfirmModal(true)}
           className="d-flex align-items-center gap-2 px-3 shadow-sm"
           style={{ fontSize: "0.85rem", borderRadius: "10px", fontWeight: 600, border: "2px solid #fee2e2" }}
         >
@@ -55,16 +61,18 @@ export default function AuditoriaGlobal() {
         </Button>
       </div>
 
-      {/* BARRA DE FILTROS (AZUL CLARO) */}
+      {/* BARRA DE FILTROS */}
       <Card className="border-0 shadow-sm mb-4" style={{ borderRadius: "14px", borderLeft: "5px solid #3b82f6" }}>
         <Card.Body className="py-3">
           <Row className="g-3 align-items-center">
             <Col md={7}>
               <InputGroup>
-                <InputGroup.Text className="bg-white border-0"><FiSearch size={18} style={{ color: "#3b82f6" }}/></InputGroup.Text>
+                <InputGroup.Text className="bg-white border-0 pe-0">
+                    <FiSearch size={18} style={{ color: "#3b82f6" }}/>
+                </InputGroup.Text>
                 <Form.Control 
                   placeholder="Buscar por nombre o acción..." 
-                  className="border-0 shadow-none fw-medium text-dark"
+                  className="border-0 shadow-none fw-medium text-dark px-2"
                   onChange={(e) => setFiltroTexto(e.target.value)}
                   style={{ fontSize: "0.95rem" }}
                 />
@@ -87,16 +95,16 @@ export default function AuditoriaGlobal() {
         </Card.Body>
       </Card>
 
-      {/* TABLA CON ENCABEZADO AZUL CLARO */}
+      {/* TABLA */}
       <Card className="border-0 shadow-sm" style={{ borderRadius: "18px", overflow: "hidden" }}>
         <Table responsive hover className="align-middle m-0">
           <thead style={{ background: "#3b82f6" }}>
             <tr className="text-white small text-uppercase fw-bold" style={{ letterSpacing: "0.5px" }}>
-              <th className="py-3 px-4 border-0">Acción Realizada</th>
-              <th className="py-3 border-0">Responsable</th>
-              <th className="py-3 border-0">Detalles</th>
-              <th className="py-3 border-0">Timestamp</th>
-              <th className="py-3 text-center border-0">Tipo</th>
+              <th className="py-3 px-4 border-0 text-white">Acción Realizada</th>
+              <th className="py-3 border-0 text-white">Responsable</th>
+              <th className="py-3 border-0 text-white">Detalles</th>
+              <th className="py-3 border-0 text-white">Timestamp</th>
+              <th className="py-3 text-center border-0 text-white">Tipo</th>
             </tr>
           </thead>
           <tbody>
@@ -150,7 +158,32 @@ export default function AuditoriaGlobal() {
             })}
           </tbody>
         </Table>
+        {logsFiltrados.length === 0 && (
+            <div className="text-center py-5">
+                <FiActivity size={40} className="text-muted mb-2 opacity-25" />
+                <p className="text-muted">No se encontraron registros en el historial.</p>
+            </div>
+        )}
       </Card>
+
+      {/* MODAL DE CONFIRMACIÓN DE VACIADO */}
+      <Modal show={showConfirmModal} onHide={() => setShowConfirmModal(false)} centered size="sm">
+        <Modal.Body className="p-4 text-center">
+          <div className="mb-3 text-danger">
+            <FiAlertTriangle size={50} />
+          </div>
+          <h5 className="fw-bold">¿Vaciar Auditoría?</h5>
+          <p className="text-muted small">Esta acción borrará todos los registros históricos de forma permanente. ¿Deseas continuar?</p>
+          <div className="d-flex gap-2 mt-4">
+            <Button variant="light" className="w-100 fw-bold border" onClick={() => setShowConfirmModal(false)}>
+              No, Volver
+            </Button>
+            <Button variant="danger" className="w-100 fw-bold" onClick={handleExecuteLimpiar}>
+              Sí, Vaciar
+            </Button>
+          </div>
+        </Modal.Body>
+      </Modal>
     </div>
   );
 }
