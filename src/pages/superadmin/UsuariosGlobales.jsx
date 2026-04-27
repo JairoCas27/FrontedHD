@@ -1,11 +1,13 @@
 import { useState } from "react";
-import { FiPlus, FiUser, FiMail, FiPhone, FiHome, FiTrash2, FiEdit2, FiShield, FiSave } from "react-icons/fi";
+import { FiPlus, FiUser, FiMail, FiPhone, FiHome, FiTrash2, FiEdit2, FiShield, FiSave, FiAlertTriangle } from "react-icons/fi";
 import { Card, Button, Table, Modal, Form, Row, Col, Badge } from "react-bootstrap";
 
 export default function UsuariosGlobales() {
   // --- ESTADOS ---
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false); // Nuevo modal para borrar
   const [isEditing, setIsEditing] = useState(false);
+  const [userToDelete, setUserToDelete] = useState(null); // Guardar ID a eliminar
   
   const [usuarios, setUsuarios] = useState([
     {
@@ -52,20 +54,25 @@ export default function UsuariosGlobales() {
   const handleSaveUsuario = (e) => {
     e.preventDefault();
     if (isEditing) {
-      // Lógica de Editar
       setUsuarios(usuarios.map(u => u.id === currentUser.id ? { ...currentUser } : u));
     } else {
-      // Lógica de Crear
       const nuevo = { ...currentUser, id: Date.now(), rol: "Administrador", estado: "Activo" };
       setUsuarios([...usuarios, nuevo]);
     }
     setShowModal(false);
   };
 
-  const eliminarUsuario = (id) => {
-    if (window.confirm("¿Está seguro de eliminar este administrador?")) {
-      setUsuarios(usuarios.filter(u => u.id !== id));
-    }
+  // Función para abrir el modal de borrado
+  const confirmDelete = (id) => {
+    setUserToDelete(id);
+    setShowDeleteModal(true);
+  };
+
+  // Función que ejecuta el borrado real
+  const handleExecuteDelete = () => {
+    setUsuarios(usuarios.filter(u => u.id !== userToDelete));
+    setShowDeleteModal(false);
+    setUserToDelete(null);
   };
 
   return (
@@ -121,7 +128,7 @@ export default function UsuariosGlobales() {
                     <Button variant="link" className="text-primary p-2" onClick={() => handleOpenModal(u)}>
                       <FiEdit2 size={18}/>
                     </Button>
-                    <Button variant="link" className="text-danger p-2" onClick={() => eliminarUsuario(u.id)}>
+                    <Button variant="link" className="text-danger p-2" onClick={() => confirmDelete(u.id)}>
                       <FiTrash2 size={18}/>
                     </Button>
                   </td>
@@ -136,8 +143,8 @@ export default function UsuariosGlobales() {
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Body className="p-4">
           <div className="text-center mb-4">
-            <h5 className="fw-bold m-0">{isEditing ? "Editar Administrador" : "Nuevo Administrador"}</h5>
-            <p className="text-muted small">Complete los campos de acceso global</p>
+            <h5 className="fw-bold m-0 text-primary">{isEditing ? "Editar Administrador" : "Nuevo Administrador"}</h5>
+            <p className="text-muted small">Asignación de credenciales para el sistema</p>
           </div>
 
           <Form onSubmit={handleSaveUsuario}>
@@ -186,10 +193,29 @@ export default function UsuariosGlobales() {
               </Form.Select>
             </Form.Group>
 
-            <Button type="submit" className="w-100 py-3 fw-bold shadow" style={{ background: "#1e1b4b", border: "none", borderRadius: "12px" }}>
-              {isEditing ? <><FiSave className="me-2"/> Guardar Cambios</> : <><FiShield className="me-2"/> Asignar</>}
+            <Button type="submit" className="w-100 py-3 fw-bold shadow" style={{ background: "#3b82f6", border: "none", borderRadius: "12px" }}>
+              {isEditing ? <><FiSave className="me-2"/> Guardar Cambios</> : <><FiShield className="me-2"/> Asignar Usuario</>}
             </Button>
           </Form>
+        </Modal.Body>
+      </Modal>
+
+      {/* MODAL: CONFIRMACIÓN DE ELIMINACIÓN (Reemplaza a la alerta fea) */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered size="sm">
+        <Modal.Body className="p-4 text-center">
+          <div className="mb-3 text-danger">
+            <FiAlertTriangle size={50} />
+          </div>
+          <h5 className="fw-bold">¿Eliminar Usuario?</h5>
+          <p className="text-muted small">Esta acción no se puede deshacer. Se revocarán todos los accesos de este administrador.</p>
+          <div className="d-flex gap-2 mt-4">
+            <Button variant="light" className="w-100 fw-bold border" onClick={() => setShowDeleteModal(false)}>
+              No, Cancelar
+            </Button>
+            <Button variant="danger" className="w-100 fw-bold" onClick={handleExecuteDelete}>
+              Sí, Eliminar
+            </Button>
+          </div>
         </Modal.Body>
       </Modal>
     </div>
