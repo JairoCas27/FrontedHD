@@ -1,26 +1,44 @@
-export const Hero = () => (
-  <section className="relative h-[80vh] min-h-[600px] flex items-center overflow-hidden">
-    <div className="absolute inset-0 z-0 bg-primary">
-      <img className="w-full h-full object-cover mix-blend-overlay" src="https://images.unsplash.com/photo-1506521781263-d8422e82f27a?q=80&w=2070" alt="Parking" />
-      <div className="absolute inset-0 hero-gradient"></div>
-    </div>
-    <div className="container mx-auto px-6 relative z-10">
-      <div className="max-w-3xl">
-        <span className="inline-block py-1 px-3 rounded-full bg-white/20 text-accent text-sm font-bold mb-6 animate-fade-in-up">
-          INNOVACIÓN URBANA
-        </span>
-        <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 animate-fade-in-up [animation-delay:100ms]">
-          Gestión Inteligente de Parkings
-        </h1>
-        <p className="text-lg text-white/90 mb-10 max-w-xl animate-fade-in-up [animation-delay:200ms]">
-          Optimice el flujo de vehículos y tome el control total de sus espacios.
-        </p>
-        <div className="flex flex-wrap gap-4 animate-fade-in-up [animation-delay:300ms]">
-          <button className="bg-secondary text-white px-8 py-4 rounded-xl font-bold flex items-center gap-2 hover:-translate-y-1 transition-all">
-            Conocer más <span className="material-symbols-outlined">arrow_forward</span>
-          </button>
-        </div>
-      </div>
-    </div>
-  </section>
-);
+function Hero({
+  title,
+  subtitle,
+  description,
+  background,
+  height = "80vh",
+  overlay = "rgba(0,0,0,0.5)",
+  align = "center",
+  backgroundPosition = "center",
+}) {
+  const alignmentClass =
+      align === "left"
+          ? "align-items-start text-start ps-5"
+          : align === "right"
+              ? "align-items-end text-end pe-5"
+              : "align-items-center text-center";
+
+  return (
+      <section
+          className={`d-flex flex-column justify-content-center ${alignmentClass} text-white`}
+          style={{
+              backgroundImage: `url(${background})`,
+              backgroundSize: "cover",
+              backgroundPosition,
+              width: "100%",
+              height,
+              position: "relative",
+          }}
+      >
+          <div
+              className="position-absolute top-0 start-0 w-100 h-100"
+              style={{ backgroundColor: overlay }}
+          />
+
+          <div className="position-relative">
+              <h1 className="display-3 fw-bold">{title}</h1>
+              {subtitle && <p className="lead mb-2">{subtitle}</p>}
+              {description && <p className="mb-4">{description}</p>}
+          </div>
+      </section>
+  );
+}
+
+export default Hero;
