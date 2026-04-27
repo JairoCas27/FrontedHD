@@ -1,4 +1,4 @@
-# 🚗 Urban Park Frontend
+# Urban Park Frontend
 
 Este proyecto es el **frontend** de **Urban Park**, una plataforma web desarrollada con **React** enfocada en la **gestión inteligente de estacionamientos (Smart Parking)**.  
 Permite digitalizar, automatizar y optimizar el control de parqueos en entornos residenciales, corporativos y urbanos.
@@ -7,7 +7,7 @@ Incluye un diseño **moderno y responsivo**, navegación fluida tipo **SPA**, y 
 
 ***
 
-## 📖 Tabla de Contenidos
+## Tabla de Contenidos
 
 * [✨ Características](#-características)
 * [⚙️ Dependencias](#-dependencias)
@@ -19,7 +19,7 @@ Incluye un diseño **moderno y responsivo**, navegación fluida tipo **SPA**, y 
 
 ***
 
-## ✨ Características
+## Características
 
 * 🚗 **Gestión inteligente de estacionamientos (Smart Parking)**
 * 📱 **Diseño responsivo** adaptable a móviles, tablets y escritorio
@@ -31,11 +31,11 @@ Incluye un diseño **moderno y responsivo**, navegación fluida tipo **SPA**, y 
 
 ***
 
-## ⚙️ Dependencias
+## Dependencias
 
 Definidas en `package.json`:
 
-### 🧩 Principales
+### Principales
 
 | Paquete | Descripción |
 |---|---|
@@ -51,7 +51,7 @@ Definidas en `package.json`:
 
 ***
 
-## 🛠️ Configuración
+## Configuración
 
 1. Clonar el repositorio:
 
@@ -67,7 +67,7 @@ npm install
 
 ***
 
-## ▶️ Ejecución
+## Ejecución
 
 Para iniciar el proyecto en modo desarrollo:
 
@@ -83,7 +83,7 @@ http://localhost:5173
 
 ***
 
-## 🧠 Funcionalidades principales
+## Funcionalidades principales
 
 * 🅿️ Gestión de espacios de estacionamiento en tiempo real
 * 🔐 Control de accesos para residentes, visitantes y personal de seguridad
@@ -96,7 +96,7 @@ http://localhost:5173
 
 ***
 
-## 🔑 Credenciales de Demo
+## Credenciales de Demo
 
 Disponibles directamente en los formularios de login como panel de acceso rápido con autocompletado al hacer clic.
 
@@ -109,7 +109,7 @@ Disponibles directamente en los formularios de login como panel de acceso rápid
 
 ***
 
-## 🔗 Backend (Próximamente)
+## Backend (Próximamente)
 
 El backend del sistema estará disponible próximamente en el siguiente repositorio:  
 👉 [https://github.com/JairoCas27/BackendHD](https://github.com/JairoCas27/BackendHD)
