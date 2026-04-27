@@ -2,86 +2,163 @@ import React from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import { Container, Row, Col } from "react-bootstrap";
 import { Link } from "react-router-dom";
-import "bootstrap-icons/font/bootstrap-icons.css";
+import { Facebook, X, Instagram, Linkedin } from "lucide-react";
+import logo from "../images/Logo1.png";
 
 function Footer() {
   return (
     <footer>
-      <div style={{ backgroundColor: "#263885", color: "#fff", padding: "40px 0" }}>
+      <style>{`
+        .footer {
+          background-color: #0F172A;
+          color: #CBD5E1;
+          padding: 70px 0 40px 0;
+          border-top: 1px solid #1E293B;
+        }
+
+        .footer-inner {
+          text-align: center;
+        }
+
+        .footer-logo {
+          height: 60px;
+          margin-bottom: 15px;
+        }
+
+        .footer-desc {
+          max-width: 420px;
+          margin: 0 auto 20px auto;
+          color: #94A3B8;
+          line-height: 1.6;
+          font-size: 0.95rem;
+        }
+
+        .socials {
+          display: flex;
+          justify-content: center;
+          gap: 14px;
+          margin-top: 10px;
+        }
+
+        .social-icon {
+          width: 44px;
+          height: 44px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          border-radius: 12px;
+          background: rgba(148, 163, 184, 0.08);
+          color: #94A3B8;
+          transition: all 0.25s ease;
+        }
+
+        .social-icon:hover {
+          background: #3B82F6;
+          color: #fff;
+          transform: translateY(-3px) scale(1.08);
+        }
+
+        .social-icon svg {
+          width: 20px;
+          height: 20px;
+        }
+
+        .footer-title {
+          color: #fff;
+          font-weight: 600;
+          margin-bottom: 15px;
+        }
+
+        .footer a {
+          color: #94A3B8;
+          text-decoration: none;
+          display: block;
+          margin-bottom: 8px;
+          transition: 0.2s;
+        }
+
+        .footer a:hover {
+          color: #3B82F6;
+          transform: translateX(3px);
+        }
+
+        .footer-bottom {
+          background-color: #020617;
+          padding: 18px 0;
+          color: #94A3B8;
+          text-align: center;
+          border-top: 1px solid #1E293B;
+          font-size: 0.85rem;
+        }
+
+        .footer-grid {
+          text-align: center;
+        }
+
+        .footer-col {
+          margin-bottom: 25px;
+        }
+      `}</style>
+
+      <div className="footer">
         <Container>
-          <Row>
-            <Col md={3}>
-              <h3 className="fw-bold">URBAN PARK</h3>
-              <p>
-                Sistema de estacionamiento para condominios y edificios.
-                <br />
-                Lima - Perú
-              </p>
-              <p>
-                <strong>Gestión inteligente de parqueos</strong>
-              </p>
+
+          <div className="footer-inner mb-5">
+            <img src={logo} alt="Urban Park" className="footer-logo" />
+
+            <p className="footer-desc">
+              Sistema digital para la administración eficiente de estacionamientos en condominios y edificios, facilitando el control total de espacios por parte del administrador.
+            </p>
+
+            <div className="socials">
+              <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer">
+                <div className="social-icon"><Facebook /></div>
+              </a>
+
+              <a href="https://x.com" target="_blank" rel="noopener noreferrer">
+                <div className="social-icon"><X /></div>
+              </a>
+
+              <a href="https://www.instagram.com" target="_blank" rel="noopener noreferrer">
+                <div className="social-icon"><Instagram /></div>
+              </a>
+
+              <a href="https://www.linkedin.com" target="_blank" rel="noopener noreferrer">
+                <div className="social-icon"><Linkedin /></div>
+              </a>
+            </div>
+          </div>
+
+          <Row className="footer-grid">
+
+            <Col md={4} className="footer-col">
+              <div className="footer-title">Producto</div>
+              <Link to="/servicios">Funcionalidades</Link>
+              <Link to="/precios">Planes</Link>
+              <Link to="/login">Login</Link>
             </Col>
 
-            <Col md={3}>
-              <h5 className="fw-bold">INFORMACIÓN</h5>
-              <ul className="list-unstyled">
-                <li>
-                  <Link to="/servicios" className="text-white text-decoration-none">
-                    Servicios
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/terminos" className="text-white text-decoration-none">
-                    Términos y Condiciones
-                  </Link>
-                </li>
-                <li>
-                  <Link to="/privacidad" className="text-white text-decoration-none">
-                    Política de Privacidad
-                  </Link>
-                </li>
-              </ul>
+            <Col md={4} className="footer-col">
+              <div className="footer-title">Soporte</div>
+              <Link to="/contacto">Contactanos</Link>
+              <Link to="/terminos">Términos</Link>
+              <Link to="/privacidad">Privacidad</Link>
             </Col>
 
-            <Col md={3}>
-              <h5 className="fw-bold">CONTACTO</h5>
-              <p>Central: +51 900 123 456</p>
-              <p>Soporte: soporte@urbanpark.com</p>
-              <p>Admin: admin@urbanpark.com</p>
-              <p>Atención: 24/7</p>
+            <Col md={4} className="footer-col">
+              <div className="footer-title">Contacto</div>
+              <div>+51 900 123 456</div>
+              <div>soporte@urbanpark.com</div>
+              <div>Lima, Perú</div>
             </Col>
 
-            <Col md={3}>
-              <h5 className="fw-bold">PLATAFORMA</h5>
-              <p>Sistema de control de estacionamientos en tiempo real.</p>
-              <p>Optimizado para condominios y edificios residenciales.</p>
-            </Col>
-          </Row>
-
-          <Row className="mt-4">
-            <Col className="text-center">
-              <a href="#" target="_blank" rel="noopener noreferrer">
-                <i className="bi bi-facebook text-white fs-4 mx-2"></i>
-              </a>
-              <a href="#" target="_blank" rel="noopener noreferrer">
-                <i className="bi bi-twitter text-white fs-4 mx-2"></i>
-              </a>
-              <a href="#" target="_blank" rel="noopener noreferrer">
-                <i className="bi bi-instagram text-white fs-4 mx-2"></i>
-              </a>
-              <a href="#" target="_blank" rel="noopener noreferrer">
-                <i className="bi bi-linkedin text-white fs-4 mx-2"></i>
-              </a>
-            </Col>
           </Row>
         </Container>
       </div>
 
-      <div style={{ backgroundColor: "#182E8F", color: "#fff", padding: "10px 0" }}>
-        <Container className="text-center">
-          <small>
-            © Copyright Urban Park. Todos los derechos reservados 2026
-          </small>
+      <div className="footer-bottom">
+        <Container>
+          © 2026 Urban Park. Todos los derechos reservados.
         </Container>
       </div>
     </footer>
