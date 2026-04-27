@@ -1,18 +1,18 @@
 import React from "react";
-import MyNavbar from "../components/MyNavbar";
-import MyFooter from "../components/MyFooter";
+import Navbar from "../components/Navbar";
+import Footer from "../components/Footer";
 import WhatsappBoton from "../components/WhatsappBoton";
 import { Outlet } from "react-router-dom";
 
 export default function PublicLayout() {
   return (
     <>
-      <MyNavbar />
+      <Navbar />
       <main>
         <Outlet />
       </main>
       <WhatsappBoton />
-      <MyFooter />
+      <Footer />
     </>
   );
 }
