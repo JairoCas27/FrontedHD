@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import './App.css'
 import { BrowserRouter as Router, Routes, Route, Navigate, Link } from 'react-router-dom';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -102,16 +101,5 @@ function App() {
     </Router>
   );
 }
-=======
-import React from 'react';
-import AdminApp from './admin/AdminApp';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import './App.css';
-import './index.css';
-
-const App = () => {
-    return <AdminApp />;
-};
->>>>>>> feature/panelAdmin
 
 export default App;
