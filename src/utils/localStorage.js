@@ -57,3 +57,54 @@ const resetear = () => {
 export const setVehiculos = (data) => {
   localStorage.setItem("vehiculos", JSON.stringify(data));
 };
+const datosCondominios = [
+  {
+    id: 1,
+    nombre: "Jerarquía Residencial Central",
+    ubicacion: "Puente Piedra",
+    plan: "Premium",
+    torres: [
+      {
+        id: "T-101",
+        nombre: "Torre Esmeralda",
+        pisos: [
+          {
+            nivel: 1,
+            apartamentos: [
+              { id: "A-1", numero: "101", metraje: 75, derecho_estacionamiento: true },
+              { id: "A-2", numero: "102", metraje: 80, derecho_estacionamiento: false }
+            ]
+          },
+          {
+            nivel: 2,
+            apartamentos: [
+              { id: "A-3", numero: "201", metraje: 75, derecho_estacionamiento: true }
+            ]
+          }
+        ]
+      },
+      {
+        id: "T-102",
+        nombre: "Torre Zafiro",
+        pisos: [
+          {
+            nivel: 1,
+            apartamentos: [
+              { id: "A-4", numero: "101", metraje: 90, derecho_estacionamiento: true }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
+    id: 2,
+    nombre: "Residencial Las Torres",
+    ubicacion: "Los Olivos",
+    plan: "Pro",
+    torres: []
+  }
+];
+
+// Esto guardará los datos respetando la clave que usa tu Condominios.jsx
+localStorage.setItem("jerarquia_residencial", JSON.stringify(datosCondominios));
