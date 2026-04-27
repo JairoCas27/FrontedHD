@@ -14,15 +14,18 @@ const WhatsappBoton = () => {
         backgroundColor: "#25D366",
         color: "white",
         borderRadius: "50%",
-        width: "60px",
-        height: "60px",
+        width: "65px",
+        height: "65px",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        boxShadow: "0 2px 10px rgba(0,0,0,0.3)",
-        zIndex: 1000,
+        boxShadow: "0 4px 12px rgba(0,0,0,0.4)",
+        zIndex: 1500,
         cursor: "pointer",
+        transition: "transform 0.2s ease, background-color 0.3s ease",
       }}
+      onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.1)")}
+      onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1.0)")}
     >
       <FaWhatsapp size={30} />
     </a>
