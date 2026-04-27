@@ -2,9 +2,9 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import Container from "react-bootstrap/Container";
 import Nav from "react-bootstrap/Nav";
-import Navbar from "react-bootstrap/Navbar";
-import NavDropdown from "react-bootstrap/NavDropdown";
-import Logo from "../images/logo.png";
+import NavbarBS from "react-bootstrap/Navbar";
+import logo1 from "../images/Logo1.png";
+import logo2 from "../images/logo.png";
 
 function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -24,21 +24,25 @@ function Navbar() {
     borderBottom: scrolled ? "1px solid #eaeaea" : "none",
   };
 
-  const baseLink = {
-    color: "#333",
+  const linkBase = {
     fontWeight: "500",
     padding: "6px 10px",
     borderRadius: "8px",
     transition: "0.3s",
+    color: scrolled ? "#111827" : "#ffffff"
   };
 
   const linkStyle = (name) =>
     hovered === name
-      ? { ...baseLink, backgroundColor: "#eef2ff", color: "#1f2a44" }
-      : baseLink;
+      ? {
+          ...linkBase,
+          backgroundColor: scrolled ? "#eef2ff" : "rgba(255,255,255,0.15)",
+          color: scrolled ? "#1f2a44" : "#ffffff"
+        }
+      : linkBase;
 
   return (
-    <Navbar
+    <NavbarBS
       expand="lg"
       fixed="top"
       style={navbarStyle}
@@ -47,20 +51,31 @@ function Navbar() {
       className="py-2"
     >
       <Container>
-        <Navbar.Brand
+        <NavbarBS.Brand
           as={Link}
           to="/"
           onClick={() => setExpanded(false)}
-          className="d-flex align-items-center fw-bold"
-          style={{ color: "#1f2a44", fontSize: "22px" }}
+          className="d-flex align-items-center"
+          style={{
+            color: scrolled ? "#111827" : "#ffffff",
+            transition: "0.3s",
+            fontWeight: "600"
+          }}
         >
-          <img src={Logo} alt="Urban Park" width="45" height="45" className="me-2" />
-          Urban Park
-        </Navbar.Brand>
+          <img
+            src={scrolled ? logo2 : logo1}
+            alt="Urban Park"
+            style={{
+              height: "45px",
+              objectFit: "contain",
+              transition: "all 0.3s ease"
+            }}
+          />
+        </NavbarBS.Brand>
 
-        <Navbar.Toggle />
+        <NavbarBS.Toggle />
 
-        <Navbar.Collapse>
+        <NavbarBS.Collapse>
           <Nav className="ms-auto align-items-lg-center gap-2">
 
             <Nav.Link
@@ -87,26 +102,25 @@ function Navbar() {
 
             <Nav.Link
               as={Link}
-              to="/como-funciona"
-              style={linkStyle("como")}
+              to="/nosotros"
+              style={linkStyle("nosotros")}
               onClick={() => setExpanded(false)}
-              onMouseEnter={() => setHovered("como")}
+              onMouseEnter={() => setHovered("nosotros")}
               onMouseLeave={() => setHovered(null)}
             >
-              Cómo funciona
+              Nosotros
             </Nav.Link>
 
-            <NavDropdown title="Condominios" id="condo-dd">
-              <NavDropdown.Item as={Link} to="/gestion">
-                Gestión de parqueos
-              </NavDropdown.Item>
-              <NavDropdown.Item as={Link} to="/reservas">
-                Reservas
-              </NavDropdown.Item>
-              <NavDropdown.Item as={Link} to="/reportes">
-                Reportes
-              </NavDropdown.Item>
-            </NavDropdown>
+            <Nav.Link
+              as={Link}
+              to="/precios"
+              style={linkStyle("precios")}
+              onClick={() => setExpanded(false)}
+              onMouseEnter={() => setHovered("precios")}
+              onMouseLeave={() => setHovered(null)}
+            >
+              Planes
+            </Nav.Link>
 
             <Nav.Link
               as={Link}
@@ -120,9 +134,9 @@ function Navbar() {
             </Nav.Link>
 
           </Nav>
-        </Navbar.Collapse>
+        </NavbarBS.Collapse>
       </Container>
-    </Navbar>
+    </NavbarBS>
   );
 }
 
