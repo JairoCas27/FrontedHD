@@ -64,7 +64,29 @@ export default function MisVehiculos() {
   const labelStyle = { fontSize: "0.75rem", fontWeight: 600, color: colores.indigoPalido, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px", display: "block" };
   const modalOverlayStyle = { position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 };
   const modalContentStyle = { background: "#ffffff", padding: "2rem", borderRadius: "28px", width: "90%", maxWidth: "380px", boxShadow: "0 20px 40px rgba(0,0,0,0.1)", border: "1px solid #f1f5f9" };
+  // Para el modal de EDITAR
+  const abrirEditarConAnimacion = (v, index) => {
+    setIndexEditando(index);
+    setForm(v);
+    setModal(true);
+    setTimeout(() => setAnimarModal(true), 10);
+  };
 
+  const cerrarEditarConAnimacion = () => {
+    setAnimarModal(false);
+    setTimeout(() => setModal(false), 300);
+  };
+
+  // Para el modal de NUEVO
+  const abrirNuevoConAnimacion = () => {
+    setModalNuevo(true);
+    setTimeout(() => setAnimarNuevo(true), 10);
+  };
+
+  const cerrarNuevoConAnimacion = () => {
+    setAnimarNuevo(false);
+    setTimeout(() => setModalNuevo(false), 300);
+  };
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', padding: '1rem' }}>
       {/* MENSAJE */}
