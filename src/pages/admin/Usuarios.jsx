@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { FiUsers, FiEdit2, FiTrash2, FiPlus } from "react-icons/fi"
 import { Table, Button, Modal, Form, Badge, Card, Row, Col } from 'react-bootstrap'
+
 
 // Datos de ejemplo para usuarios
 const usuariosIniciales = [
@@ -10,12 +11,32 @@ const usuariosIniciales = [
   { id: 4, nombre: 'María García', email: 'maria@example.com', rol: 'Residente', estado: 'Activo' },
 ]
 
+const STORAGE_KEY = 'usuarios_condominio_admin'
+
 export default function Usuarios() {
 
-  const [usuarios, setUsuarios] = useState(usuariosIniciales)
+
+  const [usuarios, setUsuarios] = useState(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      return stored ? JSON.parse(stored) : usuariosIniciales
+    } catch {
+      return usuariosIniciales
+    }
+  })
   const [showModal, setShowModal] = useState(false)
   const [editando, setEditando] = useState(null)
   const [formData, setFormData] = useState({ nombre: '', email: '', rol: 'Residente', estado: 'Activo' })
+
+  // Sincroniza con localStorage cada vez que usuarios cambie
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(usuarios))
+    } catch {
+      console.error('Error al guardar en localStorage')
+    }
+  }, [usuarios])
+
 
   // Función para abrir el modal de creación/edición
   const handleOpenModal = (usuario = null) => {
@@ -29,10 +50,12 @@ export default function Usuarios() {
     setShowModal(true)
   }
 
+
   const handleCloseModal = () => {
     setShowModal(false)
     setEditando(null)
   }
+
 
   // Función para guardar los cambios (crear o editar)
   const handleSave = () => {
@@ -45,15 +68,16 @@ export default function Usuarios() {
     handleCloseModal()
   }
 
+
   // Función para eliminar un usuario
   const handleDelete = (id) => {
     if (window.confirm('¿Eliminar este usuario?')) {
       setUsuarios(usuarios.filter(u => u.id !== id))
     }
   }
-  
+
   // Función para manejar cambios en el formulario
-    return (
+  return (
     <div>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
@@ -68,6 +92,7 @@ export default function Usuarios() {
           <FiPlus className="me-2" /> Nuevo Usuario
         </Button>
       </div>
+
 
       {/* Tabla de usuarios */}
       <Card className="shadow-sm">
@@ -113,6 +138,7 @@ export default function Usuarios() {
           </Table>
         </Card.Body>
       </Card>
+
 
       {/* Modal para crear/editar usuario */}
       <Modal show={showModal} onHide={handleCloseModal}>
