@@ -1,16 +1,16 @@
-import { FiBell } from "react-icons/fi"
+import { useState } from 'react'
+import { FiBell, FiCheck, FiTrash2, FiAlertCircle, FiInfo, FiCheckCircle } from "react-icons/fi"
+import { Card, Button, Badge, ListGroup, Alert } from 'react-bootstrap'
+
+const notificacionesIniciales = [
+  { id: 1, titulo: 'Nueva visita registrada', mensaje: 'Pedro González ha ingresado al condominio', fecha: '2025-04-27 10:30', leida: false, tipo: 'info' },
+  { id: 2, titulo: 'Acceso no autorizado', mensaje: 'Intento de acceso con placa no registrada ABC-999', fecha: '2025-04-27 09:15', leida: false, tipo: 'warning' },
+  { id: 3, titulo: 'Pago de mantenciones', mensaje: 'Recordatorio: vencimiento de cuotas el 30/04', fecha: '2025-04-26 08:00', leida: true, tipo: 'success' },
+  { id: 4, titulo: 'Mantenimiento programado', mensaje: 'Corte de agua el día 28/04 de 14:00 a 16:00', fecha: '2025-04-25 12:00', leida: true, tipo: 'info' },
+]
+
 export default function Notificaciones() {
-  return (
-    <div>
-      <div style={{ marginBottom: "2rem" }}>
-        <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>Notificaciones</h1>
-        <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>Alertas y eventos del sistema</p>
-      </div>
-      <div style={{ background: "#fff", borderRadius: "16px", padding: "3rem 2rem", textAlign: "center", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", color: "#94a3b8" }}>
-        <FiBell size={48} style={{ marginBottom: "1rem", opacity: 0.4 }} />
-        <p style={{ fontSize: "1rem", fontWeight: 500 }}>Módulo en construcción</p>
-        <p style={{ fontSize: "0.85rem", marginTop: "0.25rem" }}>El contenido estará disponible próximamente.</p>
-      </div>
-    </div>
-  )
+  const [notificaciones, setNotificaciones] = useState(notificacionesIniciales)
+
+  
 }
