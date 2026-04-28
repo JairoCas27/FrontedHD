@@ -31,5 +31,16 @@ export default function Vehiculos() {
     setEditando(null)
   }
 
+  // Función para guardar los cambios al agregar o editar un vehículo
+  const handleSave = () => {
+    if (editando) {
+      setVehiculos(vehiculos.map(v => v.id === editando.id ? { ...formData, id: v.id } : v))
+    } else {
+      const newId = Math.max(...vehiculos.map(v => v.id)) + 1
+      setVehiculos([...vehiculos, { ...formData, id: newId }])
+    }
+    handleCloseModal()
+  }
+
   
 }
