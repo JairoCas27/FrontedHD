@@ -294,4 +294,100 @@ export default function Estacionamientos() {
         </Card.Body>
       </Card>
       
+      {/* Grid de estacionamientos */}
+      {espaciosPaginados.length === 0 ? (
+        <Card className="text-center py-5">
+          <Card.Body>
+            <FiMapPin size={48} className="text-muted mb-3 opacity-50" />
+            <h5>No hay plazas que coincidan con los filtros</h5>
+            <Button variant="outline-primary" onClick={limpiarFiltros}>
+              Limpiar filtros
+            </Button>
+          </Card.Body>
+        </Card>
+      ) : (
+        <>
+          <Row className="g-3 mb-4">
+            {espaciosPaginados.map((espacio) => (
+              <Col key={espacio.id} xs={6} sm={4} md={3} lg={2}>
+                <Card 
+                  className={`text-center shadow-sm ${espacio.estado === 'Disponible' ? 'border-success' : espacio.estado === 'Mantención' ? 'border-warning' : 'border-danger'}`}
+                  style={{ cursor: 'pointer', height: '100%' }}
+                  onClick={() => handleEspacioClick(espacio)}
+                >
+                  <Card.Body>
+                    <div className="mb-2">
+                      <span style={{ fontSize: '1.2rem' }}>{getEstadoIcono(espacio.estado)}</span>
+                    </div>
+                    <h6 className="mb-1">
+                      <strong>{espacio.numero}</strong>
+                    </h6>
+                    <Badge 
+                      bg={getEstadoColor(espacio.estado)} 
+                      style={{ fontSize: '0.7rem' }}
+                    >
+                      {espacio.estado}
+                    </Badge>
+                    {espacio.residente && (
+                      <small className="d-block text-muted mt-1" style={{ fontSize: '0.65rem' }}>
+                        {espacio.residente.split(' ')[0]}
+                      </small>
+                    )}
+                    <small className="d-block text-muted" style={{ fontSize: '0.6rem' }}>
+                      Zona {espacio.bloque}
+                    </small>
+                  </Card.Body>
+                </Card>
+              </Col>
+            ))}
+          </Row>
+
+          {/* Paginación */}
+          {totalPaginas > 1 && (
+            <div className="d-flex justify-content-center mt-4">
+              <Pagination>
+                <Pagination.First onClick={() => handlePageChange(1)} disabled={paginaActual === 1} />
+                <Pagination.Prev onClick={() => handlePageChange(paginaActual - 1)} disabled={paginaActual === 1} />
+                
+                {[...Array(Math.min(5, totalPaginas))].map((_, index) => {
+                  let pageNum
+                  if (totalPaginas <= 5) {
+                    pageNum = index + 1
+                  } else if (paginaActual <= 3) {
+                    pageNum = index + 1
+                  } else if (paginaActual >= totalPaginas - 2) {
+                    pageNum = totalPaginas - 4 + index
+                  } else {
+                    pageNum = paginaActual - 2 + index
+                  }
+                  
+                  return (
+                    <Pagination.Item
+                      key={pageNum}
+                      active={pageNum === paginaActual}
+                      onClick={() => handlePageChange(pageNum)}
+                    >
+                      {pageNum}
+                    </Pagination.Item>
+                  )
+                })}
+                
+                <Pagination.Next onClick={() => handlePageChange(paginaActual + 1)} disabled={paginaActual === totalPaginas} />
+                <Pagination.Last onClick={() => handlePageChange(totalPaginas)} disabled={paginaActual === totalPaginas} />
+              </Pagination>
+            </div>
+          )}
+
+          {/* Información de paginación */}
+          <div className="text-center text-muted mt-2">
+            <small>
+              Mostrando {indexPrimero + 1} - {Math.min(indexUltimo, espaciosFiltrados.length)} de {espaciosFiltrados.length} plazas
+              {filtroBloque !== 'todos' && ` (Zona ${filtroBloque})`}
+              {filtroEstado !== 'todos' && ` - Estado: ${filtroEstado}`}
+            </small>
+          </div>
+        </>
+      )}
+
+
 }
