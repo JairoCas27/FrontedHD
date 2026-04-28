@@ -45,7 +45,48 @@ export default function Dashboard() {
             </div>
           </div>
         ))}
+        
       </div>
+        // ... (Código anterior)
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(350px, 1fr))", gap: "2rem", marginBottom: "2.5rem" }}>
+        
+        <div style={{ background: `linear-gradient(135deg, ${colores.naranja}, #ea580c)`, padding: "2.5rem", borderRadius: "32px", color: colores.white, display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 20px 30px rgba(249,115,22,0.2)" }}>
+          <div>
+            <div style={{ background: "rgba(255,255,255,0.2)", width: "fit-content", padding: "8px", borderRadius: "12px", marginBottom: "1.5rem" }}><ShieldCheck size={28} /></div>
+            <h3 style={{ margin: 0, fontSize: "1.6rem", fontWeight: 800 }}>Gestión de Accesos</h3>
+            <p style={{ opacity: 0.9, fontSize: "1rem", marginTop: "10px", lineHeight: "1.5" }}>Autoriza invitados y genera códigos QR temporales en segundos.</p>
+          </div>
+          <button style={{ marginTop: "2rem", width: "100%", background: colores.white, color: colores.naranja, border: "none", padding: "1.2rem", borderRadius: "20px", fontWeight: 800, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "10px", fontSize: "1rem" }}>
+            <Zap size={18} fill={colores.naranja} /> Iniciar Nuevo Registro
+          </button>
+        </div>
+
+        <div style={{ background: colores.white, padding: "2rem", borderRadius: "32px", border: `1px solid ${colores.naranjaBorde}`, boxShadow: "0 10px 20px rgba(0,0,0,0.02)" }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
+            <h3 style={{ margin: 0, fontSize: "1.3rem", fontWeight: 800, color: colores.slate }}>Actividad Crítica</h3>
+            <span style={{ background: "#fff7ed", color: colores.naranja, padding: "4px 12px", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 800 }}>VIVO</span>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
+            {[
+              { t: "Ingreso", d: "ABC-123 en A-102", h: "2 min", c: "#22c55e" },
+              { t: "Salida", d: "XYZ-789 de B-201", h: "15 min", c: colores.naranja },
+              { t: "Alerta", d: "Placa no reconocida", h: "1 h", c: "#ef4444" }
+            ].map((item, idx) => (
+              <div key={idx} style={{ display: "flex", alignItems: "center", gap: "15px", padding: "15px", borderRadius: "22px", background: colores.bg, border: "1px solid #f1f5f9" }}>
+                <div style={{ width: "45px", height: "45px", borderRadius: "14px", background: `${item.c}15`, display: "flex", alignItems: "center", justifyContent: "center", color: item.c }}>
+                  {item.t === "Alerta" ? <Bell size={18}/> : <Car size={18}/>}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <p style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: colores.slate }}>{item.t}</p>
+                  <p style={{ margin: 0, fontSize: "0.85rem", color: colores.lightSlate }}>{item.d}</p>
+                </div>
+                <div style={{ textAlign: "right" }}><p style={{ margin: 0, fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8" }}>{item.h}</p></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      
     </div>
   );
 }
