@@ -19,6 +19,8 @@ export default function PerfilPropietario() {
   };
 
   const [usuario, setUsuario] = useState(getUsuario());
+
+  const [modal, setModal] = useState(false);
   
   return (
     <div style={{ padding: "1rem" }}>
@@ -48,6 +50,9 @@ export default function PerfilPropietario() {
         <p>{usuario.torre} - {usuario.piso}</p>
         <p>{usuario.departamento}</p>
       </div>
+      <button onClick={() => setModal(true)}>
+        Editar Perfil
+      </button>
     </div>
       </div>
     </div>
