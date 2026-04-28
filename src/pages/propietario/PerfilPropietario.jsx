@@ -4,7 +4,10 @@ import { User } from "lucide-react";
 
 export default function PerfilPropietario() {
 
-  const [usuario] = useState({
+  
+  const getUsuario = () => {
+  const data = localStorage.getItem("usuario");
+  return data ? JSON.parse(data) : {
     nombre: "Juan Pérez",
     email: "juan@email.com",
     condominio: "Condominio Los Pinos",
@@ -12,7 +15,10 @@ export default function PerfilPropietario() {
     piso: "Piso 3",
     departamento: "Dpto 302",
     rol: "Propietario"
-  });
+  };
+  };
+
+  const [usuario, setUsuario] = useState(getUsuario());
   
   return (
     <div style={{ padding: "1rem" }}>
@@ -35,6 +41,12 @@ export default function PerfilPropietario() {
         <User size={40} />
         <h2>{usuario.nombre}</h2>
         <p>{usuario.rol}</p>
+      </div>
+      <div>
+        <p>{usuario.email}</p>
+        <p>{usuario.condominio}</p>
+        <p>{usuario.torre} - {usuario.piso}</p>
+        <p>{usuario.departamento}</p>
       </div>
     </div>
       </div>
