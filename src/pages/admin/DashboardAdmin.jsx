@@ -211,6 +211,42 @@ export default function DashboardAdmin() {
                     </Card>
                 </Col>
             </Row>
+
+            {/* Accesos Recientes */}
+            <Card className="shadow-sm">
+                <Card.Header className="bg-white">
+                    <div className="d-flex justify-content-between align-items-center">
+                        <h6 className="mb-0">Accesos Recientes</h6>
+                        <FiBell className="text-muted" />
+                    </div>
+                </Card.Header>
+                <Card.Body>
+                    <Table responsive hover>
+                        <thead className="table-light">
+                            <tr>
+                                <th>Nombre</th>
+                                <th>Tipo</th>
+                                <th>Hora</th>
+                                <th>Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {accesosRecientes.map((acceso) => (
+                                <tr key={acceso.id}>
+                                    <td>{acceso.nombre}</td>
+                                    <td>{acceso.tipo}</td>
+                                    <td>{acceso.hora}</td>
+                                    <td>
+                                        <Badge bg={acceso.estado === 'Ingreso' ? 'success' : 'secondary'}>
+                                            {acceso.estado}
+                                        </Badge>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
+                </Card.Body>
+            </Card>
         </div >
     )
 }
