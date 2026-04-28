@@ -13,6 +13,24 @@ export default function Accesos() {
   const [accesos, setAccesos] = useState(accesosIniciales)
   const [filtro, setFiltro] = useState('')
   const [nuevoAcceso, setNuevoAcceso] = useState({ nombre: '', tipo: 'Residente', placa: '', direccion: 'Ingreso' })
-
   
+  const handleRegistrarAcceso = () => {
+    if (!nuevoAcceso.nombre) return
+    
+    const nuevo = {
+      id: Math.max(...accesos.map(a => a.id)) + 1,
+      ...nuevoAcceso,
+      hora: new Date().toLocaleTimeString('es-CL', { hour: '2-digit', minute: '2-digit' }),
+      fecha: new Date().toISOString().split('T')[0]
+    }
+    setAccesos([nuevo, ...accesos])
+    setNuevoAcceso({ nombre: '', tipo: 'Residente', placa: '', direccion: 'Ingreso' })
+  }
+
+  const accesosFiltrados = accesos.filter(a => 
+    a.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
+    a.placa.toLowerCase().includes(filtro.toLowerCase())
+  )
+
+
 }
