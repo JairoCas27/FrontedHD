@@ -50,4 +50,54 @@ const [reporteSeleccionado, setReporteSeleccionado] = useState('accesos')
     }).format(value)
   }
 
+  return (
+    <div>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>
+            Reportes
+          </h1>
+          <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>
+            Métricas y exportación de datos
+          </p>
+        </div>
+        <Button variant="success" onClick={handleExportar}>
+          <FiDownload className="me-2" /> Exportar
+        </Button>
+      </div>
+
+      <Row className="g-4 mb-4">
+        <Col md={4}>
+          <Button 
+            variant={reporteSeleccionado === 'accesos' ? 'primary' : 'outline-primary'} 
+            className="w-100 py-3"
+            onClick={() => setReporteSeleccionado('accesos')}
+          >
+            <FiBarChart2 size={20} className="mb-2 d-block mx-auto" />
+            Reporte de Accesos
+          </Button>
+        </Col>
+        <Col md={4}>
+          <Button 
+            variant={reporteSeleccionado === 'financiero' ? 'primary' : 'outline-primary'} 
+            className="w-100 py-3"
+            onClick={() => setReporteSeleccionado('financiero')}
+          >
+            <FiPieChart size={20} className="mb-2 d-block mx-auto" />
+            Reporte Financiero (S/)
+          </Button>
+        </Col>
+        <Col md={4}>
+          <Button 
+            variant={reporteSeleccionado === 'estacionamientos' ? 'primary' : 'outline-primary'} 
+            className="w-100 py-3"
+            onClick={() => setReporteSeleccionado('estacionamientos')}
+          >
+            <FiBarChart2 size={20} className="mb-2 d-block mx-auto" />
+            Reporte Estacionamientos
+          </Button>
+        </Col>
+      </Row>
+
+      
 }
