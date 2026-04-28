@@ -1,4 +1,15 @@
-import { FiUsers } from "react-icons/fi"
+import { useState } from 'react'
+import { FiUsers, FiEdit2, FiTrash2, FiPlus } from "react-icons/fi"
+import { Table, Button, Modal, Form, Badge, Card, Row, Col } from 'react-bootstrap'
+
+// Datos de ejemplo para usuarios
+const usuariosIniciales = [
+  { id: 1, nombre: 'Carlos López', email: 'carlos@example.com', rol: 'Residente', estado: 'Activo' },
+  { id: 2, nombre: 'Ana Martínez', email: 'ana@example.com', rol: 'Administrador', estado: 'Activo' },
+  { id: 3, nombre: 'Juan Pérez', email: 'juan@example.com', rol: 'Seguridad', estado: 'Inactivo' },
+  { id: 4, nombre: 'María García', email: 'maria@example.com', rol: 'Residente', estado: 'Activo' },
+]
+
 export default function Usuarios() {
   return (
     <div>
@@ -6,11 +17,12 @@ export default function Usuarios() {
         <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>Usuarios</h1>
         <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>Gestión de usuarios del condominio</p>
       </div>
-      <div style={{ background: "#fff", borderRadius: "16px", padding: "3rem 2rem", textAlign: "center", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", color: "#94a3b8" }}>
-        <FiUsers size={48} style={{ marginBottom: "1rem", opacity: 0.4 }} />
-        <p style={{ fontSize: "1rem", fontWeight: 500 }}>Módulo en construcción</p>
-        <p style={{ fontSize: "0.85rem", marginTop: "0.25rem" }}>El contenido estará disponible próximamente.</p>
-      </div>
     </div>
-  )
+    )
+
+  const [usuarios, setUsuarios] = useState(usuariosIniciales)
+  const [showModal, setShowModal] = useState(false)
+  const [editando, setEditando] = useState(null)
+  const [formData, setFormData] = useState({ nombre: '', email: '', rol: 'Residente', estado: 'Activo' })
+  
 }
