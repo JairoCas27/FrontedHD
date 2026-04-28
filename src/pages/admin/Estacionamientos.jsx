@@ -229,5 +229,69 @@ export default function Estacionamientos() {
         </Col>
       </Row>
 
+      {/* Filtros */}
+      <Card className="shadow-sm mb-4">
+        <Card.Body>
+          <Row className="align-items-end">
+            <Col md={4}>
+              <Form.Label>
+                <FiFilter className="me-1" /> Filtrar por Zona/Bloque
+              </Form.Label>
+              <Form.Select
+                value={filtroBloque}
+                onChange={(e) => handleFilterChange('bloque', e.target.value)}
+              >
+                <option value="todos">Todas las zonas</option>
+                <option value="A">Zona A (Norte)</option>
+                <option value="B">Zona B (Este)</option>
+                <option value="C">Zona C (Sur)</option>
+                <option value="D">Zona D (Oeste)</option>
+                <option value="E">Zona E (Central)</option>
+                <option value="F">Zona F (Visitas)</option>
+              </Form.Select>
+            </Col>
+            <Col md={4}>
+              <Form.Label>
+                <FiFilter className="me-1" /> Filtrar por Estado
+              </Form.Label>
+              <Form.Select
+                value={filtroEstado}
+                onChange={(e) => handleFilterChange('estado', e.target.value)}
+              >
+                <option value="todos">Todos los estados</option>
+                <option value="Ocupado">🔴 Ocupados</option>
+                <option value="Disponible">🟢 Disponibles</option>
+                <option value="Mantención">🟡 En Mantención</option>
+              </Form.Select>
+            </Col>
+            <Col md={4}>
+              <Button 
+                variant="outline-secondary" 
+                onClick={limpiarFiltros}
+                className="w-100"
+              >
+                <FiX className="me-1" /> Limpiar Filtros
+              </Button>
+            </Col>
+          </Row>
+          
+          {/* Resumen de filtros aplicados */}
+          {(filtroBloque !== 'todos' || filtroEstado !== 'todos') && (
+            <div className="mt-3 pt-2 border-top">
+              <small className="text-muted">
+                <strong>Filtros aplicados:</strong>
+                {filtroBloque !== 'todos' && <Badge bg="info" className="ms-2">Zona {filtroBloque}</Badge>}
+                {filtroEstado !== 'todos' && <Badge bg="secondary" className="ms-2">{filtroEstado}</Badge>}
+                <span className="ms-3">
+                  Mostrando {espaciosFiltrados.length} de {totalPlazas} plazas
+                </span>
+                <span className="ms-2">
+                  ({filtradosOcupados} ocupadas, {filtradosDisponibles} disponibles, {filtradosMantención} mantención)
+                </span>
+              </small>
+            </div>
+          )}
+        </Card.Body>
+      </Card>
       
 }
