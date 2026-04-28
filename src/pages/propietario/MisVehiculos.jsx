@@ -187,10 +187,7 @@ export default function MisVehiculos() {
         </div>
       )}
 
-      {/* BLOQUE ORIGINAL */}
-      <div style={{ marginTop: "3rem", textAlign: "center", color: "#94a3b8" }}>
-        <FiTruck size={48} style={{ opacity: 0.5 }} /><p style={{ fontWeight: 500 }}>Módulo de carga en construcción</p>
-      </div>
+      
     </div>
   );
 }
