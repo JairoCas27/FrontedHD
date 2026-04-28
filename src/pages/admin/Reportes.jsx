@@ -221,5 +221,81 @@ export default function Reportes() {
           </Card.Body>
         </Card>
       )}
-      
+
+       {/* Reporte de Estacionamientos */}
+      {reporteSeleccionado === 'estacionamientos' && (
+        <Card className="shadow-sm">
+          <Card.Header className="bg-white">
+            <div className="d-flex justify-content-between align-items-center">
+              <h6 className="mb-0">Reporte de Estacionamientos - Estado de Ocupación</h6>
+              <Badge bg="secondary">Total: {totalPlazas} plazas</Badge>
+            </div>
+          </Card.Header>
+          <Card.Body>
+            <Row>
+              <Col md={6}>
+                <ResponsiveContainer width="100%" height={300}>
+                  <PieChart>
+                    <Pie
+                      data={datosEstacionamientos}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={true}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={100}
+                      dataKey="cantidad"
+                    >
+                      {datosEstacionamientos.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value, name, props) => [`${value} plazas`, props.payload.estado]} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Col>
+              <Col md={6}>
+                <div className="mt-4">
+                  <h6 className="mb-3">Desglose por Estado</h6>
+                  {datosEstacionamientos.map((item, index) => (
+                    <div key={index} className="mb-3">
+                      <div className="d-flex justify-content-between">
+                        <span>
+                          <span style={{ color: item.color }}>●</span> {item.estado}
+                        </span>
+                        <strong>{item.cantidad} plazas</strong>
+                      </div>
+                      <div className="progress" style={{ height: '8px' }}>
+                        <div 
+                          className="progress-bar" 
+                          style={{ width: `${(item.cantidad / totalPlazas) * 100}%`, backgroundColor: item.color }}
+                        ></div>
+                      </div>
+                      <small className="text-muted">{item.explicacion}</small>
+                    </div>
+                  ))}
+                  
+                  <div className="mt-4 p-3 bg-primary bg-opacity-10 rounded">
+                    <h6 className="mb-1">Resumen General</h6>
+                    <p className="mb-0 small">
+                      Ocupación actual: <strong>{porcentajeOcupacion}%</strong><br />
+                      Plazas totales: <strong>{totalPlazas}</strong><br />
+                      Plazas disponibles: <strong>{datosEstacionamientos[1].cantidad}</strong>
+                    </p>
+                  </div>
+                </div>
+              </Col>
+            </Row>
+            <div className="mt-3 p-2 bg-light rounded">
+              <small className="text-muted">
+                <strong>¿Qué significa?</strong> El gráfico muestra el estado actual de todas las plazas de estacionamiento. 
+                <strong>Ocupados:</strong> Plazas con vehículo estacionado.{" "}
+                <strong>Disponibles:</strong> Plazas libres para usar.{" "}
+                <strong>Mantención:</strong> Plazas fuera de servicio por reparación o limpieza.
+              </small>
+            </div>
+          </Card.Body>
+        </Card>
+      )}
+    </div>
+  )
 }
