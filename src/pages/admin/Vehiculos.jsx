@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { FiTruck, FiEdit2, FiTrash2, FiPlus } from "react-icons/fi"
 import { Table, Button, Modal, Form, Badge, Card } from 'react-bootstrap'
+
 
 const vehiculosIniciales = [
   { id: 1, placa: 'ABC-123', propietario: 'Carlos López', tipo: 'Auto', modelo: 'Toyota Corolla', estado: 'Autorizado' },
@@ -8,11 +9,30 @@ const vehiculosIniciales = [
   { id: 3, placa: 'GHI-789', propietario: 'Juan Pérez', tipo: 'Moto', modelo: 'Yamaha XTZ', estado: 'Pendiente' },
 ]
 
+const STORAGE_KEY = 'vehiculos_condominio'
+
 export default function Vehiculos() {
-  const [vehiculos, setVehiculos] = useState(vehiculosIniciales)
+  const [vehiculos, setVehiculos] = useState(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      return stored ? JSON.parse(stored) : vehiculosIniciales
+    } catch {
+      return vehiculosIniciales
+    }
+  })
   const [showModal, setShowModal] = useState(false)
   const [editando, setEditando] = useState(null)
   const [formData, setFormData] = useState({ placa: '', propietario: '', tipo: 'Auto', modelo: '', estado: 'Autorizado' })
+
+  // Sincroniza con localStorage cada vez que vehiculos cambie
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(vehiculos))
+    } catch {
+      console.error('Error al guardar en localStorage')
+    }
+  }, [vehiculos])
+
 
   // Función para abrir el modal de agregar o editar vehículo
   const handleOpenModal = (vehiculo = null) => {
@@ -26,10 +46,12 @@ export default function Vehiculos() {
     setShowModal(true)
   }
 
+
   const handleCloseModal = () => {
     setShowModal(false)
     setEditando(null)
   }
+
 
   // Función para guardar los cambios al agregar o editar un vehículo
   const handleSave = () => {
@@ -42,12 +64,14 @@ export default function Vehiculos() {
     handleCloseModal()
   }
 
+
   // Función para eliminar un vehículo
   const handleDelete = (id) => {
     if (window.confirm('¿Eliminar este vehículo?')) {
       setVehiculos(vehiculos.filter(v => v.id !== id))
     }
   }
+
 
   // Función para manejar cambios en el formulario
   return (
@@ -65,6 +89,7 @@ export default function Vehiculos() {
           <FiPlus className="me-2" /> Registrar Vehículo
         </Button>
       </div>
+
 
       <Card className="shadow-sm">
         <Card.Body>
@@ -105,6 +130,7 @@ export default function Vehiculos() {
           </Table>
         </Card.Body>
       </Card>
+
 
       {/* Modal para agregar o editar vehículo */}
       <Modal show={showModal} onHide={handleCloseModal}>
