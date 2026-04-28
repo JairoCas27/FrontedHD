@@ -47,6 +47,31 @@ const generarPermiso = () => {
 
   setModal(false);
 };
+const [mensaje, setMensaje] = useState("");
+
+const hayCruce = (nuevoInicio, nuevoFin) => {
+  return data.permisos.some(p => {
+    const i1 = new Date(p.inicio);
+    const f1 = new Date(p.fin);
+    const i2 = new Date(nuevoInicio);
+    const f2 = new Date(nuevoFin);
+
+    return i2 < f1 && f2 > i1;
+  });
+};
+
+const generarPermiso = () => {
+
+  if (!form.nombre || !form.placa) {
+    setMensaje("Completa los campos");
+    return;
+  }
+
+  if (hayCruce(form.inicio, form.fin)) {
+    setMensaje("Ya existe un permiso en ese horario");
+    return;
+  }};
+
   return (
     <div style={{ padding: "1rem" }}>
 
