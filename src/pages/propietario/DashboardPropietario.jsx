@@ -86,7 +86,26 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
-      
+            <div style={{ background: colores.white, padding: "2rem", borderRadius: "32px", border: `1px solid ${colores.naranjaBorde}`, display: "flex", alignItems: "center", justifyContent: "space-between", gap: "2rem", flexWrap: "wrap" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
+          <div style={{ background: colores.naranja, color: colores.white, padding: "15px", borderRadius: "20px", boxShadow: `0 8px 15px rgba(249,115,22,0.3)` }}>
+            <TrendingUp size={28} />
+          </div>
+          <div>
+            <h4 style={{ margin: 0, color: colores.slate, fontSize: "1.2rem", fontWeight: 800 }}>Estado de Ocupación</h4>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px", marginTop: "8px" }}>
+              <div style={{ width: "150px", height: "8px", background: "#f1f5f9", borderRadius: "10px", overflow: "hidden" }}>
+                <div style={{ width: "75%", height: "100%", background: colores.naranja, borderRadius: "10px" }} />
+              </div>
+              <span style={{ fontWeight: 800, color: colores.naranja, fontSize: "0.9rem" }}>75%</span>
+            </div>
+          </div>
+        </div>
+        <div style={{ display: "flex", gap: "12px" }}>
+          <button style={{ background: colores.bg, border: "none", padding: "12px 24px", borderRadius: "16px", color: colores.slate, fontWeight: 700, display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}><Map size={18} /> Ver Mapa</button>
+          <button style={{ background: colores.slate, border: "none", padding: "12px 24px", borderRadius: "16px", color: colores.white, fontWeight: 700, display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>Reportes <ChevronRight size={18} /></button>
+        </div>
+      </div>
     </div>
   );
 }
