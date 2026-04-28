@@ -95,6 +95,72 @@ export default function DashboardAdmin() {
                 </Card>
             </Col>
         </Row>
+
+        {/* Reporte de Estacionamientos */}
+        <Row className="g-4 mb-4">
+            <Col lg={7}>
+                <Card className="shadow-sm">
+                    <Card.Header className="bg-white">
+                        <div className="d-flex justify-content-between align-items-center">
+                            <h6 className="mb-0">Estado de Estacionamientos por Bloque</h6>
+                            <Badge bg="secondary">Total: {totalPlazas} plazas</Badge>
+                        </div>
+                    </Card.Header>
+                    <Card.Body>
+                        {espaciosPorBloque.map((bloque, index) => (
+                            <div key={index} className="mb-4">
+                                <div className="d-flex justify-content-between mb-1">
+                                    <strong>{bloque.bloque}</strong>
+                                    <small className="text-muted">
+                                        {bloque.ocupados} ocupados / {bloque.disponibles}
+                                        disponibles / {bloque.mantención} mantención
+                                    </small>
+                                </div>
+                                <ProgressBar>
+                                    <ProgressBar
+                                        variant="danger"
+                                        now={(bloque.ocupados / bloque.total) * 100}
+                                        key={1}
+                                        label={`${Math.round((bloque.ocupados / bloque.total) * 100)}%`}
+                                    />
+                                    <ProgressBar
+                                        variant="success"
+                                        now={(bloque.disponibles / bloque.total) * 100}
+                                        key={2}
+                                    />
+                                    <ProgressBar
+                                        variant="warning"
+                                        now={(bloque.mantención / bloque.total) * 100}
+                                        key={3}
+                                    />
+                                </ProgressBar>
+                                <div className="d-flex gap-3 mt-1">
+                                    <small><span className="text-danger">●</span> Ocupados: {bloque.ocupados}</small>
+                                    <small><span className="text-success">●</span> Disponibles: {bloque.disponibles}</small>
+                                    <small><span className="text-warning">●</span> Mantención: {bloque.mantención}</small>
+                                </div>
+                            </div>
+                        ))}
+
+                        <div className="mt-3 pt-3 border-top">
+                            <div className="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <h6 className="mb-0">Resumen General</h6>
+                                    <small className="text-muted">Ocupación actual del {porcentajeOcupacion}%</small>
+                                </div>
+                                <div className="text-end">
+                                    <div><Badge bg="danger">Ocupados: {totalOcupados}</Badge></div>
+                                    <div><Badge bg="success">Disponibles: {totalDisponibles}</Badge></div>
+                                    <div><Badge bg="warning">Mantención: {totalMantención}</Badge></div>
+                                </div>
+                            </div>
+                        </div>
+                    </Card.Body>
+                </Card>
+            </Col>
+        </Row>
+
+
     </div>
   )
 }
