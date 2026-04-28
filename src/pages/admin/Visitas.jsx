@@ -85,4 +85,91 @@ export default function Visitas() {
         </Col>
       </Row>
 
+      {/* Tabla de visitas */}
+      <Card className="shadow-sm">
+        <Card.Body>
+          <Table responsive hover>
+            <thead className="table-light">
+              <tr>
+                <th>Visitante</th>
+                <th>Residente</th>
+                <th>Fecha</th>
+                <th>Entrada</th>
+                <th>Salida</th>
+                <th>Motivo</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visitas.map((visita) => (
+                <tr key={visita.id}>
+                  <td>{visita.nombre}</td>
+                  <td>{visita.residente}</td>
+                  <td>{visita.fecha}</td>
+                  <td>{visita.horaEntrada}</td>
+                  <td>{visita.horaSalida || '—'}</td>
+                  <td>{visita.motivo}</td>
+                  <td>
+                    <Badge bg={visita.estado === 'Activa' ? 'success' : 'secondary'}>
+                      {visita.estado}
+                    </Badge>
+                  </td>
+                  <td>
+                    {visita.estado === 'Activa' && (
+                      <Button variant="outline-secondary" size="sm" onClick={() => handleRegistrarSalida(visita.id)}>
+                        <FiXCircle className="me-1" /> Salida
+                      </Button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card>
+
+      <Modal show={showModal} onHide={() => setShowModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Registrar Nueva Visita</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Nombre del Visitante</Form.Label>
+              <Form.Control
+                type="text"
+                value={formData.nombre}
+                onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Residente a Visitar</Form.Label>
+              <Form.Control
+                type="text"
+                value={formData.residente}
+                onChange={(e) => setFormData({ ...formData, residente: e.target.value })}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Motivo de la Visita</Form.Label>
+              <Form.Control
+                type="text"
+                value={formData.motivo}
+                onChange={(e) => setFormData({ ...formData, motivo: e.target.value })}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={handleRegistrarVisita}>
+            Registrar Ingreso
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </div>
+  )
 }
