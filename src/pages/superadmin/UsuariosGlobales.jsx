@@ -1,6 +1,26 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FiPlus, FiUser, FiMail, FiPhone, FiHome, FiTrash2, FiEdit2, FiShield, FiSave, FiAlertTriangle } from "react-icons/fi";
 import { Card, Button, Table, Modal, Form, Row, Col, Badge } from "react-bootstrap";
+
+const usuariosIniciales = [
+  { id: 1, nombre: "Carlos Martínez", email: "carlos.admin@urbanpark.com", telefono: "987 654 321", condominio: "Jerarquía Residencial I", rol: "Administrador", estado: "Activo" },
+  { id: 2, nombre: "Ana Lucia Rojas", email: "ana.rojas@gmail.com", telefono: "912 345 678", condominio: "Residencial Arboleda", rol: "Administrador", estado: "Activo" },
+  { id: 3, nombre: "Roberto Gómez", email: "roberto.g@outlook.com", telefono: "933 445 566", condominio: "Urban Park Sur", rol: "Administrador", estado: "Activo" },
+  { id: 4, nombre: "Elena Vizcarra", email: "elena.v@urbanpark.pe", telefono: "955 667 788", condominio: "Condominio El Olivar", rol: "Administrador", estado: "Activo" },
+  { id: 5, nombre: "Marcos Peña", email: "m.pena@gmail.com", telefono: "911 223 344", condominio: "Altos de Comas", rol: "Administrador", estado: "Activo" },
+  { id: 6, nombre: "Sofía Luján", email: "sofia.l@urbanpark.com", telefono: "977 889 900", condominio: "Villa Marina", rol: "Administrador", estado: "Activo" },
+  { id: 7, nombre: "Javier Izquierdo", email: "jizquierdo@gmail.com", telefono: "944 556 677", condominio: "Parque San Miguel", rol: "Administrador", estado: "Activo" },
+  { id: 8, nombre: "Patricia Salas", email: "p.salas@outlook.com", telefono: "922 334 455", condominio: "Residencial San Felipe", rol: "Administrador", estado: "Activo" },
+  { id: 9, nombre: "Diego Torres", email: "dtorres@urbanpark.pe", telefono: "966 778 899", condominio: "Praderas del Norte", rol: "Administrador", estado: "Activo" },
+  { id: 10, nombre: "Lucía Méndez", email: "lucia.m@gmail.com", telefono: "988 990 011", condominio: "Mirador de la Costa", rol: "Administrador", estado: "Activo" },
+  { id: 11, nombre: "Ricardo Palma", email: "r.palma@urbanpark.com", telefono: "955 112 233", condominio: "Jerarquía Residencial I", rol: "Administrador", estado: "Activo" },
+  { id: 12, nombre: "Gabriela Mistral", email: "gmistral@gmail.com", telefono: "944 223 344", condominio: "Residencial Las Palmas", rol: "Administrador", estado: "Activo" },
+  { id: 13, nombre: "Andrés Bello", email: "abello@outlook.com", telefono: "933 334 445", condominio: "Urban Park Sur", rol: "Administrador", estado: "Activo" },
+  { id: 14, nombre: "César Vallejo", email: "cvallejo@urbanpark.pe", telefono: "922 445 566", condominio: "Altos de Comas", rol: "Administrador", estado: "Activo" },
+  { id: 15, nombre: "Isabel Allende", email: "iallende@gmail.com", telefono: "911 556 677", condominio: "Villa Marina", rol: "Administrador", estado: "Activo" }
+];
+
+const STORAGE_KEY = 'usuarios_globales_superadmin'
 
 export default function UsuariosGlobales() {
   // --- ESTADOS ---
@@ -10,25 +30,27 @@ export default function UsuariosGlobales() {
   const [userToDelete, setUserToDelete] = useState(null);
   
   // --- DATA EXPANDIDA (15 MIEMBROS) ---
-  const [usuarios, setUsuarios] = useState([
-    { id: 1, nombre: "Carlos Martínez", email: "carlos.admin@urbanpark.com", telefono: "987 654 321", condominio: "Jerarquía Residencial I", rol: "Administrador", estado: "Activo" },
-    { id: 2, nombre: "Ana Lucia Rojas", email: "ana.rojas@gmail.com", telefono: "912 345 678", condominio: "Residencial Arboleda", rol: "Administrador", estado: "Activo" },
-    { id: 3, nombre: "Roberto Gómez", email: "roberto.g@outlook.com", telefono: "933 445 566", condominio: "Urban Park Sur", rol: "Administrador", estado: "Activo" },
-    { id: 4, nombre: "Elena Vizcarra", email: "elena.v@urbanpark.pe", telefono: "955 667 788", condominio: "Condominio El Olivar", rol: "Administrador", estado: "Activo" },
-    { id: 5, nombre: "Marcos Peña", email: "m.pena@gmail.com", telefono: "911 223 344", condominio: "Altos de Comas", rol: "Administrador", estado: "Activo" },
-    { id: 6, nombre: "Sofía Luján", email: "sofia.l@urbanpark.com", telefono: "977 889 900", condominio: "Villa Marina", rol: "Administrador", estado: "Activo" },
-    { id: 7, nombre: "Javier Izquierdo", email: "jizquierdo@gmail.com", telefono: "944 556 677", condominio: "Parque San Miguel", rol: "Administrador", estado: "Activo" },
-    { id: 8, nombre: "Patricia Salas", email: "p.salas@outlook.com", telefono: "922 334 455", condominio: "Residencial San Felipe", rol: "Administrador", estado: "Activo" },
-    { id: 9, nombre: "Diego Torres", email: "dtorres@urbanpark.pe", telefono: "966 778 899", condominio: "Praderas del Norte", rol: "Administrador", estado: "Activo" },
-    { id: 10, nombre: "Lucía Méndez", email: "lucia.m@gmail.com", telefono: "988 990 011", condominio: "Mirador de la Costa", rol: "Administrador", estado: "Activo" },
-    { id: 11, nombre: "Ricardo Palma", email: "r.palma@urbanpark.com", telefono: "955 112 233", condominio: "Jerarquía Residencial I", rol: "Administrador", estado: "Activo" },
-    { id: 12, nombre: "Gabriela Mistral", email: "gmistral@gmail.com", telefono: "944 223 344", condominio: "Residencial Las Palmas", rol: "Administrador", estado: "Activo" },
-    { id: 13, nombre: "Andrés Bello", email: "abello@outlook.com", telefono: "933 334 455", condominio: "Urban Park Sur", rol: "Administrador", estado: "Activo" },
-    { id: 14, nombre: "César Vallejo", email: "cvallejo@urbanpark.pe", telefono: "922 445 566", condominio: "Altos de Comas", rol: "Administrador", estado: "Activo" },
-    { id: 15, nombre: "Isabel Allende", email: "iallende@gmail.com", telefono: "911 556 677", condominio: "Villa Marina", rol: "Administrador", estado: "Activo" }
-  ]);
+  const [usuarios, setUsuarios] = useState(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      return stored ? JSON.parse(stored) : usuariosIniciales
+    } catch {
+      return usuariosIniciales
+    }
+  });
+
+  // Sincroniza con localStorage cada vez que usuarios cambie
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(usuarios))
+    } catch {
+      console.error('Error al guardar en localStorage')
+    }
+  }, [usuarios]);
+
 
   const [currentUser, setCurrentUser] = useState({ id: null, nombre: "", email: "", telefono: "", condominio: "Jerarquía Residencial I" });
+
 
   // --- FUNCIONES ---
   const handleOpenModal = (user = null) => {
@@ -42,6 +64,7 @@ export default function UsuariosGlobales() {
     setShowModal(true);
   };
 
+
   const handleSaveUsuario = (e) => {
     e.preventDefault();
     if (isEditing) {
@@ -53,15 +76,18 @@ export default function UsuariosGlobales() {
     setShowModal(false);
   };
 
+
   const confirmDelete = (id) => {
     setUserToDelete(id);
     setShowDeleteModal(true);
   };
 
+
   const handleExecuteDelete = () => {
     setUsuarios(usuarios.filter(u => u.id !== userToDelete));
     setShowDeleteModal(false);
   };
+
 
   return (
     <div style={{ padding: "1.5rem" }}>
@@ -75,6 +101,7 @@ export default function UsuariosGlobales() {
           <FiPlus className="me-2" /> Crear Administrador
         </Button>
       </div>
+
 
       {/* TABLA */}
       <Card className="border-0 shadow-sm" style={{ borderRadius: "18px" }}>
@@ -119,6 +146,7 @@ export default function UsuariosGlobales() {
         </Card.Body>
       </Card>
 
+
       {/* MODAL: CREAR / EDITAR */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Body className="p-4">
@@ -157,6 +185,7 @@ export default function UsuariosGlobales() {
           </Form>
         </Modal.Body>
       </Modal>
+
 
       {/* MODAL: ELIMINAR */}
       <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered size="sm">
