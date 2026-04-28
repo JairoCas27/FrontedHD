@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { FiUserCheck, FiCheckCircle, FiXCircle, FiSearch, FiClock } from "react-icons/fi"
 import { Table, Button, Form, Card, Row, Col, Badge, Modal } from 'react-bootstrap'
+
 
 const visitasIniciales = [
   { id: 1, nombre: 'Pedro González', residente: 'Carlos López', fecha: '2025-04-27', horaEntrada: '10:00', horaSalida: null, estado: 'Activa', motivo: 'Visita familiar' },
@@ -8,10 +9,29 @@ const visitasIniciales = [
   { id: 3, nombre: 'Roberto Díaz', residente: 'Juan Pérez', fecha: '2025-04-26', horaEntrada: '15:00', horaSalida: '17:30', estado: 'Finalizada', motivo: 'Servicio técnico' },
 ]
 
+const STORAGE_KEY = 'visitas_condominio_admin'
+
 export default function Visitas() {
-  const [visitas, setVisitas] = useState(visitasIniciales)
+  const [visitas, setVisitas] = useState(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      return stored ? JSON.parse(stored) : visitasIniciales
+    } catch {
+      return visitasIniciales
+    }
+  })
   const [showModal, setShowModal] = useState(false)
   const [formData, setFormData] = useState({ nombre: '', residente: '', motivo: '' })
+
+  // Sincroniza con localStorage cada vez que visitas cambie
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(visitas))
+    } catch {
+      console.error('Error al guardar en localStorage')
+    }
+  }, [visitas])
+
 
   // Función para registrar una nueva visita
   const handleRegistrarVisita = () => {
@@ -28,6 +48,7 @@ export default function Visitas() {
     setFormData({ nombre: '', residente: '', motivo: '' })
   }
 
+
   // Función para registrar la salida de una visita
   const handleRegistrarSalida = (id) => {
     setVisitas(visitas.map(v =>
@@ -36,6 +57,7 @@ export default function Visitas() {
         : v
     ))
   }
+
 
   return (
     <div>
@@ -52,6 +74,7 @@ export default function Visitas() {
           <FiUserCheck className="me-2" /> Nueva Visita
         </Button>
       </div>
+
 
       <Row className="g-4 mb-4">
         <Col md={3}>
@@ -84,6 +107,7 @@ export default function Visitas() {
           </Card>
         </Col>
       </Row>
+
 
       {/* Tabla de visitas */}
       <Card className="shadow-sm">
@@ -128,6 +152,7 @@ export default function Visitas() {
           </Table>
         </Card.Body>
       </Card>
+
 
       <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
