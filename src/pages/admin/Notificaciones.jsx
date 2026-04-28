@@ -12,5 +12,35 @@ const notificacionesIniciales = [
 export default function Notificaciones() {
   const [notificaciones, setNotificaciones] = useState(notificacionesIniciales)
 
+  const marcarComoLeida = (id) => {
+    setNotificaciones(notificaciones.map(n =>
+      n.id === id ? { ...n, leida: true } : n
+    ))
+  }
+
+  const eliminarNotificacion = (id) => {
+    setNotificaciones(notificaciones.filter(n => n.id !== id))
+  }
+
+  const marcarTodasLeidas = () => {
+    setNotificaciones(notificaciones.map(n => ({ ...n, leida: true })))
+  }
+
+  const eliminarTodas = () => {
+    if (window.confirm('¿Eliminar todas las notificaciones?')) {
+      setNotificaciones([])
+    }
+  }
+
+  const getIcono = (tipo) => {
+    switch (tipo) {
+      case 'warning': return <FiAlertCircle className="text-warning" />
+      case 'success': return <FiCheckCircle className="text-success" />
+      default: return <FiInfo className="text-info" />
+    }
+  }
+
+  const noLeidas = notificaciones.filter(n => !n.leida).length
+
   
 }
