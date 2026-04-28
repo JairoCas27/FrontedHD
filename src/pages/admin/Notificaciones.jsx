@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { FiBell, FiCheck, FiTrash2, FiAlertCircle, FiInfo, FiCheckCircle } from "react-icons/fi"
 import { Card, Button, Badge, ListGroup, Alert } from 'react-bootstrap'
+
 
 const notificacionesIniciales = [
   { id: 1, titulo: 'Nueva visita registrada', mensaje: 'Pedro González ha ingresado al condominio', fecha: '2025-04-27 10:30', leida: false, tipo: 'info' },
@@ -9,8 +10,27 @@ const notificacionesIniciales = [
   { id: 4, titulo: 'Mantenimiento programado', mensaje: 'Corte de agua el día 28/04 de 14:00 a 16:00', fecha: '2025-04-25 12:00', leida: true, tipo: 'info' },
 ]
 
+const STORAGE_KEY = 'notificaciones_condominio_admin'
+
 export default function Notificaciones() {
-  const [notificaciones, setNotificaciones] = useState(notificacionesIniciales)
+  const [notificaciones, setNotificaciones] = useState(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      return stored ? JSON.parse(stored) : notificacionesIniciales
+    } catch {
+      return notificacionesIniciales
+    }
+  })
+
+  // Sincroniza con localStorage cada vez que notificaciones cambie
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(notificaciones))
+    } catch {
+      console.error('Error al guardar en localStorage')
+    }
+  }, [notificaciones])
+
 
   const marcarComoLeida = (id) => {
     setNotificaciones(notificaciones.map(n =>
@@ -18,19 +38,23 @@ export default function Notificaciones() {
     ))
   }
 
+
   const eliminarNotificacion = (id) => {
     setNotificaciones(notificaciones.filter(n => n.id !== id))
   }
 
+
   const marcarTodasLeidas = () => {
     setNotificaciones(notificaciones.map(n => ({ ...n, leida: true })))
   }
+
 
   const eliminarTodas = () => {
     if (window.confirm('¿Eliminar todas las notificaciones?')) {
       setNotificaciones([])
     }
   }
+
 
   const getIcono = (tipo) => {
     switch (tipo) {
@@ -40,7 +64,9 @@ export default function Notificaciones() {
     }
   }
 
+
   const noLeidas = notificaciones.filter(n => !n.leida).length
+
 
   return (
     <div>
@@ -67,6 +93,7 @@ export default function Notificaciones() {
           </Button>
         </div>
       </div>
+
 
       {notificaciones.length === 0 ? (
         <Card className="shadow-sm text-center py-5">
