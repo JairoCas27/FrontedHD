@@ -173,4 +173,53 @@ export default function Reportes() {
         </Card>
       )}
 
+      {/* Reporte Financiero con Soles Peruanos */}
+      {reporteSeleccionado === 'financiero' && (
+        <Card className="shadow-sm">
+          <Card.Header className="bg-white">
+            <h6 className="mb-0">Reporte Financiero - Fondo Común (Soles Peruanos)</h6>
+          </Card.Header>
+          <Card.Body>
+            <ResponsiveContainer width="100%" height={400}>
+              <LineChart data={datosIngresos}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="mes" />
+                <YAxis tickFormatter={(value) => `S/ ${value}`} />
+                <Tooltip formatter={(value) => [`S/ ${value.toLocaleString()}`, '']} />
+                <Legend />
+                <Line type="monotone" dataKey="ingresos" stroke="#0d6efd" strokeWidth={2} name="Ingresos (Cuotas, alquileres, multas)" />
+                <Line type="monotone" dataKey="egresos" stroke="#dc3545" strokeWidth={2} name="Egresos (Gastos operativos)" />
+              </LineChart>
+            </ResponsiveContainer>
+            <Table className="mt-4" responsive>
+              <thead className="table-light">
+                <tr>
+                  <th>Mes</th>
+                  <th>Ingresos (S/)</th>
+                  <th>Egresos (S/)</th>
+                  <th>Balance (S/)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {datosIngresos.map((item, index) => (
+                  <tr key={index}>
+                    <td>{item.mes}</td>
+                    <td className="text-success">{formatCurrency(item.ingresos)}</td>
+                    <td className="text-danger">{formatCurrency(item.egresos)}</td>
+                    <td className="text-primary">{formatCurrency(item.ingresos - item.egresos)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </Table>
+            <div className="mt-3 p-2 bg-light rounded">
+              <small className="text-muted">
+                <strong>¿Qué representa?</strong> Los ingresos incluyen cuotas de mantenimiento, 
+                alquiler de estacionamientos y multas. Los egresos incluyen vigilancia, 
+                limpieza, mantenimiento y servicios básicos del condominio.
+              </small>
+            </div>
+          </Card.Body>
+        </Card>
+      )}
+      
 }
