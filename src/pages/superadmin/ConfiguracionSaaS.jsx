@@ -2,25 +2,38 @@ import { useState } from "react";
 import { FiSettings, FiGlobe, FiBell, FiLock, FiSave, FiAlertCircle, FiCheckCircle } from "react-icons/fi";
 import { Card, Button, Form, Row, Col, Modal } from "react-bootstrap";
 
+const STORAGE_KEY = 'config_global_superadmin'
+
+const configInicial = {
+  nombreApp: "Urban Park Sistema",
+  correoSoporte: "soporte@urbanpark.pe",
+  mantenimiento: false,
+  notificacionesEmail: true,
+  registroAbierto: true
+}
+
 export default function ConfiguracionSaaS() {
   // --- ESTADOS ---
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [config, setConfig] = useState({
-    nombreApp: "Urban Park Sistema",
-    correoSoporte: "soporte@urbanpark.pe",
-    mantenimiento: false,
-    notificacionesEmail: true,
-    registroAbierto: true
+  const [config, setConfig] = useState(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      return stored ? JSON.parse(stored) : configInicial
+    } catch {
+      return configInicial
+    }
   });
+
 
   // --- FUNCIONES ---
   const handleSave = (e) => {
     e.preventDefault();
     // Aquí simulamos el guardado en LocalStorage
-    localStorage.setItem("config_global", JSON.stringify(config));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(config));
     setShowSuccessModal(true); // Abrimos el modal en lugar de la alerta
     console.log("Configuración guardada:", config);
   };
+
 
   return (
     <div style={{ padding: "1.5rem" }}>
@@ -33,6 +46,7 @@ export default function ConfiguracionSaaS() {
           Configuración general de la plataforma SaaS
         </p>
       </div>
+
 
       <Form onSubmit={handleSave}>
         <Row>
@@ -54,6 +68,7 @@ export default function ConfiguracionSaaS() {
                   />
                 </Form.Group>
 
+
                 <Form.Group className="mb-3">
                   <Form.Label className="small fw-bold text-muted">CORREO DE CONTACTO</Form.Label>
                   <Form.Control 
@@ -67,6 +82,7 @@ export default function ConfiguracionSaaS() {
             </Card>
           </Col>
 
+
           {/* Bloque 2: Permisos */}
           <Col md={6} className="mb-4">
             <Card className="border-0 shadow-sm h-100" style={{ borderRadius: "15px" }}>
@@ -74,6 +90,7 @@ export default function ConfiguracionSaaS() {
                 <h6 className="fw-bold mb-4 d-flex align-items-center gap-2" style={{ color: "#4f46e5" }}>
                   <FiLock /> Accesos y Permisos
                 </h6>
+
 
                 <div className="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded-3">
                   <span className="small fw-bold">Permitir Nuevos Registros</span>
@@ -84,6 +101,7 @@ export default function ConfiguracionSaaS() {
                   />
                 </div>
 
+
                 <div className="d-flex justify-content-between align-items-center mb-3 p-2 bg-light rounded-3">
                   <span className="small fw-bold">Notificaciones por Correo</span>
                   <Form.Check 
@@ -92,6 +110,7 @@ export default function ConfiguracionSaaS() {
                     onChange={(e) => setConfig({...config, notificacionesEmail: e.target.checked})}
                   />
                 </div>
+
 
                 <div className="d-flex justify-content-between align-items-center p-2 bg-light rounded-3">
                   <span className="small fw-bold text-danger">Modo Mantenimiento</span>
@@ -106,6 +125,7 @@ export default function ConfiguracionSaaS() {
           </Col>
         </Row>
 
+
         {/* Botón de Guardar */}
         <div className="text-end">
           <Button 
@@ -119,6 +139,7 @@ export default function ConfiguracionSaaS() {
         </div>
       </Form>
 
+
       {/* Nota informativa */}
       <div className="mt-4 p-3 rounded-3 border d-flex align-items-center gap-3 bg-white">
         <FiAlertCircle className="text-warning" size={24} />
@@ -126,6 +147,7 @@ export default function ConfiguracionSaaS() {
           <b>Nota:</b> Estos parámetros son de nivel <b>Super Administrador</b> y afectan el comportamiento global del sistema.
         </span>
       </div>
+
 
       {/* MODAL DE ÉXITO (Reemplaza la alerta) */}
       <Modal show={showSuccessModal} onHide={() => setShowSuccessModal(false)} centered size="sm">
