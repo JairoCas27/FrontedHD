@@ -106,7 +106,7 @@ export default function Vehiculos() {
         </Card.Body>
       </Card>
 
-      // Modal para agregar o editar vehículo
+      {/* Modal para agregar o editar vehículo */}
       <Modal show={showModal} onHide={handleCloseModal}>
         <Modal.Header closeButton>
           <Modal.Title>{editando ? 'Editar Vehículo' : 'Registrar Vehículo'}</Modal.Title>
