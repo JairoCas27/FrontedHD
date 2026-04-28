@@ -28,7 +28,25 @@ export default function PermisosEstacionamiento() {
     console.log(form);
     setModal(false);
   };
+  const [data, setData] = useState(getData());
 
+const generarPermiso = () => {
+  const nuevo = {
+    ...form,
+    estado: "Activo",
+    id: Date.now()
+  };
+
+  const actualizado = {
+    ...data,
+    permisos: [nuevo, ...data.permisos]
+  };
+
+  localStorage.setItem("permisos", JSON.stringify(actualizado));
+  setData(actualizado);
+
+  setModal(false);
+};
   return (
     <div style={{ padding: "1rem" }}>
 
@@ -63,6 +81,12 @@ export default function PermisosEstacionamiento() {
             <input name="placa" onChange={handleChange}/>
             <input name="inicio" type="datetime-local" onChange={handleChange}/>
             <input name="fin" type="datetime-local" onChange={handleChange}/>
+            {data.permisos.map(p => (
+              <div key={p.id}>
+                <h3>{p.nombre}</h3>
+                <p>{p.placa}</p>
+              </div>
+            ))}
             <button onClick={generarPermiso}>
               <Send/> Enviar
             </button>
