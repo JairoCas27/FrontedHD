@@ -77,5 +77,50 @@ export default function Usuarios() {
         </Button>
       </div>
 
-      
+      //Tabla de usuarios
+      <Card className="shadow-sm">
+        <Card.Body>
+          <Table responsive hover>
+            <thead className="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Rol</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {usuarios.map((usuario) => (
+                <tr key={usuario.id}>
+                  <td>{usuario.id}</td>
+                  <td>{usuario.nombre}</td>
+                  <td>{usuario.email}</td>
+                  <td>
+                    <Badge bg={usuario.rol === 'Administrador' ? 'danger' : usuario.rol === 'Seguridad' ? 'warning' : 'info'}>
+                      {usuario.rol}
+                    </Badge>
+                  </td>
+                  <td>
+                    <Badge bg={usuario.estado === 'Activo' ? 'success' : 'secondary'}>
+                      {usuario.estado}
+                    </Badge>
+                  </td>
+                  <td>
+                    <Button variant="outline-primary" size="sm" className="me-2" onClick={() => handleOpenModal(usuario)}>
+                      <FiEdit2 />
+                    </Button>
+                    <Button variant="outline-danger" size="sm" onClick={() => handleDelete(usuario.id)}>
+                      <FiTrash2 />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card>
+
+
 }
