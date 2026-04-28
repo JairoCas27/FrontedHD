@@ -93,6 +93,7 @@ http://localhost:5173
 * 🏢 Soporte multi-condominio y multiusuario
 * 🔗 Integración con APIs backend (ej. Spring Boot)
 * 🔔 Notificaciones y validaciones visuales
+* 💾 Persistencia local de datos mediante Local Storage para funcionamiento offline o recuperación rápida de información
 
 ***
 

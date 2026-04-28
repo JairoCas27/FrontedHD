@@ -1,16 +1,202 @@
-import { FiTruck } from "react-icons/fi"
+import { useState, useEffect } from 'react'
+import { FiTruck, FiEdit2, FiTrash2, FiPlus } from "react-icons/fi"
+import { Table, Button, Modal, Form, Badge, Card } from 'react-bootstrap'
+
+
+const vehiculosIniciales = [
+  { id: 1, placa: 'ABC-123', propietario: 'Carlos López', tipo: 'Auto', modelo: 'Toyota Corolla', estado: 'Autorizado' },
+  { id: 2, placa: 'DEF-456', propietario: 'Ana Martínez', tipo: 'SUV', modelo: 'Hyundai Tucson', estado: 'Autorizado' },
+  { id: 3, placa: 'GHI-789', propietario: 'Juan Pérez', tipo: 'Moto', modelo: 'Yamaha XTZ', estado: 'Pendiente' },
+]
+
+const STORAGE_KEY = 'vehiculos_condominio'
+
 export default function Vehiculos() {
+  const [vehiculos, setVehiculos] = useState(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      return stored ? JSON.parse(stored) : vehiculosIniciales
+    } catch {
+      return vehiculosIniciales
+    }
+  })
+  const [showModal, setShowModal] = useState(false)
+  const [editando, setEditando] = useState(null)
+  const [formData, setFormData] = useState({ placa: '', propietario: '', tipo: 'Auto', modelo: '', estado: 'Autorizado' })
+
+  // Sincroniza con localStorage cada vez que vehiculos cambie
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(vehiculos))
+    } catch {
+      console.error('Error al guardar en localStorage')
+    }
+  }, [vehiculos])
+
+
+  // Función para abrir el modal de agregar o editar vehículo
+  const handleOpenModal = (vehiculo = null) => {
+    if (vehiculo) {
+      setEditando(vehiculo)
+      setFormData(vehiculo)
+    } else {
+      setEditando(null)
+      setFormData({ placa: '', propietario: '', tipo: 'Auto', modelo: '', estado: 'Autorizado' })
+    }
+    setShowModal(true)
+  }
+
+
+  const handleCloseModal = () => {
+    setShowModal(false)
+    setEditando(null)
+  }
+
+
+  // Función para guardar los cambios al agregar o editar un vehículo
+  const handleSave = () => {
+    if (editando) {
+      setVehiculos(vehiculos.map(v => v.id === editando.id ? { ...formData, id: v.id } : v))
+    } else {
+      const newId = Math.max(...vehiculos.map(v => v.id)) + 1
+      setVehiculos([...vehiculos, { ...formData, id: newId }])
+    }
+    handleCloseModal()
+  }
+
+
+  // Función para eliminar un vehículo
+  const handleDelete = (id) => {
+    if (window.confirm('¿Eliminar este vehículo?')) {
+      setVehiculos(vehiculos.filter(v => v.id !== id))
+    }
+  }
+
+
+  // Función para manejar cambios en el formulario
   return (
     <div>
-      <div style={{ marginBottom: "2rem" }}>
-        <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>Vehículos</h1>
-        <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>Registro y gestión de vehículos</p>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>
+            Vehículos
+          </h1>
+          <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>
+            Registro y gestión de vehículos
+          </p>
+        </div>
+        <Button variant="primary" onClick={() => handleOpenModal()}>
+          <FiPlus className="me-2" /> Registrar Vehículo
+        </Button>
       </div>
-      <div style={{ background: "#fff", borderRadius: "16px", padding: "3rem 2rem", textAlign: "center", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", color: "#94a3b8" }}>
-        <FiTruck size={48} style={{ marginBottom: "1rem", opacity: 0.4 }} />
-        <p style={{ fontSize: "1rem", fontWeight: 500 }}>Módulo en construcción</p>
-        <p style={{ fontSize: "0.85rem", marginTop: "0.25rem" }}>El contenido estará disponible próximamente.</p>
-      </div>
+
+
+      <Card className="shadow-sm">
+        <Card.Body>
+          <Table responsive hover>
+            <thead className="table-light">
+              <tr>
+                <th>Placa</th>
+                <th>Propietario</th>
+                <th>Tipo</th>
+                <th>Modelo</th>
+                <th>Estado</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {vehiculos.map((vehiculo) => (
+                <tr key={vehiculo.id}>
+                  <td><strong>{vehiculo.placa}</strong></td>
+                  <td>{vehiculo.propietario}</td>
+                  <td>{vehiculo.tipo}</td>
+                  <td>{vehiculo.modelo}</td>
+                  <td>
+                    <Badge bg={vehiculo.estado === 'Autorizado' ? 'success' : 'warning'}>
+                      {vehiculo.estado}
+                    </Badge>
+                  </td>
+                  <td>
+                    <Button variant="outline-primary" size="sm" className="me-2" onClick={() => handleOpenModal(vehiculo)}>
+                      <FiEdit2 />
+                    </Button>
+                    <Button variant="outline-danger" size="sm" onClick={() => handleDelete(vehiculo.id)}>
+                      <FiTrash2 />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card>
+
+
+      {/* Modal para agregar o editar vehículo */}
+      <Modal show={showModal} onHide={handleCloseModal}>
+        <Modal.Header closeButton>
+          <Modal.Title>{editando ? 'Editar Vehículo' : 'Registrar Vehículo'}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Placa</Form.Label>
+              <Form.Control
+                type="text"
+                value={formData.placa}
+                onChange={(e) => setFormData({ ...formData, placa: e.target.value.toUpperCase() })}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Propietario</Form.Label>
+              <Form.Control
+                type="text"
+                value={formData.propietario}
+                onChange={(e) => setFormData({ ...formData, propietario: e.target.value })}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Tipo</Form.Label>
+              <Form.Select
+                value={formData.tipo}
+                onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
+              >
+                <option>Auto</option>
+                <option>SUV</option>
+                <option>Moto</option>
+                <option>Camioneta</option>
+              </Form.Select>
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Modelo</Form.Label>
+              <Form.Control
+                type="text"
+                value={formData.modelo}
+                onChange={(e) => setFormData({ ...formData, modelo: e.target.value })}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Estado</Form.Label>
+              <Form.Select
+                value={formData.estado}
+                onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
+              >
+                <option>Autorizado</option>
+                <option>Pendiente</option>
+                <option>Restringido</option>
+              </Form.Select>
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseModal}>
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={handleSave}>
+            Guardar
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   )
 }

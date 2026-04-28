@@ -28,6 +28,7 @@ export default function SidebarSuperAdmin({ isOpen, setIsOpen }) {
       accentDark="rgb(91,33,182)"
       menuItems={menuItems}
       loginRoute="/login"
+      storageKey="perfil_superadmin"
     />
   )
 }

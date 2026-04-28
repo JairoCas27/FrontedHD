@@ -1,4 +1,4 @@
-import parkingLogin from "../../images/parking-login.png"
+import parkingLoginSeguridad from "../../images/parking-login-seguridad.png"
 import AuthLayout from "../../components/AuthLayout"
 import { useLogin } from "../../hooks/useLogin"
 
@@ -25,7 +25,7 @@ function LoginSeguridad() {
     <AuthLayout
       title="Acceso Seguridad"
       description="Panel de control para agentes y personal de seguridad"
-      heroImage={parkingLogin}
+      heroImage={parkingLoginSeguridad}
       accentColor="rgb(34,197,94)"
       accentColorDark="rgb(22,163,74)"
       submitLabel="Ingresar como Seguridad"
