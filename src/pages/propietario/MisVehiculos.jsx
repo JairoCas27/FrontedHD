@@ -23,7 +23,8 @@ export default function MisVehiculos() {
       }
     ];
   };
-
+  const [animarModal, setAnimarModal] = useState(false);
+  const [animarNuevo, setAnimarNuevo] = useState(false);
   const [vehiculos, setVehiculos] = useState(getVehiculos());
   const [modal, setModal] = useState(false);
   const [modalNuevo, setModalNuevo] = useState(false);
