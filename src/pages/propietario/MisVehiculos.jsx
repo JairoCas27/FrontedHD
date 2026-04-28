@@ -98,8 +98,13 @@ export default function MisVehiculos() {
                 </div>
               ))}
             </div>
-            <button onClick={() => abrirEditar(v, index)} style={{ width: "100%", background: "white", padding: "0.7rem", borderRadius: "12px", border: "none", color: colores.naranjaOscuro, fontWeight: "700", cursor: "pointer" }}>Editar Información</button>
-          </div>
+            <button 
+              onClick={() => abrirEditar(v, index)}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.boxShadow = "0 8px 15px rgba(0,0,0,0.1)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.background = "white"; e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "translateY(0)"; }}
+              style={{ width: "100%", background: "white", padding: "0.7rem", borderRadius: "12px", border: "none", color: colores.naranjaOscuro, fontWeight: "700", cursor: "pointer", transition: "all 0.2s ease" }}>Editar Información
+            </button>
+            </div>
         ))}
       </div>
       {/* MODAL EDITAR */}
