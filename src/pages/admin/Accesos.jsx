@@ -127,5 +127,58 @@ export default function Accesos() {
         </Col>
       </Row>
 
-      
+      <Card className="shadow-sm">
+        <Card.Header className="bg-white">
+          <div className="d-flex justify-content-between align-items-center">
+            <h6 className="mb-0">Historial de Accesos</h6>
+            <div className="d-flex gap-2">
+              <FiSearch className="text-muted mt-2" />
+              <Form.Control
+                type="text"
+                placeholder="Buscar..."
+                size="sm"
+                style={{ width: '200px' }}
+                value={filtro}
+                onChange={(e) => setFiltro(e.target.value)}
+              />
+            </div>
+          </div>
+        </Card.Header>
+        <Card.Body>
+          <Table responsive hover>
+            <thead className="table-light">
+              <tr>
+                <th>Fecha</th>
+                <th>Hora</th>
+                <th>Nombre</th>
+                <th>Tipo</th>
+                <th>Placa</th>
+                <th>Dirección</th>
+              </tr>
+            </thead>
+            <tbody>
+              {accesosFiltrados.map((acceso) => (
+                <tr key={acceso.id}>
+                  <td>{acceso.fecha}</td>
+                  <td>{acceso.hora}</td>
+                  <td>{acceso.nombre}</td>
+                  <td>
+                    <Badge bg={acceso.tipo === 'Residente' ? 'primary' : acceso.tipo === 'Visita' ? 'info' : 'secondary'}>
+                      {acceso.tipo}
+                    </Badge>
+                  </td>
+                  <td>{acceso.placa || '—'}</td>
+                  <td>
+                    <Badge bg={acceso.direccion === 'Ingreso' ? 'success' : 'danger'}>
+                      {acceso.direccion}
+                    </Badge>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card>
+    </div>
+  )
 }
