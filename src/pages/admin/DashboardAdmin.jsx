@@ -1,5 +1,17 @@
 import { FiHome } from "react-icons/fi"
 
+// Datos de ejemplo para estacionamientos
+
+//simulacion de espacios por bloques
+const espaciosPorBloque = [
+    { bloque: 'Bloque A', total: 60, ocupados: 48, disponibles: 8, mantención: 4 },
+    { bloque: 'Bloque B', total: 60, ocupados: 47, disponibles: 9, mantención: 4 },
+    { bloque: 'Bloque C', total: 60, ocupados: 46, disponibles: 8, mantención: 6 },
+    { bloque: 'Bloque D', total: 60, ocupados: 45, disponibles: 9, mantención: 6 },
+    { bloque: 'Bloque E', total: 60, ocupados: 48, disponibles: 6, mantención: 6 },
+    { bloque: 'Visitas', total: 42, ocupados: 33, disponibles: 5, mantención: 4 },
+]
+
 export default function DashboardAdmin() {
   return (
     <div style={{ padding: "0" }}>
