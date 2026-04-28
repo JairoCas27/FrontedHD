@@ -13,4 +13,23 @@ export default function Vehiculos() {
   const [showModal, setShowModal] = useState(false)
   const [editando, setEditando] = useState(null)
   const [formData, setFormData] = useState({ placa: '', propietario: '', tipo: 'Auto', modelo: '', estado: 'Autorizado' })
+
+  // Función para abrir el modal de agregar o editar vehículo
+  const handleOpenModal = (vehiculo = null) => {
+    if (vehiculo) {
+      setEditando(vehiculo)
+      setFormData(vehiculo)
+    } else {
+      setEditando(null)
+      setFormData({ placa: '', propietario: '', tipo: 'Auto', modelo: '', estado: 'Autorizado' })
+    }
+    setShowModal(true)
+  }
+
+  const handleCloseModal = () => {
+    setShowModal(false)
+    setEditando(null)
+  }
+
+  
 }
