@@ -1,16 +1,24 @@
-import { FiMapPin } from "react-icons/fi"
+import { useState } from "react";
+
 export default function MisEstacionamientos() {
+
+  const [espacios] = useState([
+    { codigo: "A-101", estado: "disponible", vehiculo: null },
+    { codigo: "A-102", estado: "ocupado", vehiculo: "ABC-123" },
+    { codigo: "B-201", estado: "reservado", vehiculo: "XYZ-789" }
+  ]);
+
   return (
-    <div>
-      <div style={{ marginBottom: "2rem" }}>
-        <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>Mis Estacionamientos</h1>
-        <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>Espacios asignados y estado del parqueo</p>
-      </div>
-      <div style={{ background: "#fff", borderRadius: "16px", padding: "3rem 2rem", textAlign: "center", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", color: "#94a3b8" }}>
-        <FiMapPin size={48} style={{ marginBottom: "1rem", opacity: 0.4 }} />
-        <p style={{ fontSize: "1rem", fontWeight: 500 }}>Módulo en construcción</p>
-        <p style={{ fontSize: "0.85rem", marginTop: "0.25rem" }}>El contenido estará disponible próximamente.</p>
-      </div>
+    <div style={{ padding: "1rem" }}>
+      <h1>Mis Estacionamientos</h1>
+
+      {espacios.map((e, index) => (
+        <div key={index} style={{ border: "1px solid #ccc", marginBottom: "10px", padding: "10px" }}>
+          <p><strong>Código:</strong> {e.codigo}</p>
+          <p><strong>Estado:</strong> {e.estado}</p>
+          <p><strong>Vehículo:</strong> {e.vehiculo || "Ninguno"}</p>
+        </div>
+      ))}
     </div>
-  )
+  );
 }
