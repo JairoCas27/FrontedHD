@@ -106,5 +106,71 @@ export default function Vehiculos() {
         </Card.Body>
       </Card>
 
-
+      // Modal para agregar o editar vehículo
+      <Modal show={showModal} onHide={handleCloseModal}>
+        <Modal.Header closeButton>
+          <Modal.Title>{editando ? 'Editar Vehículo' : 'Registrar Vehículo'}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Placa</Form.Label>
+              <Form.Control
+                type="text"
+                value={formData.placa}
+                onChange={(e) => setFormData({ ...formData, placa: e.target.value.toUpperCase() })}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Propietario</Form.Label>
+              <Form.Control
+                type="text"
+                value={formData.propietario}
+                onChange={(e) => setFormData({ ...formData, propietario: e.target.value })}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Tipo</Form.Label>
+              <Form.Select
+                value={formData.tipo}
+                onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}
+              >
+                <option>Auto</option>
+                <option>SUV</option>
+                <option>Moto</option>
+                <option>Camioneta</option>
+              </Form.Select>
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Modelo</Form.Label>
+              <Form.Control
+                type="text"
+                value={formData.modelo}
+                onChange={(e) => setFormData({ ...formData, modelo: e.target.value })}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Estado</Form.Label>
+              <Form.Select
+                value={formData.estado}
+                onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
+              >
+                <option>Autorizado</option>
+                <option>Pendiente</option>
+                <option>Restringido</option>
+              </Form.Select>
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={handleCloseModal}>
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={handleSave}>
+            Guardar
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </div>
+  )
 }
