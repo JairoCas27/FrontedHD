@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { FiActivity, FiLogIn, FiLogOut, FiSearch } from "react-icons/fi"
 import { Table, Button, Form, Card, Row, Col, Badge } from 'react-bootstrap'
+
 
 const accesosIniciales = [
   { id: 1, nombre: 'Carlos López', tipo: 'Residente', placa: 'ABC-123', hora: '08:30', fecha: '2025-04-27', direccion: 'Ingreso' },
@@ -9,10 +10,29 @@ const accesosIniciales = [
   { id: 4, nombre: 'María García', tipo: 'Proveedor', placa: 'JKL-012', hora: '11:20', fecha: '2025-04-27', direccion: 'Ingreso' },
 ]
 
+const STORAGE_KEY = 'accesos_condominio_admin'
+
 export default function Accesos() {
-  const [accesos, setAccesos] = useState(accesosIniciales)
+  const [accesos, setAccesos] = useState(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      return stored ? JSON.parse(stored) : accesosIniciales
+    } catch {
+      return accesosIniciales
+    }
+  })
   const [filtro, setFiltro] = useState('')
   const [nuevoAcceso, setNuevoAcceso] = useState({ nombre: '', tipo: 'Residente', placa: '', direccion: 'Ingreso' })
+
+  // Sincroniza con localStorage cada vez que accesos cambie
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(accesos))
+    } catch {
+      console.error('Error al guardar en localStorage')
+    }
+  }, [accesos])
+
 
   const handleRegistrarAcceso = () => {
     if (!nuevoAcceso.nombre) return
@@ -27,10 +47,12 @@ export default function Accesos() {
     setNuevoAcceso({ nombre: '', tipo: 'Residente', placa: '', direccion: 'Ingreso' })
   }
 
+
   const accesosFiltrados = accesos.filter(a => 
     a.nombre.toLowerCase().includes(filtro.toLowerCase()) ||
     a.placa.toLowerCase().includes(filtro.toLowerCase())
   )
+
 
   return (
     <div>
@@ -42,6 +64,7 @@ export default function Accesos() {
           Control de ingresos y salidas
         </p>
       </div>
+
 
       <Row className="g-4 mb-4">
         <Col md={6}>
@@ -126,6 +149,7 @@ export default function Accesos() {
           </Card>
         </Col>
       </Row>
+
 
       <Card className="shadow-sm">
         <Card.Header className="bg-white">
