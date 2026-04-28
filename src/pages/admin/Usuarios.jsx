@@ -69,7 +69,7 @@ export default function Usuarios() {
         </Button>
       </div>
 
-      //Tabla de usuarios
+      {/* Tabla de usuarios */}
       <Card className="shadow-sm">
         <Card.Body>
           <Table responsive hover>
@@ -114,7 +114,7 @@ export default function Usuarios() {
         </Card.Body>
       </Card>
 
-      // Modal para crear/editar usuario
+      {/* Modal para crear/editar usuario */}
       <Modal show={showModal} onHide={handleCloseModal}>
         <Modal.Header closeButton>
           <Modal.Title>{editando ? 'Editar Usuario' : 'Nuevo Usuario'}</Modal.Title>
