@@ -1,14 +1,25 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { FiUser, FiMail, FiPhone, FiMapPin, FiSave, FiLock } from "react-icons/fi"
 import { Card, Row, Col, Form, Button, Alert } from 'react-bootstrap'
 
+const perfilInicial = {
+  nombre: 'Usuario Demo',
+  email: 'usuario@demo.com',
+  telefono: '+51 914 646 333',
+  direccion: 'Calle las Cucardas 399, Lima',
+  rol: 'Administrador'
+}
+
+const STORAGE_KEY = 'perfil_condominio_admin'
+
 export default function Perfil() {
-  const [perfil, setPerfil] = useState({
-    nombre: 'Usuario Demo',
-    email: 'usuario@demo.com',
-    telefono: '+51 914 646 333',
-    direccion: 'Calle las Cucardas 399, Lima',
-    rol: 'Administrador'
+  const [perfil, setPerfil] = useState(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      return stored ? JSON.parse(stored) : perfilInicial
+    } catch {
+      return perfilInicial
+    }
   })
 
   const [passwordData, setPasswordData] = useState({
@@ -20,12 +31,23 @@ export default function Perfil() {
   const [mensaje, setMensaje] = useState('')
   const [tipoMensaje, setTipoMensaje] = useState('success')
 
+  // Sincroniza con localStorage cada vez que perfil cambie
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(perfil))
+    } catch {
+      console.error('Error al guardar en localStorage')
+    }
+  }, [perfil])
+
+
   const handlePerfilSubmit = (e) => {
     e.preventDefault()
     setMensaje('Perfil actualizado correctamente')
     setTipoMensaje('success')
     setTimeout(() => setMensaje(''), 3000)
   }
+
 
   const handlePasswordSubmit = (e) => {
     e.preventDefault()
@@ -43,6 +65,7 @@ export default function Perfil() {
     setTimeout(() => setMensaje(''), 3000)
   }
 
+
   return (
     <div>
       <div className="mb-4">
@@ -54,11 +77,13 @@ export default function Perfil() {
         </p>
       </div>
 
+
       {mensaje && (
         <Alert variant={tipoMensaje} className="mb-4">
           {mensaje}
         </Alert>
       )}
+
 
       <Row className="g-4">
         <Col lg={6}>
@@ -128,6 +153,7 @@ export default function Perfil() {
           </Card>
         </Col>
 
+
         <Col lg={6}>
           <Card className="shadow-sm">
             <Card.Header className="bg-white">
@@ -173,6 +199,7 @@ export default function Perfil() {
               </Form>
             </Card.Body>
           </Card>
+
 
           <Card className="shadow-sm mt-4">
             <Card.Header className="bg-white">
