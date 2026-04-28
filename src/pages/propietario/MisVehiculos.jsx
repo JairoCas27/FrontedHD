@@ -113,7 +113,12 @@ export default function MisVehiculos() {
           <div style={modalContentStyle}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.8rem" }}>
               <div><h3 style={{ color: colores.slate, margin: 0, fontSize: "1.3rem", fontWeight: 700 }}>Editar Vehículo</h3><p style={{ margin: 0, fontSize: "0.85rem", color: colores.lightSlate }}>Actualiza los detalles</p></div>
-              <button onClick={() => setModal(false)} style={{ background: "#f1f5f9", border: "none", borderRadius: "10px", padding: "6px", cursor: "pointer", color: colores.lightSlate }}><X size={20} /></button>
+              <button 
+                onClick={() => setModal(false)}
+                onMouseEnter={(e) => e.currentTarget.style.background = "#f3e3ce"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "#f1f5f9"}
+                style={{ background: "#f1f5f9", border: "none", borderRadius: "10px", padding: "6px", cursor: "pointer", color: colores.lightSlate, transition: "0.2s" }}>
+                  <X size={20} /></button>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
               {["marca", "modelo", "color", "placa"].map(f => (
@@ -143,7 +148,11 @@ export default function MisVehiculos() {
           <div style={modalContentStyle}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.8rem" }}>
               <div><h3 style={{ color: colores.slate, margin: 0, fontSize: "1.3rem", fontWeight: 700 }}>Nuevo Vehículo</h3><p style={{ margin: 0, fontSize: "0.85rem", color: colores.lightSlate }}>Envía una solicitud de registro</p></div>
-              <button onClick={() => setModalNuevo(false)} style={{ background: "#f1f5f9", border: "none", borderRadius: "10px", padding: "6px", cursor: "pointer", color: colores.lightSlate }}><X size={20} /></button>
+              <button 
+                onClick={() => setModalNuevo(false)}
+                onMouseEnter={(e) => e.currentTarget.style.background = "#f3e3ce"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "#f1f5f9"}
+                style={{ background: "#f1f5f9", border: "none", borderRadius: "10px", padding: "6px", cursor: "pointer", color: colores.lightSlate, transition: "0.2s" }}><X size={20} /></button>
             </div>
             <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
               {["marca", "modelo", "color", "placa"].map(f => (
