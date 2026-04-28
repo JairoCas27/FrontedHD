@@ -37,4 +37,52 @@ export default function Visitas() {
     ))
   }
 
+  return (
+    <div>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>
+            Visitas
+          </h1>
+          <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>
+            Registro y control de visitantes
+          </p>
+        </div>
+        <Button variant="primary" onClick={() => setShowModal(true)}>
+          <FiUserCheck className="me-2" /> Nueva Visita
+        </Button>
+      </div>
+
+      <Row className="g-4 mb-4">
+        <Col md={3}>
+          <Card className="shadow-sm text-center">
+            <Card.Body>
+              <h2 className="text-primary">{visitas.filter(v => v.estado === 'Activa').length}</h2>
+              <p className="text-muted mb-0">Visitas Activas</p>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={3}>
+          <Card className="shadow-sm text-center">
+            <Card.Body>
+              <h2 className="text-success">{visitas.filter(v => v.estado === 'Finalizada').length}</h2>
+              <p className="text-muted mb-0">Finalizadas Hoy</p>
+            </Card.Body>
+          </Card>
+        </Col>
+        <Col md={6}>
+          <Card className="shadow-sm">
+            <Card.Body>
+              <div className="d-flex align-items-center">
+                <FiClock size={30} className="text-info me-3" />
+                <div>
+                  <h6 className="mb-0">Visita más larga hoy</h6>
+                  <small className="text-muted">Pedro González - 2h 30min</small>
+                </div>
+              </div>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
+
 }
