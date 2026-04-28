@@ -1,24 +1,45 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { FiSettings, FiSave, FiGlobe, FiShield, FiBell, FiMail } from "react-icons/fi"
 import { Card, Row, Col, Form, Button, Alert, Tabs, Tab } from 'react-bootstrap'
 
+const configInicial = {
+  nombreCondominio: 'Urban Park',
+  direccion: 'Av. Los Condores 1234',
+  telefono: '+56 2 2123 4567',
+  email: 'contacto@urbanpark.cl',
+  horarioInicio: '08:00',
+  horarioFin: '22:00',
+  notificacionesEmail: true,
+  notificacionesPush: true,
+  accesoAutomatico: false,
+  registroVisitantes: true,
+  maxVisitasDiarias: 10
+}
+
+const STORAGE_KEY = 'configuracion_condominio_admin'
+
 export default function Configuracion() {
-  const [config, setConfig] = useState({
-    nombreCondominio: 'Urban Park',
-    direccion: 'Av. Los Condores 1234',
-    telefono: '+56 2 2123 4567',
-    email: 'contacto@urbanpark.cl',
-    horarioInicio: '08:00',
-    horarioFin: '22:00',
-    notificacionesEmail: true,
-    notificacionesPush: true,
-    accesoAutomatico: false,
-    registroVisitantes: true,
-    maxVisitasDiarias: 10
+  const [config, setConfig] = useState(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      return stored ? JSON.parse(stored) : configInicial
+    } catch {
+      return configInicial
+    }
   })
 
   const [mensaje, setMensaje] = useState('')
   const [tipoMensaje, setTipoMensaje] = useState('success')
+
+  // Sincroniza con localStorage cada vez que config cambie
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(config))
+    } catch {
+      console.error('Error al guardar en localStorage')
+    }
+  }, [config])
+
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -26,6 +47,7 @@ export default function Configuracion() {
     setTipoMensaje('success')
     setTimeout(() => setMensaje(''), 3000)
   }
+
 
   return (
     <div>
@@ -38,11 +60,13 @@ export default function Configuracion() {
         </p>
       </div>
 
+
       {mensaje && (
         <Alert variant={tipoMensaje} className="mb-4">
           {mensaje}
         </Alert>
       )}
+
 
       <Form onSubmit={handleSubmit}>
         <Tabs defaultActiveKey="general" className="mb-4" fill>
@@ -95,6 +119,7 @@ export default function Configuracion() {
             </Card>
           </Tab>
 
+
           <Tab eventKey="horarios" title={<><FiBell className="me-1" /> Horarios</>}>
             <Card className="shadow-sm mt-3">
               <Card.Body>
@@ -132,6 +157,7 @@ export default function Configuracion() {
             </Card>
           </Tab>
 
+
           <Tab eventKey="seguridad" title={<><FiShield className="me-1" /> Seguridad</>}>
             <Card className="shadow-sm mt-3">
               <Card.Body>
@@ -156,6 +182,7 @@ export default function Configuracion() {
               </Card.Body>
             </Card>
           </Tab>
+
 
           <Tab eventKey="notificaciones" title={<><FiMail className="me-1" /> Notificaciones</>}>
             <Card className="shadow-sm mt-3">
@@ -182,6 +209,7 @@ export default function Configuracion() {
             </Card>
           </Tab>
         </Tabs>
+
 
         <div className="text-end mt-4">
           <Button type="submit" variant="primary" size="lg">
