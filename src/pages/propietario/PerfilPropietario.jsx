@@ -53,8 +53,19 @@ export default function PerfilPropietario() {
       <button onClick={() => setModal(true)}>
         Editar Perfil
       </button>
+      
     </div>
       </div>
+
+    {modal && (
+              <div>
+                <div>
+                  <h3>Editar Perfil</h3>
+                  <button onClick={() => setModal(false)}>Cerrar</button>
+                </div>
+              </div>
+            )}
     </div>
+    
   );
 }
