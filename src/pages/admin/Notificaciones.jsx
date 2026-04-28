@@ -42,5 +42,31 @@ export default function Notificaciones() {
 
   const noLeidas = notificaciones.filter(n => !n.leida).length
 
-  
+  return (
+    <div>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>
+            Notificaciones
+          </h1>
+          <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>
+            Alertas y eventos del sistema
+          </p>
+        </div>
+        <div>
+          {noLeidas > 0 && (
+            <Badge bg="danger" className="me-2">
+              {noLeidas} nuevas
+            </Badge>
+          )}
+          <Button variant="outline-primary" size="sm" className="me-2" onClick={marcarTodasLeidas}>
+            <FiCheck className="me-1" /> Marcar todas
+          </Button>
+          <Button variant="outline-danger" size="sm" onClick={eliminarTodas}>
+            <FiTrash2 className="me-1" /> Eliminar todas
+          </Button>
+        </div>
+      </div>
+
+      
 }
