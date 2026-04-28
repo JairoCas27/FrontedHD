@@ -27,6 +27,7 @@ export default function SidebarPropietario({ isOpen, setIsOpen }) {
       accentDark="rgb(234,88,12)"
       menuItems={menuItems}
       loginRoute="/login-propietario"
+      storageKey="usuario"
     />
   )
 }
