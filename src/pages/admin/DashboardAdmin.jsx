@@ -21,6 +21,13 @@ const accesosRecientes = [
     { id: 4, nombre: 'María García', tipo: 'Proveedor', hora: '11:20', estado: 'Ingreso' },
 ]
 
+// Calcular totales
+const totalPlazas = espaciosPorBloque.reduce((sum, b) => sum + b.total, 0)
+const totalOcupados = espaciosPorBloque.reduce((sum, b) => sum + b.ocupados, 0)
+const totalDisponibles = espaciosPorBloque.reduce((sum, b) => sum + b.disponibles, 0)
+const totalMantención = espaciosPorBloque.reduce((sum, b) => sum + (b.mantención || 0), 0)
+const porcentajeOcupacion = Math.round((totalOcupados / totalPlazas) * 100)
+
 export default function DashboardAdmin() {
     return (
         <div style={{ padding: "0" }}>
