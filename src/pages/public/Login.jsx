@@ -1,4 +1,4 @@
-import parkingLogin from "../../images/parking-login.png"
+import parkingLoginAdmin from "../../images/parking-login-admin.png"
 import AuthLayout from "../../components/AuthLayout"
 import { useLogin } from "../../hooks/useLogin"
 
@@ -26,7 +26,7 @@ function Login() {
     <AuthLayout
       title="Acceso Administrador"
       description="Accede al panel de administración de estacionamientos"
-      heroImage={parkingLogin}
+      heroImage={parkingLoginAdmin}
       accentColor="rgb(52,151,195)"
       accentColorDark="rgb(37,117,152)"
       submitLabel="Ingresar como Administrador"
