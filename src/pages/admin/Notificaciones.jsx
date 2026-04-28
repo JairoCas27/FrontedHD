@@ -68,5 +68,62 @@ export default function Notificaciones() {
         </div>
       </div>
 
-      
+      {notificaciones.length === 0 ? (
+        <Card className="shadow-sm text-center py-5">
+          <Card.Body>
+            <FiBell size={48} className="text-muted mb-3 opacity-50" />
+            <h5>No hay notificaciones</h5>
+            <p className="text-muted">Las notificaciones aparecerán aquí</p>
+          </Card.Body>
+        </Card>
+      ) : (
+        <Card className="shadow-sm">
+          <ListGroup variant="flush">
+            {notificaciones.map((notificacion) => (
+              <ListGroup.Item 
+                key={notificacion.id} 
+                className={`d-flex justify-content-between align-items-center ${!notificacion.leida ? 'bg-light' : ''}`}
+              >
+                <div className="d-flex align-items-start">
+                  <div className="me-3 mt-1">
+                    {getIcono(notificacion.tipo)}
+                  </div>
+                  <div>
+                    <h6 className="mb-1">
+                      {notificacion.titulo}
+                      {!notificacion.leida && (
+                        <Badge bg="primary" className="ms-2">Nueva</Badge>
+                      )}
+                    </h6>
+                    <p className="mb-1 text-muted small">{notificacion.mensaje}</p>
+                    <small className="text-muted">{notificacion.fecha}</small>
+                  </div>
+                </div>
+                <div>
+                  {!notificacion.leida && (
+                    <Button 
+                      variant="link" 
+                      size="sm" 
+                      className="text-success me-2"
+                      onClick={() => marcarComoLeida(notificacion.id)}
+                    >
+                      <FiCheck />
+                    </Button>
+                  )}
+                  <Button 
+                    variant="link" 
+                    size="sm" 
+                    className="text-danger"
+                    onClick={() => eliminarNotificacion(notificacion.id)}
+                  >
+                    <FiTrash2 />
+                  </Button>
+                </div>
+              </ListGroup.Item>
+            ))}
+          </ListGroup>
+        </Card>
+      )}
+    </div>
+  )
 }
