@@ -1,16 +1,13 @@
-import { FiMapPin } from "react-icons/fi"
+import { useState, useMemo } from 'react'
+import { FiMapPin, FiFilter, FiX } from "react-icons/fi"
+import { Card, Row, Col, Button, Badge, Modal, Form, Pagination, InputGroup } from 'react-bootstrap'
+
+// Configuración de plazas
+const TOTAL_PLAZAS = 342
+const OCUPADAS = 267
+const DISPONIBLES = 45
+const MANTENCION = 30
+
 export default function Estacionamientos() {
-  return (
-    <div>
-      <div style={{ marginBottom: "2rem" }}>
-        <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>Estacionamientos</h1>
-        <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>Gestión de espacios de estacionamiento</p>
-      </div>
-      <div style={{ background: "#fff", borderRadius: "16px", padding: "3rem 2rem", textAlign: "center", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", color: "#94a3b8" }}>
-        <FiMapPin size={48} style={{ marginBottom: "1rem", opacity: 0.4 }} />
-        <p style={{ fontSize: "1rem", fontWeight: 500 }}>Módulo en construcción</p>
-        <p style={{ fontSize: "0.85rem", marginTop: "0.25rem" }}>El contenido estará disponible próximamente.</p>
-      </div>
-    </div>
-  )
+  
 }
