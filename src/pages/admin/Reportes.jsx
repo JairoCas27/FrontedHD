@@ -34,7 +34,7 @@ const totalPlazas = datosEstacionamientos.reduce((sum, item) => sum + item.canti
 const porcentajeOcupacion = Math.round((datosEstacionamientos[0].cantidad / totalPlazas) * 100)
 
 export default function Reportes() {
-const [reporteSeleccionado, setReporteSeleccionado] = useState('accesos')
+  const [reporteSeleccionado, setReporteSeleccionado] = useState('accesos')
 
   const handleExportar = () => {
     alert('Función de exportación en desarrollo')
@@ -68,8 +68,8 @@ const [reporteSeleccionado, setReporteSeleccionado] = useState('accesos')
 
       <Row className="g-4 mb-4">
         <Col md={4}>
-          <Button 
-            variant={reporteSeleccionado === 'accesos' ? 'primary' : 'outline-primary'} 
+          <Button
+            variant={reporteSeleccionado === 'accesos' ? 'primary' : 'outline-primary'}
             className="w-100 py-3"
             onClick={() => setReporteSeleccionado('accesos')}
           >
@@ -78,8 +78,8 @@ const [reporteSeleccionado, setReporteSeleccionado] = useState('accesos')
           </Button>
         </Col>
         <Col md={4}>
-          <Button 
-            variant={reporteSeleccionado === 'financiero' ? 'primary' : 'outline-primary'} 
+          <Button
+            variant={reporteSeleccionado === 'financiero' ? 'primary' : 'outline-primary'}
             className="w-100 py-3"
             onClick={() => setReporteSeleccionado('financiero')}
           >
@@ -88,8 +88,8 @@ const [reporteSeleccionado, setReporteSeleccionado] = useState('accesos')
           </Button>
         </Col>
         <Col md={4}>
-          <Button 
-            variant={reporteSeleccionado === 'estacionamientos' ? 'primary' : 'outline-primary'} 
+          <Button
+            variant={reporteSeleccionado === 'estacionamientos' ? 'primary' : 'outline-primary'}
             className="w-100 py-3"
             onClick={() => setReporteSeleccionado('estacionamientos')}
           >
@@ -99,5 +99,78 @@ const [reporteSeleccionado, setReporteSeleccionado] = useState('accesos')
         </Col>
       </Row>
 
-      
+      {/* Reporte de Accesos */}
+      {reporteSeleccionado === 'accesos' && (
+        <Card className="shadow-sm">
+          <Card.Header className="bg-white">
+            <div className="d-flex justify-content-between align-items-center">
+              <h6 className="mb-0">Reporte de Accesos por Tipo de Persona</h6>
+              <Form.Group className="d-flex gap-2">
+                <Form.Control type="date" size="sm" style={{ width: '130px' }} />
+                <Form.Control type="date" size="sm" style={{ width: '130px' }} />
+              </Form.Group>
+            </div>
+          </Card.Header>
+          <Card.Body>
+            <Row>
+              <Col md={8}>
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={[
+                    { dia: 'Lun', residentes: 145, visitas: 32, proveedores: 12 },
+                    { dia: 'Mar', residentes: 178, visitas: 45, proveedores: 15 },
+                    { dia: 'Mié', residentes: 210, visitas: 38, proveedores: 18 },
+                    { dia: 'Jue', residentes: 192, visitas: 41, proveedores: 14 },
+                    { dia: 'Vie', residentes: 225, visitas: 58, proveedores: 22 },
+                    { dia: 'Sáb', residentes: 180, visitas: 72, proveedores: 10 },
+                    { dia: 'Dom', residentes: 95, visitas: 48, proveedores: 5 },
+                  ]}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="dia" />
+                    <YAxis />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="residentes" fill="#0d6efd" name="Residentes" />
+                    <Bar dataKey="visitas" fill="#20c997" name="Visitas" />
+                    <Bar dataKey="proveedores" fill="#ffc107" name="Proveedores" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Col>
+              <Col md={4}>
+                <ResponsiveContainer width="100%" height={250}>
+                  <PieChart>
+                    <Pie
+                      data={datosAccesos}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="cantidad"
+                    >
+                      {datosAccesos.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => [`${value} accesos`, 'Cantidad']} />
+                  </PieChart>
+                </ResponsiveContainer>
+                <div className="text-center mt-2">
+                  <small className="text-muted">
+                    Distribución total de accesos en el mes
+                  </small>
+                </div>
+              </Col>
+            </Row>
+            <div className="mt-3 p-2 bg-light rounded">
+              <small className="text-muted">
+                <strong>¿Qué significa?</strong> El gráfico muestra la cantidad de accesos registrados,
+                clasificados por tipo de persona: Residentes (propietarios/inquilinos),
+                Visitas (invitados) y Proveedores (delivery, servicios, repartos).
+              </small>
+            </div>
+          </Card.Body>
+        </Card>
+      )}
+
 }
