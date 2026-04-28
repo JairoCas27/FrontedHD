@@ -34,6 +34,7 @@ export default function SidebarAdmin({ isOpen, setIsOpen }) {
       accentDark="rgb(37,117,152)"
       menuItems={menuItems}
       loginRoute="/login"
+      storageKey="perfil_condominio_admin"
     />
   )
 }
