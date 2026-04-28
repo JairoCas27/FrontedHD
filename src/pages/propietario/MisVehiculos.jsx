@@ -121,8 +121,18 @@ export default function MisVehiculos() {
               ))}
             </div>
             <div style={{ display: "flex", gap: "0.8rem", marginTop: "2rem" }}>
-              <button onClick={solicitar} style={{ flex: 1, background: "transparent", color: colores.lightSlate, border: "1px solid #e2e8f0", padding: "0.8rem", borderRadius: "14px", fontWeight: "600", cursor: "pointer" }}>Solicitar</button>
-              <button onClick={guardar} style={{ flex: 1, background: colores.naranjaPrincipal, color: "white", border: "none", padding: "0.8rem", borderRadius: "14px", fontWeight: "600", cursor: "pointer" }}>Guardar</button>
+              <button 
+                onClick={solicitar}
+                onMouseEnter={(e) => e.currentTarget.style.background = "#cfcfcf"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
+                style={{ flex: 1, background: "transparent", color: colores.lightSlate, border: "1px solid #e2e8f0", padding: "0.8rem", borderRadius: "14px", fontWeight: "600", cursor: "pointer", transition: "0.2s ease" }}
+              >Solicitar</button>
+              <button 
+                onClick={guardar}
+                onMouseEnter={(e) => { e.currentTarget.style.background = colores.naranjaOscuro; e.currentTarget.style.transform = "translateY(-2px)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = colores.naranjaPrincipal; e.currentTarget.style.transform = "translateY(0)"; }}
+                style={{ flex: 1, background: colores.naranjaPrincipal, color: "white", border: "none", padding: "0.8rem", borderRadius: "14px", fontWeight: "600", cursor: "pointer", transition: "all 0.2s ease" }}
+              >Guardar</button>
             </div>
           </div>
         </div>
