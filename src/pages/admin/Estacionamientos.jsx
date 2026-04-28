@@ -293,7 +293,7 @@ export default function Estacionamientos() {
           )}
         </Card.Body>
       </Card>
-      
+
       {/* Grid de estacionamientos */}
       {espaciosPaginados.length === 0 ? (
         <Card className="text-center py-5">
@@ -389,5 +389,55 @@ export default function Estacionamientos() {
         </>
       )}
 
-
+      // Modal para editar espacio
+      <Modal show={showModal} onHide={() => setShowModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Espacio {espacioSeleccionado?.numero} - Zona {espacioSeleccionado?.bloque}</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <Form>
+            <Form.Group className="mb-3">
+              <Form.Label>Estado</Form.Label>
+              <Form.Select
+                value={formData.estado}
+                onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
+              >
+                <option value="Disponible">🟢 Disponible</option>
+                <option value="Ocupado">🔴 Ocupado</option>
+                <option value="Mantención">🟡 Mantención</option>
+              </Form.Select>
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Residente/Propietario</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Nombre del residente"
+                value={formData.residente || ''}
+                onChange={(e) => setFormData({ ...formData, residente: e.target.value })}
+                disabled={formData.estado !== 'Ocupado'}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Vehículo (Placa)</Form.Label>
+              <Form.Control
+                type="text"
+                placeholder="Placa del vehículo"
+                value={formData.vehiculo || ''}
+                onChange={(e) => setFormData({ ...formData, vehiculo: e.target.value.toUpperCase() })}
+                disabled={formData.estado !== 'Ocupado'}
+              />
+            </Form.Group>
+          </Form>
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={handleUpdateEspacio}>
+            Guardar Cambios
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </div>
+  )
 }
