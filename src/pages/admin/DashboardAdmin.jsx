@@ -12,6 +12,14 @@ const espaciosPorBloque = [
     { bloque: 'Visitas', total: 42, ocupados: 33, disponibles: 5, mantención: 4 },
 ]
 
+//Simulación de accesos recientes
+const accesosRecientes = [
+    { id: 1, nombre: 'Carlos López', tipo: 'Residente', hora: '08:30', estado: 'Ingreso' },
+    { id: 2, nombre: 'Ana Martínez', tipo: 'Visita', hora: '09:15', estado: 'Ingreso' },
+    { id: 3, nombre: 'Juan Pérez', tipo: 'Residente', hora: '10:00', estado: 'Salida' },
+    { id: 4, nombre: 'María García', tipo: 'Proveedor', hora: '11:20', estado: 'Ingreso' },
+]
+
 export default function DashboardAdmin() {
   return (
     <div style={{ padding: "0" }}>
