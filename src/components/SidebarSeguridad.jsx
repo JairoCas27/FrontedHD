@@ -27,6 +27,7 @@ export default function SidebarSeguridad({ isOpen, setIsOpen }) {
       accentDark="rgb(22,163,74)"
       menuItems={menuItems}
       loginRoute="/login-seguridad"
+      storageKey="perfilSeguridad"
     />
   )
 }
