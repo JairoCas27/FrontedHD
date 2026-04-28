@@ -77,7 +77,9 @@ export default function MisVehiculos() {
       </div>
       {/* BOTÓN AÑADIR */}
       <div style={{ marginBottom: "1.5rem" }}>
-        <button onClick={() => setModalNuevo(true)} style={{ background: colores.naranjaPrincipal, color: "white", border: "none", padding: "0.8rem 1.2rem", borderRadius: "14px", display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontWeight: "600", boxShadow: "0 4px 12px rgba(249,115,22,0.2)" }}>
+        <button onClick={() => setModalNuevo(true)} onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.background = colores.naranjaOscuro; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.background = colores.naranjaPrincipal; }} style={{ background: colores.naranjaPrincipal, color: "white", 
+          border: "none", padding: "0.8rem 1.2rem", borderRadius: "14px", display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontWeight: "600", boxShadow: "0 4px 12px rgba(249,115,22,0.2)", transition: "all 0.2s ease" }}>
           <Plus size={18}/> Añadir vehículo
         </button>
       </div>
