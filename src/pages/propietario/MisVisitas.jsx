@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Car } from "lucide-react";
+import { Car, Plus, X, Send } from "lucide-react";
 
 export default function PermisosEstacionamiento() {
 
@@ -12,6 +12,22 @@ export default function PermisosEstacionamiento() {
   };
 
   const [data] = useState(getData());
+  const [modal, setModal] = useState(false);
+  const [form, setForm] = useState({
+    nombre: "",
+    placa: "",
+    inicio: "",
+    fin: ""
+  });
+
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const generarPermiso = () => {
+    console.log(form);
+    setModal(false);
+  };
 
   return (
     <div style={{ padding: "1rem" }}>
@@ -37,7 +53,21 @@ export default function PermisosEstacionamiento() {
           </div>
         </div>
       </div>
+        <button onClick={() => setModal(true)}>
+          <Plus/> Generar permiso
+        </button>
 
+        {modal && (
+          <div>
+            <input name="nombre" onChange={handleChange}/>
+            <input name="placa" onChange={handleChange}/>
+            <input name="inicio" type="datetime-local" onChange={handleChange}/>
+            <input name="fin" type="datetime-local" onChange={handleChange}/>
+            <button onClick={generarPermiso}>
+              <Send/> Enviar
+            </button>
+          </div>
+        )}
     </div>
   );
 }
