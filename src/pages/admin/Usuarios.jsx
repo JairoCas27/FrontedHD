@@ -52,4 +52,30 @@ export default function Usuarios() {
     }
     handleCloseModal()
   }
+
+  // Función para eliminar un usuario
+  const handleDelete = (id) => {
+    if (window.confirm('¿Eliminar este usuario?')) {
+      setUsuarios(usuarios.filter(u => u.id !== id))
+    }
+  }
+  
+  // Función para manejar cambios en el formulario
+    return (
+    <div>
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <div>
+          <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>
+            Usuarios
+          </h1>
+          <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>
+            Gestión de usuarios del condominio
+          </p>
+        </div>
+        <Button variant="primary" onClick={() => handleOpenModal()}>
+          <FiPlus className="me-2" /> Nuevo Usuario
+        </Button>
+      </div>
+
+      
 }
