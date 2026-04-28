@@ -1,6 +1,108 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FiPlus, FiHome, FiLayers, FiGrid, FiCheckCircle, FiXCircle, FiHash, FiMaximize, FiMapPin } from "react-icons/fi";
 import { Accordion, Badge, Card, Button, Table, Modal, Form, Row, Col } from "react-bootstrap";
+
+const condominiosIniciales = [
+  {
+    id: 1,
+    nombre: "Jerarquía Residencial I",
+    ubicacion: "Puente Piedra",
+    plan: "Premium",
+    torres: [
+      { 
+        id: "T1", 
+        nombre: "Torre A", 
+        pisos: [
+          { nivel: 1, apartamentos: [{ id: "A1", numero: "101", metraje: 85, derecho_estacionamiento: true }] },
+          { nivel: 2, apartamentos: [{ id: "A2", numero: "201", metraje: 70, derecho_estacionamiento: false }] }
+        ] 
+      }
+    ]
+  },
+  {
+    id: 2,
+    nombre: "Urban Park Sur",
+    ubicacion: "Santiago de Surco",
+    plan: "Básico",
+    torres: [
+      { id: "T3", nombre: "Edificio Central", pisos: [{ nivel: 1, apartamentos: [{ id: "A4", numero: "101", metraje: 110, derecho_estacionamiento: true }] }] }
+    ]
+  },
+  {
+    id: 3,
+    nombre: "Residencial Las Palmas",
+    ubicacion: "Los Olivos",
+    plan: "Premium",
+    torres: [
+      { id: "T4", nombre: "Torre Norte", pisos: [{ nivel: 1, apartamentos: [{ id: "A5", numero: "101", metraje: 75, derecho_estacionamiento: true }] }] }
+    ]
+  },
+  {
+    id: 4,
+    nombre: "Condominio El Olivar",
+    ubicacion: "San Isidro",
+    plan: "Premium",
+    torres: [
+      { id: "T5", nombre: "Torre Gold", pisos: [{ nivel: 10, apartamentos: [{ id: "A6", numero: "1001", metraje: 150, derecho_estacionamiento: true }] }] }
+    ]
+  },
+  {
+    id: 5,
+    nombre: "Altos de Comas",
+    ubicacion: "Comas",
+    plan: "Básico",
+    torres: [
+      { id: "T6", nombre: "Block A", pisos: [{ nivel: 1, apartamentos: [{ id: "A7", numero: "101", metraje: 65, derecho_estacionamiento: false }] }] }
+    ]
+  },
+  {
+    id: 6,
+    nombre: "Villa Marina",
+    ubicacion: "Chorrillos",
+    plan: "Premium",
+    torres: [
+      { id: "T7", nombre: "Torre Mar", pisos: [{ nivel: 1, apartamentos: [{ id: "A8", numero: "101", metraje: 95, derecho_estacionamiento: true }] }] }
+    ]
+  },
+  {
+    id: 7,
+    nombre: "Parque San Miguel",
+    ubicacion: "San Miguel",
+    plan: "Básico",
+    torres: [
+      { id: "T8", nombre: "Edificio A", pisos: [{ nivel: 1, apartamentos: [{ id: "A9", numero: "101", metraje: 80, derecho_estacionamiento: true }] }] }
+    ]
+  },
+  {
+    id: 8,
+    nombre: "Residencial San Felipe",
+    ubicacion: "Jesús María",
+    plan: "Premium",
+    torres: [
+      { id: "T9", nombre: "Torre 1", pisos: [{ nivel: 5, apartamentos: [{ id: "A10", numero: "502", metraje: 115, derecho_estacionamiento: true }] }] }
+    ]
+  },
+  {
+    id: 9,
+    nombre: "Praderas del Norte",
+    ubicacion: "Carabayllo",
+    plan: "Básico",
+    torres: [
+      { id: "T10", nombre: "Sector 1", pisos: [{ nivel: 1, apartamentos: [{ id: "A11", numero: "101", metraje: 60, derecho_estacionamiento: false }] }] }
+    ]
+  },
+  {
+    id: 10,
+    nombre: "Mirador de la Costa",
+    ubicacion: "Magdalena del Mar",
+    plan: "Premium",
+    torres: [
+      { id: "T11", nombre: "Torre Pacific", pisos: [{ nivel: 1, apartamentos: [{ id: "A12", numero: "101", metraje: 130, derecho_estacionamiento: true }] }] }
+    ]
+  }
+];
+
+const STORAGE_KEY = 'condominios_superadmin'
 
 export default function Condominios() {
   // --- ESTADOS DE CONTROL ---
@@ -13,106 +115,26 @@ export default function Condominios() {
   const [selectedTorreId, setSelectedTorreId] = useState(null);
   const [selectedPisoNivel, setSelectedPisoNivel] = useState(null);
 
+
   // --- DATOS INICIALES EXPANDIDOS (10 CONDOMINIOS) ---
-  const [condominios, setCondominios] = useState([
-    {
-      id: 1,
-      nombre: "Jerarquía Residencial I",
-      ubicacion: "Puente Piedra",
-      plan: "Premium",
-      torres: [
-        { 
-          id: "T1", 
-          nombre: "Torre A", 
-          pisos: [
-            { nivel: 1, apartamentos: [{ id: "A1", numero: "101", metraje: 85, derecho_estacionamiento: true }] },
-            { nivel: 2, apartamentos: [{ id: "A2", numero: "201", metraje: 70, derecho_estacionamiento: false }] }
-          ] 
-        }
-      ]
-    },
-    {
-      id: 2,
-      nombre: "Urban Park Sur",
-      ubicacion: "Santiago de Surco",
-      plan: "Básico",
-      torres: [
-        { id: "T3", nombre: "Edificio Central", pisos: [{ nivel: 1, apartamentos: [{ id: "A4", numero: "101", metraje: 110, derecho_estacionamiento: true }] }] }
-      ]
-    },
-    {
-      id: 3,
-      nombre: "Residencial Las Palmas",
-      ubicacion: "Los Olivos",
-      plan: "Premium",
-      torres: [
-        { id: "T4", nombre: "Torre Norte", pisos: [{ nivel: 1, apartamentos: [{ id: "A5", numero: "101", metraje: 75, derecho_estacionamiento: true }] }] }
-      ]
-    },
-    {
-      id: 4,
-      nombre: "Condominio El Olivar",
-      ubicacion: "San Isidro",
-      plan: "Premium",
-      torres: [
-        { id: "T5", nombre: "Torre Gold", pisos: [{ nivel: 10, apartamentos: [{ id: "A6", numero: "1001", metraje: 150, derecho_estacionamiento: true }] }] }
-      ]
-    },
-    {
-      id: 5,
-      nombre: "Altos de Comas",
-      ubicacion: "Comas",
-      plan: "Básico",
-      torres: [
-        { id: "T6", nombre: "Block A", pisos: [{ nivel: 1, apartamentos: [{ id: "A7", numero: "101", metraje: 65, derecho_estacionamiento: false }] }] }
-      ]
-    },
-    {
-      id: 6,
-      nombre: "Villa Marina",
-      ubicacion: "Chorrillos",
-      plan: "Premium",
-      torres: [
-        { id: "T7", nombre: "Torre Mar", pisos: [{ nivel: 1, apartamentos: [{ id: "A8", numero: "101", metraje: 95, derecho_estacionamiento: true }] }] }
-      ]
-    },
-    {
-      id: 7,
-      nombre: "Parque San Miguel",
-      ubicacion: "San Miguel",
-      plan: "Básico",
-      torres: [
-        { id: "T8", nombre: "Edificio A", pisos: [{ nivel: 1, apartamentos: [{ id: "A9", numero: "101", metraje: 80, derecho_estacionamiento: true }] }] }
-      ]
-    },
-    {
-      id: 8,
-      nombre: "Residencial San Felipe",
-      ubicacion: "Jesús María",
-      plan: "Premium",
-      torres: [
-        { id: "T9", nombre: "Torre 1", pisos: [{ nivel: 5, apartamentos: [{ id: "A10", numero: "502", metraje: 115, derecho_estacionamiento: true }] }] }
-      ]
-    },
-    {
-      id: 9,
-      nombre: "Praderas del Norte",
-      ubicacion: "Carabayllo",
-      plan: "Básico",
-      torres: [
-        { id: "T10", nombre: "Sector 1", pisos: [{ nivel: 1, apartamentos: [{ id: "A11", numero: "101", metraje: 60, derecho_estacionamiento: false }] }] }
-      ]
-    },
-    {
-      id: 10,
-      nombre: "Mirador de la Costa",
-      ubicacion: "Magdalena del Mar",
-      plan: "Premium",
-      torres: [
-        { id: "T11", nombre: "Torre Pacific", pisos: [{ nivel: 1, apartamentos: [{ id: "A12", numero: "101", metraje: 130, derecho_estacionamiento: true }] }] }
-      ]
+  const [condominios, setCondominios] = useState(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      return stored ? JSON.parse(stored) : condominiosIniciales
+    } catch {
+      return condominiosIniciales
     }
-  ]);
+  });
+
+  // Sincroniza con localStorage cada vez que condominios cambie
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(condominios))
+    } catch {
+      console.error('Error al guardar en localStorage')
+    }
+  }, [condominios]);
+
 
   // Estados de formularios
   const [newCondo, setNewCondo] = useState({ nombre: "", ubicacion: "", plan: "Básico" });
@@ -120,7 +142,9 @@ export default function Condominios() {
   const [newPisoNum, setNewPisoNum] = useState("");
   const [newApto, setNewApto] = useState({ numero: "", metraje: "", derecho_estacionamiento: true });
 
+
   // --- LÓGICA DE ACTUALIZACIÓN ---
+
 
   const handleAddCondominio = (e) => {
     e.preventDefault();
@@ -128,6 +152,7 @@ export default function Condominios() {
     setCondominios([...condominios, nuevo]);
     setShowCondoModal(false);
   };
+
 
   const handleAddTorre = (e) => {
     e.preventDefault();
@@ -137,6 +162,7 @@ export default function Condominios() {
     setShowTorreModal(false);
     setNewTorreName("");
   };
+
 
   const handleAddPiso = (e) => {
     e.preventDefault();
@@ -148,6 +174,7 @@ export default function Condominios() {
     setShowPisoModal(false);
     setNewPisoNum("");
   };
+
 
   const handleAddApto = (e) => {
     e.preventDefault();
@@ -162,6 +189,7 @@ export default function Condominios() {
     setNewApto({ numero: "", metraje: "", derecho_estacionamiento: true });
   };
 
+
   return (
     <div style={{ padding: "1.5rem" }}>
       {/* HEADER PRINCIPAL */}
@@ -174,6 +202,7 @@ export default function Condominios() {
           <FiPlus className="me-2" /> Registrar Condominio
         </Button>
       </div>
+
 
       {/* RENDERIZADO DE CONDOMINIOS */}
       {condominios.map((condo) => (
@@ -192,6 +221,7 @@ export default function Condominios() {
               </div>
             </div>
           </Card.Header>
+
 
           <Card.Body className="px-4 pb-4 pt-0">
             <Accordion>
@@ -212,6 +242,7 @@ export default function Condominios() {
                             + Apartamento
                           </Button>
                         </div>
+
 
                         <Table responsive borderless hover className="m-0">
                           <thead className="small text-muted text-uppercase fw-bold" style={{ fontSize: "0.7rem" }}>
@@ -251,7 +282,9 @@ export default function Condominios() {
         </Card>
       ))}
 
+
       {/* --- MODALES --- */}
+
 
       {/* MODAL: CONDOMINIO */}
       <Modal show={showCondoModal} onHide={() => setShowCondoModal(false)} centered>
@@ -271,6 +304,7 @@ export default function Condominios() {
         </Modal.Body>
       </Modal>
 
+
       {/* MODAL: TORRE */}
       <Modal show={showTorreModal} onHide={() => setShowTorreModal(false)} centered>
         <Modal.Body className="p-4 text-center">
@@ -283,6 +317,7 @@ export default function Condominios() {
         </Modal.Body>
       </Modal>
 
+
       {/* MODAL: PISO */}
       <Modal show={showPisoModal} onHide={() => setShowPisoModal(false)} centered size="sm">
         <Modal.Body className="p-4 text-center">
@@ -293,6 +328,7 @@ export default function Condominios() {
           </Form>
         </Modal.Body>
       </Modal>
+
 
       {/* MODAL: APARTAMENTO */}
       <Modal show={showAptoModal} onHide={() => setShowAptoModal(false)} centered>
