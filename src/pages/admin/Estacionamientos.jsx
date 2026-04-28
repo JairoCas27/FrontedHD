@@ -389,7 +389,7 @@ export default function Estacionamientos() {
         </>
       )}
 
-      // Modal para editar espacio
+      {/* Modal para editar espacio de estacionamiento */}
       <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>Espacio {espacioSeleccionado?.numero} - Zona {espacioSeleccionado?.bloque}</Modal.Title>
