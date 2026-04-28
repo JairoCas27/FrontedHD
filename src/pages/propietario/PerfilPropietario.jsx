@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { User, Mail, Home, Save, Send, X, MapPin, Building, ShieldCheck, Edit3 } from "lucide-react";
+import { User, Mail, Home, Save, Send, X, MapPin, Building, ShieldCheck, Edit3, Lock } from "lucide-react";
 
 export default function PerfilPropietario() {
   const getUsuario = () => {
@@ -26,7 +26,8 @@ export default function PerfilPropietario() {
     naranjaOscuro: "#ea580c",
     slate: "#1e293b",
     lightSlate: "#64748b",
-    indigoPalido: "#94a3b8"
+    indigoPalido: "#94a3b8",
+    disabled: "#f1f5f9"
   };
 
   const abrirEditar = () => {
@@ -57,6 +58,7 @@ export default function PerfilPropietario() {
   };
 
   const inputStyle = { width: "100%", padding: "10px 0", border: "none", borderBottom: "2px solid #e2e8f0", outline: "none", fontSize: "1rem", color: "#334155", background: "transparent", transition: "border-color 0.2s" };
+  const inputDisabledStyle = { ...inputStyle, color: colores.indigoPalido, borderBottom: "2px solid #f1f5f9", cursor: "not-allowed" };
   const labelStyle = { fontSize: "0.75rem", fontWeight: 600, color: colores.indigoPalido, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px", display: "block" };
 
   return (
@@ -179,20 +181,30 @@ export default function PerfilPropietario() {
               </button>
             </div>
 
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem", maxHeight: "55vh", overflowY: "auto", paddingRight: "8px" }}>
-              {["nombre", "email", "condominio", "torre", "piso", "departamento"].map(f => (
-                <div key={f}>
-                  <label style={labelStyle}>{f}</label>
-                  <input 
-                    name={f} 
-                    value={form[f]} 
-                    onChange={handleChange} 
-                    style={inputStyle} 
-                    onFocus={e => e.target.style.borderBottomColor = colores.naranjaPrincipal} 
-                    onBlur={e => e.target.style.borderBottomColor = "#e2e8f0"} 
-                  />
+            <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem", paddingRight: "8px" }}>
+              
+              {/* SECCIÓN EDITABLE */}
+              <div>
+                <label style={labelStyle}>Nombre Completo</label>
+                <input name="nombre" value={form.nombre} onChange={handleChange} style={inputStyle} onFocus={e => e.target.style.borderBottomColor = colores.naranjaPrincipal} onBlur={e => e.target.style.borderBottomColor = "#e2e8f0"} />
+              </div>
+              <div>
+                <label style={labelStyle}>Correo Electrónico</label>
+                <input name="email" value={form.email} onChange={handleChange} style={inputStyle} onFocus={e => e.target.style.borderBottomColor = colores.naranjaPrincipal} onBlur={e => e.target.style.borderBottomColor = "#e2e8f0"} />
+              </div>
+
+              {/* SECCIÓN NO EDITABLE (CONDOMINIO) */}
+              <div style={{ marginTop: "10px", padding: "15px", background: "#f8fafc", borderRadius: "16px", border: "1px dashed #e2e8f0" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "5px", marginBottom: "10px", color: colores.indigoPalido }}>
+                  <Lock size={12} /> <span style={{ fontSize: "0.7rem", fontWeight: 700, textTransform: "uppercase" }}>Información de Vivienda (Solo lectura)</span>
                 </div>
-              ))}
+                {["condominio", "torre", "piso", "departamento"].map(f => (
+                  <div key={f} style={{ marginBottom: "8px" }}>
+                    <label style={{ ...labelStyle, color: "#94a3b8", fontSize: "0.65rem" }}>{f}</label>
+                    <input name={f} value={form[f]} readOnly style={inputDisabledStyle} />
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div style={{ display: "flex", gap: "0.8rem", marginTop: "2rem" }}>
