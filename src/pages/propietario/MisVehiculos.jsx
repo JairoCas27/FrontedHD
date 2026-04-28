@@ -3,10 +3,27 @@ import { FiTruck } from "react-icons/fi";
 import { Car, Send, Save, X, Plus } from "lucide-react";
 
 export default function MisVehiculos() {
+
   const getVehiculos = () => {
-    const data = localStorage.getItem("vehiculos");
-    return data ? JSON.parse(data) : [{ estacionamiento: "A-1234", marca: "Toyota", modelo: "Camry 2022", color: "Plata", placa: "ABC-1234" }];
+  const data = localStorage.getItem("vehiculos");
+  return data ? JSON.parse(data) : [
+      {
+        estacionamiento: "A-1234",
+        marca: "Toyota",
+        modelo: "Camry 2022",
+        color: "Plata",
+        placa: "ABC-1234",
+      },
+      {
+        estacionamiento: "B-5678",
+        marca: "Honda",
+        modelo: "Civic 2023",
+        color: "Negro",
+        placa: "XYZ-5678",
+      }
+    ];
   };
+
   const [vehiculos, setVehiculos] = useState(getVehiculos());
   const [modal, setModal] = useState(false);
   const [modalNuevo, setModalNuevo] = useState(false);
