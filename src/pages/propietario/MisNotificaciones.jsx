@@ -76,27 +76,27 @@ export default function MisNotificaciones() {
       
       {/* HEADER */}
       <div style={{ 
-  marginBottom: "2.5rem", 
-  textAlign: "center", // Centra todo el contenido
-  display: "flex", 
-  flexDirection: "column", 
-  alignItems: "center" 
-}}>
-  <h1 style={{ 
-    fontSize: "1.8rem", 
-    fontWeight: 800, 
-    color: colores.slate, 
-    margin: 0 
-  }}>
-    Notificaciones
-  </h1>
-  <p style={{ 
-    color: colores.lightSlate, 
-    margin: "4px 0 0 0", 
-    paddingLeft: "0" // Quitamos los 42px para que no se desfase del centro
-  }}>
-    Seguimiento en tiempo real de tu espacio
-  </p>
+          marginBottom: "2.5rem", 
+          textAlign: "center", 
+          display: "flex", 
+          flexDirection: "column", 
+          alignItems: "center" 
+        }}>
+        <h1 style={{ 
+          fontSize: "1.8rem", 
+          fontWeight: 800, 
+          color: colores.slate, 
+          margin: 0 
+        }}>
+          Notificaciones
+        </h1>
+        <p style={{ 
+          color: colores.lightSlate, 
+          margin: "4px 0 0 0", 
+          paddingLeft: "0" 
+        }}>
+          Seguimiento en tiempo real de tu espacio
+        </p>
 
       {/* FILTROS (CHIPS) */}
       <div style={{ 
@@ -157,7 +157,7 @@ export default function MisNotificaciones() {
 
               {/* ICONO CON COLOR DINÁMICO */}
               <div style={{
-                background: `${colores[n.tipo]}15`, // Color con 15% opacidad
+                background: `${colores[n.tipo]}15`, 
                 color: colores[n.tipo],
                 padding: "12px",
                 borderRadius: "18px",
