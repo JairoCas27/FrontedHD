@@ -41,4 +41,15 @@ export default function Usuarios() {
     setShowModal(false)
     setEditando(null)
   }
+
+  // Función para guardar los cambios (crear o editar)
+  const handleSave = () => {
+    if (editando) {
+      setUsuarios(usuarios.map(u => u.id === editando.id ? { ...formData, id: u.id } : u))
+    } else {
+      const newId = Math.max(...usuarios.map(u => u.id)) + 1
+      setUsuarios([...usuarios, { ...formData, id: newId }])
+    }
+    handleCloseModal()
+  }
 }
