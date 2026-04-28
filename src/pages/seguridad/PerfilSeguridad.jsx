@@ -35,11 +35,15 @@ export default function PerfilSeguridad() {
   const guardarCambios = (e) => {
     e.preventDefault();
     
-    const nuevoPerfil = { ...formData, ultimoAcceso: new Date().toLocaleString() };
+    const nuevoPerfil = { 
+      ...formData, 
+      ultimoAcceso: new Date().toLocaleString(),
+      nombre: `${formData.nombres} ${formData.apellidos}`
+    };
     localStorage.setItem("perfilSeguridad", JSON.stringify(nuevoPerfil));
     setPerfil(nuevoPerfil);
     setEditando(false);
-    setMensaje({ tipo: "success", texto: "✅ Perfil actualizado correctamente" });
+    setMensaje({ tipo: "success", texto: "Perfil actualizado correctamente" });
     
     setTimeout(() => setMensaje(null), 3000);
   };
