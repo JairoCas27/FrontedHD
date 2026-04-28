@@ -11,14 +11,6 @@ const usuariosIniciales = [
 ]
 
 export default function Usuarios() {
-  return (
-    <div>
-      <div style={{ marginBottom: "2rem" }}>
-        <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>Usuarios</h1>
-        <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>Gestión de usuarios del condominio</p>
-      </div>
-    </div>
-    )
 
   const [usuarios, setUsuarios] = useState(usuariosIniciales)
   const [showModal, setShowModal] = useState(false)
