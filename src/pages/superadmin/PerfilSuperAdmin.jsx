@@ -2,25 +2,38 @@ import { useState } from "react";
 import { FiUser, FiMail, FiPhone, FiShield, FiSave, FiCheckCircle, FiCamera, FiBriefcase } from "react-icons/fi";
 import { Card, Button, Form, Row, Col, Modal, Image, Badge } from "react-bootstrap";
 
+const STORAGE_KEY = 'perfil_superadmin'
+
+const perfilInicial = {
+  nombre: "Nick Admin",
+  email: "nick.admin@urbanpark.pe",
+  telefono: "+51 987 654 321",
+  cargo: "Director de Operaciones SaaS",
+  empresa: "Urban Park Solutions",
+  biografia: "Responsable de la gestión global de condominios y despliegue de infraestructura física en la zona norte."
+}
+
 export default function PerfilSuperAdmin() {
   // --- ESTADOS ---
   const [showSuccessModal, setShowSuccessModal] = useState(false);
-  const [perfil, setPerfil] = useState({
-    nombre: "Nick Admin",
-    email: "nick.admin@urbanpark.pe",
-    telefono: "+51 987 654 321",
-    cargo: "Director de Operaciones SaaS",
-    empresa: "Urban Park Solutions",
-    biografia: "Responsable de la gestión global de condominios y despliegue de infraestructura física en la zona norte."
+  const [perfil, setPerfil] = useState(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      return stored ? JSON.parse(stored) : perfilInicial
+    } catch {
+      return perfilInicial
+    }
   });
+
 
   // --- FUNCIONES ---
   const handleUpdate = (e) => {
     e.preventDefault();
     // Guardamos en LocalStorage para persistencia
-    localStorage.setItem("perfil_superadmin", JSON.stringify(perfil));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(perfil));
     setShowSuccessModal(true);
   };
+
 
   return (
     <div style={{ padding: "1.5rem" }}>
@@ -33,6 +46,7 @@ export default function PerfilSuperAdmin() {
           Administración de cuenta de Super Usuario
         </p>
       </div>
+
 
       <Row>
         {/* COLUMNA IZQUIERDA: RESUMEN VISUAL */}
@@ -85,6 +99,7 @@ export default function PerfilSuperAdmin() {
           </Card>
         </Col>
 
+
         {/* COLUMNA DERECHA: FORMULARIO */}
         <Col md={8}>
           <Card className="border-0 shadow-sm" style={{ borderRadius: "20px" }}>
@@ -117,6 +132,7 @@ export default function PerfilSuperAdmin() {
                   </Col>
                 </Row>
 
+
                 <Form.Group className="mb-3">
                   <Form.Label className="small fw-bold text-muted">CORREO ELECTRÓNICO</Form.Label>
                   <Form.Control 
@@ -127,6 +143,7 @@ export default function PerfilSuperAdmin() {
                   />
                 </Form.Group>
 
+
                 <Form.Group className="mb-3">
                   <Form.Label className="small fw-bold text-muted">TELÉFONO / WHATSAPP</Form.Label>
                   <Form.Control 
@@ -135,6 +152,7 @@ export default function PerfilSuperAdmin() {
                     onChange={(e) => setPerfil({...perfil, telefono: e.target.value})}
                   />
                 </Form.Group>
+
 
                 <Form.Group className="mb-4">
                   <Form.Label className="small fw-bold text-muted">BIO / RESUMEN</Form.Label>
@@ -146,6 +164,7 @@ export default function PerfilSuperAdmin() {
                     onChange={(e) => setPerfil({...perfil, biografia: e.target.value})}
                   />
                 </Form.Group>
+
 
                 <div className="text-end pt-2">
                   <Button 
@@ -161,6 +180,7 @@ export default function PerfilSuperAdmin() {
           </Card>
         </Col>
       </Row>
+
 
       {/* MODAL DE ÉXITO PERSONALIZADO */}
       <Modal show={showSuccessModal} onHide={() => setShowSuccessModal(false)} centered size="sm">
