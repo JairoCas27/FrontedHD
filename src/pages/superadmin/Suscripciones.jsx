@@ -1,36 +1,57 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FiCreditCard, FiCalendar, FiTrendingUp, FiAlertCircle, FiCheck, FiMoreVertical, FiDownload, FiTrash2, FiBell, FiInfo } from "react-icons/fi";
 import { Card, Button, Table, Row, Col, Badge, Dropdown, Modal } from "react-bootstrap";
 
+const facturasIniciales = [
+  { id: "INV-001", cliente: "Jerarquía Residencial I", plan: "Premium", monto: "S/ 450.00", fecha: "2026-04-20", estado: "Pagado" },
+  { id: "INV-002", cliente: "Urban Park Sur", plan: "Básico", monto: "S/ 150.00", fecha: "2026-04-25", estado: "Pendiente" },
+  { id: "INV-003", cliente: "Residencial Las Palmas", plan: "Pro", monto: "S/ 300.00", fecha: "2026-04-15", estado: "Vencido" },
+  { id: "INV-004", cliente: "Condominio El Olivar", plan: "Premium", monto: "S/ 450.00", fecha: "2026-04-10", estado: "Pagado" },
+  { id: "INV-005", cliente: "Altos de Comas", plan: "Básico", monto: "S/ 150.00", fecha: "2026-04-28", estado: "Pendiente" },
+  { id: "INV-006", cliente: "Villa Marina", plan: "Premium", monto: "S/ 450.00", fecha: "2026-04-05", estado: "Pagado" },
+  { id: "INV-007", cliente: "Parque San Miguel", plan: "Básico", monto: "S/ 150.00", fecha: "2026-04-12", estado: "Vencido" },
+  { id: "INV-008", cliente: "Residencial San Felipe", plan: "Premium", monto: "S/ 450.00", fecha: "2026-04-18", estado: "Pagado" },
+  { id: "INV-009", cliente: "Praderas del Norte", plan: "Básico", monto: "S/ 150.00", fecha: "2026-04-22", estado: "Pendiente" },
+  { id: "INV-010", cliente: "Mirador de la Costa", plan: "Premium", monto: "S/ 450.00", fecha: "2026-04-01", estado: "Pagado" },
+  { id: "INV-011", cliente: "Jerarquía Residencial I", plan: "Premium", monto: "S/ 450.00", fecha: "2026-03-20", estado: "Pagado" },
+  { id: "INV-012", cliente: "Residencial Arboleda", plan: "Básico", monto: "S/ 150.00", fecha: "2026-04-24", estado: "Pendiente" },
+  { id: "INV-013", cliente: "Torres del Sol", plan: "Pro", monto: "S/ 300.00", fecha: "2026-04-05", estado: "Vencido" },
+  { id: "INV-014", cliente: "Urban Park Sur", plan: "Básico", monto: "S/ 150.00", fecha: "2026-03-25", estado: "Pagado" },
+  { id: "INV-015", cliente: "Altos de Miraflores", plan: "Premium", monto: "S/ 450.00", fecha: "2026-04-26", estado: "Pendiente" },
+  { id: "INV-016", cliente: "Condominio La Ensenada", plan: "Básico", monto: "S/ 150.00", fecha: "2026-04-02", estado: "Pagado" },
+  { id: "INV-017", cliente: "Villa Sol", plan: "Pro", monto: "S/ 300.00", fecha: "2026-04-14", estado: "Vencido" },
+  { id: "INV-018", cliente: "El Remanso", plan: "Básico", monto: "S/ 150.00", fecha: "2026-04-27", estado: "Pendiente" },
+  { id: "INV-019", cliente: "Las Palmeras", plan: "Pro", monto: "S/ 300.00", fecha: "2026-04-20", estado: "Pagado" },
+  { id: "INV-020", cliente: "Residencial Arboleda", plan: "Básico", monto: "S/ 150.00", fecha: "2026-03-24", estado: "Pagado" },
+];
+
+const STORAGE_KEY = 'suscripciones_superadmin'
+
 export default function Suscripciones() {
   // --- ESTADOS ---
-  const [facturas, setFacturas] = useState([
-    { id: "INV-001", cliente: "Jerarquía Residencial I", plan: "Premium", monto: "S/ 450.00", fecha: "2026-04-20", estado: "Pagado" },
-    { id: "INV-002", cliente: "Urban Park Sur", plan: "Básico", monto: "S/ 150.00", fecha: "2026-04-25", estado: "Pendiente" },
-    { id: "INV-003", cliente: "Residencial Las Palmas", plan: "Pro", monto: "S/ 300.00", fecha: "2026-04-15", estado: "Vencido" },
-    { id: "INV-004", cliente: "Condominio El Olivar", plan: "Premium", monto: "S/ 450.00", fecha: "2026-04-10", estado: "Pagado" },
-    { id: "INV-005", cliente: "Altos de Comas", plan: "Básico", monto: "S/ 150.00", fecha: "2026-04-28", estado: "Pendiente" },
-    { id: "INV-006", cliente: "Villa Marina", plan: "Premium", monto: "S/ 450.00", fecha: "2026-04-05", estado: "Pagado" },
-    { id: "INV-007", cliente: "Parque San Miguel", plan: "Básico", monto: "S/ 150.00", fecha: "2026-04-12", estado: "Vencido" },
-    { id: "INV-008", cliente: "Residencial San Felipe", plan: "Premium", monto: "S/ 450.00", fecha: "2026-04-18", estado: "Pagado" },
-    { id: "INV-009", cliente: "Praderas del Norte", plan: "Básico", monto: "S/ 150.00", fecha: "2026-04-22", estado: "Pendiente" },
-    { id: "INV-010", cliente: "Mirador de la Costa", plan: "Premium", monto: "S/ 450.00", fecha: "2026-04-01", estado: "Pagado" },
-    { id: "INV-011", cliente: "Jerarquía Residencial I", plan: "Premium", monto: "S/ 450.00", fecha: "2026-03-20", estado: "Pagado" },
-    { id: "INV-012", cliente: "Residencial Arboleda", plan: "Básico", monto: "S/ 150.00", fecha: "2026-04-24", estado: "Pendiente" },
-    { id: "INV-013", cliente: "Torres del Sol", plan: "Pro", monto: "S/ 300.00", fecha: "2026-04-05", estado: "Vencido" },
-    { id: "INV-014", cliente: "Urban Park Sur", plan: "Básico", monto: "S/ 150.00", fecha: "2026-03-25", estado: "Pagado" },
-    { id: "INV-015", cliente: "Altos de Miraflores", plan: "Premium", monto: "S/ 450.00", fecha: "2026-04-26", estado: "Pendiente" },
-    { id: "INV-016", cliente: "Condominio La Ensenada", plan: "Básico", monto: "S/ 150.00", fecha: "2026-04-02", estado: "Pagado" },
-    { id: "INV-017", cliente: "Villa Sol", plan: "Pro", monto: "S/ 300.00", fecha: "2026-04-14", estado: "Vencido" },
-    { id: "INV-018", cliente: "El Remanso", plan: "Básico", monto: "S/ 150.00", fecha: "2026-04-27", estado: "Pendiente" },
-    { id: "INV-019", cliente: "Las Palmeras", plan: "Pro", monto: "S/ 300.00", fecha: "2026-04-20", estado: "Pagado" },
-    { id: "INV-020", cliente: "Residencial Arboleda", plan: "Básico", monto: "S/ 150.00", fecha: "2026-03-24", estado: "Pagado" },
-  ]);
+  const [facturas, setFacturas] = useState(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      return stored ? JSON.parse(stored) : facturasIniciales
+    } catch {
+      return facturasIniciales
+    }
+  });
+
+  // Sincroniza con localStorage cada vez que facturas cambie
+  useEffect(() => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(facturas))
+    } catch {
+      console.error('Error al guardar en localStorage')
+    }
+  }, [facturas]);
 
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [selectedFactura, setSelectedFactura] = useState(null);
   const [modalConfig, setModalConfig] = useState({ title: "", message: "", type: "info" });
+
 
   // --- FUNCIONES ---
   const handleShowStatus = (title, message, type = "info") => {
@@ -38,28 +59,34 @@ export default function Suscripciones() {
     setShowStatusModal(true);
   };
 
+
   const handleDownloadReport = () => {
     handleShowStatus("Reporte Generado", "El reporte financiero consolidado se ha descargado exitosamente.", "success");
   };
+
 
   const marcarComoPagado = (id) => {
     setFacturas(facturas.map(f => f.id === id ? { ...f, estado: "Pagado" } : f));
     handleShowStatus("Pago Exitoso", `La factura ${id} ha sido marcada como PAGADA.`, "success");
   };
 
+
   const notificarCliente = (cliente) => {
     handleShowStatus("Aviso Enviado", `Notificación de cobro enviada a la administración de ${cliente}.`, "primary");
   };
+
 
   const confirmEliminar = (factura) => {
     setSelectedFactura(factura);
     setShowConfirmModal(true);
   };
 
+
   const executeEliminar = () => {
     setFacturas(facturas.filter(f => f.id !== selectedFactura.id));
     setShowConfirmModal(false);
   };
+
 
   return (
     <div style={{ padding: "1.5rem" }}>
@@ -67,6 +94,7 @@ export default function Suscripciones() {
         <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#3b82f6", margin: 0 }}>Suscripciones SaaS</h1>
         <p style={{ color: "#0ea5e9", fontWeight: 600, fontSize: "0.9rem" }}>Control financiero de {facturas.length} recibos generados</p>
       </div>
+
 
       <Row className="mb-4">
         <Col md={4}>
@@ -104,6 +132,7 @@ export default function Suscripciones() {
         </Col>
       </Row>
 
+
       <Card className="border-0 shadow-sm" style={{ borderRadius: "20px" }}>
         <Card.Body className="p-0">
           <div className="d-flex justify-content-between align-items-center p-4">
@@ -112,6 +141,7 @@ export default function Suscripciones() {
               <FiDownload className="me-2" /> Reporte Global
             </Button>
           </div>
+
 
           <Table responsive hover className="align-middle m-0">
             <thead style={{ background: "#f8fafc" }}>
@@ -161,6 +191,7 @@ export default function Suscripciones() {
         </Card.Body>
       </Card>
 
+
       {/* MODALES */}
       <Modal show={showStatusModal} onHide={() => setShowStatusModal(false)} centered size="sm">
         <Modal.Body className="p-4 text-center">
@@ -170,6 +201,7 @@ export default function Suscripciones() {
           <Button variant="dark" className="w-100 mt-3 rounded-3 fw-bold" onClick={() => setShowStatusModal(false)}>Aceptar</Button>
         </Modal.Body>
       </Modal>
+
 
       <Modal show={showConfirmModal} onHide={() => setShowConfirmModal(false)} centered size="sm">
         <Modal.Body className="p-4 text-center">
