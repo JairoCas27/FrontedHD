@@ -42,5 +42,11 @@ export default function Vehiculos() {
     handleCloseModal()
   }
 
+  // Función para eliminar un vehículo
+  const handleDelete = (id) => {
+    if (window.confirm('¿Eliminar este vehículo?')) {
+      setVehiculos(vehiculos.filter(v => v.id !== id))
+    }
+  }
   
 }
