@@ -1,16 +1,16 @@
-import { FiUserCheck } from "react-icons/fi"
+import { useState } from 'react'
+import { FiUserCheck, FiCheckCircle, FiXCircle, FiSearch, FiClock } from "react-icons/fi"
+import { Table, Button, Form, Card, Row, Col, Badge, Modal } from 'react-bootstrap'
+
+const visitasIniciales = [
+  { id: 1, nombre: 'Pedro González', residente: 'Carlos López', fecha: '2025-04-27', horaEntrada: '10:00', horaSalida: null, estado: 'Activa', motivo: 'Visita familiar' },
+  { id: 2, nombre: 'Laura Fernández', residente: 'Ana Martínez', fecha: '2025-04-27', horaEntrada: '11:30', horaSalida: null, estado: 'Activa', motivo: 'Reunión de trabajo' },
+  { id: 3, nombre: 'Roberto Díaz', residente: 'Juan Pérez', fecha: '2025-04-26', horaEntrada: '15:00', horaSalida: '17:30', estado: 'Finalizada', motivo: 'Servicio técnico' },
+]
+
 export default function Visitas() {
-  return (
-    <div>
-      <div style={{ marginBottom: "2rem" }}>
-        <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>Visitas</h1>
-        <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>Registro y control de visitantes</p>
-      </div>
-      <div style={{ background: "#fff", borderRadius: "16px", padding: "3rem 2rem", textAlign: "center", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", color: "#94a3b8" }}>
-        <FiUserCheck size={48} style={{ marginBottom: "1rem", opacity: 0.4 }} />
-        <p style={{ fontSize: "1rem", fontWeight: 500 }}>Módulo en construcción</p>
-        <p style={{ fontSize: "0.85rem", marginTop: "0.25rem" }}>El contenido estará disponible próximamente.</p>
-      </div>
-    </div>
-  )
+  const [visitas, setVisitas] = useState(visitasIniciales)
+  const [showModal, setShowModal] = useState(false)
+  const [formData, setFormData] = useState({ nombre: '', residente: '', motivo: '' })
+  
 }
