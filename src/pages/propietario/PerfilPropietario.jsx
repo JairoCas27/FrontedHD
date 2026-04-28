@@ -1,16 +1,24 @@
 import { FiUser } from "react-icons/fi"
+
 export default function PerfilPropietario() {
   return (
-    <div>
+    <div style={{ padding: "1rem" }}>
       <div style={{ marginBottom: "2rem" }}>
-        <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>Perfil</h1>
-        <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>Datos personales y cambio de contraseña</p>
+        <h1 style={{ fontSize: "1.8rem", color: "#1e293b" }}>Mi Perfil</h1>
+        <p style={{ color: "#64748b" }}>Información personal del propietario</p>
       </div>
-      <div style={{ background: "#fff", borderRadius: "16px", padding: "3rem 2rem", textAlign: "center", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", color: "#94a3b8" }}>
-        <FiUser size={48} style={{ marginBottom: "1rem", opacity: 0.4 }} />
-        <p style={{ fontSize: "1rem", fontWeight: 500 }}>Módulo en construcción</p>
-        <p style={{ fontSize: "0.85rem", marginTop: "0.25rem" }}>El contenido estará disponible próximamente.</p>
+
+      <div style={{
+        maxWidth: "500px",
+        background: "linear-gradient(135deg, #f97316, #ea580c)",
+        borderRadius: "24px",
+        padding: "2rem",
+        color: "white"
+      }}>
+        <FiUser size={40} />
+        <h2>Nombre Usuario</h2>
+        <p>Propietario</p>
       </div>
     </div>
-  )
+  );
 }
