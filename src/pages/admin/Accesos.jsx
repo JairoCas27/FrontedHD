@@ -1,16 +1,18 @@
-import { FiActivity } from "react-icons/fi"
+import { useState } from 'react'
+import { FiActivity, FiLogIn, FiLogOut, FiSearch } from "react-icons/fi"
+import { Table, Button, Form, Card, Row, Col, Badge } from 'react-bootstrap'
+
+const accesosIniciales = [
+  { id: 1, nombre: 'Carlos López', tipo: 'Residente', placa: 'ABC-123', hora: '08:30', fecha: '2025-04-27', direccion: 'Ingreso' },
+  { id: 2, nombre: 'Ana Martínez', tipo: 'Visita', placa: 'DEF-456', hora: '09:15', fecha: '2025-04-27', direccion: 'Ingreso' },
+  { id: 3, nombre: 'Juan Pérez', tipo: 'Residente', placa: 'GHI-789', hora: '10:00', fecha: '2025-04-27', direccion: 'Salida' },
+  { id: 4, nombre: 'María García', tipo: 'Proveedor', placa: 'JKL-012', hora: '11:20', fecha: '2025-04-27', direccion: 'Ingreso' },
+]
+
 export default function Accesos() {
-  return (
-    <div>
-      <div style={{ marginBottom: "2rem" }}>
-        <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>Accesos</h1>
-        <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>Control de ingresos y salidas</p>
-      </div>
-      <div style={{ background: "#fff", borderRadius: "16px", padding: "3rem 2rem", textAlign: "center", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", color: "#94a3b8" }}>
-        <FiActivity size={48} style={{ marginBottom: "1rem", opacity: 0.4 }} />
-        <p style={{ fontSize: "1rem", fontWeight: 500 }}>Módulo en construcción</p>
-        <p style={{ fontSize: "0.85rem", marginTop: "0.25rem" }}>El contenido estará disponible próximamente.</p>
-      </div>
-    </div>
-  )
+  const [accesos, setAccesos] = useState(accesosIniciales)
+  const [filtro, setFiltro] = useState('')
+  const [nuevoAcceso, setNuevoAcceso] = useState({ nombre: '', tipo: 'Residente', placa: '', direccion: 'Ingreso' })
+
+  
 }
