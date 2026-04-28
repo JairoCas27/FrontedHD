@@ -24,5 +24,21 @@ export default function Usuarios() {
   const [showModal, setShowModal] = useState(false)
   const [editando, setEditando] = useState(null)
   const [formData, setFormData] = useState({ nombre: '', email: '', rol: 'Residente', estado: 'Activo' })
-  
+
+  // Función para abrir el modal de creación/edición
+  const handleOpenModal = (usuario = null) => {
+    if (usuario) {
+      setEditando(usuario)
+      setFormData(usuario)
+    } else {
+      setEditando(null)
+      setFormData({ nombre: '', email: '', rol: 'Residente', estado: 'Activo' })
+    }
+    setShowModal(true)
+  }
+
+  const handleCloseModal = () => {
+    setShowModal(false)
+    setEditando(null)
+  }
 }
