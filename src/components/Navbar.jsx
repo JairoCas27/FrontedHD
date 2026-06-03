@@ -19,9 +19,9 @@ function Navbar() {
 
   const navbarStyle = {
     transition: "all 0.3s ease",
-    backgroundColor: scrolled ? "#ffffff" : "transparent",
-    boxShadow: scrolled ? "0 4px 15px rgba(0,0,0,0.08)" : "none",
-    borderBottom: scrolled ? "1px solid #eaeaea" : "none",
+    backgroundColor: scrolled || expanded ? "#ffffff" : "transparent",
+    boxShadow: scrolled || expanded ? "0 4px 15px rgba(0,0,0,0.08)" : "none",
+    borderBottom: scrolled || expanded ? "1px solid #eaeaea" : "none",
   };
 
   const linkBase = {
@@ -29,15 +29,17 @@ function Navbar() {
     padding: "6px 10px",
     borderRadius: "8px",
     transition: "0.3s",
-    color: scrolled ? "#111827" : "#ffffff"
+    color: scrolled || expanded ? "#111827" : "#ffffff",
   };
 
   const linkStyle = (name) =>
     hovered === name
       ? {
           ...linkBase,
-          backgroundColor: scrolled ? "#eef2ff" : "rgba(255,255,255,0.15)",
-          color: scrolled ? "#1f2a44" : "#ffffff"
+          backgroundColor: scrolled || expanded
+            ? "#eef2ff"
+            : "rgba(255,255,255,0.15)",
+          color: scrolled || expanded ? "#1f2a44" : "#ffffff",
         }
       : linkBase;
 
@@ -57,18 +59,18 @@ function Navbar() {
           onClick={() => setExpanded(false)}
           className="d-flex align-items-center"
           style={{
-            color: scrolled ? "#111827" : "#ffffff",
+            color: scrolled || expanded ? "#111827" : "#ffffff",
             transition: "0.3s",
-            fontWeight: "600"
+            fontWeight: "600",
           }}
         >
           <img
-            src={scrolled ? logo2 : logo1}
+            src={scrolled || expanded ? logo2 : logo1}
             alt="Urban Park"
             style={{
               height: "45px",
               objectFit: "contain",
-              transition: "all 0.3s ease"
+              transition: "all 0.3s ease",
             }}
           />
         </NavbarBS.Brand>
@@ -77,7 +79,6 @@ function Navbar() {
 
         <NavbarBS.Collapse>
           <Nav className="ms-auto align-items-lg-center gap-2">
-
             <Nav.Link
               as={Link}
               to="/"
@@ -132,7 +133,6 @@ function Navbar() {
             >
               Contacto
             </Nav.Link>
-
           </Nav>
         </NavbarBS.Collapse>
       </Container>
