@@ -10,9 +10,8 @@ function Nosotros() {
   return (
     <>
       <Hero
-        title="URBAN PARK"
-        subtitle="La plataforma inteligente de gestión de estacionamientos"
-        description="Un sistema SaaS escalable que digitaliza, automatiza y optimiza el control de parqueos en condominios, edificios corporativos y complejos residenciales."
+        title="Sobre Nosotros"
+        description="Plataforma SaaS que digitaliza y optimiza la gestión de estacionamientos en edificios y condominios."
         background={parkingAbout}
         height="70vh"
         align="center"

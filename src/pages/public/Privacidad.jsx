@@ -7,7 +7,7 @@ function Privacidad() {
     <>
       <Hero
         title="Política de Privacidad"
-        subtitle="Tu información es gestionada de forma segura dentro del sistema UrbanPark."
+        description="Protegemos tu información con altos estándares de seguridad dentro de Urban Park."
         background={urbanParkHero}
         height="60vh"
         align="center"

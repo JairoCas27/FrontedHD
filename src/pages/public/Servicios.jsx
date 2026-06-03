@@ -56,9 +56,8 @@ function Servicios() {
   return (
     <div className="bg-light">
       <Hero
-        title="Sistema de Gestión de Parking"
-        subtitle="Control centralizado para condominios y edificios"
-        description="Administración de accesos, vehículos y espacios de estacionamiento en una sola plataforma."
+        title="Servicios"
+        description="Control centralizado de accesos, vehículos y espacios de estacionamiento."
         background={parkingHero}
         height="80vh"
       />

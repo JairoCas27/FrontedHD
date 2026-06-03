@@ -6,29 +6,29 @@ import ParkingVideo from "../../images/ParkingVideo.mp4";
 
 function Inicio() {
   const listaInicio = [
-    { icon: "bi-check-circle-fill", text: "Control de estacionamientos en tiempo real dentro del condominio." },
-    { icon: "bi-check-circle-fill", text: "Gestión de ingresos y salidas de vehículos de forma ordenada." },
-    { icon: "bi-check-circle-fill", text: "Reservas digitales rápidas desde web o app." },
-    { icon: "bi-check-circle-fill", text: "Accesos por roles para mayor control y seguridad." }
+    { icon: "bi-check-circle-fill", text: "Gestión en tiempo real de la ocupación de estacionamientos del condominio." },
+    { icon: "bi-check-circle-fill", text: "Control automatizado de ingresos y salidas con registro ordenado de vehículos." },
+    { icon: "bi-check-circle-fill", text: "Reservas digitales rápidas desde web o aplicación móvil." },
+    { icon: "bi-check-circle-fill", text: "Gestión por roles y permisos para mayor seguridad y control operativo." },
+    { icon: "bi-check-circle-fill", text: "Integración flexible con condominios mediante APIs y sistemas existentes." }
   ];
 
   const carruselInicio = [
-    { icon: "bi-speedometer2", title: "Monitoreo en tiempo real", text: "Visualiza la ocupación y disponibilidad de los espacios en todo momento." },
-    { icon: "bi-shield-lock", title: "Acceso seguro", text: "Control de permisos por usuario para una gestión ordenada del condominio." },
-    { icon: "bi-graph-up", title: "Reportes inteligentes", text: "Analiza el uso de los espacios y el flujo de vehículos dentro del condominio." },
-    { icon: "bi-phone", title: "Acceso móvil", text: "Gestiona los estacionamientos desde cualquier dispositivo 24/7." },
-    { icon: "bi-clock-history", title: "Historial completo", text: "Registro detallado de todos los movimientos de vehículos." },
-    { icon: "bi-building", title: "Multi-condominio", text: "Administra varios edificios desde un solo panel centralizado." },
-    { icon: "bi-car-front", title: "Optimización de espacios", text: "Mejora la asignación y uso eficiente de cada estacionamiento." },
-    { icon: "bi-geo-alt", title: "Asignación inteligente", text: "Distribución ordenada de espacios según disponibilidad del condominio." }
+    { icon: "bi-speedometer2", title: "Monitoreo en tiempo real", text: "Visualiza en tiempo real la ocupación, disponibilidad y actividad del estacionamiento." },
+    { icon: "bi-shield-lock", title: "Control de acceso seguro", text: "Administra permisos de usuarios y vehículos desde un panel centralizado seguro." },
+    { icon: "bi-graph-up", title: "Analítica inteligente", text: "Genera reportes detallados sobre uso de espacios y flujo vehicular del sistema." },
+    { icon: "bi-phone", title: "Acceso multiplataforma", text: "Gestiona la plataforma desde web o aplicación móvil en cualquier momento disponible." },
+    { icon: "bi-clock-history", title: "Trazabilidad completa", text: "Registra entradas, salidas y movimientos de vehículos con historial completo." },
+    { icon: "bi-building", title: "Gestión multi-condominio", text: "Administra múltiples edificios desde una sola plataforma centralizada escalable." },
+    { icon: "bi-car-front", title: "Optimización de espacios", text: "Mejora la asignación y uso eficiente de todos los estacionamientos disponibles." },
+    { icon: "bi-diagram-3", title: "Arquitectura flexible", text: "Sistema adaptable y escalable para cualquier tipo de condominio o edificio." }
   ];
 
   return (
     <>
       <Hero
         title="URBAN PARK"
-        subtitle="Sistema de gestión de parking para condominios"
-        description="Control, organización y monitoreo en tiempo real para la administración eficiente de estacionamientos en edificios modernos."
+        description="Gestión inteligente y en tiempo real de estacionamientos para edificios modernos."
         video={ParkingVideo}
         height="90vh"
         align="center"

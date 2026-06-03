@@ -23,9 +23,8 @@ function Contacto() {
   return (
     <>
       <Hero
-        title="Contactanos"
-        subtitle="Estamos aquí para ayudarte a optimizar tu sistema de parking"
-        description="Soporte técnico, ventas o consultas sobre Urban Park."
+        title="Contacto"
+        description="Soporte, ventas o consultas sobre la plataforma Urban Park."
         background={parkingContact}
         height="70vh"
         align="center"

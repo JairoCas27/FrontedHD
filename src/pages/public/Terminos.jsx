@@ -7,8 +7,7 @@ function Terminos() {
     <>
       <Hero
         title="Términos y Condiciones"
-        subtitle="Transparencia y seguridad en la gestión de estacionamientos"
-        description="Al utilizar URBANK PARK aceptas nuestras políticas de uso, seguridad y gestión de datos dentro de la plataforma SaaS."
+        description="Condiciones de uso de la plataforma Urban Park y políticas de servicio."
         background={fondoParking}
         height="60vh"
         align="center"

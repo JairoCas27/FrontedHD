@@ -63,9 +63,8 @@ function Precios() {
   return (
     <div className="bg-light">
       <Hero
-        title="Únete a URBANK PARK"
-        subtitle="Escalables según tu condominio"
-        description="Paga solo por lo que necesitas, crece cuando quieras."
+        title="Planes y Precios"
+        description="Paga según tus necesidades y escala tu operación cuando lo requieras."
         background={parkingPricing}
         height="80vh"
       />
