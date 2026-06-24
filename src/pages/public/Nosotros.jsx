@@ -1,17 +1,17 @@
-import React from "react";
-import Hero from "../../components/Hero";
-import SeccionConImg from "../../components/SeccionImg";
-import parkingAbout from "../../images/parking-about.jpg";
-import parkingSystem from "../../images/parking-system.jpg";
-import parkingTech from "../../images/parking-tech.jpg";
-import parkingFuture from "../../images/parking-future.jpg";
+import React from "react"
+import Hero from "../../components/Hero"
+import SeccionConImg from "../../components/SeccionImg"
+import parkingAbout from "../../images/parking-about.jpg"
+import parkingSystem from "../../images/parking-system.jpg"
+import parkingTech from "../../images/parking-tech.jpg"
+import parkingFuture from "../../images/parking-future.jpg"
 
 function Nosotros() {
   return (
     <>
       <Hero
         title="Sobre Nosotros"
-        description="Plataforma SaaS que digitaliza y optimiza la gestión de estacionamientos en edificios y condominios."
+        description="Urbania es un sistema de gestión de condominios que centraliza la administración operativa, digitaliza procesos internos y mejora el control de residentes, accesos y recursos del edificio."
         background={parkingAbout}
         height="70vh"
         align="center"
@@ -19,48 +19,62 @@ function Nosotros() {
       />
 
       <SeccionConImg
-        title="Plataforma SaaS para Smart Parking"
+        title="Digitalización de la administración residencial"
         text={[
-          "Urban Park es una solución SaaS (Software as a Service) diseñada para la gestión inteligente de estacionamientos en tiempo real.",
-          "Centraliza el control de accesos, disponibilidad de espacios, reservas y monitoreo desde una única plataforma accesible desde web y dispositivos móviles.",
-          "Actualmente es utilizada como base tecnológica para entornos residenciales y corporativos que buscan automatizar su operación de parqueo."
+          "Urbania reemplaza procesos manuales en condominios por una gestión completamente digital basada en roles y permisos.",
+          "Permite administrar estructuras complejas como condominios con múltiples torres, edificios y unidades habitacionales.",
+          "Incluye control detallado de residentes, propietarios, visitantes y personal de seguridad con historial de actividad."
         ]}
         image={parkingSystem}
-        imageAlt="Sistema Urban Park"
+        imageAlt="Sistema Urbania"
         imagePosition="left"
         bgColor="#0f172a"
         textColor="#ffffff"
       />
 
       <SeccionConImg
-        title="Arquitectura Escalable y Modular"
+        title="Control operativo y automatización"
         text={[
-          "El sistema está construido bajo una arquitectura moderna full-stack, preparada para escalar a múltiples condominios y miles de usuarios concurrentes.",
-          "Incluye módulos independientes para administración, seguridad, residentes y reportes en tiempo real.",
-          "Su diseño permite integración con tecnologías como cámaras LPR, QR dinámico y control de accesos automatizado."
+          "El sistema gestiona accesos vehiculares y peatonales mediante registros digitales y validaciones en tiempo real.",
+          "Incluye administración de estacionamientos con asignación dinámica y control de ocupación por condominio.",
+          "Permite la gestión de carritos compartidos con flujo de préstamo, devolución y trazabilidad completa."
         ]}
         image={parkingTech}
-        imageAlt="Tecnología Urban Park"
+        imageAlt="Tecnología Urbania"
         imagePosition="right"
         bgColor="#111827"
         textColor="#e5e7eb"
       />
 
       <SeccionConImg
-        title="Visión de Futuro en Smart Cities"
+        title="Arquitectura preparada para crecimiento"
         text={[
-          "Urban Park no es solo un sistema de estacionamientos, es una plataforma orientada a la evolución de las ciudades inteligentes.",
-          "Buscamos convertirnos en el estándar de gestión de parqueos en Latinoamérica, integrando IA, automatización y analítica avanzada.",
-          "Nuestro objetivo es reducir tiempos de gestión, mejorar la seguridad y optimizar el uso del espacio urbano."
+          "Urbania está construida bajo un modelo modular que permite escalar a múltiples condominios sin afectar el rendimiento.",
+          "Su backend soporta autenticación segura, control por roles, auditoría de acciones y comunicación entre módulos.",
+          "Está preparada para integrarse con sistemas externos como cámaras, lectores QR y soluciones de monitoreo inteligente."
         ]}
-        image={parkingFuture}
-        imageAlt="Futuro Smart Parking"
+        image={parkingTech}
+        imageAlt="Arquitectura Urbania"
         imagePosition="left"
         bgColor="#0b1220"
         textColor="#ffffff"
       />
+
+      <SeccionConImg
+        title="Evolución hacia gestión urbana inteligente"
+        text={[
+          "Urbania busca evolucionar la administración de condominios hacia un modelo basado en datos y automatización.",
+          "El sistema permite generar reportes de uso, comportamiento de residentes y eficiencia de espacios comunes.",
+          "Su visión es convertirse en una herramienta clave para la modernización de comunidades residenciales en entornos urbanos."
+        ]}
+        image={parkingFuture}
+        imageAlt="Futuro Urbania"
+        imagePosition="right"
+        bgColor="#0b1220"
+        textColor="#ffffff"
+      />
     </>
-  );
+  )
 }
 
-export default Nosotros;
+export default Nosotros
