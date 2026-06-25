@@ -1,19 +1,18 @@
-const USERS = [
-    { correo: "superadmin@parking.com", password: "super123", rol: "superadmin" },
-    { correo: "admin@parking.com",      password: "admin123",  rol: "admin" },
-    { correo: "seguridad@parking.com",  password: "seg123",    rol: "seguridad" },
-    { correo: "propietario@parking.com",password: "prop123",   rol: "propietario" }
-  ]
-  
-  const ROLE_ROUTES = {
-    superadmin:  "/superadmin/dashboard",
-    admin:       "/admin/dashboard",
-    seguridad:   "/seguridad/accesos",
-    propietario: "/propietario/dashboard"
+const BASE_URL = import.meta.env.VITE_API_URL
+
+export async function loginApi({ correo, password, recuerdame }) {
+  const response = await fetch(`${BASE_URL}/api/auth/login`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ correo, contrasena: password, recuerdame })
+  })
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}))
+    return { success: false, message: error.message || "Correo o contraseña incorrectos" }
   }
-  
-  export function loginDemo({ correo, password }) {
-    const user = USERS.find(u => u.correo === correo && u.password === password)
-    if (!user) return { success: false, message: "Correo o contraseña incorrectos" }
-    return { success: true, user, redirect: ROLE_ROUTES[user.rol] }
-  }
+
+  const data = await response.json()
+  return { success: true, usuario: data.usuario }
+}

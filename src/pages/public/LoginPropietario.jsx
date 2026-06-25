@@ -3,19 +3,15 @@ import AuthLayout from "../../components/AuthLayout"
 import { useLogin } from "../../hooks/useLogin"
 
 const cards = [
-  { icon: "bi-building", label: "Gestión de estacionamientos" },
-  { icon: "bi-cash-coin", label: "Control de ingresos y pagos" },
-  { icon: "bi-bar-chart-line", label: "Reportes financieros detallados" },
-  { icon: "bi-gear", label: "Configuración personalizada" }
+  { icon: "bi-building",        label: "Gestión de estacionamientos" },
+  { icon: "bi-cash-coin",       label: "Control de ingresos y pagos" },
+  { icon: "bi-bar-chart-line",  label: "Reportes financieros detallados" },
+  { icon: "bi-gear",            label: "Configuración personalizada" }
 ]
 
 const extraButtons = [
-  { label: "Iniciar sesión como Seguridad", route: "/login-seguridad", color: "rgb(34,197,94)" },
-  { label: "Iniciar sesión como Administrador", route: "/login", color: "rgb(52,151,195)" }
-]
-
-const demoCredentials = [
-  { rol: "Propietario", correo: "propietario@parking.com", password: "prop123" }
+  { label: "Iniciar sesión como Seguridad",      route: "/login-seguridad", color: "rgb(34,197,94)" },
+  { label: "Iniciar sesión como Administrador",  route: "/login",           color: "rgb(52,151,195)" }
 ]
 
 function LoginPropietario() {
@@ -32,7 +28,6 @@ function LoginPropietario() {
       onSubmit={handleLogin}
       leftCards={cards}
       extraButtons={extraButtons}
-      demoCredentials={demoCredentials}
     />
   )
 }
