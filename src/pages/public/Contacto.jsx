@@ -24,7 +24,7 @@ function Contacto() {
     <>
       <Hero
         title="Contacto"
-        description="Soporte, ventas o consultas sobre la plataforma Urban Park."
+        description="Soporte, ventas o consultas sobre la plataforma Urbania."
         background={parkingContact}
         height="70vh"
         align="center"
