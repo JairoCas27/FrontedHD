@@ -7,7 +7,7 @@ function Privacidad() {
     <>
       <Hero
         title="Política de Privacidad"
-        description="Protegemos tu información con altos estándares de seguridad dentro de Urban Park."
+        description="Urbania protege la información de los usuarios mediante estándares de seguridad, cifrado y control de acceso en toda la plataforma."
         background={urbanParkHero}
         height="60vh"
         align="center"
@@ -24,63 +24,56 @@ function Privacidad() {
         <Container>
           <p>
             La presente Política de Privacidad describe cómo{" "}
-            <strong>UrbanPark</strong> recopila, utiliza y protege la información
-            proporcionada por los usuarios del sistema de gestión de estacionamientos
-            para condominios.
+            <strong>Urbania</strong> recopila, utiliza y protege la información de los usuarios dentro del sistema de gestión de condominios.
           </p>
 
           <h3 className="mt-4" style={{ color: "#1e3a8a" }}>
             Información que recopilamos
           </h3>
           <p>
-            Podemos recopilar datos personales como nombres, DNI, correo electrónico,
-            número de celular, placa de vehículo y datos necesarios para la gestión
-            de accesos y reservas de estacionamiento.
+            Urbania puede recopilar datos personales como nombres, documentos de identidad, correo electrónico, número de contacto,
+            placas de vehículos y registros de acceso necesarios para la administración del condominio.
           </p>
 
           <h3 className="mt-4" style={{ color: "#1e3a8a" }}>
             Uso de la información
           </h3>
           <p>
-            La información es utilizada exclusivamente para la administración del sistema,
-            control de accesos, gestión de espacios de estacionamiento y comunicación
-            relacionada al servicio dentro del condominio.
+            Los datos se utilizan exclusivamente para la gestión operativa del sistema, incluyendo control de accesos,
+            administración de residentes, vehículos, estacionamientos y servicios internos del condominio.
           </p>
 
           <h3 className="mt-4" style={{ color: "#1e3a8a" }}>
-            Cookies y almacenamiento local
+            Almacenamiento y sesiones
           </h3>
           <p>
-            UrbanPark puede utilizar cookies o almacenamiento local (LocalStorage)
-            para mejorar la experiencia del usuario, mantener sesiones activas y
-            optimizar el rendimiento del sistema.
+            Urbania puede utilizar almacenamiento local y cookies para mantener sesiones activas, mejorar la experiencia del usuario
+            y optimizar el rendimiento de la plataforma.
           </p>
 
           <h3 className="mt-4" style={{ color: "#1e3a8a" }}>
             Enlaces externos
           </h3>
           <p>
-            El sistema puede contener enlaces a servicios externos. UrbanPark no
-            se responsabiliza por las políticas de privacidad de dichos sitios.
+            El sistema puede incluir enlaces a servicios externos. Urbania no se responsabiliza por las políticas de privacidad
+            de plataformas de terceros.
           </p>
 
           <h3 className="mt-4" style={{ color: "#1e3a8a" }}>
             Protección de datos
           </h3>
           <p>
-            UrbanPark implementa medidas de seguridad para proteger la información
-            de los usuarios. No compartimos datos personales con terceros sin
-            autorización, salvo requerimiento legal o necesidad operativa del sistema.
+            Urbania implementa medidas de seguridad como autenticación, control de roles y cifrado para proteger la información.
+            No se comparten datos personales con terceros, salvo requerimiento legal o necesidad operativa del sistema.
           </p>
 
           <p className="mt-4">
-            Al utilizar UrbanPark, aceptas esta política de privacidad y el manejo
-            responsable de tu información dentro del sistema.
+            Al utilizar Urbania, el usuario acepta esta Política de Privacidad y el tratamiento responsable de su información dentro del sistema.
           </p>
         </Container>
       </section>
     </>
-  );
+  )
 }
 
-export default Privacidad;
+export default Privacidad
