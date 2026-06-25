@@ -147,7 +147,6 @@ function Footer() {
               <h5 className="footer-title">Producto</h5>
               <Link to="/servicios">Funcionalidades</Link>
               <Link to="/precios">Planes</Link>
-              <Link to="/login">Auntenticarse</Link>
             </Col>
 
             <Col lg={2} md={6} className="footer-col">
