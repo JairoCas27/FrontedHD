@@ -3,6 +3,7 @@ import Hero from "../../components/Hero"
 import SeccionConImg from "../../components/SeccionImg"
 import parkingAbout from "../../images/parking-about.jpg"
 import parkingSystem from "../../images/parking-system.jpg"
+import controlOperativo from "../../images/control-operativo.jpg"
 import parkingTech from "../../images/parking-tech.jpg"
 import parkingFuture from "../../images/parking-future.jpg"
 
@@ -39,8 +40,8 @@ function Nosotros() {
           "Incluye administración de estacionamientos con asignación dinámica y control de ocupación por condominio.",
           "Permite la gestión de carritos compartidos con flujo de préstamo, devolución y trazabilidad completa."
         ]}
-        image={parkingTech}
-        imageAlt="Tecnología Urbania"
+        image={controlOperativo}
+        imageAlt="Control Operativo"
         imagePosition="right"
         bgColor="#111827"
         textColor="#e5e7eb"
