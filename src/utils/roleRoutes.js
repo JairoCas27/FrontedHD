@@ -4,10 +4,3 @@ export const ROLE_ROUTES = {
     SEGURIDAD:           "/seguridad/accesos",
     PROPIETARIO:         "/propietario/dashboard"
   }
-  
-  export const LOGIN_ROUTES = {
-    SUPER_ADMINISTRADOR: "/login",
-    ADMINISTRADOR:       "/login",
-    SEGURIDAD:           "/login-seguridad",
-    PROPIETARIO:         "/login-propietario"
-  }
