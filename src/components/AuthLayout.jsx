@@ -66,7 +66,9 @@ function AuthLayout({ heroImage, accentColor, accentColorDark, onSubmit }) {
     border: `1px solid ${touched[field] && !(field === "correo" ? correo.trim() : password.trim()) ? "#ef4444" : "#e2e8f0"}`,
     outline: "none",
     transition: "border-color 0.2s ease",
-    background: "#fff"
+    background: "#ffffff",
+    color: "#1e293b",
+    colorScheme: "light"
   })
 
   const cardStyle = {
@@ -160,6 +162,7 @@ function AuthLayout({ heroImage, accentColor, accentColorDark, onSubmit }) {
                 <input
                   type="email"
                   placeholder="Correo"
+                  className="auth-input"
                   value={correo}
                   onChange={(e) => setCorreo(e.target.value)}
                   onBlur={() => setTouched((p) => ({ ...p, correo: true }))}
@@ -172,6 +175,7 @@ function AuthLayout({ heroImage, accentColor, accentColorDark, onSubmit }) {
                   <input
                     type={showPassword ? "text" : "password"}
                     placeholder="Contraseña"
+                    className="auth-input"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     onBlur={() => setTouched((p) => ({ ...p, password: true }))}
@@ -179,7 +183,7 @@ function AuthLayout({ heroImage, accentColor, accentColorDark, onSubmit }) {
                   />
                   <span
                     onClick={() => setShowPassword(!showPassword)}
-                    style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", cursor: "pointer" }}
+                    style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", cursor: "pointer", color: "#64748b" }}
                   >
                     <i className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`} />
                   </span>
