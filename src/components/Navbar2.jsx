@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
-import logo2 from "../images/logo.png"
+import logo2 from "../images/Logo1.png"
 
 function Navbar2() {
   const [scrolled, setScrolled] = useState(false)
@@ -65,10 +65,11 @@ function Navbar2() {
         <span
           style={{
             fontSize: "0.85rem",
-            color: "#1f2937",
+            color: "#fff",
             fontWeight: 500,
-            opacity: 0.8,
-            whiteSpace: "nowrap"
+            opacity: 1,
+            whiteSpace: "nowrap",
+            textShadow: "0 2px 6px rgba(0,0,0,0.4)"
           }}
         >
           ¿Aún no eres cliente?

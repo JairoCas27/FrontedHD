@@ -1,4 +1,5 @@
-import heroImage from "../../images/parking-login-admin.png"
+import bgImageLeft from "../../images/FondoCondominio.png"
+import bgImageRight from "../../images/FondoParking.png"
 import AuthLayout from "../../components/AuthLayout"
 import { useLogin } from "../../hooks/useLogin"
 
@@ -7,9 +8,15 @@ function Login() {
 
   return (
     <AuthLayout
-      heroImage={heroImage}
-      accentColor="rgb(52,151,195)"
-      accentColorDark="rgb(37,117,152)"
+      bgImageLeft={bgImageLeft}
+      bgImageRight={bgImageRight}
+      bgLeftOpacity={1}
+      bgRightOpacity={1}
+      accentColor="#7c3aed"
+      accentColorDark="#5b21b6"
+      heroTitle="Un solo lugar,"
+      heroTitleAccent="todo bajo control."
+      heroDescription="La plataforma integral que simplifica la gestión de condominios, residentes, accesos, estacionamientos y más. Todo en tiempo real, todo en un solo lugar."
       onSubmit={handleLogin}
     />
   )
