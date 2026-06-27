@@ -1,21 +1,17 @@
 import "bootstrap-icons/font/bootstrap-icons.css"
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom"
 import { toast } from "react-toastify"
 import fondoParking from "../images/FondoParking.png"
 import ForgotPasswordModal from "./ForgotPassword"
 
-function AuthLayout({
-  title,
-  description,
-  heroImage,
-  accentColor,
-  accentColorDark,
-  onSubmit,
-  submitLabel,
-  extraButtons,
-  leftCards
-}) {
+const LEFT_CARDS = [
+  { icon: "bi-shield-lock",    label: "Acceso seguro y protegido" },
+  { icon: "bi-diagram-3",      label: "Administración centralizada" },
+  { icon: "bi-graph-up-arrow", label: "Analítica avanzada del sistema" },
+  { icon: "bi-camera-video",   label: "Integración con cámaras LPR" }
+]
+
+function AuthLayout({ heroImage, accentColor, accentColorDark, onSubmit }) {
   const [correo, setCorreo] = useState("")
   const [password, setPassword] = useState("")
   const [recuerdame, setRecuerdame] = useState(false)
@@ -24,7 +20,6 @@ function AuthLayout({
   const [phase, setPhase] = useState(0)
   const [loading, setLoading] = useState(false)
   const [touched, setTouched] = useState({ correo: false, password: false })
-  const navigate = useNavigate()
 
   const dark = accentColorDark || accentColor
 
@@ -94,18 +89,6 @@ function AuthLayout({
     e.currentTarget.style.background = "rgba(255,255,255,0.14)"
   }
 
-  const buttonPrimary = {
-    width: "100%",
-    padding: "14px",
-    borderRadius: "12px",
-    border: "none",
-    background: loading ? "#94a3b8" : `linear-gradient(90deg, ${accentColor}, ${dark})`,
-    color: "#fff",
-    fontWeight: 700,
-    cursor: loading ? "not-allowed" : "pointer",
-    transition: "all 0.2s ease"
-  }
-
   return (
     <div className="container-fluid vh-100 p-0 overflow-hidden" style={{ fontFamily: "Inter, sans-serif" }}>
       <div className="row h-100 g-0">
@@ -139,7 +122,7 @@ function AuthLayout({
           />
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", width: "100%", maxWidth: "520px", zIndex: 2, marginTop: "25px" }}>
-            {leftCards.map((card, i) => (
+            {LEFT_CARDS.map((card, i) => (
               <div
                 key={i}
                 style={{
@@ -166,8 +149,10 @@ function AuthLayout({
 
           <div style={{ width: "100%", maxWidth: "420px", zIndex: 2 }}>
             <div style={fadeUp(phase >= 1)}>
-              <h2 style={{ fontSize: "2rem", fontWeight: 800, color: "#1e293b" }}>{title}</h2>
-              <p style={{ color: "#64748b", marginBottom: "30px", fontWeight: 700 }}>{description}</p>
+              <h2 style={{ fontSize: "2rem", fontWeight: 800, color: "#1e293b" }}>Bienvenido</h2>
+              <p style={{ color: "#64748b", marginBottom: "30px", fontWeight: 700 }}>
+                Ingresa tus credenciales para continuar
+              </p>
             </div>
 
             <form onSubmit={handleSubmit} noValidate>
@@ -211,7 +196,6 @@ function AuthLayout({
                   />
                   Recuérdame
                 </label>
-
                 <span
                   onClick={() => setOpenForgot(true)}
                   style={{ fontSize: "0.85rem", color: accentColor, fontWeight: 500, cursor: "pointer" }}
@@ -224,27 +208,22 @@ function AuthLayout({
                 <button
                   type="submit"
                   disabled={loading}
-                  style={buttonPrimary}
+                  style={{
+                    width: "100%",
+                    padding: "14px",
+                    borderRadius: "12px",
+                    border: "none",
+                    background: loading ? "#94a3b8" : `linear-gradient(90deg, ${accentColor}, ${dark})`,
+                    color: "#fff",
+                    fontWeight: 700,
+                    cursor: loading ? "not-allowed" : "pointer",
+                    transition: "all 0.2s ease"
+                  }}
                   onMouseEnter={(e) => { if (!loading) { e.currentTarget.style.transform = "translateY(-2px) scale(1.02)"; e.currentTarget.style.filter = "brightness(1.1)" } }}
                   onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0px) scale(1)"; e.currentTarget.style.filter = "brightness(1)" }}
                 >
-                  {loading ? "Iniciando sesión..." : submitLabel}
+                  {loading ? "Iniciando sesión..." : "Ingresar"}
                 </button>
-
-                <div style={{ marginTop: "14px", display: "flex", flexDirection: "column", gap: "10px" }}>
-                  {extraButtons.map((btn, i) => (
-                    <button
-                      key={i}
-                      type="button"
-                      style={{ width: "100%", padding: "12px", borderRadius: "12px", border: `1px solid ${btn.color}`, background: "transparent", color: btn.color, fontWeight: 700, cursor: "pointer", transition: "all 0.2s ease" }}
-                      onClick={() => navigate(btn.route)}
-                      onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.background = btn.color; e.currentTarget.style.color = "#fff" }}
-                      onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0px)"; e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = btn.color }}
-                    >
-                      {btn.label}
-                    </button>
-                  ))}
-                </div>
               </div>
             </form>
           </div>
