@@ -22,8 +22,6 @@ import Register from "./pages/public/Register"
 import Login from "./pages/public/Login"
 import Privacidad from "./pages/public/Privacidad"
 import Terminos from "./pages/public/Terminos"
-import LoginPropietario from "./pages/public/LoginPropietario"
-import LoginSeguridad from "./pages/public/LoginSeguridad"
 
 import DashboardAdmin from "./pages/admin/DashboardAdmin"
 import Usuarios from "./pages/admin/Usuarios"
@@ -80,8 +78,6 @@ function App() {
 
         <Route element={<LoginLayout />}>
           <Route path="/login" element={<Login />} />
-          <Route path="/login-propietario" element={<LoginPropietario />} />
-          <Route path="/login-seguridad" element={<LoginSeguridad />} />
         </Route>
 
         <Route element={<AppLayout Sidebar={SidebarAdmin} allowedRole="admin" />}>
