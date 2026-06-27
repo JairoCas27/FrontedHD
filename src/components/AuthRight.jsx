@@ -3,6 +3,7 @@ import { useState } from "react"
 import { toast } from "react-toastify"
 import ForgotPasswordModal from "./ForgotPassword"
 import LogoSolo from "../images/LogoSolo.png"
+import { validateLoginForm } from "../utils/validators"
 
 function AuthRight({ accentColor, accentColorDark, onSubmit, phase, ease }) {
   const [correo, setCorreo] = useState("")
@@ -12,26 +13,23 @@ function AuthRight({ accentColor, accentColorDark, onSubmit, phase, ease }) {
   const [openForgot, setOpenForgot] = useState(false)
   const [loading, setLoading] = useState(false)
   const [touched, setTouched] = useState({ correo: false, password: false })
+  const [errors, setErrors] = useState({ correo: false, password: false })
 
   const dark = accentColorDark || accentColor
 
   const handleSubmit = async (e) => {
     e.preventDefault()
     setTouched({ correo: true, password: true })
-    if (!correo.trim() && !password.trim()) {
-      toast.warning("Por favor completa todos los campos")
+    const { valid, message, field } = validateLoginForm({ correo, password })
+    if (!valid) {
+      toast.warning(message)
+      if (field === "both") setErrors({ correo: true, password: true })
+      else if (field) setErrors((p) => ({ ...p, [field]: true }))
       return
     }
-    if (!correo.trim()) {
-      toast.warning("El correo es obligatorio")
-      return
-    }
-    if (!password.trim()) {
-      toast.warning("La contraseña es obligatoria")
-      return
-    }
+    setErrors({ correo: false, password: false })
     setLoading(true)
-    await onSubmit({ correo, password, recuerdame })
+    await onSubmit({ correo: correo.trim(), password: password.trim(), recuerdame })
     setLoading(false)
   }
 
@@ -45,7 +43,7 @@ function AuthRight({ accentColor, accentColorDark, onSubmit, phase, ease }) {
     width: "100%",
     padding: "13px 14px 13px 42px",
     borderRadius: "12px",
-    border: `1.5px solid ${touched[field] && !(field === "correo" ? correo.trim() : password.trim()) ? "#ef4444" : "#e2e8f0"}`,
+    border: `1.5px solid ${errors[field] ? "#ef4444" : "#e2e8f0"}`,
     outline: "none",
     transition: "border-color 0.2s ease",
     background: "#f8fafc",
@@ -92,7 +90,7 @@ function AuthRight({ accentColor, accentColorDark, onSubmit, phase, ease }) {
                 type="email"
                 placeholder="Correo electrónico"
                 value={correo}
-                onChange={(e) => setCorreo(e.target.value)}
+                onChange={(e) => { setCorreo(e.target.value); setErrors((p) => ({ ...p, correo: false })) }}
                 onBlur={() => setTouched((p) => ({ ...p, correo: true }))}
                 style={inputStyle("correo")}
               />
@@ -106,7 +104,7 @@ function AuthRight({ accentColor, accentColorDark, onSubmit, phase, ease }) {
                 type={showPassword ? "text" : "password"}
                 placeholder="Contraseña"
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => { setPassword(e.target.value); setErrors((p) => ({ ...p, password: false })) }}
                 onBlur={() => setTouched((p) => ({ ...p, password: true }))}
                 style={inputStyle("password")}
               />

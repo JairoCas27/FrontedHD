@@ -124,7 +124,14 @@ function App() {
 
       </Routes>
 
-      <ToastContainer position="top-right" autoClose={3000} theme="colored" />
+      <ToastContainer
+        position="top-right"
+        autoClose={3500}
+        theme="colored"
+        closeOnClick
+        pauseOnHover
+        draggable
+      />
     </Router>
   )
 }
