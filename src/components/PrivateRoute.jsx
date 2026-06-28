@@ -1,32 +1,27 @@
-import { Navigate } from "react-router-dom"
-import { useAuth } from "../context/AuthContext"
-
-const ROLE_LOGIN = {
-  admin:       "/login",
-  superadmin:  "/login",
-  seguridad:   "/login-seguridad",
-  propietario: "/login-propietario"
-}
+import { Navigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const ALLOWED_ROLES = {
-  admin:       ["admin"],
-  superadmin:  ["superadmin"],
-  seguridad:   ["seguridad"],
-  propietario: ["propietario"]
-}
+  admin: ['ADMINISTRADOR_CONDOMINIO'],
+  superadmin: ['SUPER_ADMINISTRADOR'],
+  seguridad: ['AGENTE_SEGURIDAD'],
+  propietario: ['PROPIETARIO'],
+};
 
-export default function PrivateRoute({ allowedRole }) {
-  const { user, loading } = useAuth()
+export default function PrivateRoute({ allowedRole, children }) {
+  const { user, loading } = useAuth();
 
-  if (loading) return null
+  if (loading) return null;
 
   if (!user) {
-    return <Navigate to={ROLE_LOGIN[allowedRole] || "/login"} replace />
+    return <Navigate to="/login" replace />;
   }
 
-  if (!ALLOWED_ROLES[allowedRole].includes(user.rol)) {
-    return <Navigate to={ROLE_LOGIN[user.rol] || "/login"} replace />
+  const allowed = ALLOWED_ROLES[allowedRole] || [];
+  if (!allowed.includes(user.rol)) {
+    // Redirigir al home del rol o a login
+    return <Navigate to="/login" replace />;
   }
 
-  return null
+  return children;
 }

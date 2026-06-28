@@ -7,12 +7,14 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  // Carga inicial desde localStorage
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
       getCurrentUser()
-        .then((data) => setUser(data.usuario || data))
+        .then((data) => {
+          // Si la respuesta es { usuario: {...} }
+          setUser(data.usuario || data);
+        })
         .catch(() => {
           localStorage.removeItem('token');
           setUser(null);
@@ -43,11 +45,11 @@ export function AuthProvider({ children }) {
     }
   };
 
-  const value = { user, loading, login, logout, getHomeRoute };
-
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={{ user, loading, login, logout, getHomeRoute }}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
 
-export function useAuth() {
-  return useContext(AuthContext);
-}
+export function useAuth() { return useContext(AuthContext); }
