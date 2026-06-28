@@ -1,4 +1,3 @@
-// src/pages/superadmin/Condominios.jsx
 import { useState, useEffect } from 'react';
 import { FiPlus, FiEdit2, FiTrash2, FiCheckCircle, FiXCircle } from 'react-icons/fi';
 import {
@@ -13,22 +12,29 @@ import { Modal, Form, Button, Table, Badge } from 'react-bootstrap';
 export default function Condominios() {
   const [condominios, setCondominios] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [editing, setEditing] = useState(null);
   const [form, setForm] = useState({ nombre: '', direccion: '', ciudad: '', paisId: 1 });
 
   const load = async () => {
+    setLoading(true);
+    setError(null);
     try {
       const data = await getCondominiums();
-      setCondominios(data);
-    } catch (error) {
-      console.error(error);
+      // Asegurar que data sea un array
+      setCondominios(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err.message || 'Error al cargar condominios');
+      setCondominios([]);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -64,13 +70,21 @@ export default function Condominios() {
     }
   };
 
-  if (loading) return <div>Cargando...</div>;
+  if (loading) return <div className="text-center py-5">Cargando condominios...</div>;
+  if (error) return <div className="text-center py-5 text-danger">Error: {error}</div>;
 
   return (
     <div style={{ padding: '1.5rem' }}>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1 style={{ fontWeight: 800, color: '#3b82f6' }}>Condominios</h1>
-        <Button onClick={() => { setEditing(null); setForm({ nombre: '', direccion: '', ciudad: '' }); setShowModal(true); }}>
+        <Button
+          variant="primary"
+          onClick={() => {
+            setEditing(null);
+            setForm({ nombre: '', direccion: '', ciudad: '', paisId: 1 });
+            setShowModal(true);
+          }}
+        >
           <FiPlus className="me-2" /> Nuevo
         </Button>
       </div>
@@ -87,33 +101,56 @@ export default function Condominios() {
           </tr>
         </thead>
         <tbody>
-          {condominios.map((c) => (
-            <tr key={c.id}>
-              <td>{c.id}</td>
-              <td>{c.nombre}</td>
-              <td>{c.direccion}</td>
-              <td>{c.ciudad}</td>
-              <td>
-                <Badge bg={c.activo ? 'success' : 'secondary'}>
-                  {c.activo ? 'Activo' : 'Inactivo'}
-                </Badge>
-              </td>
-              <td>
-                <Button variant="outline-primary" size="sm" className="me-2"
-                  onClick={() => { setEditing(c); setForm(c); setShowModal(true); }}>
-                  <FiEdit2 />
-                </Button>
-                <Button variant="outline-warning" size="sm" className="me-2"
-                  onClick={() => handleToggleStatus(c.id, c.activo)}>
-                  {c.activo ? <FiXCircle /> : <FiCheckCircle />}
-                </Button>
-                <Button variant="outline-danger" size="sm"
-                  onClick={() => handleDelete(c.id)}>
-                  <FiTrash2 />
-                </Button>
+          {condominios.length === 0 ? (
+            <tr>
+              <td colSpan="6" className="text-center text-muted">
+                No hay condominios registrados
               </td>
             </tr>
-          ))}
+          ) : (
+            condominios.map((c) => (
+              <tr key={c.id}>
+                <td>{c.id}</td>
+                <td>{c.nombre}</td>
+                <td>{c.direccion}</td>
+                <td>{c.ciudad}</td>
+                <td>
+                  <Badge bg={c.activo ? 'success' : 'secondary'}>
+                    {c.activo ? 'Activo' : 'Inactivo'}
+                  </Badge>
+                </td>
+                <td>
+                  <Button
+                    variant="outline-primary"
+                    size="sm"
+                    className="me-2"
+                    onClick={() => {
+                      setEditing(c);
+                      setForm(c);
+                      setShowModal(true);
+                    }}
+                  >
+                    <FiEdit2 />
+                  </Button>
+                  <Button
+                    variant="outline-warning"
+                    size="sm"
+                    className="me-2"
+                    onClick={() => handleToggleStatus(c.id, c.activo)}
+                  >
+                    {c.activo ? <FiXCircle /> : <FiCheckCircle />}
+                  </Button>
+                  <Button
+                    variant="outline-danger"
+                    size="sm"
+                    onClick={() => handleDelete(c.id)}
+                  >
+                    <FiTrash2 />
+                  </Button>
+                </td>
+              </tr>
+            ))
+          )}
         </tbody>
       </Table>
 
@@ -147,7 +184,9 @@ export default function Condominios() {
             </Form.Group>
           </Modal.Body>
           <Modal.Footer>
-            <Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
+            <Button variant="secondary" onClick={() => setShowModal(false)}>
+              Cancelar
+            </Button>
             <Button type="submit">Guardar</Button>
           </Modal.Footer>
         </Form>
