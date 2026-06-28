@@ -37,10 +37,8 @@ import Perfil from "./pages/admin/Perfil"
 
 import DashboardSuperAdmin from "./pages/superadmin/DashboardSuperAdmin"
 import Condominios from "./pages/superadmin/Condominios"
+import Administradores from "./pages/superadmin/Administradores"
 import UsuariosGlobales from "./pages/superadmin/UsuariosGlobales"
-import Suscripciones from "./pages/superadmin/Suscripciones"
-import AuditoriaGlobal from "./pages/superadmin/AuditoriaGlobal"
-import ConfiguracionSaaS from "./pages/superadmin/ConfiguracionSaaS"
 import PerfilSuperAdmin from "./pages/superadmin/PerfilSuperAdmin"
 
 import AccesosSeguridad from "./pages/seguridad/AccesosSeguridad"
@@ -97,10 +95,8 @@ function App() {
         <Route element={<AppLayout Sidebar={SidebarSuperAdmin} allowedRole="superadmin" />}>
           <Route path="/superadmin/dashboard" element={<DashboardSuperAdmin />} />
           <Route path="/superadmin/condominios" element={<Condominios />} />
+          <Route path="/superadmin/administradores" element={<Administradores />} />
           <Route path="/superadmin/usuarios" element={<UsuariosGlobales />} />
-          <Route path="/superadmin/suscripciones" element={<Suscripciones />} />
-          <Route path="/superadmin/auditoria" element={<AuditoriaGlobal />} />
-          <Route path="/superadmin/configuracion" element={<ConfiguracionSaaS />} />
           <Route path="/superadmin/perfil" element={<PerfilSuperAdmin />} />
         </Route>
 
