@@ -10,17 +10,28 @@ export function useLogin() {
   const handleLogin = async ({ correo, password, recuerdame }) => {
     try {
       const result = await loginApi({ correo, password, recuerdame });
-      // Se espera: { token, usuario }
-      login(result.usuario, result.token);
-      toast.success(`Bienvenido, ${result.usuario.nombres}`);
+      // Se espera que result contenga { token, usuario }
+      if (result.token) {
+        login(result.usuario, result.token);
+      } else {
+        // Si el backend usa cookies HttpOnly, solo guardamos el usuario
+        login(result.usuario);
+      }
+      toast.success(`Bienvenido, ${result.usuario?.nombres || 'usuario'}`);
 
       // Redirigir según rol
-      const role = result.usuario.rol;
-      if (role === 'SUPER_ADMINISTRADOR') navigate('/superadmin/dashboard');
-      else if (role === 'ADMINISTRADOR_CONDOMINIO') navigate('/admin/dashboard');
-      else if (role === 'AGENTE_SEGURIDAD') navigate('/seguridad/accesos');
-      else if (role === 'PROPIETARIO') navigate('/propietario/dashboard');
-      else navigate('/');
+      const role = result.usuario?.rol;
+      if (role === 'SUPER_ADMINISTRADOR') {
+        navigate('/superadmin/dashboard');
+      } else if (role === 'ADMINISTRADOR_CONDOMINIO') {
+        navigate('/admin/dashboard');
+      } else if (role === 'AGENTE_SEGURIDAD') {
+        navigate('/seguridad/accesos');
+      } else if (role === 'PROPIETARIO') {
+        navigate('/propietario/dashboard');
+      } else {
+        navigate('/');
+      }
     } catch (error) {
       toast.error(error.message || 'Error al iniciar sesión');
     }

@@ -12,6 +12,7 @@ const getHeaders = () => {
 async function safeFetch(path, options = {}) {
   const response = await fetch(`${BASE_URL}${path}`, {
     ...options,
+    credentials: 'include', // importante para cookies HttpOnly
     headers: { ...getHeaders(), ...options.headers },
   });
 
@@ -29,8 +30,8 @@ export async function loginApi({ correo, password, recuerdame }) {
     method: 'POST',
     body: JSON.stringify({ correo, contrasena: password, recuerdame }),
   });
-  // Se espera que el backend devuelva { token, usuario }
-  return { success: true, ...data };
+  // El backend debe devolver { token, usuario }
+  return data;
 }
 
 export async function logoutApi() {
