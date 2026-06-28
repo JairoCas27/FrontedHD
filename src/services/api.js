@@ -1,18 +1,38 @@
 const BASE_URL = import.meta.env.VITE_API_URL
 
-export async function loginApi({ correo, password, recuerdame }) {
-  const response = await fetch(`${BASE_URL}/api/auth/login`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
+async function safeFetch(path, options = {}) {
+  const response = await fetch(`${BASE_URL}${path}`, {
     credentials: "include",
-    body: JSON.stringify({ correo, contrasena: password, recuerdame })
+    headers: { "Content-Type": "application/json" },
+    ...options,
   })
 
+  const data = await response.json().catch(() => null)
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}))
-    return { success: false, message: error.message || "Correo o contraseña incorrectos" }
+    const message = data?.message || data?.error || response.statusText || "Error de red"
+    throw new Error(message)
   }
 
-  const data = await response.json()
+  return data
+}
+
+export async function loginApi({ correo, password, recuerdame }) {
+  const data = await safeFetch("/api/auth/login", {
+    method: "POST",
+    body: JSON.stringify({ correo, contrasena: password, recuerdame }),
+  })
+
   return { success: true, usuario: data.usuario }
+}
+
+export async function getSuperAdminDashboardMetrics() {
+  return safeFetch("/api/super-admin/dashboard/metrics")
+}
+
+export async function getSuperAdminRecentCondos() {
+  return safeFetch("/api/super-admin/dashboard/recent-condos")
+}
+
+export async function getSuperAdminRecentAdmins() {
+  return safeFetch("/api/super-admin/dashboard/recent-admins")
 }
