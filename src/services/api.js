@@ -30,7 +30,7 @@ export async function loginApi({ correo, password, recuerdame }) {
     method: 'POST',
     body: JSON.stringify({ correo, contrasena: password, recuerdame }),
   });
-  return data; // { token, usuario }
+  return data;
 }
 
 export async function logoutApi() {
@@ -39,6 +39,13 @@ export async function logoutApi() {
 
 export async function getCurrentUser() {
   return safeFetch('/api/auth/me');
+}
+
+export async function changePassword(data) {
+  return safeFetch('/api/auth/change-password', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
 }
 
 // ===== PERFIL =====
@@ -51,6 +58,15 @@ export async function updateProfile(data) {
     method: 'PUT',
     body: JSON.stringify(data),
   });
+}
+
+// ===== CATÁLOGOS =====
+export async function getCountries() {
+  return safeFetch('/api/catalogs/countries');
+}
+
+export async function getCities(countryId) {
+  return safeFetch(`/api/catalogs/countries/${countryId}/cities`);
 }
 
 // ===== SUPER ADMIN =====
@@ -146,7 +162,7 @@ export async function getAvailableAdministrators() {
   return safeFetch('/api/super-admin/administrators/available');
 }
 
-// Usuarios globales
+// Usuarios globales (CRUD usando endpoints de admin)
 export async function getAllUsers() {
   return safeFetch('/api/super-admin/users');
 }
@@ -168,5 +184,21 @@ export async function forceUserPassword(userId, nuevaContrasena) {
 export async function invalidateUserSession(userId) {
   return safeFetch(`/api/super-admin/users/${userId}/invalidate-session`, {
     method: 'POST',
+  });
+}
+
+// Nuevas funciones para CRUD de usuarios (usando endpoints de admin)
+// Asumimos que el super admin tiene acceso a /api/admin/users
+export async function createUser(data) {
+  return safeFetch('/api/admin/users', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateUser(id, data) {
+  return safeFetch(`/api/admin/users/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
   });
 }
