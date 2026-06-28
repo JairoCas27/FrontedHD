@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FiSearch, FiEdit2, FiUser, FiMail, FiHome, FiShield, FiLock, FiRefreshCw, FiX, FiCheck } from 'react-icons/fi';
+import { FiSearch, FiLock, FiRefreshCw, FiX, FiCheck } from 'react-icons/fi';
 import {
   getAllUsers,
   patchUserStatus,
@@ -11,29 +11,28 @@ import { Table, Badge, Button, Modal, Form, InputGroup } from 'react-bootstrap';
 export default function UsuariosGlobales() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
   const [filter, setFilter] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [newPassword, setNewPassword] = useState('');
+  const [error, setError] = useState(null);
 
   const load = async () => {
-    setLoading(true);
-    setError(null);
     try {
       const data = await getAllUsers();
-      setUsers(Array.isArray(data) ? data : []);
-    } catch (err) {
-      setError(err.message || 'Error al cargar usuarios');
+      const list = Array.isArray(data) ? data : data?.content || data?.data || [];
+      setUsers(list);
+      setError(null);
+    } catch (error) {
+      console.error(error);
+      setError('Error al cargar usuarios');
       setUsers([]);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    load();
-  }, []);
+  useEffect(() => { load(); }, []);
 
   const handleToggleStatus = async (userId, activo) => {
     if (!window.confirm(`¿${activo ? 'Desactivar' : 'Activar'} usuario?`)) return;
@@ -68,25 +67,20 @@ export default function UsuariosGlobales() {
     }
   };
 
-  const filtered = users.filter(
-    (u) =>
-      u.nombres?.toLowerCase().includes(filter.toLowerCase()) ||
-      u.correo?.toLowerCase().includes(filter.toLowerCase())
+  const filtered = users.filter(u =>
+    u.nombres?.toLowerCase().includes(filter.toLowerCase()) ||
+    u.correo?.toLowerCase().includes(filter.toLowerCase())
   );
 
   if (loading) return <div className="text-center py-5">Cargando usuarios...</div>;
-  if (error) return <div className="text-center py-5 text-danger">Error: {error}</div>;
+  if (error) return <div className="text-danger text-center">{error}</div>;
 
   return (
     <div style={{ padding: '1.5rem' }}>
-      <h1 className="mb-4" style={{ fontWeight: 800, color: '#3b82f6' }}>
-        Usuarios del Sistema
-      </h1>
+      <h1 className="mb-4" style={{ fontWeight: 800, color: '#3b82f6' }}>Usuarios del Sistema</h1>
 
       <InputGroup className="mb-4">
-        <InputGroup.Text>
-          <FiSearch />
-        </InputGroup.Text>
+        <InputGroup.Text><FiSearch /></InputGroup.Text>
         <Form.Control
           placeholder="Filtrar por nombre o correo..."
           value={filter}
@@ -94,36 +88,28 @@ export default function UsuariosGlobales() {
         />
       </InputGroup>
 
-      <Table striped bordered hover responsive>
-        <thead>
-          <tr>
-            <th>Nombre</th>
-            <th>Correo</th>
-            <th>Teléfono</th>
-            <th>Rol</th>
-            <th>Condominio</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filtered.length === 0 ? (
+      {filtered.length === 0 ? (
+        <p>No hay usuarios que coincidan con el filtro.</p>
+      ) : (
+        <Table striped bordered hover responsive>
+          <thead>
             <tr>
-              <td colSpan="7" className="text-center text-muted">
-                No se encontraron usuarios
-              </td>
+              <th>Nombre</th>
+              <th>Correo</th>
+              <th>Teléfono</th>
+              <th>Rol</th>
+              <th>Condominio</th>
+              <th>Estado</th>
+              <th>Acciones</th>
             </tr>
-          ) : (
-            filtered.map((u) => (
+          </thead>
+          <tbody>
+            {filtered.map((u) => (
               <tr key={u.id}>
-                <td>
-                  {u.nombres} {u.apellidos}
-                </td>
+                <td>{u.nombres} {u.apellidos}</td>
                 <td>{u.correo}</td>
                 <td>{u.telefono}</td>
-                <td>
-                  <Badge bg="info">{u.rol}</Badge>
-                </td>
+                <td><Badge bg="info">{u.rol}</Badge></td>
                 <td>{u.condominio?.nombre || '-'}</td>
                 <td>
                   <Badge bg={u.activo ? 'success' : 'secondary'}>
@@ -131,47 +117,31 @@ export default function UsuariosGlobales() {
                   </Badge>
                 </td>
                 <td>
-                  <Button
-                    variant="outline-warning"
-                    size="sm"
-                    className="me-2"
-                    onClick={() => handleToggleStatus(u.id, u.activo)}
-                  >
+                  <Button variant="outline-warning" size="sm" className="me-2"
+                    onClick={() => handleToggleStatus(u.id, u.activo)}>
                     {u.activo ? <FiX /> : <FiCheck />}
                   </Button>
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    className="me-2"
-                    onClick={() => {
-                      setSelectedUser(u);
-                      setShowPasswordModal(true);
-                    }}
-                  >
+                  <Button variant="outline-primary" size="sm" className="me-2"
+                    onClick={() => { setSelectedUser(u); setShowPasswordModal(true); }}>
                     <FiLock />
                   </Button>
-                  <Button
-                    variant="outline-danger"
-                    size="sm"
-                    onClick={() => handleInvalidate(u.id)}
-                  >
+                  <Button variant="outline-danger" size="sm"
+                    onClick={() => handleInvalidate(u.id)}>
                     <FiRefreshCw />
                   </Button>
                 </td>
               </tr>
-            ))
-          )}
-        </tbody>
-      </Table>
+            ))}
+          </tbody>
+        </Table>
+      )}
 
       <Modal show={showPasswordModal} onHide={() => setShowPasswordModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>Forzar cambio de contraseña</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <p>
-            Usuario: <strong>{selectedUser?.nombres} {selectedUser?.apellidos}</strong>
-          </p>
+          <p>Usuario: <strong>{selectedUser?.nombres} {selectedUser?.apellidos}</strong></p>
           <Form.Group>
             <Form.Label>Nueva contraseña</Form.Label>
             <Form.Control
@@ -182,12 +152,8 @@ export default function UsuariosGlobales() {
           </Form.Group>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowPasswordModal(false)}>
-            Cancelar
-          </Button>
-          <Button variant="primary" onClick={() => handleForcePassword(selectedUser?.id)}>
-            Guardar
-          </Button>
+          <Button variant="secondary" onClick={() => setShowPasswordModal(false)}>Cancelar</Button>
+          <Button variant="primary" onClick={() => handleForcePassword(selectedUser?.id)}>Guardar</Button>
         </Modal.Footer>
       </Modal>
     </div>
