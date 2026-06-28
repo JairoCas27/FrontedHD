@@ -170,3 +170,59 @@ export async function invalidateUserSession(userId) {
     method: 'POST',
   });
 }
+
+
+// =========================
+// PROPIETARIO
+// =========================
+
+// Dashboard
+export async function getHomeownerDashboardSummary() {
+  return safeFetch("/api/homeowner/dashboard/summary");
+}
+
+// Apartamento
+export async function getHomeownerApartmentDetails() {
+  return safeFetch("/api/homeowner/apartment/details");
+}
+
+// Vehículos
+export async function getHomeownerVehicles() {
+  return safeFetch("/api/homeowner/vehicles");
+}
+
+export async function createHomeownerVehicle(data) {
+  return safeFetch("/api/homeowner/vehicles", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteHomeownerVehicle(id) {
+  return safeFetch(`/api/homeowner/vehicles/${id}`, {
+    method: "DELETE",
+  });
+}
+
+// Inquilinos
+export async function getHomeownerTenants() {
+  return safeFetch("/api/homeowner/tenants");
+}
+
+export async function createHomeownerTenant(data) {
+  return safeFetch("/api/homeowner/tenants", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteHomeownerTenant(id) {
+  return safeFetch(`/api/homeowner/tenants/${id}`, {
+    method: "DELETE",
+  });
+}
+
+// Historial
+export async function getHomeownerLogs() {
+  return safeFetch("/api/homeowner/logs");
+}
