@@ -20,12 +20,16 @@ export default function Condominios() {
   const load = async () => {
     try {
       const data = await getCondominiums();
-      const list = Array.isArray(data) ? data : data?.content || data?.data || [];
+      // Extraer array: si es array directamente, si no, buscar en content/data/items
+      let list = data;
+      if (!Array.isArray(list)) {
+        list = data?.content || data?.data || data?.items || [];
+      }
       setCondominios(list);
       setError(null);
     } catch (err) {
       console.error(err);
-      setError('Error al cargar condominios');
+      setError(err.message || 'Error al cargar condominios');
       setCondominios([]);
     } finally {
       setLoading(false);
@@ -133,23 +137,29 @@ export default function Condominios() {
         <Form onSubmit={handleSubmit}>
           <Modal.Body>
             <Form.Group className="mb-3">
-              <Form.Label>Nombre</Form.Label>
+              <Form.Label htmlFor="condNombre">Nombre</Form.Label>
               <Form.Control
+                id="condNombre"
+                name="nombre"
                 value={form.nombre}
                 onChange={(e) => setForm({ ...form, nombre: e.target.value })}
                 required
               />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Dirección</Form.Label>
+              <Form.Label htmlFor="condDireccion">Dirección</Form.Label>
               <Form.Control
+                id="condDireccion"
+                name="direccion"
                 value={form.direccion}
                 onChange={(e) => setForm({ ...form, direccion: e.target.value })}
               />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label>Ciudad</Form.Label>
+              <Form.Label htmlFor="condCiudad">Ciudad</Form.Label>
               <Form.Control
+                id="condCiudad"
+                name="ciudad"
                 value={form.ciudad}
                 onChange={(e) => setForm({ ...form, ciudad: e.target.value })}
               />

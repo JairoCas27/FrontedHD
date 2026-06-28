@@ -7,7 +7,6 @@ import {
     deleteAdministrator,
     patchAdministratorStatus,
     assignAdministratorCondo,
-    getAvailableAdministrators,
     getUnassignedCondominiums,
 } from '../../services/api';
 import { Modal, Form, Button, Table, Badge } from 'react-bootstrap';
@@ -34,13 +33,22 @@ export default function Administradores() {
                 getAdministrators(),
                 getUnassignedCondominiums().catch(() => []),
             ]);
-            setAdmins(Array.isArray(adminsData) ? adminsData : adminsData?.content || adminsData?.data || []);
-            setUnassignedCondos(Array.isArray(unassigned) ? unassigned : unassigned?.content || unassigned?.data || []);
+            let adminsList = adminsData;
+            if (!Array.isArray(adminsList)) {
+                adminsList = adminsData?.content || adminsData?.data || adminsData?.items || [];
+            }
+            let unassignedList = unassigned;
+            if (!Array.isArray(unassignedList)) {
+                unassignedList = unassigned?.content || unassigned?.data || unassigned?.items || [];
+            }
+            setAdmins(adminsList);
+            setUnassignedCondos(unassignedList);
             setError(null);
-        } catch (error) {
-            console.error(error);
-            setError('Error al cargar administradores');
+        } catch (err) {
+            console.error(err);
+            setError(err.message || 'Error al cargar administradores');
             setAdmins([]);
+            setUnassignedCondos([]);
         } finally {
             setLoading(false);
         }
@@ -150,24 +158,30 @@ export default function Administradores() {
                 <Form onSubmit={handleSubmit}>
                     <Modal.Body>
                         <Form.Group className="mb-3">
-                            <Form.Label>Nombres</Form.Label>
+                            <Form.Label htmlFor="adminNombres">Nombres</Form.Label>
                             <Form.Control
+                                id="adminNombres"
+                                name="nombres"
                                 value={form.nombres}
                                 onChange={(e) => setForm({ ...form, nombres: e.target.value })}
                                 required
                             />
                         </Form.Group>
                         <Form.Group className="mb-3">
-                            <Form.Label>Apellidos</Form.Label>
+                            <Form.Label htmlFor="adminApellidos">Apellidos</Form.Label>
                             <Form.Control
+                                id="adminApellidos"
+                                name="apellidos"
                                 value={form.apellidos}
                                 onChange={(e) => setForm({ ...form, apellidos: e.target.value })}
                                 required
                             />
                         </Form.Group>
                         <Form.Group className="mb-3">
-                            <Form.Label>Correo</Form.Label>
+                            <Form.Label htmlFor="adminCorreo">Correo</Form.Label>
                             <Form.Control
+                                id="adminCorreo"
+                                name="correo"
                                 type="email"
                                 value={form.correo}
                                 onChange={(e) => setForm({ ...form, correo: e.target.value })}
@@ -175,16 +189,20 @@ export default function Administradores() {
                             />
                         </Form.Group>
                         <Form.Group className="mb-3">
-                            <Form.Label>Teléfono</Form.Label>
+                            <Form.Label htmlFor="adminTelefono">Teléfono</Form.Label>
                             <Form.Control
+                                id="adminTelefono"
+                                name="telefono"
                                 value={form.telefono}
                                 onChange={(e) => setForm({ ...form, telefono: e.target.value })}
                             />
                         </Form.Group>
                         {!editing && (
                             <Form.Group className="mb-3">
-                                <Form.Label>Contraseña</Form.Label>
+                                <Form.Label htmlFor="adminPassword">Contraseña</Form.Label>
                                 <Form.Control
+                                    id="adminPassword"
+                                    name="contrasena"
                                     type="password"
                                     value={form.contrasena}
                                     onChange={(e) => setForm({ ...form, contrasena: e.target.value })}
@@ -193,8 +211,10 @@ export default function Administradores() {
                             </Form.Group>
                         )}
                         <Form.Group className="mb-3">
-                            <Form.Label>Asignar condominio</Form.Label>
+                            <Form.Label htmlFor="adminCondo">Asignar condominio</Form.Label>
                             <Form.Select
+                                id="adminCondo"
+                                name="condominioId"
                                 value={form.condominioId || ''}
                                 onChange={(e) => setForm({ ...form, condominioId: e.target.value })}
                             >

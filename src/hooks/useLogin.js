@@ -10,16 +10,13 @@ export function useLogin() {
   const handleLogin = async ({ correo, password, recuerdame }) => {
     try {
       const result = await loginApi({ correo, password, recuerdame });
-      // Se espera que result contenga { token, usuario }
       if (result.token) {
         login(result.usuario, result.token);
       } else {
-        // Si el backend usa cookies HttpOnly, solo guardamos el usuario
         login(result.usuario);
       }
       toast.success(`Bienvenido, ${result.usuario?.nombres || 'usuario'}`);
 
-      // Redirigir según rol
       const role = result.usuario?.rol;
       if (role === 'SUPER_ADMINISTRADOR') {
         navigate('/superadmin/dashboard');

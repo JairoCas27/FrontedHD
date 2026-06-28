@@ -20,12 +20,15 @@ export default function UsuariosGlobales() {
   const load = async () => {
     try {
       const data = await getAllUsers();
-      const list = Array.isArray(data) ? data : data?.content || data?.data || [];
+      let list = data;
+      if (!Array.isArray(list)) {
+        list = data?.content || data?.data || data?.items || [];
+      }
       setUsers(list);
       setError(null);
-    } catch (error) {
-      console.error(error);
-      setError('Error al cargar usuarios');
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Error al cargar usuarios');
       setUsers([]);
     } finally {
       setLoading(false);
@@ -85,6 +88,8 @@ export default function UsuariosGlobales() {
           placeholder="Filtrar por nombre o correo..."
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
+          id="userFilter"
+          name="userFilter"
         />
       </InputGroup>
 
@@ -143,8 +148,10 @@ export default function UsuariosGlobales() {
         <Modal.Body>
           <p>Usuario: <strong>{selectedUser?.nombres} {selectedUser?.apellidos}</strong></p>
           <Form.Group>
-            <Form.Label>Nueva contraseña</Form.Label>
+            <Form.Label htmlFor="newPassword">Nueva contraseña</Form.Label>
             <Form.Control
+              id="newPassword"
+              name="newPassword"
               type="text"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
