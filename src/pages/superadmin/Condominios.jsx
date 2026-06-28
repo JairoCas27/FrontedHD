@@ -20,6 +20,7 @@ export default function Condominios() {
   const load = async () => {
     try {
       const data = await getCondominiums();
+      console.log('Respuesta de condominios:', data);
       // Extraer array: si es array directamente, si no, buscar en content/data/items
       let list = data;
       if (!Array.isArray(list)) {
@@ -79,7 +80,7 @@ export default function Condominios() {
     <div style={{ padding: '1.5rem' }}>
       <div className="d-flex justify-content-between align-items-center mb-4">
         <h1 style={{ fontWeight: 800, color: '#3b82f6' }}>Condominios</h1>
-        <Button onClick={() => { setEditing(null); setForm({ nombre: '', direccion: '', ciudad: '' }); setShowModal(true); }}>
+        <Button onClick={() => { setEditing(null); setForm({ nombre: '', direccion: '', ciudad: '', paisId: 1 }); setShowModal(true); }}>
           <FiPlus className="me-2" /> Nuevo
         </Button>
       </div>
@@ -112,7 +113,7 @@ export default function Condominios() {
                 </td>
                 <td>
                   <Button variant="outline-primary" size="sm" className="me-2"
-                    onClick={() => { setEditing(c); setForm(c); setShowModal(true); }}>
+                    onClick={() => { setEditing(c); setForm({ ...c, paisId: c.paisId || 1 }); setShowModal(true); }}>
                     <FiEdit2 />
                   </Button>
                   <Button variant="outline-warning" size="sm" className="me-2"
@@ -140,7 +141,7 @@ export default function Condominios() {
               <Form.Label htmlFor="condNombre">Nombre</Form.Label>
               <Form.Control
                 id="condNombre"
-                name="nombre"
+                name="condNombre"
                 value={form.nombre}
                 onChange={(e) => setForm({ ...form, nombre: e.target.value })}
                 required
@@ -150,7 +151,7 @@ export default function Condominios() {
               <Form.Label htmlFor="condDireccion">Dirección</Form.Label>
               <Form.Control
                 id="condDireccion"
-                name="direccion"
+                name="condDireccion"
                 value={form.direccion}
                 onChange={(e) => setForm({ ...form, direccion: e.target.value })}
               />
@@ -159,7 +160,7 @@ export default function Condominios() {
               <Form.Label htmlFor="condCiudad">Ciudad</Form.Label>
               <Form.Control
                 id="condCiudad"
-                name="ciudad"
+                name="condCiudad"
                 value={form.ciudad}
                 onChange={(e) => setForm({ ...form, ciudad: e.target.value })}
               />

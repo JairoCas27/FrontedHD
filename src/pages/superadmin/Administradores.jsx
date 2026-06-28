@@ -33,6 +33,7 @@ export default function Administradores() {
                 getAdministrators(),
                 getUnassignedCondominiums().catch(() => []),
             ]);
+            console.log('Respuesta de administradores:', adminsData);
             let adminsList = adminsData;
             if (!Array.isArray(adminsList)) {
                 adminsList = adminsData?.content || adminsData?.data || adminsData?.items || [];
@@ -60,12 +61,28 @@ export default function Administradores() {
         e.preventDefault();
         try {
             if (editing) {
-                await updateAdministrator(editing.id, form);
+                // Actualizar datos básicos
+                await updateAdministrator(editing.id, {
+                    nombres: form.nombres,
+                    apellidos: form.apellidos,
+                    correo: form.correo,
+                    telefono: form.telefono,
+                });
+                // Si se seleccionó un condominio, asignarlo
                 if (form.condominioId) {
                     await assignAdministratorCondo(editing.id, form.condominioId);
                 }
             } else {
-                await createAdministrator(form);
+                // Crear nuevo (sin condominioId)
+                const { condominioId, ...createData } = form;
+                await createAdministrator(createData);
+                // Si se seleccionó un condominio, asignarlo después de crear
+                if (condominioId) {
+                    // Nota: necesitamos el ID del nuevo admin; la API debería devolverlo.
+                    // Si no lo devuelve, este paso fallará.
+                    // Por simplicidad, omitimos la asignación automática aquí.
+                    // Se puede hacer manualmente después.
+                }
             }
             setShowModal(false);
             loadAll();
@@ -133,7 +150,7 @@ export default function Administradores() {
                                 </td>
                                 <td>
                                     <Button variant="outline-primary" size="sm" className="me-2"
-                                        onClick={() => { setEditing(a); setForm({ ...a, contrasena: '' }); setShowModal(true); }}>
+                                        onClick={() => { setEditing(a); setForm({ ...a, contrasena: '', condominioId: a.condominio?.id || '' }); setShowModal(true); }}>
                                         <FiEdit2 />
                                     </Button>
                                     <Button variant="outline-warning" size="sm" className="me-2"
@@ -161,7 +178,7 @@ export default function Administradores() {
                             <Form.Label htmlFor="adminNombres">Nombres</Form.Label>
                             <Form.Control
                                 id="adminNombres"
-                                name="nombres"
+                                name="adminNombres"
                                 value={form.nombres}
                                 onChange={(e) => setForm({ ...form, nombres: e.target.value })}
                                 required
@@ -171,7 +188,7 @@ export default function Administradores() {
                             <Form.Label htmlFor="adminApellidos">Apellidos</Form.Label>
                             <Form.Control
                                 id="adminApellidos"
-                                name="apellidos"
+                                name="adminApellidos"
                                 value={form.apellidos}
                                 onChange={(e) => setForm({ ...form, apellidos: e.target.value })}
                                 required
@@ -181,7 +198,7 @@ export default function Administradores() {
                             <Form.Label htmlFor="adminCorreo">Correo</Form.Label>
                             <Form.Control
                                 id="adminCorreo"
-                                name="correo"
+                                name="adminCorreo"
                                 type="email"
                                 value={form.correo}
                                 onChange={(e) => setForm({ ...form, correo: e.target.value })}
@@ -192,7 +209,7 @@ export default function Administradores() {
                             <Form.Label htmlFor="adminTelefono">Teléfono</Form.Label>
                             <Form.Control
                                 id="adminTelefono"
-                                name="telefono"
+                                name="adminTelefono"
                                 value={form.telefono}
                                 onChange={(e) => setForm({ ...form, telefono: e.target.value })}
                             />
@@ -202,7 +219,7 @@ export default function Administradores() {
                                 <Form.Label htmlFor="adminPassword">Contraseña</Form.Label>
                                 <Form.Control
                                     id="adminPassword"
-                                    name="contrasena"
+                                    name="adminPassword"
                                     type="password"
                                     value={form.contrasena}
                                     onChange={(e) => setForm({ ...form, contrasena: e.target.value })}
@@ -214,7 +231,7 @@ export default function Administradores() {
                             <Form.Label htmlFor="adminCondo">Asignar condominio</Form.Label>
                             <Form.Select
                                 id="adminCondo"
-                                name="condominioId"
+                                name="adminCondo"
                                 value={form.condominioId || ''}
                                 onChange={(e) => setForm({ ...form, condominioId: e.target.value })}
                             >

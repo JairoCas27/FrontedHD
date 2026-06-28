@@ -20,6 +20,7 @@ export default function UsuariosGlobales() {
   const load = async () => {
     try {
       const data = await getAllUsers();
+      console.log('Respuesta de usuarios globales:', data);
       let list = data;
       if (!Array.isArray(list)) {
         list = data?.content || data?.data || data?.items || [];
@@ -85,11 +86,11 @@ export default function UsuariosGlobales() {
       <InputGroup className="mb-4">
         <InputGroup.Text><FiSearch /></InputGroup.Text>
         <Form.Control
+          id="userFilter"
+          name="userFilter"
           placeholder="Filtrar por nombre o correo..."
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
-          id="userFilter"
-          name="userFilter"
         />
       </InputGroup>
 
