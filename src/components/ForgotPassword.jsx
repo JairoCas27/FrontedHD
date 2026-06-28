@@ -1,15 +1,15 @@
-import { useState } from "react"
+import { useState } from "react";
 
 function ForgotPasswordModal({ open, onClose }) {
-  const [correo, setCorreo] = useState("")
-  const [sent, setSent] = useState(false)
+  const [correo, setCorreo] = useState("");
+  const [sent, setSent] = useState(false);
 
-  if (!open) return null
+  if (!open) return null;
 
   const handleSubmit = (e) => {
-    e.preventDefault()
-    setSent(true)
-  }
+    e.preventDefault();
+    setSent(true);
+  };
 
   return (
     <div
@@ -23,7 +23,7 @@ function ForgotPasswordModal({ open, onClose }) {
         justifyContent: "center",
         zIndex: 9999,
         animation: "fadeBg 0.25s ease",
-        padding: "20px"
+        padding: "20px",
       }}
     >
       <div
@@ -36,7 +36,7 @@ function ForgotPasswordModal({ open, onClose }) {
           padding: "30px",
           boxShadow: "0 35px 90px rgba(0,0,0,0.35)",
           transform: "translateY(0)",
-          animation: "modalPop 0.28s cubic-bezier(.2,.9,.2,1)"
+          animation: "modalPop 0.28s cubic-bezier(.2,.9,.2,1)",
         }}
       >
         <h2
@@ -45,7 +45,7 @@ function ForgotPasswordModal({ open, onClose }) {
             color: "#0f172a",
             marginBottom: "6px",
             fontSize: "1.4rem",
-            letterSpacing: "-0.3px"
+            letterSpacing: "-0.3px",
           }}
         >
           Recuperar acceso
@@ -56,7 +56,7 @@ function ForgotPasswordModal({ open, onClose }) {
             color: "#64748b",
             fontSize: "0.92rem",
             marginBottom: "22px",
-            lineHeight: "1.5"
+            lineHeight: "1.5",
           }}
         >
           Ingresa tu correo registrado y te enviaremos un enlace seguro para restablecer tu contraseña.
@@ -71,13 +71,15 @@ function ForgotPasswordModal({ open, onClose }) {
                   fontWeight: 600,
                   color: "#334155",
                   display: "block",
-                  marginBottom: "6px"
+                  marginBottom: "6px",
                 }}
               >
                 Correo electrónico
               </label>
 
               <input
+                id="emailRecuperacion"
+                name="emailRecuperacion"
                 type="email"
                 value={correo}
                 onChange={(e) => setCorreo(e.target.value)}
@@ -90,18 +92,18 @@ function ForgotPasswordModal({ open, onClose }) {
                   border: "1px solid #e2e8f0",
                   outline: "none",
                   fontSize: "0.95rem",
-                  transition: "all 0.25s ease",
-                  background: "#f8fafc"
+                  transition: "all .25s ease",
+                  background: "#f8fafc",
                 }}
                 onFocus={(e) => {
-                  e.target.style.border = "1px solid rgb(52,151,195)"
-                  e.target.style.boxShadow = "0 0 0 4px rgba(52,151,195,0.15)"
-                  e.target.style.background = "#ffffff"
+                  e.target.style.border = "1px solid rgb(52,151,195)";
+                  e.target.style.boxShadow = "0 0 0 4px rgba(52,151,195,0.15)";
+                  e.target.style.background = "#ffffff";
                 }}
                 onBlur={(e) => {
-                  e.target.style.border = "1px solid #e2e8f0"
-                  e.target.style.boxShadow = "none"
-                  e.target.style.background = "#f8fafc"
+                  e.target.style.border = "1px solid #e2e8f0";
+                  e.target.style.boxShadow = "none";
+                  e.target.style.background = "#f8fafc";
                 }}
               />
             </div>
@@ -119,15 +121,15 @@ function ForgotPasswordModal({ open, onClose }) {
                 fontSize: "0.95rem",
                 cursor: "pointer",
                 boxShadow: "0 10px 25px rgba(52,151,195,0.25)",
-                transition: "all 0.25s ease"
+                transition: "all 0.25s ease",
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-1px)"
-                e.currentTarget.style.boxShadow = "0 14px 30px rgba(52,151,195,0.35)"
+                e.currentTarget.style.transform = "translateY(-1px)";
+                e.currentTarget.style.boxShadow = "0 14px 30px rgba(52,151,195,0.35)";
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)"
-                e.currentTarget.style.boxShadow = "0 10px 25px rgba(52,151,195,0.25)"
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "0 10px 25px rgba(52,151,195,0.25)";
               }}
             >
               Enviar enlace
@@ -138,7 +140,7 @@ function ForgotPasswordModal({ open, onClose }) {
             style={{
               textAlign: "center",
               padding: "10px 0",
-              animation: "fadeIn 0.3s ease"
+              animation: "fadeIn 0.3s ease",
             }}
           >
             <div
@@ -150,7 +152,7 @@ function ForgotPasswordModal({ open, onClose }) {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                margin: "0 auto 12px auto"
+                margin: "0 auto 12px auto",
               }}
             >
               <i
@@ -163,7 +165,7 @@ function ForgotPasswordModal({ open, onClose }) {
               style={{
                 fontWeight: 700,
                 color: "#0f172a",
-                marginBottom: "6px"
+                marginBottom: "6px",
               }}
             >
               Correo enviado
@@ -187,13 +189,13 @@ function ForgotPasswordModal({ open, onClose }) {
             color: "#475569",
             fontWeight: 600,
             cursor: "pointer",
-            transition: "all 0.25s ease"
+            transition: "all 0.25s ease",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = "#e2e8f0"
+            e.currentTarget.style.background = "#e2e8f0";
           }}
           onMouseLeave={(e) => {
-            e.currentTarget.style.background = "#f1f5f9"
+            e.currentTarget.style.background = "#f1f5f9";
           }}
         >
           Cerrar
@@ -217,7 +219,7 @@ function ForgotPasswordModal({ open, onClose }) {
         `}</style>
       </div>
     </div>
-  )
+  );
 }
 
-export default ForgotPasswordModal
+export default ForgotPasswordModal;

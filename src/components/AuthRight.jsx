@@ -1,43 +1,43 @@
-import "bootstrap-icons/font/bootstrap-icons.css"
-import { useState } from "react"
-import { toast } from "react-toastify"
-import ForgotPasswordModal from "./ForgotPassword"
-import LogoSolo from "../images/LogoSolo.png"
-import { validateLoginForm } from "../utils/validators"
+import "bootstrap-icons/font/bootstrap-icons.css";
+import { useState } from "react";
+import { toast } from "react-toastify";
+import ForgotPasswordModal from "./ForgotPassword";
+import LogoSolo from "../images/LogoSolo.png";
+import { validateLoginForm } from "../utils/validators";
 
 function AuthRight({ accentColor, accentColorDark, onSubmit, phase, ease }) {
-  const [correo, setCorreo] = useState("")
-  const [password, setPassword] = useState("")
-  const [recuerdame, setRecuerdame] = useState(false)
-  const [showPassword, setShowPassword] = useState(false)
-  const [openForgot, setOpenForgot] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [touched, setTouched] = useState({ correo: false, password: false })
-  const [errors, setErrors] = useState({ correo: false, password: false })
+  const [correo, setCorreo] = useState("");
+  const [password, setPassword] = useState("");
+  const [recuerdame, setRecuerdame] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [openForgot, setOpenForgot] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [touched, setTouched] = useState({ correo: false, password: false });
+  const [errors, setErrors] = useState({ correo: false, password: false });
 
-  const dark = accentColorDark || accentColor
+  const dark = accentColorDark || accentColor;
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setTouched({ correo: true, password: true })
-    const { valid, message, field } = validateLoginForm({ correo, password })
+    e.preventDefault();
+    setTouched({ correo: true, password: true });
+    const { valid, message, field } = validateLoginForm({ correo, password });
     if (!valid) {
-      toast.warning(message)
-      if (field === "both") setErrors({ correo: true, password: true })
-      else if (field) setErrors((p) => ({ ...p, [field]: true }))
-      return
+      toast.warning(message);
+      if (field === "both") setErrors({ correo: true, password: true });
+      else if (field) setErrors((p) => ({ ...p, [field]: true }));
+      return;
     }
-    setErrors({ correo: false, password: false })
-    setLoading(true)
-    await onSubmit({ correo: correo.trim(), password: password.trim(), recuerdame })
-    setLoading(false)
-  }
+    setErrors({ correo: false, password: false });
+    setLoading(true);
+    await onSubmit({ correo: correo.trim(), password: password.trim(), recuerdame });
+    setLoading(false);
+  };
 
   const fadeUp = (show, delay = "0s") => ({
     opacity: show ? 1 : 0,
     transform: show ? "translateY(0px)" : "translateY(24px)",
-    transition: `opacity 0.5s ${ease} ${delay}, transform 0.5s ${ease} ${delay}`
-  })
+    transition: `opacity 0.5s ${ease} ${delay}, transform 0.5s ${ease} ${delay}`,
+  });
 
   const inputStyle = (field) => ({
     width: "100%",
@@ -49,8 +49,8 @@ function AuthRight({ accentColor, accentColorDark, onSubmit, phase, ease }) {
     background: "#f8fafc",
     color: "#1e293b",
     fontSize: "0.92rem",
-    colorScheme: "light"
-  })
+    colorScheme: "light",
+  });
 
   return (
     <div
@@ -66,7 +66,7 @@ function AuthRight({ accentColor, accentColorDark, onSubmit, phase, ease }) {
           padding: "clamp(20px, 2.5vh, 40px) clamp(20px, 2.5vw, 36px)",
           backdropFilter: "blur(12px)",
           boxShadow: "0 20px 60px rgba(0,0,0,0.15)",
-          ...fadeUp(phase >= 1)
+          ...fadeUp(phase >= 1),
         }}
       >
         <div style={{ textAlign: "center", marginBottom: "clamp(12px, 1.8vh, 28px)" }}>
@@ -87,6 +87,8 @@ function AuthRight({ accentColor, accentColorDark, onSubmit, phase, ease }) {
             <div style={{ position: "relative" }}>
               <i className="bi bi-envelope" style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8", fontSize: "0.95rem" }} />
               <input
+                id="correo"
+                name="correo"
                 type="email"
                 placeholder="Correo electrónico"
                 value={correo}
@@ -101,6 +103,8 @@ function AuthRight({ accentColor, accentColorDark, onSubmit, phase, ease }) {
             <div style={{ position: "relative" }}>
               <i className="bi bi-lock" style={{ position: "absolute", left: "14px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8", fontSize: "0.95rem" }} />
               <input
+                id="password"
+                name="password"
                 type={showPassword ? "text" : "password"}
                 placeholder="Contraseña"
                 value={password}
@@ -120,6 +124,8 @@ function AuthRight({ accentColor, accentColorDark, onSubmit, phase, ease }) {
           <div style={{ ...fadeUp(phase >= 3, "0.05s"), display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "clamp(12px, 1.5vh, 22px)" }}>
             <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "0.85rem", color: "#475569", fontWeight: 500, userSelect: "none" }}>
               <input
+                id="recuerdame"
+                name="recuerdame"
                 type="checkbox"
                 checked={recuerdame}
                 onChange={(e) => setRecuerdame(e.target.checked)}
@@ -153,7 +159,7 @@ function AuthRight({ accentColor, accentColorDark, onSubmit, phase, ease }) {
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
-                gap: "10px"
+                gap: "10px",
               }}
               onMouseEnter={(e) => { if (!loading) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.filter = "brightness(1.1)" } }}
               onMouseLeave={(e) => { e.currentTarget.style.transform = "translateY(0px)"; e.currentTarget.style.filter = "brightness(1)" }}
@@ -173,7 +179,7 @@ function AuthRight({ accentColor, accentColorDark, onSubmit, phase, ease }) {
 
       <ForgotPasswordModal open={openForgot} onClose={() => setOpenForgot(false)} />
     </div>
-  )
+  );
 }
 
-export default AuthRight
+export default AuthRight;
