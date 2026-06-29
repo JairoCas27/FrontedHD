@@ -26,6 +26,7 @@ export default function Administradores() {
         idCondominio: '',
     });
     const [error, setError] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
 
     // Filtros
     const [searchTerm, setSearchTerm] = useState('');
@@ -44,7 +45,6 @@ export default function Administradores() {
             console.log('Respuesta de administradores (raw):', adminsData);
             console.log('Respuesta de condominios (raw):', condosData);
 
-            // Extraer lista de administradores (array directo o dentro de items)
             let adminsList = [];
             if (Array.isArray(adminsData)) {
                 adminsList = adminsData;
@@ -58,7 +58,6 @@ export default function Administradores() {
                 console.warn('Formato inesperado de administradores:', adminsData);
             }
 
-            // Extraer lista de condominios
             let condosList = [];
             if (Array.isArray(condosData)) {
                 condosList = condosData;
@@ -91,7 +90,6 @@ export default function Administradores() {
         loadAll();
     }, []);
 
-    // Filtrar administradores
     const filtered = admins.filter(a => {
         const fullName = `${a.nombres || ''} ${a.apellidos || ''}`.toLowerCase();
         const email = (a.correo || '').toLowerCase();
@@ -104,30 +102,55 @@ export default function Administradores() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setSubmitting(true);
         try {
+            // Verificar token antes de enviar
+            const token = localStorage.getItem('token');
+            console.log('Token actual:', token ? 'Presente' : 'No encontrado');
+
             if (editing) {
-                await updateAdministrator(editing.id, {
-                    nombres: form.nombres,
-                    apellidos: form.apellidos,
-                    correo: form.correo,
-                    telefono: form.telefono,
-                });
-                if (form.idCondominio && form.idCondominio !== editing.idCondominio?.toString()) {
-                    await assignAdministratorCondo(editing.id, form.idCondominio);
+                // Preparar payload para actualizar
+                const updatePayload = {
+                    nombres: form.nombres.trim(),
+                    apellidos: form.apellidos.trim(),
+                    correo: form.correo.trim(),
+                    telefono: form.telefono.trim(),
+                };
+                console.log('Payload update:', updatePayload);
+                await updateAdministrator(editing.id, updatePayload);
+
+                // Asignar condominio si cambió y no está vacío
+                const newCondoId = form.idCondominio ? parseInt(form.idCondominio, 10) : null;
+                const oldCondoId = editing.idCondominio ? parseInt(editing.idCondominio, 10) : null;
+                console.log(`Condo: nuevo=${newCondoId}, anterior=${oldCondoId}`);
+                if (newCondoId !== null && newCondoId !== oldCondoId) {
+                    console.log('Asignando condominio:', newCondoId);
+                    await assignAdministratorCondo(editing.id, newCondoId);
+                } else if (newCondoId === null && oldCondoId !== null) {
+                    // Si se selecciona "Sin asignar", no se puede desasignar con el endpoint actual
+                    // Se podría implementar un endpoint para desasignar, pero por ahora no.
+                    console.warn('No se puede desasignar condominio con el endpoint actual');
                 }
             } else {
-                await createAdministrator({
-                    nombres: form.nombres,
-                    apellidos: form.apellidos,
-                    correo: form.correo,
-                    telefono: form.telefono,
-                    contrasena: form.contrasena,
-                });
+                // Crear nuevo
+                const createPayload = {
+                    nombres: form.nombres.trim(),
+                    apellidos: form.apellidos.trim(),
+                    correo: form.correo.trim(),
+                    telefono: form.telefono.trim(),
+                    contrasena: form.contrasena.trim(),
+                };
+                console.log('Payload create:', createPayload);
+                await createAdministrator(createPayload);
+                // La creación no asigna condominio automáticamente; se puede editar después
             }
             setShowModal(false);
-            loadAll();
+            await loadAll();
         } catch (err) {
-            alert(err.message);
+            console.error('Error en handleSubmit:', err);
+            alert(`Error: ${err.message}`);
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -135,7 +158,7 @@ export default function Administradores() {
         if (!window.confirm('¿Eliminar administrador?')) return;
         try {
             await deleteAdministrator(id);
-            loadAll();
+            await loadAll();
         } catch (err) {
             alert(err.message);
         }
@@ -144,7 +167,7 @@ export default function Administradores() {
     const handleToggleStatus = async (id, activo) => {
         try {
             await patchAdministratorStatus(id, !activo);
-            loadAll();
+            await loadAll();
         } catch (err) {
             alert(err.message);
         }
@@ -185,7 +208,7 @@ export default function Administradores() {
                 </Button>
             </div>
 
-            {/* Filtros con labels ocultos para accesibilidad */}
+            {/* Filtros */}
             <Row className="mb-4 g-2">
                 <Col md={4}>
                     <InputGroup>
@@ -388,7 +411,9 @@ export default function Administradores() {
                     </Modal.Body>
                     <Modal.Footer>
                         <Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
-                        <Button type="submit">Guardar</Button>
+                        <Button type="submit" disabled={submitting}>
+                            {submitting ? 'Guardando...' : 'Guardar'}
+                        </Button>
                     </Modal.Footer>
                 </Form>
             </Modal>
