@@ -190,7 +190,7 @@ export default function DashboardSuperAdmin() {
       <div className="d-flex justify-content-between align-items-start mb-4">
         <div>
           <h1 style={{ fontWeight: 800, color: '#0f172a', marginBottom: '4px' }}>
-            Dashboard Global del Sistema de Gestión de Condominios
+            Dashboard Global del Sistema
           </h1>
         </div>
         <Badge
