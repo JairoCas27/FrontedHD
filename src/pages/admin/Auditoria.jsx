@@ -1,17 +1,18 @@
-import { useState } from 'react'
-import { FiShield, FiSearch, FiFilter, FiUser, FiActivity, FiSettings } from "react-icons/fi"
-import { Card, Table, Form, Row, Col, Badge, Button } from 'react-bootstrap'
+import React, { useState } from 'react'
+import { FiShield, FiSearch, FiFilter, FiX } from "react-icons/fi"
+import BadgeEstado from '../../components/BadgeEstado'
 
 const logsIniciales = [
-  { id: 1, usuario: 'admin@urbanpark.cl', accion: 'Inicio de sesión', modulo: 'Auth', ip: '192.168.1.100', fecha: '2025-04-27 08:30:15', estado: 'Éxito' },
-  { id: 2, usuario: 'carlos.lopez', accion: 'Registro de vehículo', modulo: 'Vehículos', ip: '192.168.1.45', fecha: '2025-04-27 09:15:22', estado: 'Éxito' },
-  { id: 3, usuario: 'ana.martinez', accion: 'Eliminación de usuario', modulo: 'Usuarios', ip: '192.168.1.78', fecha: '2025-04-27 10:00:05', estado: 'Éxito' },
-  { id: 4, usuario: 'desconocido', accion: 'Intento de acceso fallido', modulo: 'Auth', ip: '10.0.0.55', fecha: '2025-04-27 10:30:42', estado: 'Fallo' },
-  { id: 5, usuario: 'juan.perez', accion: 'Actualización de configuración', modulo: 'Configuración', ip: '192.168.1.22', fecha: '2025-04-27 11:20:10', estado: 'Éxito' },
+  { id: 1, usuario: 'admin@urbanpark.cl', accion: 'Inicio de sesión', modulo: 'Auth', ip: '192.168.1.100', fecha: '2026-06-27 08:30:15', estado: 'Dentro' }, // 'Éxito' -> 'Dentro' para el badge
+  { id: 2, usuario: 'carlos.lopez', accion: 'Registro de vehículo', modulo: 'Vehículos', ip: '192.168.1.45', fecha: '2026-06-27 09:15:22', estado: 'Dentro' },
+  { id: 3, usuario: 'ana.martinez', accion: 'Eliminación de usuario', modulo: 'Usuarios', ip: '192.168.1.78', fecha: '2026-06-27 10:00:05', estado: 'Dentro' },
+  { id: 4, usuario: 'desconocido', accion: 'Intento de acceso fallido', modulo: 'Auth', ip: '10.0.0.55', fecha: '2026-06-27 10:30:42', estado: 'Fuera' }, // 'Fallo' -> 'Fuera' para el badge
+  { id: 5, usuario: 'juan.perez', accion: 'Actualización de configuración', modulo: 'Configuración', ip: '192.168.1.22', fecha: '2026-06-27 11:20:10', estado: 'Dentro' },
 ]
 
 export default function Auditoria() {
-  const [logs, setLogs] = useState(logsIniciales)
+  const colorAdmin = "rgb(52,151,195)"
+  const [logs] = useState(logsIniciales)
   const [filtroModulo, setFiltroModulo] = useState('')
   const [filtroUsuario, setFiltroUsuario] = useState('')
 
@@ -23,98 +24,121 @@ export default function Auditoria() {
 
   const modulos = [...new Set(logs.map(log => log.modulo))]
 
+  // Estilos fijos unificados
+  const estiloInput = {
+    width: "100%",
+    padding: "0.65rem 0.75rem",
+    borderRadius: "0.5rem",
+    border: "1px solid #cbd5e1",
+    fontSize: "0.9rem",
+    color: "#334155",
+    backgroundColor: "#ffffff",
+    boxSizing: "border-box",
+    outline: "none"
+  }
+
+  const estiloLabel = {
+    display: "block",
+    fontSize: "0.75rem",
+    fontWeight: "700",
+    color: "#475569",
+    marginBottom: "0.4rem",
+    textTransform: "uppercase",
+    letterSpacing: "0.025em"
+  }
+
   return (
-    <div>
-      <div className="mb-4">
-        <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>
-          Auditoría
-        </h1>
-        <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>
-          Logs y control de permisos
-        </p>
+    <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
+      
+      {/* 1. Cabecera */}
+      <div style={{ marginBottom: "2rem" }}>
+        <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>Auditoría</h1>
+        <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>Logs de operaciones y control de historial del sistema (Bitácora)</p>
       </div>
 
-      <Card className="shadow-sm mb-4">
-        <Card.Body>
-          <Row className="g-3">
-            <Col md={4}>
-              <Form.Group>
-                <Form.Label>
-                  <FiSearch className="me-1" /> Buscar por Usuario
-                </Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="Email o nombre de usuario..."
-                  value={filtroUsuario}
-                  onChange={(e) => setFiltroUsuario(e.target.value)}
-                />
-              </Form.Group>
-            </Col>
-            <Col md={4}>
-              <Form.Group>
-                <Form.Label>
-                  <FiFilter className="me-1" /> Filtrar por Módulo
-                </Form.Label>
-                <Form.Select
-                  value={filtroModulo}
-                  onChange={(e) => setFiltroModulo(e.target.value)}
-                >
-                  <option value="">Todos</option>
-                  {modulos.map(modulo => (
-                    <option key={modulo} value={modulo}>{modulo}</option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            </Col>
-            <Col md={4} className="d-flex align-items-end">
-              <Button variant="outline-secondary" onClick={() => { setFiltroModulo(''); setFiltroUsuario('') }}>
-                Limpiar Filtros
-              </Button>
-            </Col>
-          </Row>
-        </Card.Body>
-      </Card>
+      {/* 2. Filtros de Búsqueda Estilizados */}
+      <div style={{ backgroundColor: "#ffffff", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #e2e8f0", marginBottom: "2rem", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "end" }}>
+          
+          <div style={{ flex: 1, minWidth: "240px" }}>
+            <label style={estiloLabel}><FiSearch style={{ marginRight: "4px" }} /> Buscar por Usuario</label>
+            <input 
+              type="text" 
+              style={estiloInput} 
+              placeholder="Email o nombre de usuario..." 
+              value={filtroUsuario} 
+              onChange={(e) => setFiltroUsuario(e.target.value)} 
+            />
+          </div>
 
-      <Card className="shadow-sm">
-        <Card.Body>
-          <Table responsive hover>
-            <thead className="table-light">
-              <tr>
-                <th>Fecha/Hora</th>
-                <th>Usuario</th>
-                <th>Acción</th>
-                <th>Módulo</th>
-                <th>IP</th>
-                <th>Estado</th>
+          <div style={{ flex: 1, minWidth: "200px" }}>
+            <label style={estiloLabel}><FiFilter style={{ marginRight: "4px" }} /> Filtrar por Módulo</label>
+            <select style={estiloInput} value={filtroModulo} onChange={(e) => setFiltroModulo(e.target.value)}>
+              <option value="">Todos los módulos</option>
+              {modulos.map(modulo => (
+                <option key={modulo} value={modulo}>{modulo}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ minWidth: "150px" }}>
+            <button 
+              onClick={() => { setFiltroModulo(''); setFiltroUsuario('') }}
+              style={{ width: "100%", padding: "0.65rem 1rem", border: "1px solid #cbd5e1", backgroundColor: "#ffffff", color: "#64748b", borderRadius: "0.5rem", fontSize: "0.9rem", fontWeight: "600", cursor: "pointer" }}
+            >
+              <FiX style={{ marginRight: "4px" }} /> Limpiar Filtros
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      {/* 3. Tabla de Logs / Bitácora Premium */}
+      <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden", width: "100%", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)" }}>
+        <div style={{ overflowX: "auto", width: "100%" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+            <thead>
+              <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: "700", fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
+                <th style={{ padding: "1rem 1.5rem", width: "20%" }}>Fecha / Hora</th>
+                <th style={{ padding: "1rem", width: "25%" }}>Usuario Ejecutor</th>
+                <th style={{ padding: "1rem", width: "25%" }}>Acción Realizada</th>
+                <th style={{ padding: "1rem", width: "10%" }}>Módulo</th>
+                <th style={{ padding: "1rem", width: "10%" }}>Dirección IP</th>
+                <th style={{ padding: "1rem 1.5rem", width: "10%" }}>Estado</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
               {logsFiltrados.map((log) => (
-                <tr key={log.id}>
-                  <td style={{ whiteSpace: 'nowrap' }}>{log.fecha}</td>
-                  <td>{log.usuario}</td>
-                  <td>{log.accion}</td>
-                  <td>
-                    <Badge bg="secondary">{log.modulo}</Badge>
+                <tr key={log.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                  <td style={{ padding: "1rem 1.5rem", whiteSpace: "nowrap", color: "#64748b", fontWeight: "500" }}>{log.fecha}</td>
+                  <td style={{ padding: "1rem", fontWeight: "700", color: "#0f172a" }}>{log.usuario}</td>
+                  <td style={{ padding: "1rem", color: "#334155", fontWeight: "600" }}>{log.accion}</td>
+                  <td style={{ padding: "1rem" }}>
+                    <span style={{ backgroundColor: "#f1f5f9", color: "#475569", padding: "0.25rem 0.5rem", borderRadius: "0.375rem", fontSize: "0.75rem", fontWeight: "700" }}>
+                      {log.modulo}
+                    </span>
                   </td>
-                  <td><code>{log.ip}</code></td>
-                  <td>
-                    <Badge bg={log.estado === 'Éxito' ? 'success' : 'danger'}>
-                      {log.estado}
-                    </Badge>
+                  <td style={{ padding: "1rem", fontFamily: "monospace", color: "#64748b", fontWeight: "700" }}>{log.ip}</td>
+                  <td style={{ padding: "1rem 1.5rem" }}>
+                    {/* Convertimos el texto para que use tu BadgeEstado inteligente */}
+                    <BadgeEstado estado={log.estado === 'Dentro' ? 'Activo' : 'Inactivo'} />
                   </td>
                 </tr>
               ))}
             </tbody>
-          </Table>
-          {logsFiltrados.length === 0 && (
-            <div className="text-center py-5 text-muted">
-              <FiShield size={48} className="mb-3 opacity-50" />
-              <p>No se encontraron registros</p>
-            </div>
-          )}
-        </Card.Body>
-      </Card>
+          </table>
+        </div>
+
+        {/* 4. Estado vacío / No se encontraron registros */}
+        {logsFiltrados.length === 0 && (
+          <div style={{ padding: "4rem 2rem", textAlign: "center", color: "#94a3b8" }}>
+            <FiShield size={44} style={{ color: "#cbd5e1", marginBottom: "1rem" }} />
+            <h5 style={{ margin: 0, fontSize: "1rem", fontWeight: "700", color: "#64748b" }}>No se encontraron registros de auditoría</h5>
+            <p style={{ margin: "0.25rem 0 0 0", fontSize: "0.85rem", color: "#94a3b8" }}>Prueba cambiando los parámetros de búsqueda o limpiando los filtros activos.</p>
+          </div>
+        )}
+      </div>
+
     </div>
   )
 }
