@@ -23,7 +23,7 @@ export default function Administradores() {
         correo: '',
         telefono: '',
         contrasena: '',
-        idCondominio: '', // Cambio de condominioId a idCondominio
+        idCondominio: '',
     });
     const [error, setError] = useState(null);
 
@@ -34,21 +34,43 @@ export default function Administradores() {
 
     const loadAll = async () => {
         setLoading(true);
+        setError(null);
         try {
             const [adminsData, condosData] = await Promise.all([
                 getAdministrators(),
                 getCondominiums(),
             ]);
-            // Extraer items de la respuesta
-            let adminsList = adminsData?.items || adminsData?.content || adminsData?.data || [];
-            if (!Array.isArray(adminsList)) adminsList = [];
-            let condosList = condosData?.items || condosData?.content || condosData?.data || [];
-            if (!Array.isArray(condosList)) condosList = [];
+
+            console.log('Datos de administradores (raw):', adminsData);
+            console.log('Datos de condominios (raw):', condosData);
+
+            // Extraer lista de administradores
+            let adminsList = adminsData?.items;
+            if (!Array.isArray(adminsList)) {
+                adminsList = adminsData?.content || adminsData?.data || [];
+            }
+            // Si aún no es array, intentar convertir
+            if (!Array.isArray(adminsList)) {
+                console.warn('La respuesta de administradores no es un array:', adminsData);
+                adminsList = [];
+            }
+
+            // Extraer lista de condominios
+            let condosList = condosData?.items;
+            if (!Array.isArray(condosList)) {
+                condosList = condosData?.content || condosData?.data || [];
+            }
+            if (!Array.isArray(condosList)) {
+                condosList = [];
+            }
+
+            console.log('Administradores procesados:', adminsList);
+            console.log('Condominios procesados:', condosList);
+
             setAdmins(adminsList);
             setCondominios(condosList);
-            setError(null);
         } catch (err) {
-            console.error(err);
+            console.error('Error en loadAll:', err);
             setError(err.message);
             setAdmins([]);
             setCondominios([]);
@@ -63,9 +85,10 @@ export default function Administradores() {
 
     // Filtrar administradores
     const filtered = admins.filter(a => {
-        const fullName = `${a.nombres} ${a.apellidos}`.toLowerCase();
-        const matchSearch = fullName.includes(searchTerm.toLowerCase()) ||
-            a.correo.toLowerCase().includes(searchTerm.toLowerCase());
+        const fullName = `${a.nombres || ''} ${a.apellidos || ''}`.toLowerCase();
+        const email = (a.correo || '').toLowerCase();
+        const search = searchTerm.toLowerCase();
+        const matchSearch = fullName.includes(search) || email.includes(search);
         const matchCondo = condominioFilter ? a.idCondominio === parseInt(condominioFilter, 10) : true;
         const matchEstado = estadoFilter !== '' ? (estadoFilter === 'activo' ? a.activo : !a.activo) : true;
         return matchSearch && matchCondo && matchEstado;
@@ -82,12 +105,12 @@ export default function Administradores() {
                     correo: form.correo,
                     telefono: form.telefono,
                 });
-                // Si cambió condominio, asignar (solo si se seleccionó uno)
+                // Asignar condominio si cambió
                 if (form.idCondominio && form.idCondominio !== editing.idCondominio?.toString()) {
                     await assignAdministratorCondo(editing.id, form.idCondominio);
                 }
             } else {
-                // Crear nuevo administrador (sin condominio inicial)
+                // Crear nuevo
                 await createAdministrator({
                     nombres: form.nombres,
                     apellidos: form.apellidos,
@@ -95,9 +118,6 @@ export default function Administradores() {
                     telefono: form.telefono,
                     contrasena: form.contrasena,
                 });
-                // Si se seleccionó un condominio, asignarlo (el nuevo admin necesita su ID)
-                // Nota: La creación no devuelve el ID en esta versión, se puede mejorar
-                // Por ahora, recargamos la lista y el usuario asigna manualmente después.
             }
             setShowModal(false);
             loadAll();
@@ -128,12 +148,12 @@ export default function Administradores() {
     if (loading) return <div className="text-center py-5">Cargando administradores...</div>;
     if (error) return (
         <div className="text-center text-danger py-5">
-            <p>{error}</p>
+            <p><strong>Error:</strong> {error}</p>
             <Button variant="outline-primary" onClick={loadAll}>Reintentar</Button>
         </div>
     );
 
-    // Lista de condominios para el filtro
+    // Preparar opciones de condominios para el select
     const condominioOptions = condominios.map(c => ({
         id: c.id,
         nombre: c.nombre,
@@ -203,7 +223,18 @@ export default function Administradores() {
             </Row>
 
             {filtered.length === 0 ? (
-                <p>No hay administradores que coincidan con los filtros.</p>
+                <div className="text-center py-4">
+                    <p>No hay administradores que coincidan con los filtros.</p>
+                    {admins.length > 0 && (
+                        <Button variant="outline-secondary" onClick={() => {
+                            setSearchTerm('');
+                            setCondominioFilter('');
+                            setEstadoFilter('');
+                        }}>
+                            Limpiar filtros
+                        </Button>
+                    )}
+                </div>
             ) : (
                 <Table striped bordered hover responsive>
                     <thead>
@@ -270,7 +301,7 @@ export default function Administradores() {
                 </Table>
             )}
 
-            {/* Modal de creación/edición */}
+            {/* Modal */}
             <Modal show={showModal} onHide={() => setShowModal(false)}>
                 <Modal.Header closeButton>
                     <Modal.Title>{editing ? 'Editar' : 'Nuevo'} administrador</Modal.Title>
