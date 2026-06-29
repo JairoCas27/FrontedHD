@@ -135,7 +135,7 @@ export async function getUnassignedCondominiums() {
 
 // Administradores
 export async function getAdministrators() {
-  return safeFetch('/api/super-admin/administrators');
+  return safeFetch('/api/super-admin/administrators?page=0&size=100');
 }
 
 export async function createAdministrator(data) {

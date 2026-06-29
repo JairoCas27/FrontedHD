@@ -23,7 +23,7 @@ export default function Administradores() {
         correo: '',
         telefono: '',
         contrasena: '',
-        condominioId: '',
+        idCondominio: '', // Cambio de condominioId a idCondominio
     });
     const [error, setError] = useState(null);
 
@@ -39,10 +39,11 @@ export default function Administradores() {
                 getAdministrators(),
                 getCondominiums(),
             ]);
-            let adminsList = adminsData;
-            if (!Array.isArray(adminsList)) adminsList = adminsData?.content || adminsData?.data || [];
-            let condosList = condosData;
-            if (!Array.isArray(condosList)) condosList = condosData?.content || condosData?.data || [];
+            // Extraer items de la respuesta
+            let adminsList = adminsData?.items || adminsData?.content || adminsData?.data || [];
+            if (!Array.isArray(adminsList)) adminsList = [];
+            let condosList = condosData?.items || condosData?.content || condosData?.data || [];
+            if (!Array.isArray(condosList)) condosList = [];
             setAdmins(adminsList);
             setCondominios(condosList);
             setError(null);
@@ -60,11 +61,12 @@ export default function Administradores() {
         loadAll();
     }, []);
 
+    // Filtrar administradores
     const filtered = admins.filter(a => {
         const fullName = `${a.nombres} ${a.apellidos}`.toLowerCase();
         const matchSearch = fullName.includes(searchTerm.toLowerCase()) ||
             a.correo.toLowerCase().includes(searchTerm.toLowerCase());
-        const matchCondo = condominioFilter ? a.condominio?.id === parseInt(condominioFilter) : true;
+        const matchCondo = condominioFilter ? a.idCondominio === parseInt(condominioFilter, 10) : true;
         const matchEstado = estadoFilter !== '' ? (estadoFilter === 'activo' ? a.activo : !a.activo) : true;
         return matchSearch && matchCondo && matchEstado;
     });
@@ -80,12 +82,22 @@ export default function Administradores() {
                     correo: form.correo,
                     telefono: form.telefono,
                 });
-                // Si cambió condominio, asignar
-                if (form.condominioId && form.condominioId !== editing.condominio?.id?.toString()) {
-                    await assignAdministratorCondo(editing.id, form.condominioId);
+                // Si cambió condominio, asignar (solo si se seleccionó uno)
+                if (form.idCondominio && form.idCondominio !== editing.idCondominio?.toString()) {
+                    await assignAdministratorCondo(editing.id, form.idCondominio);
                 }
             } else {
-                await createAdministrator(form);
+                // Crear nuevo administrador (sin condominio inicial)
+                await createAdministrator({
+                    nombres: form.nombres,
+                    apellidos: form.apellidos,
+                    correo: form.correo,
+                    telefono: form.telefono,
+                    contrasena: form.contrasena,
+                });
+                // Si se seleccionó un condominio, asignarlo (el nuevo admin necesita su ID)
+                // Nota: La creación no devuelve el ID en esta versión, se puede mejorar
+                // Por ahora, recargamos la lista y el usuario asigna manualmente después.
             }
             setShowModal(false);
             loadAll();
@@ -114,7 +126,18 @@ export default function Administradores() {
     };
 
     if (loading) return <div className="text-center py-5">Cargando administradores...</div>;
-    if (error) return <div className="text-danger text-center">{error}</div>;
+    if (error) return (
+        <div className="text-center text-danger py-5">
+            <p>{error}</p>
+            <Button variant="outline-primary" onClick={loadAll}>Reintentar</Button>
+        </div>
+    );
+
+    // Lista de condominios para el filtro
+    const condominioOptions = condominios.map(c => ({
+        id: c.id,
+        nombre: c.nombre,
+    }));
 
     return (
         <div style={{ padding: '1.5rem' }}>
@@ -129,7 +152,7 @@ export default function Administradores() {
                             correo: '',
                             telefono: '',
                             contrasena: '',
-                            condominioId: '',
+                            idCondominio: '',
                         });
                         setShowModal(true);
                     }}
@@ -144,6 +167,8 @@ export default function Administradores() {
                     <InputGroup>
                         <InputGroup.Text><FiSearch /></InputGroup.Text>
                         <Form.Control
+                            id="searchAdmin"
+                            name="searchAdmin"
                             placeholder="Buscar por nombre o correo..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
@@ -152,17 +177,21 @@ export default function Administradores() {
                 </Col>
                 <Col md={3}>
                     <Form.Select
+                        id="filterCondo"
+                        name="filterCondo"
                         value={condominioFilter}
                         onChange={(e) => setCondominioFilter(e.target.value)}
                     >
                         <option value="">Todos los condominios</option>
-                        {condominios.map(c => (
+                        {condominioOptions.map(c => (
                             <option key={c.id} value={c.id}>{c.nombre}</option>
                         ))}
                     </Form.Select>
                 </Col>
                 <Col md={3}>
                     <Form.Select
+                        id="filterEstado"
+                        name="filterEstado"
                         value={estadoFilter}
                         onChange={(e) => setEstadoFilter(e.target.value)}
                     >
@@ -193,7 +222,7 @@ export default function Administradores() {
                                 <td>{a.nombres} {a.apellidos}</td>
                                 <td>{a.correo}</td>
                                 <td>{a.telefono}</td>
-                                <td>{a.condominio?.nombre || 'Sin asignar'}</td>
+                                <td>{a.nombreCondominio || 'Sin asignar'}</td>
                                 <td>
                                     <Badge bg={a.activo ? 'success' : 'secondary'}>
                                         {a.activo ? 'Activo' : 'Inactivo'}
@@ -212,7 +241,7 @@ export default function Administradores() {
                                                 correo: a.correo,
                                                 telefono: a.telefono || '',
                                                 contrasena: '',
-                                                condominioId: a.condominio?.id?.toString() || '',
+                                                idCondominio: a.idCondominio?.toString() || '',
                                             });
                                             setShowModal(true);
                                         }}
@@ -241,7 +270,7 @@ export default function Administradores() {
                 </Table>
             )}
 
-            {/* Modal */}
+            {/* Modal de creación/edición */}
             <Modal show={showModal} onHide={() => setShowModal(false)}>
                 <Modal.Header closeButton>
                     <Modal.Title>{editing ? 'Editar' : 'Nuevo'} administrador</Modal.Title>
@@ -306,11 +335,11 @@ export default function Administradores() {
                             <Form.Select
                                 id="adminCondo"
                                 name="adminCondo"
-                                value={form.condominioId}
-                                onChange={(e) => setForm({ ...form, condominioId: e.target.value })}
+                                value={form.idCondominio}
+                                onChange={(e) => setForm({ ...form, idCondominio: e.target.value })}
                             >
                                 <option value="">Sin asignar</option>
-                                {condominios.map(c => (
+                                {condominioOptions.map(c => (
                                     <option key={c.id} value={c.id}>{c.nombre}</option>
                                 ))}
                             </Form.Select>
