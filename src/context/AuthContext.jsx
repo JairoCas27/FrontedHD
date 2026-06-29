@@ -9,14 +9,35 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const token = localStorage.getItem('token');
-    if (token) {
+    const storedUser = localStorage.getItem('user');
+    if (token && storedUser) {
+      // Si hay token y usuario en localStorage, lo usamos directamente
+      setUser(JSON.parse(storedUser));
+      setLoading(false);
+      // Opcional: validar el token con el backend
       getCurrentUser()
-        .then((data) => {
-          // Si la respuesta es { usuario: {...} }
-          setUser(data.usuario || data);
+        .then(data => {
+          const userData = data.usuario || data;
+          setUser(userData);
+          localStorage.setItem('user', JSON.stringify(userData));
         })
         .catch(() => {
           localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          setUser(null);
+        })
+        .finally(() => setLoading(false));
+    } else if (token) {
+      // Solo token, obtener usuario
+      getCurrentUser()
+        .then(data => {
+          const userData = data.usuario || data;
+          setUser(userData);
+          localStorage.setItem('user', JSON.stringify(userData));
+        })
+        .catch(() => {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
           setUser(null);
         })
         .finally(() => setLoading(false));
@@ -27,11 +48,13 @@ export function AuthProvider({ children }) {
 
   const login = (userData, token) => {
     if (token) localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(userData));
     setUser(userData);
   };
 
   const logout = () => {
     localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setUser(null);
   };
 

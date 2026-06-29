@@ -1,6 +1,7 @@
-// src/components/SidebarSuperAdmin.jsx
+// SidebarSuperAdmin.jsx
 import SidebarLayout from './SidebarLayout';
 import { FiHome, FiGrid, FiUsers, FiUser } from 'react-icons/fi';
+import { useAuth } from '../context/AuthContext';
 
 const menuItems = [
   { section: 'Principal' },
@@ -13,6 +14,7 @@ const menuItems = [
 ];
 
 export default function SidebarSuperAdmin({ isOpen, setIsOpen }) {
+  const { user } = useAuth();
   return (
     <SidebarLayout
       isOpen={isOpen}
@@ -22,7 +24,7 @@ export default function SidebarSuperAdmin({ isOpen, setIsOpen }) {
       accentLight="rgba(124,58,237,0.1)"
       accentDark="rgb(91,33,182)"
       menuItems={menuItems}
-      storageKey="perfil_superadmin"
+      user={user}
     />
   );
 }
