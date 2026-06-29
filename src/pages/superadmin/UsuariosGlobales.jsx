@@ -6,8 +6,9 @@ import {
   forceUserPassword,
   invalidateUserSession,
   getCondominiums,
-  createUser,
-  updateUser,
+  createAdministrator,
+  updateAdministrator,
+  assignAdministratorCondo,
 } from '../../services/api';
 import { Modal, Form, Button, Table, Badge, InputGroup, Row, Col } from 'react-bootstrap';
 import { toast } from 'react-toastify';
@@ -39,13 +40,14 @@ export default function UsuariosGlobales() {
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Lista de roles permitidos
   const ROLES = [
-    { value: 'SUPER_ADMINISTRADOR', label: 'Super Administrador' },
     { value: 'ADMINISTRADOR_CONDOMINIO', label: 'Administrador de Condominio' },
     { value: 'AGENTE_SEGURIDAD', label: 'Agente de Seguridad' },
     { value: 'PROPIETARIO', label: 'Propietario' },
   ];
+
+  // Roles que se pueden crear/editar desde este módulo
+  const EDITABLE_ROLES = ['ADMINISTRADOR_CONDOMINIO'];
 
   const loadData = async () => {
     setLoading(true);
@@ -56,10 +58,6 @@ export default function UsuariosGlobales() {
         getCondominiums(),
       ]);
 
-      console.log('Respuesta de usuarios (raw):', usersData);
-      console.log('Respuesta de condominios (raw):', condosData);
-
-      // Extraer lista de usuarios
       let usersList = [];
       if (Array.isArray(usersData)) {
         usersList = usersData;
@@ -69,11 +67,8 @@ export default function UsuariosGlobales() {
         usersList = usersData.content;
       } else if (usersData?.data && Array.isArray(usersData.data)) {
         usersList = usersData.data;
-      } else {
-        console.warn('Formato inesperado de usuarios:', usersData);
       }
 
-      // Extraer condominios
       let condosList = [];
       if (Array.isArray(condosData)) {
         condosList = condosData;
@@ -83,17 +78,12 @@ export default function UsuariosGlobales() {
         condosList = condosData.content;
       } else if (condosData?.data && Array.isArray(condosData.data)) {
         condosList = condosData.data;
-      } else {
-        console.warn('Formato inesperado de condominios:', condosData);
       }
-
-      console.log('Usuarios procesados:', usersList);
-      console.log('Condominios procesados:', condosList);
 
       setUsers(usersList);
       setCondominios(condosList);
     } catch (err) {
-      console.error('Error en loadData:', err);
+      console.error(err);
       setError(err.message);
       setUsers([]);
       setCondominios([]);
@@ -107,7 +97,6 @@ export default function UsuariosGlobales() {
     loadData();
   }, []);
 
-  // Filtrar usuarios
   const filtered = users.filter(u => {
     const fullName = `${u.nombres || ''} ${u.apellidos || ''}`.toLowerCase();
     const email = (u.correo || '').toLowerCase();
@@ -121,40 +110,60 @@ export default function UsuariosGlobales() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Validar que solo se pueda crear/editar administradores
+    if (!EDITABLE_ROLES.includes(form.rol)) {
+      toast.warning('Solo se pueden crear/editar usuarios con rol "Administrador de Condominio" desde este panel.');
+      return;
+    }
+
     setSubmitting(true);
     try {
       if (editingUser) {
-        // Actualizar usuario
-        const updatePayload = {
+        // 1. Actualizar datos básicos del administrador
+        await updateAdministrator(editingUser.id, {
           nombres: form.nombres.trim(),
           apellidos: form.apellidos.trim(),
           correo: form.correo.trim(),
           telefono: form.telefono.trim(),
-          rol: form.rol,
-          condominioId: form.idCondominio ? parseInt(form.idCondominio, 10) : null,
-        };
-        console.log('Payload update:', updatePayload);
-        await updateUser(editingUser.id, updatePayload);
-        toast.success('Usuario actualizado correctamente.');
+        });
+
+        // 2. Asignar condominio si cambió
+        const newCondoId = form.idCondominio ? parseInt(form.idCondominio, 10) : null;
+        const oldCondoId = editingUser.idCondominio ? parseInt(editingUser.idCondominio, 10) : null;
+        if (newCondoId !== oldCondoId) {
+          if (newCondoId !== null) {
+            await assignAdministratorCondo(editingUser.id, newCondoId);
+          } else {
+            // Intentar desasignar (si el backend lo permite)
+            try {
+              await assignAdministratorCondo(editingUser.id, null);
+            } catch (err) {
+              toast.warning('No se pudo desasignar el condominio. El backend podría no permitirlo.');
+            }
+          }
+        }
+        toast.success('Administrador actualizado correctamente.');
       } else {
-        // Crear usuario
-        const createPayload = {
+        // Crear nuevo administrador
+        const created = await createAdministrator({
           nombres: form.nombres.trim(),
           apellidos: form.apellidos.trim(),
           correo: form.correo.trim(),
           telefono: form.telefono.trim(),
           contrasena: form.contrasena.trim(),
-          rol: form.rol,
-          condominioId: form.idCondominio ? parseInt(form.idCondominio, 10) : null,
-        };
-        console.log('Payload create:', createPayload);
-        await createUser(createPayload);
-        toast.success('Usuario creado correctamente.');
+        });
+
+        // Si se seleccionó condominio, asignarlo
+        if (form.idCondominio && created.id) {
+          await assignAdministratorCondo(created.id, parseInt(form.idCondominio, 10));
+        }
+        toast.success('Administrador creado correctamente.');
       }
       setShowModal(false);
       setTimeout(() => loadData(), 300);
     } catch (err) {
-      console.error('Error en handleSubmit:', err);
+      console.error(err);
       toast.error(`Error: ${err.message}`);
     } finally {
       setSubmitting(false);
@@ -207,11 +216,13 @@ export default function UsuariosGlobales() {
     </div>
   );
 
-  // Opciones para condominios
   const condominioOptions = condominios.map(c => ({
     id: c.id,
     nombre: c.nombre,
   }));
+
+  // Determinar si el rol seleccionado es editable
+  const isEditableRole = EDITABLE_ROLES.includes(form.rol);
 
   return (
     <div style={{ padding: '1.5rem' }}>
@@ -226,7 +237,7 @@ export default function UsuariosGlobales() {
               correo: '',
               telefono: '',
               contrasena: '',
-              rol: 'PROPIETARIO',
+              rol: 'ADMINISTRADOR_CONDOMINIO', // por defecto el único editable
               idCondominio: '',
             });
             setShowModal(true);
@@ -236,7 +247,7 @@ export default function UsuariosGlobales() {
         </Button>
       </div>
 
-      {/* Filtros con accesibilidad */}
+      {/* Filtros */}
       <Row className="mb-4 g-2">
         <Col md={3}>
           <InputGroup>
@@ -330,68 +341,74 @@ export default function UsuariosGlobales() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map(u => (
-              <tr key={u.id}>
-                <td>{u.nombres} {u.apellidos}</td>
-                <td>{u.correo}</td>
-                <td>{u.telefono}</td>
-                <td><Badge bg="info">{u.rol}</Badge></td>
-                <td>{u.nombreCondominio || 'Sin asignar'}</td>
-                <td>
-                  <Badge bg={u.activo ? 'success' : 'secondary'}>
-                    {u.activo ? 'Activo' : 'Inactivo'}
-                  </Badge>
-                </td>
-                <td>
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    className="me-2"
-                    onClick={() => {
-                      setEditingUser(u);
-                      setForm({
-                        nombres: u.nombres,
-                        apellidos: u.apellidos,
-                        correo: u.correo,
-                        telefono: u.telefono || '',
-                        contrasena: '',
-                        rol: u.rol,
-                        idCondominio: u.idCondominio?.toString() || '',
-                      });
-                      setShowModal(true);
-                    }}
-                  >
-                    <FiEdit2 />
-                  </Button>
-                  <Button
-                    variant="outline-warning"
-                    size="sm"
-                    className="me-2"
-                    onClick={() => handleToggleStatus(u.id, u.activo)}
-                  >
-                    {u.activo ? <FiX /> : <FiCheck />}
-                  </Button>
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    className="me-2"
-                    onClick={() => {
-                      setSelectedUser(u);
-                      setShowPasswordModal(true);
-                    }}
-                  >
-                    <FiLock />
-                  </Button>
-                  <Button
-                    variant="outline-danger"
-                    size="sm"
-                    onClick={() => handleInvalidate(u.id)}
-                  >
-                    <FiRefreshCw />
-                  </Button>
-                </td>
-              </tr>
-            ))}
+            {filtered.map(u => {
+              const isAdmin = u.rol === 'ADMINISTRADOR_CONDOMINIO';
+              return (
+                <tr key={u.id}>
+                  <td>{u.nombres} {u.apellidos}</td>
+                  <td>{u.correo}</td>
+                  <td>{u.telefono}</td>
+                  <td><Badge bg="info">{u.rol}</Badge></td>
+                  <td>{u.nombreCondominio || 'Sin asignar'}</td>
+                  <td>
+                    <Badge bg={u.activo ? 'success' : 'secondary'}>
+                      {u.activo ? 'Activo' : 'Inactivo'}
+                    </Badge>
+                  </td>
+                  <td>
+                    {/* Botón Editar: solo visible si es administrador */}
+                    {isAdmin && (
+                      <Button
+                        variant="outline-primary"
+                        size="sm"
+                        className="me-2"
+                        onClick={() => {
+                          setEditingUser(u);
+                          setForm({
+                            nombres: u.nombres,
+                            apellidos: u.apellidos,
+                            correo: u.correo,
+                            telefono: u.telefono || '',
+                            contrasena: '',
+                            rol: u.rol,
+                            idCondominio: u.idCondominio?.toString() || '',
+                          });
+                          setShowModal(true);
+                        }}
+                      >
+                        <FiEdit2 />
+                      </Button>
+                    )}
+                    <Button
+                      variant="outline-warning"
+                      size="sm"
+                      className="me-2"
+                      onClick={() => handleToggleStatus(u.id, u.activo)}
+                    >
+                      {u.activo ? <FiX /> : <FiCheck />}
+                    </Button>
+                    <Button
+                      variant="outline-primary"
+                      size="sm"
+                      className="me-2"
+                      onClick={() => {
+                        setSelectedUser(u);
+                        setShowPasswordModal(true);
+                      }}
+                    >
+                      <FiLock />
+                    </Button>
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      onClick={() => handleInvalidate(u.id)}
+                    >
+                      <FiRefreshCw />
+                    </Button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </Table>
       )}
@@ -462,12 +479,20 @@ export default function UsuariosGlobales() {
                 id="userRol"
                 name="userRol"
                 value={form.rol}
-                onChange={(e) => setForm({ ...form, rol: e.target.value })}
+                onChange={(e) => {
+                  const newRol = e.target.value;
+                  setForm({ ...form, rol: newRol });
+                }}
               >
                 {ROLES.map(r => (
                   <option key={r.value} value={r.value}>{r.label}</option>
                 ))}
               </Form.Select>
+              {!isEditableRole && (
+                <div className="text-warning mt-1 small">
+                  ⚠️ Solo se pueden crear/editar Administradores de Condominio desde este panel.
+                </div>
+              )}
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label htmlFor="userCondo">Condominio</Form.Label>
@@ -476,6 +501,7 @@ export default function UsuariosGlobales() {
                 name="userCondo"
                 value={form.idCondominio}
                 onChange={(e) => setForm({ ...form, idCondominio: e.target.value })}
+                disabled={!isEditableRole}
               >
                 <option value="">Sin asignar</option>
                 {condominioOptions.map(c => (
@@ -486,7 +512,11 @@ export default function UsuariosGlobales() {
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
-            <Button type="submit" disabled={submitting}>
+            <Button
+              type="submit"
+              disabled={submitting || !isEditableRole}
+              title={!isEditableRole ? 'Solo se permite crear/editar Administradores de Condominio' : ''}
+            >
               {submitting ? 'Guardando...' : 'Guardar'}
             </Button>
           </Modal.Footer>
