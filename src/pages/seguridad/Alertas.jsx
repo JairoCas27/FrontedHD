@@ -61,13 +61,13 @@ export default function Alertas() {
 
   const getTipoColor = (tipo) => {
     const colores = {
-      ACCESO_NO_AUTORIZADO: "#ef4444",
-      VEHICULO_DANADO: "#f59e0b",
-      PERSONA_SOSPECHOSA: "#8b5cf6",
-      EMERGENCIA_MEDICA: "#ec4899",
-      OTRO: "#64748b"
+      ACCESO_NO_AUTORIZADO: "text-red-500 bg-red-50",
+      VEHICULO_DANADO: "text-amber-500 bg-amber-50",
+      PERSONA_SOSPECHOSA: "text-violet-500 bg-violet-50",
+      EMERGENCIA_MEDICA: "text-pink-500 bg-pink-50",
+      OTRO: "text-slate-500 bg-slate-50"
     };
-    return colores[tipo] || "#64748b";
+    return colores[tipo] || "text-slate-500 bg-slate-50";
   };
 
   const getTipoLabel = (tipo) => {
@@ -85,29 +85,29 @@ export default function Alertas() {
   const alertasResueltas = alertas.filter(a => a.estado === "RESUELTA");
 
   return (
-    <div>
+    <div className="p-6 max-w-6xl mx-auto">
       {/* HEADER */}
-      <div style={{ marginBottom: "2rem" }}>
-        <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>Alertas</h1>
-        <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>Registro de incidentes y alertas de seguridad</p>
+      <div className="mb-8">
+        <h1 className="text-2xl font-extrabold text-slate-800">Alertas</h1>
+        <p className="text-slate-500 mt-1 text-sm">Registro de incidentes y alertas de seguridad</p>
       </div>
 
       {/* FORMULARIO DE NUEVA ALERTA */}
-      <div style={{ background: "#fff", borderRadius: "16px", padding: "2rem", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginBottom: "2rem" }}>
-        <h5 style={{ fontWeight: 700, color: "#1e293b", marginBottom: "1.5rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+      <div className="bg-white rounded-2xl p-8 shadow-md mb-8">
+        <h5 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
           <FiAlertTriangle size={20} />
           Nueva Alerta
         </h5>
 
         <form onSubmit={registrarAlerta}>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginBottom: "1rem" }}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
             <div>
-              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", marginBottom: "0.5rem" }}>Tipo de Alerta</label>
+              <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Tipo de Alerta</label>
               <select
                 name="tipo"
                 value={formData.tipo}
                 onChange={handleChange}
-                style={{ width: "100%", padding: "0.75rem", borderRadius: "10px", border: "1px solid #e2e8f0", outline: "none" }}
+                className="w-full px-3 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-red-400"
               >
                 <option value="ACCESO_NO_AUTORIZADO">Acceso No Autorizado</option>
                 <option value="VEHICULO_DANADO">Vehículo Dañado</option>
@@ -117,60 +117,46 @@ export default function Alertas() {
               </select>
             </div>
             <div>
-              <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", marginBottom: "0.5rem" }}>Ubicación</label>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <FiMapPin size={16} color="#94a3b8" />
+              <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Ubicación</label>
+              <div className="flex items-center gap-2">
+                <FiMapPin size={16} className="text-slate-400" />
                 <input
                   type="text"
                   name="ubicacion"
                   value={formData.ubicacion}
                   onChange={handleChange}
                   placeholder="Entrada principal, Sótano A, etc."
-                  style={{ flex: 1, padding: "0.75rem", borderRadius: "10px", border: "1px solid #e2e8f0", outline: "none" }}
+                  className="flex-1 px-3 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-red-400"
                 />
               </div>
             </div>
           </div>
           
-          <div style={{ marginBottom: "1.5rem" }}>
-            <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", marginBottom: "0.5rem" }}>Descripción</label>
+          <div className="mb-6">
+            <label className="block text-xs font-bold text-slate-400 uppercase mb-2">Descripción</label>
             <textarea
               name="descripcion"
               value={formData.descripcion}
               onChange={handleChange}
               placeholder="Describa el incidente..."
               rows="3"
-              style={{ width: "100%", padding: "0.75rem", borderRadius: "10px", border: "1px solid #e2e8f0", outline: "none", resize: "vertical" }}
+              className="w-full px-3 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-red-400 resize-y"
             />
           </div>
 
           {mensaje && (
-            <div style={{
-              padding: "1rem",
-              borderRadius: "10px",
-              marginBottom: "1rem",
-              backgroundColor: mensaje.tipo === "success" ? "#f0fdf4" : "#fffbeb",
-              border: `1px solid ${mensaje.tipo === "success" ? "#10b981" : "#f59e0b"}`,
-              color: mensaje.tipo === "success" ? "#166534" : "#92400e"
-            }}>
+            <div className={`p-4 rounded-xl mb-4 border ${
+              mensaje.tipo === "success" 
+                ? "bg-emerald-50 border-emerald-500 text-emerald-800" 
+                : "bg-amber-50 border-amber-500 text-amber-800"
+            }`}>
               {mensaje.texto}
             </div>
           )}
 
           <button
             type="submit"
-            style={{
-              padding: "0.75rem 2rem",
-              backgroundColor: "#ef4444",
-              color: "#fff",
-              border: "none",
-              borderRadius: "10px",
-              fontWeight: 700,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.5rem"
-            }}
+            className="px-8 py-3 bg-red-500 hover:bg-red-600 text-white rounded-xl font-bold flex items-center gap-2 transition-colors"
           >
             <FiAlertTriangle size={18} />
             Registrar Alerta
@@ -179,79 +165,47 @@ export default function Alertas() {
       </div>
 
       {/* ALERTAS ACTIVAS */}
-      <div style={{ background: "#fff", borderRadius: "16px", padding: "2rem", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginBottom: "2rem" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-          <h5 style={{ fontWeight: 700, color: "#1e293b", margin: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+      <div className="bg-white rounded-2xl p-8 shadow-md mb-8">
+        <div className="flex justify-between items-center mb-6">
+          <h5 className="font-bold text-slate-800 flex items-center gap-2">
             <FiShield size={20} />
             Alertas Activas
           </h5>
-          <span style={{
-            padding: "0.35rem 0.75rem",
-            backgroundColor: "#fef2f2",
-            borderRadius: "20px",
-            fontSize: "0.85rem",
-            fontWeight: 600,
-            color: "#ef4444"
-          }}>
+          <span className="px-3 py-1.5 bg-red-50 rounded-full text-xs font-semibold text-red-500">
             {alertasActivas.length} activas
           </span>
         </div>
 
         {alertasActivas.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "2rem", color: "#94a3b8" }}>
-            <FiCheckCircle size={48} style={{ marginBottom: "1rem", opacity: 0.4 }} />
-            <p style={{ fontSize: "1rem", fontWeight: 500 }}>No hay alertas activas</p>
-            <p style={{ fontSize: "0.85rem", marginTop: "0.25rem" }}>Todas las alertas han sido resueltas</p>
+          <div className="text-center py-8 text-slate-400">
+            <FiCheckCircle size={48} className="mx-auto mb-4 opacity-40" />
+            <p className="text-base font-medium">No hay alertas activas</p>
+            <p className="text-sm mt-1">Todas las alertas han sido resueltas</p>
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div className="flex flex-col gap-4">
             {alertasActivas.map((alerta) => (
-              <div key={alerta.id} style={{
-                padding: "1.5rem",
-                borderRadius: "12px",
-                border: "1px solid #e2e8f0",
-                borderLeft: `4px solid ${getTipoColor(alerta.tipo)}`
-              }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                      <span style={{
-                        padding: "0.25rem 0.75rem",
-                        borderRadius: "20px",
-                        fontSize: "0.75rem",
-                        fontWeight: 700,
-                        backgroundColor: getTipoColor(alerta.tipo) + "20",
-                        color: getTipoColor(alerta.tipo)
-                      }}>
+              <div key={alerta.id} className="p-6 rounded-xl border border-slate-200 border-l-4 border-l-red-500">
+                <div className="flex justify-between items-start flex-wrap gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className={`px-3 py-1 rounded-full text-xs font-bold ${getTipoColor(alerta.tipo)}`}>
                         {getTipoLabel(alerta.tipo)}
                       </span>
-                      <span style={{ fontSize: "0.85rem", color: "#94a3b8", display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                      <span className="text-sm text-slate-400 flex items-center gap-1">
                         <FiClock size={12} />
                         {alerta.hora}
                       </span>
                     </div>
-                    <p style={{ margin: "0.5rem 0", color: "#1e293b", fontWeight: 600 }}>{alerta.descripcion}</p>
-                    <p style={{ margin: 0, fontSize: "0.9rem", color: "#64748b", display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                    <p className="my-2 text-slate-800 font-semibold">{alerta.descripcion}</p>
+                    <p className="text-sm text-slate-500 flex items-center gap-1">
                       <FiMapPin size={14} />
                       {alerta.ubicacion}
                     </p>
                   </div>
                   <button
                     onClick={() => resolverAlerta(alerta.id)}
-                    style={{
-                      padding: "0.5rem 1rem",
-                      backgroundColor: "#10b981",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: "8px",
-                      fontWeight: 600,
-                      fontSize: "0.85rem",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                      whiteSpace: "nowrap"
-                    }}
+                    className="px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white rounded-lg font-semibold text-sm flex items-center gap-2 whitespace-nowrap transition-colors"
                   >
                     <FiCheckCircle size={14} />
                     Resolver
@@ -265,51 +219,31 @@ export default function Alertas() {
 
       {/* ALERTAS RESUELTAS */}
       {alertasResueltas.length > 0 && (
-        <div style={{ background: "#fff", borderRadius: "16px", padding: "2rem", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-            <h5 style={{ fontWeight: 700, color: "#1e293b", margin: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        <div className="bg-white rounded-2xl p-8 shadow-md">
+          <div className="flex justify-between items-center mb-6">
+            <h5 className="font-bold text-slate-800 flex items-center gap-2">
               <FiCheckCircle size={20} />
               Alertas Resueltas
             </h5>
-            <span style={{
-              padding: "0.35rem 0.75rem",
-              backgroundColor: "#f0fdf4",
-              borderRadius: "20px",
-              fontSize: "0.85rem",
-              fontWeight: 600,
-              color: "#10b981"
-            }}>
+            <span className="px-3 py-1.5 bg-emerald-50 rounded-full text-xs font-semibold text-emerald-500">
               {alertasResueltas.length} resueltas
             </span>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+          <div className="flex flex-col gap-4">
             {alertasResueltas.map((alerta) => (
-              <div key={alerta.id} style={{
-                padding: "1.5rem",
-                borderRadius: "12px",
-                border: "1px solid #e2e8f0",
-                borderLeft: "4px solid #10b981",
-                opacity: 0.7
-              }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                  <span style={{
-                    padding: "0.25rem 0.75rem",
-                    borderRadius: "20px",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    backgroundColor: "#f0fdf4",
-                    color: "#10b981"
-                  }}>
+              <div key={alerta.id} className="p-6 rounded-xl border border-slate-200 border-l-4 border-l-emerald-500 opacity-70">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-500">
                     RESUELTA
                   </span>
-                  <span style={{ fontSize: "0.85rem", color: "#94a3b8", display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                  <span className="text-sm text-slate-400 flex items-center gap-1">
                     <FiClock size={12} />
                     {alerta.hora}
                   </span>
                 </div>
-                <p style={{ margin: "0.5rem 0", color: "#1e293b", fontWeight: 600 }}>{alerta.descripcion}</p>
-                <p style={{ margin: 0, fontSize: "0.9rem", color: "#64748b", display: "flex", alignItems: "center", gap: "0.25rem" }}>
+                <p className="my-2 text-slate-800 font-semibold">{alerta.descripcion}</p>
+                <p className="text-sm text-slate-500 flex items-center gap-1">
                   <FiMapPin size={14} />
                   {alerta.ubicacion}
                 </p>
