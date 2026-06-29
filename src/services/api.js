@@ -30,7 +30,7 @@ export async function loginApi({ correo, password, recuerdame }) {
     method: 'POST',
     body: JSON.stringify({ correo, contrasena: password, recuerdame }),
   });
-  return data; // { token, usuario }
+  return data;
 }
 
 export async function logoutApi() {
@@ -39,6 +39,13 @@ export async function logoutApi() {
 
 export async function getCurrentUser() {
   return safeFetch('/api/auth/me');
+}
+
+export async function changePassword(data) {
+  return safeFetch('/api/auth/change-password', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
 }
 
 // ===== PERFIL =====
@@ -51,6 +58,15 @@ export async function updateProfile(data) {
     method: 'PUT',
     body: JSON.stringify(data),
   });
+}
+
+// ===== CATÁLOGOS =====
+export async function getCountries() {
+  return safeFetch('/api/catalogs/countries');
+}
+
+export async function getCities(countryId) {
+  return safeFetch(`/api/catalogs/countries/${countryId}/cities`);
 }
 
 // ===== SUPER ADMIN =====
@@ -69,22 +85,36 @@ export async function getSuperAdminRecentCondos() {
 
 // Condominios
 export async function getCondominiums() {
-  return safeFetch('/api/super-admin/condominiums');
+  return safeFetch('/api/super-admin/condominiums?page=0&size=100');
 }
 
 export async function createCondominium(data) {
+  // El backend espera idPais e idCiudad
   return safeFetch('/api/super-admin/condominiums', {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      nombre: data.nombre,
+      direccion: data.direccion,
+      idPais: data.idPais,   // cambiar de paisId a idPais
+      idCiudad: data.idCiudad, // cambiar de ciudadId a idCiudad
+      activo: true,
+    }),
   });
 }
 
 export async function updateCondominium(id, data) {
   return safeFetch(`/api/super-admin/condominiums/${id}`, {
     method: 'PUT',
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      nombre: data.nombre,
+      direccion: data.direccion,
+      idPais: data.idPais,
+      idCiudad: data.idCiudad,
+      activo: data.activo !== undefined ? data.activo : true,
+    }),
   });
 }
+
 
 export async function deleteCondominium(id) {
   return safeFetch(`/api/super-admin/condominiums/${id}`, {
@@ -105,7 +135,7 @@ export async function getUnassignedCondominiums() {
 
 // Administradores
 export async function getAdministrators() {
-  return safeFetch('/api/super-admin/administrators');
+  return safeFetch('/api/super-admin/administrators?page=0&size=100');
 }
 
 export async function createAdministrator(data) {
@@ -138,7 +168,7 @@ export async function patchAdministratorStatus(id, activo) {
 export async function assignAdministratorCondo(adminId, condominioId) {
   return safeFetch(`/api/super-admin/administrators/${adminId}/assign-condo`, {
     method: 'PUT',
-    body: JSON.stringify({ condominioId }),
+    body: JSON.stringify({ idCondominio: condominioId }),
   });
 }
 
@@ -146,7 +176,7 @@ export async function getAvailableAdministrators() {
   return safeFetch('/api/super-admin/administrators/available');
 }
 
-// Usuarios globales
+// Usuarios globales (CRUD usando endpoints de admin)
 export async function getAllUsers() {
   return safeFetch('/api/super-admin/users');
 }
@@ -161,7 +191,7 @@ export async function patchUserStatus(userId, activo) {
 export async function forceUserPassword(userId, nuevaContrasena) {
   return safeFetch(`/api/super-admin/users/${userId}/force-password`, {
     method: 'PUT',
-    body: JSON.stringify({ contrasena: nuevaContrasena }),
+    body: JSON.stringify({ nuevaContrasena }),
   });
 }
 

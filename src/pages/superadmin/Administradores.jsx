@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiCheckCircle, FiXCircle } from 'react-icons/fi';
+import { useState, useEffect, useMemo } from 'react';
+import { FiPlus, FiEdit2, FiTrash2, FiCheckCircle, FiXCircle, FiSearch, FiArrowUp, FiArrowDown } from 'react-icons/fi';
 import {
     getAdministrators,
     createAdministrator,
@@ -7,87 +7,196 @@ import {
     deleteAdministrator,
     patchAdministratorStatus,
     assignAdministratorCondo,
-    getUnassignedCondominiums,
+    getCondominiums,
 } from '../../services/api';
-import { Modal, Form, Button, Table, Badge } from 'react-bootstrap';
+import { Modal, Form, Button, Table, Badge, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
+import { toast } from 'react-toastify';
 
 export default function Administradores() {
     const [admins, setAdmins] = useState([]);
+    const [condominios, setCondominios] = useState([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editing, setEditing] = useState(null);
-    const [unassignedCondos, setUnassignedCondos] = useState([]);
     const [form, setForm] = useState({
         nombres: '',
         apellidos: '',
         correo: '',
         telefono: '',
         contrasena: '',
-        condominioId: '',
+        idCondominio: '',
     });
     const [error, setError] = useState(null);
+    const [submitting, setSubmitting] = useState(false);
+
+    // Filtros
+    const [searchTerm, setSearchTerm] = useState('');
+    const [condominioFilter, setCondominioFilter] = useState('');
+    const [estadoFilter, setEstadoFilter] = useState('');
+    const [sortOrder, setSortOrder] = useState('asc'); // 'asc' o 'desc'
+    const [sortField, setSortField] = useState('nombre'); // 'nombre', 'correo', 'estado'
+
+    // Mapa de condominios ocupados
+    const [occupiedCondos, setOccupiedCondos] = useState(new Set());
 
     const loadAll = async () => {
+        setLoading(true);
+        setError(null);
         try {
-            const [adminsData, unassigned] = await Promise.all([
+            const [adminsData, condosData] = await Promise.all([
                 getAdministrators(),
-                getUnassignedCondominiums().catch(() => []),
+                getCondominiums(),
             ]);
-            console.log('Respuesta de administradores:', adminsData);
-            let adminsList = adminsData;
-            if (!Array.isArray(adminsList)) {
-                adminsList = adminsData?.content || adminsData?.data || adminsData?.items || [];
+
+            let adminsList = [];
+            if (Array.isArray(adminsData)) {
+                adminsList = adminsData;
+            } else if (adminsData?.items && Array.isArray(adminsData.items)) {
+                adminsList = adminsData.items;
+            } else if (adminsData?.content && Array.isArray(adminsData.content)) {
+                adminsList = adminsData.content;
+            } else if (adminsData?.data && Array.isArray(adminsData.data)) {
+                adminsList = adminsData.data;
             }
-            let unassignedList = unassigned;
-            if (!Array.isArray(unassignedList)) {
-                unassignedList = unassigned?.content || unassigned?.data || unassigned?.items || [];
+
+            let condosList = [];
+            if (Array.isArray(condosData)) {
+                condosList = condosData;
+            } else if (condosData?.items && Array.isArray(condosData.items)) {
+                condosList = condosData.items;
+            } else if (condosData?.content && Array.isArray(condosData.content)) {
+                condosList = condosData.content;
+            } else if (condosData?.data && Array.isArray(condosData.data)) {
+                condosList = condosData.data;
             }
+
+            // Construir set de condominios ocupados
+            const occupied = new Set();
+            adminsList.forEach(admin => {
+                if (admin.activo && admin.idCondominio !== null && admin.idCondominio !== undefined) {
+                    occupied.add(admin.idCondominio);
+                }
+            });
+            setOccupiedCondos(occupied);
             setAdmins(adminsList);
-            setUnassignedCondos(unassignedList);
-            setError(null);
+            setCondominios(condosList);
         } catch (err) {
-            console.error(err);
-            setError(err.message || 'Error al cargar administradores');
+            console.error('Error en loadAll:', err);
+            setError(err.message);
             setAdmins([]);
-            setUnassignedCondos([]);
+            setCondominios([]);
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => { loadAll(); }, []);
+    useEffect(() => {
+        loadAll();
+    }, []);
+
+    // Filtrar y ordenar
+    const filteredAndSorted = useMemo(() => {
+        let result = admins.filter(a => {
+            const fullName = `${a.nombres || ''} ${a.apellidos || ''}`.toLowerCase();
+            const email = (a.correo || '').toLowerCase();
+            const search = searchTerm.toLowerCase();
+            const matchSearch = fullName.includes(search) || email.includes(search);
+            const matchCondo = condominioFilter ? a.idCondominio === parseInt(condominioFilter, 10) : true;
+            const matchEstado = estadoFilter !== '' ? (estadoFilter === 'activo' ? a.activo : !a.activo) : true;
+            return matchSearch && matchCondo && matchEstado;
+        });
+
+        // Ordenar
+        result.sort((a, b) => {
+            let valA, valB;
+            if (sortField === 'nombre') {
+                valA = `${a.nombres || ''} ${a.apellidos || ''}`.toLowerCase();
+                valB = `${b.nombres || ''} ${b.apellidos || ''}`.toLowerCase();
+            } else if (sortField === 'correo') {
+                valA = (a.correo || '').toLowerCase();
+                valB = (b.correo || '').toLowerCase();
+            } else if (sortField === 'estado') {
+                valA = a.activo ? 1 : 0;
+                valB = b.activo ? 1 : 0;
+            } else {
+                return 0;
+            }
+            if (sortOrder === 'asc') {
+                return valA > valB ? 1 : valA < valB ? -1 : 0;
+            } else {
+                return valA < valB ? 1 : valA > valB ? -1 : 0;
+            }
+        });
+        return result;
+    }, [admins, searchTerm, condominioFilter, estadoFilter, sortField, sortOrder]);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setSubmitting(true);
         try {
             if (editing) {
-                // Actualizar datos básicos
-                await updateAdministrator(editing.id, {
-                    nombres: form.nombres,
-                    apellidos: form.apellidos,
-                    correo: form.correo,
-                    telefono: form.telefono,
-                });
-                // Si se seleccionó un condominio, asignarlo
-                if (form.condominioId) {
-                    await assignAdministratorCondo(editing.id, form.condominioId);
+                const updatePayload = {
+                    nombres: form.nombres.trim(),
+                    apellidos: form.apellidos.trim(),
+                    correo: form.correo.trim(),
+                    telefono: form.telefono.trim(),
+                };
+                await updateAdministrator(editing.id, updatePayload);
+
+                const newCondoId = form.idCondominio ? parseInt(form.idCondominio, 10) : null;
+                const oldCondoId = editing.idCondominio ? parseInt(editing.idCondominio, 10) : null;
+
+                if (newCondoId !== oldCondoId) {
+                    if (newCondoId !== null) {
+                        if (occupiedCondos.has(newCondoId)) {
+                            toast.error('Este condominio ya tiene un administrador asignado. Solo puede tener uno.');
+                            setSubmitting(false);
+                            return;
+                        }
+                        const selectedCondo = condominios.find(c => c.id === newCondoId);
+                        if (selectedCondo && !selectedCondo.activo) {
+                            toast.error('No se puede asignar un condominio desactivado.');
+                            setSubmitting(false);
+                            return;
+                        }
+                        await assignAdministratorCondo(editing.id, newCondoId);
+                        toast.success('Condominio asignado correctamente.');
+                    } else {
+                        try {
+                            await assignAdministratorCondo(editing.id, null);
+                            toast.info('Administrador desasignado del condominio.');
+                        } catch (err) {
+                            if (err.message.includes('no puede ser null')) {
+                                toast.warning('El backend no permite desasignar. Solo se puede cambiar a otro condominio.');
+                            } else {
+                                toast.error(`Error al desasignar: ${err.message}`);
+                            }
+                            setSubmitting(false);
+                            return;
+                        }
+                    }
                 }
             } else {
-                // Crear nuevo (sin condominioId)
-                const { condominioId, ...createData } = form;
-                await createAdministrator(createData);
-                // Si se seleccionó un condominio, asignarlo después de crear
-                if (condominioId) {
-                    // Nota: necesitamos el ID del nuevo admin; la API debería devolverlo.
-                    // Si no lo devuelve, este paso fallará.
-                    // Por simplicidad, omitimos la asignación automática aquí.
-                    // Se puede hacer manualmente después.
+                const createPayload = {
+                    nombres: form.nombres.trim(),
+                    apellidos: form.apellidos.trim(),
+                    correo: form.correo.trim(),
+                    telefono: form.telefono.trim(),
+                    contrasena: form.contrasena.trim(),
+                };
+                await createAdministrator(createPayload);
+                toast.success('Administrador creado correctamente.');
+                if (form.idCondominio) {
+                    toast.info('Condominio no asignado automáticamente. Edita el administrador para asignarlo.');
                 }
             }
             setShowModal(false);
-            loadAll();
-        } catch (error) {
-            alert(error.message);
+            setTimeout(() => loadAll(), 300);
+        } catch (err) {
+            console.error('Error en handleSubmit:', err);
+            toast.error(`Error: ${err.message}`);
+        } finally {
+            setSubmitting(false);
         }
     };
 
@@ -95,81 +204,246 @@ export default function Administradores() {
         if (!window.confirm('¿Eliminar administrador?')) return;
         try {
             await deleteAdministrator(id);
-            loadAll();
-        } catch (error) {
-            alert(error.message);
+            toast.success('Administrador eliminado.');
+            await loadAll();
+        } catch (err) {
+            toast.error(`Error al eliminar: ${err.message}`);
         }
     };
 
     const handleToggleStatus = async (id, activo) => {
         try {
             await patchAdministratorStatus(id, !activo);
-            loadAll();
-        } catch (error) {
-            alert(error.message);
+            toast.success(`Administrador ${!activo ? 'activado' : 'desactivado'}.`);
+            await loadAll();
+        } catch (err) {
+            toast.error(`Error al cambiar estado: ${err.message}`);
         }
     };
 
-    if (loading) return <div className="text-center py-5">Cargando administradores...</div>;
-    if (error) return <div className="text-danger text-center">{error}</div>;
+    if (loading)
+        return (
+            <div className="text-center py-5">
+                <Spinner animation="border" variant="primary" />
+                <p className="mt-2">Cargando administradores...</p>
+            </div>
+        );
+    if (error)
+        return (
+            <div className="text-center text-danger py-5">
+                <p><strong>Error:</strong> {error}</p>
+                <Button variant="outline-primary" onClick={loadAll}>Reintentar</Button>
+            </div>
+        );
+
+    const getCondoOptions = () => {
+        const options = [];
+        condominios.forEach(c => {
+            const isOccupied = occupiedCondos.has(c.id);
+            const isCurrentAdminCondo = editing && editing.idCondominio === c.id;
+            if (!editing && isOccupied) return;
+            const disabled = isOccupied && !isCurrentAdminCondo;
+            options.push({
+                id: c.id,
+                nombre: c.nombre,
+                activo: c.activo,
+                disabled: disabled,
+                label: disabled ? `${c.nombre} (ocupado)` : c.nombre,
+            });
+        });
+        return options;
+    };
+
+    const condominioOptions = getCondoOptions();
+
+    // Helper para el ícono de orden
+    const getSortIcon = (field) => {
+        if (sortField !== field) return null;
+        return sortOrder === 'asc' ? <FiArrowUp size={14} /> : <FiArrowDown size={14} />;
+    };
+
+    const toggleSort = (field) => {
+        if (sortField === field) {
+            setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+        } else {
+            setSortField(field);
+            setSortOrder('asc');
+        }
+    };
 
     return (
         <div style={{ padding: '1.5rem' }}>
             <div className="d-flex justify-content-between align-items-center mb-4">
-                <h1 style={{ fontWeight: 800, color: '#3b82f6' }}>Administradores</h1>
-                <Button onClick={() => { setEditing(null); setForm({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', condominioId: '' }); setShowModal(true); }}>
+                <h1 style={{ fontWeight: 700, color: '#1e293b' }}>Administradores</h1>
+                <Button variant="primary" onClick={() => {
+                    setEditing(null);
+                    setForm({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', idCondominio: '' });
+                    setShowModal(true);
+                }}>
                     <FiPlus className="me-2" /> Nuevo
                 </Button>
             </div>
 
-            {admins.length === 0 ? (
-                <p>No hay administradores registrados.</p>
-            ) : (
-                <Table striped bordered hover responsive>
-                    <thead>
-                        <tr>
-                            <th>Nombre</th>
-                            <th>Correo</th>
-                            <th>Teléfono</th>
-                            <th>Condominio</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {admins.map((a) => (
-                            <tr key={a.id}>
-                                <td>{a.nombres} {a.apellidos}</td>
-                                <td>{a.correo}</td>
-                                <td>{a.telefono}</td>
-                                <td>{a.condominio?.nombre || 'Sin asignar'}</td>
-                                <td>
-                                    <Badge bg={a.activo ? 'success' : 'secondary'}>
-                                        {a.activo ? 'Activo' : 'Inactivo'}
-                                    </Badge>
-                                </td>
-                                <td>
-                                    <Button variant="outline-primary" size="sm" className="me-2"
-                                        onClick={() => { setEditing(a); setForm({ ...a, contrasena: '', condominioId: a.condominio?.id || '' }); setShowModal(true); }}>
-                                        <FiEdit2 />
-                                    </Button>
-                                    <Button variant="outline-warning" size="sm" className="me-2"
-                                        onClick={() => handleToggleStatus(a.id, a.activo)}>
-                                        {a.activo ? <FiXCircle /> : <FiCheckCircle />}
-                                    </Button>
-                                    <Button variant="outline-danger" size="sm"
-                                        onClick={() => handleDelete(a.id)}>
-                                        <FiTrash2 />
-                                    </Button>
-                                </td>
-                            </tr>
+            {/* Filtros y orden */}
+            <Row className="mb-4 g-2 align-items-end">
+                <Col md={3}>
+                    <InputGroup>
+                        <InputGroup.Text><FiSearch /></InputGroup.Text>
+                        <Form.Control
+                            id="searchAdmin"
+                            name="searchAdmin"
+                            placeholder="Buscar por nombre o correo..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            aria-label="Buscar administrador"
+                        />
+                    </InputGroup>
+                </Col>
+                <Col md={2}>
+                    <Form.Label htmlFor="filterCondo" srOnly>Filtrar por condominio</Form.Label>
+                    <Form.Select
+                        id="filterCondo"
+                        name="filterCondo"
+                        value={condominioFilter}
+                        onChange={(e) => setCondominioFilter(e.target.value)}
+                        aria-label="Filtrar por condominio"
+                    >
+                        <option value="">Todos los condominios</option>
+                        {condominios.map(c => (
+                            <option key={c.id} value={c.id}>
+                                {c.nombre} {!c.activo ? '(inactivo)' : ''}
+                            </option>
                         ))}
-                    </tbody>
-                </Table>
+                    </Form.Select>
+                </Col>
+                <Col md={2}>
+                    <Form.Label htmlFor="filterEstado" srOnly>Filtrar por estado</Form.Label>
+                    <Form.Select
+                        id="filterEstado"
+                        name="filterEstado"
+                        value={estadoFilter}
+                        onChange={(e) => setEstadoFilter(e.target.value)}
+                        aria-label="Filtrar por estado"
+                    >
+                        <option value="">Todos los estados</option>
+                        <option value="activo">Activo</option>
+                        <option value="inactivo">Inactivo</option>
+                    </Form.Select>
+                </Col>
+                <Col md={2}>
+                    <Form.Label htmlFor="sortOrder" srOnly>Ordenar por</Form.Label>
+                    <Form.Select
+                        id="sortOrder"
+                        name="sortOrder"
+                        value={`${sortField}-${sortOrder}`}
+                        onChange={(e) => {
+                            const [field, order] = e.target.value.split('-');
+                            setSortField(field);
+                            setSortOrder(order);
+                        }}
+                        aria-label="Ordenar por"
+                    >
+                        <option value="nombre-asc">Nombre A-Z</option>
+                        <option value="nombre-desc">Nombre Z-A</option>
+                        <option value="correo-asc">Correo A-Z</option>
+                        <option value="correo-desc">Correo Z-A</option>
+                        <option value="estado-asc">Estado (Activo primero)</option>
+                        <option value="estado-desc">Estado (Inactivo primero)</option>
+                    </Form.Select>
+                </Col>
+                <Col md={3} className="text-end">
+                    <Button variant="outline-secondary" onClick={() => {
+                        setSearchTerm('');
+                        setCondominioFilter('');
+                        setEstadoFilter('');
+                    }}>
+                        Limpiar filtros
+                    </Button>
+                </Col>
+            </Row>
+
+            {filteredAndSorted.length === 0 ? (
+                <div className="text-center py-4">
+                    <p>No hay administradores que coincidan con los filtros.</p>
+                    {admins.length === 0 && <p>No hay administradores registrados en el sistema.</p>}
+                </div>
+            ) : (
+                <div className="table-responsive">
+                    <Table striped hover bordered={false} className="shadow-sm rounded overflow-hidden">
+                        <thead className="bg-light">
+                            <tr>
+                                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('nombre')}>
+                                    Nombre {getSortIcon('nombre')}
+                                </th>
+                                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('correo')}>
+                                    Correo {getSortIcon('correo')}
+                                </th>
+                                <th>Teléfono</th>
+                                <th>Condominio</th>
+                                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('estado')}>
+                                    Estado {getSortIcon('estado')}
+                                </th>
+                                <th>Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredAndSorted.map(a => (
+                                <tr key={a.id}>
+                                    <td><strong>{a.nombres} {a.apellidos}</strong></td>
+                                    <td>{a.correo}</td>
+                                    <td>{a.telefono}</td>
+                                    <td>{a.nombreCondominio || <span className="text-muted">Sin asignar</span>}</td>
+                                    <td>
+                                        <Badge bg={a.activo ? 'success' : 'secondary'} pill>
+                                            {a.activo ? 'Activo' : 'Inactivo'}
+                                        </Badge>
+                                    </td>
+                                    <td>
+                                        <Button
+                                            variant="outline-primary"
+                                            size="sm"
+                                            className="me-2"
+                                            onClick={() => {
+                                                setEditing(a);
+                                                setForm({
+                                                    nombres: a.nombres,
+                                                    apellidos: a.apellidos,
+                                                    correo: a.correo,
+                                                    telefono: a.telefono || '',
+                                                    contrasena: '',
+                                                    idCondominio: a.idCondominio?.toString() || '',
+                                                });
+                                                setShowModal(true);
+                                            }}
+                                        >
+                                            <FiEdit2 />
+                                        </Button>
+                                        <Button
+                                            variant="outline-warning"
+                                            size="sm"
+                                            className="me-2"
+                                            onClick={() => handleToggleStatus(a.id, a.activo)}
+                                        >
+                                            {a.activo ? <FiXCircle /> : <FiCheckCircle />}
+                                        </Button>
+                                        <Button
+                                            variant="outline-danger"
+                                            size="sm"
+                                            onClick={() => handleDelete(a.id)}
+                                        >
+                                            <FiTrash2 />
+                                        </Button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
+                </div>
             )}
 
-            <Modal show={showModal} onHide={() => setShowModal(false)}>
-                <Modal.Header closeButton>
+            {/* Modal igual que antes, solo mejoras visuales menores */}
+            <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+                <Modal.Header closeButton className="bg-light">
                     <Modal.Title>{editing ? 'Editar' : 'Nuevo'} administrador</Modal.Title>
                 </Modal.Header>
                 <Form onSubmit={handleSubmit}>
@@ -232,19 +506,29 @@ export default function Administradores() {
                             <Form.Select
                                 id="adminCondo"
                                 name="adminCondo"
-                                value={form.condominioId || ''}
-                                onChange={(e) => setForm({ ...form, condominioId: e.target.value })}
+                                value={form.idCondominio}
+                                onChange={(e) => setForm({ ...form, idCondominio: e.target.value })}
                             >
                                 <option value="">Sin asignar</option>
-                                {unassignedCondos.map((c) => (
-                                    <option key={c.id} value={c.id}>{c.nombre}</option>
+                                {condominioOptions.map(c => (
+                                    <option key={c.id} value={c.id} disabled={c.disabled}>
+                                        {c.label}
+                                    </option>
                                 ))}
                             </Form.Select>
+                            <small className="text-muted">
+                                {editing && form.idCondominio &&
+                                    condominios.find(c => c.id === parseInt(form.idCondominio))?.activo === false &&
+                                    ' ⚠️ Este condominio está inactivo'
+                                }
+                            </small>
                         </Form.Group>
                     </Modal.Body>
                     <Modal.Footer>
                         <Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
-                        <Button type="submit">Guardar</Button>
+                        <Button type="submit" disabled={submitting}>
+                            {submitting ? 'Guardando...' : 'Guardar'}
+                        </Button>
                     </Modal.Footer>
                 </Form>
             </Modal>
