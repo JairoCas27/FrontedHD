@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { FiSearch, FiLock, FiRefreshCw, FiX, FiCheck, FiPlus, FiEdit2 } from 'react-icons/fi';
+import { useState, useEffect, useMemo } from 'react';
+import { FiSearch, FiLock, FiRefreshCw, FiX, FiCheck, FiPlus, FiEdit2, FiArrowUp, FiArrowDown } from 'react-icons/fi';
 import {
   getAllUsers,
   patchUserStatus,
@@ -10,7 +10,7 @@ import {
   updateAdministrator,
   assignAdministratorCondo,
 } from '../../services/api';
-import { Modal, Form, Button, Table, Badge, InputGroup, Row, Col } from 'react-bootstrap';
+import { Modal, Form, Button, Table, Badge, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 
 export default function UsuariosGlobales() {
@@ -23,6 +23,8 @@ export default function UsuariosGlobales() {
     estado: '',
     condominio: '',
   });
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [sortField, setSortField] = useState('nombre');
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [form, setForm] = useState({
@@ -97,16 +99,43 @@ export default function UsuariosGlobales() {
     loadData();
   }, []);
 
-  const filtered = users.filter(u => {
-    const fullName = `${u.nombres || ''} ${u.apellidos || ''}`.toLowerCase();
-    const email = (u.correo || '').toLowerCase();
-    const search = filters.search.toLowerCase();
-    const matchSearch = fullName.includes(search) || email.includes(search);
-    const matchRol = filters.rol ? u.rol === filters.rol : true;
-    const matchEstado = filters.estado !== '' ? (filters.estado === 'activo' ? u.activo : !u.activo) : true;
-    const matchCondo = filters.condominio ? u.idCondominio === parseInt(filters.condominio, 10) : true;
-    return matchSearch && matchRol && matchEstado && matchCondo;
-  });
+  const filteredAndSorted = useMemo(() => {
+    let result = users.filter(u => {
+      const fullName = `${u.nombres || ''} ${u.apellidos || ''}`.toLowerCase();
+      const email = (u.correo || '').toLowerCase();
+      const search = filters.search.toLowerCase();
+      const matchSearch = fullName.includes(search) || email.includes(search);
+      const matchRol = filters.rol ? u.rol === filters.rol : true;
+      const matchEstado = filters.estado !== '' ? (filters.estado === 'activo' ? u.activo : !u.activo) : true;
+      const matchCondo = filters.condominio ? u.idCondominio === parseInt(filters.condominio, 10) : true;
+      return matchSearch && matchRol && matchEstado && matchCondo;
+    });
+
+    result.sort((a, b) => {
+      let valA, valB;
+      if (sortField === 'nombre') {
+        valA = `${a.nombres || ''} ${a.apellidos || ''}`.toLowerCase();
+        valB = `${b.nombres || ''} ${b.apellidos || ''}`.toLowerCase();
+      } else if (sortField === 'correo') {
+        valA = (a.correo || '').toLowerCase();
+        valB = (b.correo || '').toLowerCase();
+      } else if (sortField === 'rol') {
+        valA = a.rol || '';
+        valB = b.rol || '';
+      } else if (sortField === 'estado') {
+        valA = a.activo ? 1 : 0;
+        valB = b.activo ? 1 : 0;
+      } else {
+        return 0;
+      }
+      if (sortOrder === 'asc') {
+        return valA > valB ? 1 : valA < valB ? -1 : 0;
+      } else {
+        return valA < valB ? 1 : valA > valB ? -1 : 0;
+      }
+    });
+    return result;
+  }, [users, filters, sortField, sortOrder]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -176,18 +205,14 @@ export default function UsuariosGlobales() {
   };
 
   const handleForcePassword = async (userId) => {
-    // Validar que no esté vacío
     if (!newPassword || newPassword.trim() === '') {
       toast.warning('La contraseña no puede estar vacía');
       return;
     }
-
-    // Validar longitud mínima (6 caracteres)
     if (newPassword.length < 6) {
       toast.error('La contraseña debe tener al menos 6 caracteres.');
       return;
     }
-
     try {
       await forceUserPassword(userId, newPassword.trim());
       toast.success('Contraseña actualizada correctamente.');
@@ -212,13 +237,34 @@ export default function UsuariosGlobales() {
     }
   };
 
-  if (loading) return <div className="text-center py-5">Cargando usuarios...</div>;
-  if (error) return (
-    <div className="text-center text-danger py-5">
-      <p><strong>Error:</strong> {error}</p>
-      <Button variant="outline-primary" onClick={loadData}>Reintentar</Button>
-    </div>
-  );
+  const toggleSort = (field) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const getSortIcon = (field) => {
+    if (sortField !== field) return null;
+    return sortOrder === 'asc' ? <FiArrowUp size={14} /> : <FiArrowDown size={14} />;
+  };
+
+  if (loading)
+    return (
+      <div className="text-center py-5">
+        <Spinner animation="border" variant="primary" />
+        <p className="mt-2">Cargando usuarios...</p>
+      </div>
+    );
+  if (error)
+    return (
+      <div className="text-center text-danger py-5">
+        <p><strong>Error:</strong> {error}</p>
+        <Button variant="outline-primary" onClick={loadData}>Reintentar</Button>
+      </div>
+    );
 
   const condominioOptions = condominios.map(c => ({
     id: c.id,
@@ -230,27 +276,25 @@ export default function UsuariosGlobales() {
   return (
     <div style={{ padding: '1.5rem' }}>
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 style={{ fontWeight: 800, color: '#3b82f6' }}>Usuarios del Sistema</h1>
-        <Button
-          onClick={() => {
-            setEditingUser(null);
-            setForm({
-              nombres: '',
-              apellidos: '',
-              correo: '',
-              telefono: '',
-              contrasena: '',
-              rol: 'ADMINISTRADOR_CONDOMINIO',
-              idCondominio: '',
-            });
-            setShowModal(true);
-          }}
-        >
+        <h1 style={{ fontWeight: 700, color: '#1e293b' }}>Usuarios del Sistema</h1>
+        <Button variant="primary" onClick={() => {
+          setEditingUser(null);
+          setForm({
+            nombres: '',
+            apellidos: '',
+            correo: '',
+            telefono: '',
+            contrasena: '',
+            rol: 'ADMINISTRADOR_CONDOMINIO',
+            idCondominio: '',
+          });
+          setShowModal(true);
+        }}>
           <FiPlus className="me-2" /> Nuevo Usuario
         </Button>
       </div>
 
-      <Row className="mb-4 g-2">
+      <Row className="mb-4 g-2 align-items-end">
         <Col md={3}>
           <InputGroup>
             <InputGroup.Text><FiSearch /></InputGroup.Text>
@@ -293,7 +337,7 @@ export default function UsuariosGlobales() {
             <option value="inactivo">Inactivo</option>
           </Form.Select>
         </Col>
-        <Col md={3}>
+        <Col md={2}>
           <Form.Label htmlFor="filterCondo" srOnly>Filtrar por condominio</Form.Label>
           <Form.Select
             id="filterCondo"
@@ -308,115 +352,137 @@ export default function UsuariosGlobales() {
             ))}
           </Form.Select>
         </Col>
-        <Col md={2} className="text-end">
+        <Col md={3} className="text-end">
           <Button variant="outline-secondary" onClick={() => {
             setFilters({ search: '', rol: '', estado: '', condominio: '' });
           }}>
             Limpiar filtros
           </Button>
+          <Form.Select
+            className="mt-1"
+            value={`${sortField}-${sortOrder}`}
+            onChange={(e) => {
+              const [field, order] = e.target.value.split('-');
+              setSortField(field);
+              setSortOrder(order);
+            }}
+            aria-label="Ordenar por"
+          >
+            <option value="nombre-asc">Nombre A-Z</option>
+            <option value="nombre-desc">Nombre Z-A</option>
+            <option value="correo-asc">Correo A-Z</option>
+            <option value="correo-desc">Correo Z-A</option>
+            <option value="rol-asc">Rol A-Z</option>
+            <option value="rol-desc">Rol Z-A</option>
+            <option value="estado-asc">Estado (Activo primero)</option>
+            <option value="estado-desc">Estado (Inactivo primero)</option>
+          </Form.Select>
         </Col>
       </Row>
 
-      {filtered.length === 0 ? (
+      {filteredAndSorted.length === 0 ? (
         <div className="text-center py-4">
           <p>No hay usuarios que coincidan con los filtros.</p>
           {users.length === 0 && <p>No hay usuarios registrados en el sistema.</p>}
-          {users.length > 0 && (
-            <Button variant="outline-secondary" onClick={() => {
-              setFilters({ search: '', rol: '', estado: '', condominio: '' });
-            }}>
-              Limpiar filtros
-            </Button>
-          )}
         </div>
       ) : (
-        <Table striped bordered hover responsive>
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>Correo</th>
-              <th>Teléfono</th>
-              <th>Rol</th>
-              <th>Condominio</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(u => {
-              const isAdmin = u.rol === 'ADMINISTRADOR_CONDOMINIO';
-              return (
-                <tr key={u.id}>
-                  <td>{u.nombres} {u.apellidos}</td>
-                  <td>{u.correo}</td>
-                  <td>{u.telefono}</td>
-                  <td><Badge bg="info">{u.rol}</Badge></td>
-                  <td>{u.nombreCondominio || 'Sin asignar'}</td>
-                  <td>
-                    <Badge bg={u.activo ? 'success' : 'secondary'}>
-                      {u.activo ? 'Activo' : 'Inactivo'}
-                    </Badge>
-                  </td>
-                  <td>
-                    {isAdmin && (
+        <div className="table-responsive">
+          <Table striped hover bordered={false} className="shadow-sm rounded overflow-hidden">
+            <thead className="bg-light">
+              <tr>
+                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('nombre')}>
+                  Nombre {getSortIcon('nombre')}
+                </th>
+                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('correo')}>
+                  Correo {getSortIcon('correo')}
+                </th>
+                <th>Teléfono</th>
+                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('rol')}>
+                  Rol {getSortIcon('rol')}
+                </th>
+                <th>Condominio</th>
+                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('estado')}>
+                  Estado {getSortIcon('estado')}
+                </th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredAndSorted.map(u => {
+                const isAdmin = u.rol === 'ADMINISTRADOR_CONDOMINIO';
+                return (
+                  <tr key={u.id}>
+                    <td><strong>{u.nombres} {u.apellidos}</strong></td>
+                    <td>{u.correo}</td>
+                    <td>{u.telefono}</td>
+                    <td><Badge bg="info">{u.rol}</Badge></td>
+                    <td>{u.nombreCondominio || <span className="text-muted">Sin asignar</span>}</td>
+                    <td>
+                      <Badge bg={u.activo ? 'success' : 'secondary'} pill>
+                        {u.activo ? 'Activo' : 'Inactivo'}
+                      </Badge>
+                    </td>
+                    <td>
+                      {isAdmin && (
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
+                          className="me-2"
+                          onClick={() => {
+                            setEditingUser(u);
+                            setForm({
+                              nombres: u.nombres,
+                              apellidos: u.apellidos,
+                              correo: u.correo,
+                              telefono: u.telefono || '',
+                              contrasena: '',
+                              rol: u.rol,
+                              idCondominio: u.idCondominio?.toString() || '',
+                            });
+                            setShowModal(true);
+                          }}
+                        >
+                          <FiEdit2 />
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline-warning"
+                        size="sm"
+                        className="me-2"
+                        onClick={() => handleToggleStatus(u.id, u.activo)}
+                      >
+                        {u.activo ? <FiX /> : <FiCheck />}
+                      </Button>
                       <Button
                         variant="outline-primary"
                         size="sm"
                         className="me-2"
                         onClick={() => {
-                          setEditingUser(u);
-                          setForm({
-                            nombres: u.nombres,
-                            apellidos: u.apellidos,
-                            correo: u.correo,
-                            telefono: u.telefono || '',
-                            contrasena: '',
-                            rol: u.rol,
-                            idCondominio: u.idCondominio?.toString() || '',
-                          });
-                          setShowModal(true);
+                          setSelectedUser(u);
+                          setShowPasswordModal(true);
                         }}
                       >
-                        <FiEdit2 />
+                        <FiLock />
                       </Button>
-                    )}
-                    <Button
-                      variant="outline-warning"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => handleToggleStatus(u.id, u.activo)}
-                    >
-                      {u.activo ? <FiX /> : <FiCheck />}
-                    </Button>
-                    <Button
-                      variant="outline-primary"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => {
-                        setSelectedUser(u);
-                        setShowPasswordModal(true);
-                      }}
-                    >
-                      <FiLock />
-                    </Button>
-                    <Button
-                      variant="outline-danger"
-                      size="sm"
-                      onClick={() => handleInvalidate(u.id)}
-                    >
-                      <FiRefreshCw />
-                    </Button>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </Table>
+                      <Button
+                        variant="outline-danger"
+                        size="sm"
+                        onClick={() => handleInvalidate(u.id)}
+                      >
+                        <FiRefreshCw />
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </Table>
+        </div>
       )}
 
-      {/* Modal de creación/edición */}
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
-        <Modal.Header closeButton>
+      {/* Modales (igual que antes) */}
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+        <Modal.Header closeButton className="bg-light">
           <Modal.Title>{editingUser ? 'Editar' : 'Nuevo'} usuario</Modal.Title>
         </Modal.Header>
         <Form onSubmit={handleSubmit}>
@@ -524,9 +590,8 @@ export default function UsuariosGlobales() {
         </Form>
       </Modal>
 
-      {/* Modal para forzar contraseña */}
-      <Modal show={showPasswordModal} onHide={() => setShowPasswordModal(false)}>
-        <Modal.Header closeButton>
+      <Modal show={showPasswordModal} onHide={() => setShowPasswordModal(false)} centered>
+        <Modal.Header closeButton className="bg-light">
           <Modal.Title>Forzar cambio de contraseña</Modal.Title>
         </Modal.Header>
         <Modal.Body>
