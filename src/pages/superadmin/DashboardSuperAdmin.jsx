@@ -191,10 +191,10 @@ export default function DashboardSuperAdmin() {
         <div>
           <h1 style={{ fontWeight: 800, color: '#0f172a', marginBottom: '4px' }}>
             Dashboard Global
+            <p style={{ color: '#64748b', fontSize: '0.95rem' }}>
+              Resumen general del sistema de gestión de condominios
+            </p>
           </h1>
-          <p style={{ color: '#64748b', fontSize: '0.95rem' }}>
-            Resumen general del sistema de gestión de condominios
-          </p>
         </div>
         <Badge bg="primary" style={{ fontSize: '0.85rem', padding: '8px 16px' }}>
           <FiCalendar className="me-1" /> Actualizado: {new Date().toLocaleDateString()}
