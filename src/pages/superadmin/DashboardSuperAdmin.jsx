@@ -6,9 +6,6 @@ import {
   FiGrid,
   FiActivity,
   FiUserCheck,
-  FiUserX,
-  FiTrendingUp,
-  FiTrendingDown,
   FiCalendar,
   FiClock,
 } from 'react-icons/fi';
@@ -16,6 +13,7 @@ import {
   getSuperAdminDashboardMetrics,
   getSuperAdminRecentAdmins,
   getSuperAdminRecentCondos,
+  getCondominiums, // <-- Importamos para obtener todos los condominios
 } from '../../services/api';
 import {
   BarChart,
@@ -29,10 +27,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
-  Area,
-  AreaChart,
 } from 'recharts';
 import { Card, Badge, Row, Col, Spinner } from 'react-bootstrap';
 
@@ -54,20 +48,35 @@ export default function DashboardSuperAdmin() {
   const [metrics, setMetrics] = useState(null);
   const [recentAdmins, setRecentAdmins] = useState([]);
   const [recentCondos, setRecentCondos] = useState([]);
+  const [allCondos, setAllCondos] = useState([]); // <-- Lista completa
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     const load = async () => {
       try {
-        const [m, admins, condos] = await Promise.all([
+        // Cargar métricas, últimos administradores, últimos condominios y TODOS los condominios
+        const [m, admins, condos, allCondosData] = await Promise.all([
           getSuperAdminDashboardMetrics(),
           getSuperAdminRecentAdmins(),
           getSuperAdminRecentCondos(),
+          getCondominiums(), // <-- Llamada para obtener todos
         ]);
+
         setMetrics(m);
-        setRecentAdmins(admins);
-        setRecentCondos(condos);
+
+        // Extraer arrays correctamente (pueden venir como {items: [...]})
+        const extractItems = (data) => {
+          if (Array.isArray(data)) return data;
+          if (data?.items && Array.isArray(data.items)) return data.items;
+          if (data?.content && Array.isArray(data.content)) return data.content;
+          if (data?.data && Array.isArray(data.data)) return data.data;
+          return [];
+        };
+
+        setRecentAdmins(extractItems(admins));
+        setRecentCondos(extractItems(condos));
+        setAllCondos(extractItems(allCondosData));
       } catch (err) {
         console.error(err);
         setError(err.message);
@@ -98,46 +107,31 @@ export default function DashboardSuperAdmin() {
     );
   }
 
-  // Datos para gráficos (basados en métricas reales)
-  const roleDistribution = [
-    { name: 'Administradores', value: metrics?.totalAdministradores || 0 },
-    { name: 'Propietarios', value: metrics?.totalPropietarios || 0 },
-    // Si hay agentes de seguridad, se pueden agregar; asumimos que el resto son agentes
-    { name: 'Agentes Seguridad', value: Math.max(0, (metrics?.totalUsuarios || 0) - (metrics?.totalAdministradores || 0) - (metrics?.totalPropietarios || 0)) },
-  ].filter(item => item.value > 0);
-
-  // Datos de condominios activos/inactivos (si no vienen, los calculamos de la lista reciente)
-  const totalCondos = metrics?.totalCondominios || 0;
-  const activeCondos = recentCondos.filter(c => c.activo !== false).length || 0;
+  // ---- Cálculo de condominios activos/inactivos a partir de la lista completa ----
+  const totalCondos = allCondos.length || metrics?.totalCondominios || 0;
+  const activeCondos = allCondos.filter(c => c.activo === true).length;
   const inactiveCondos = totalCondos - activeCondos;
 
+  // Datos para gráfico de torta (solo si hay datos)
   const condoStatusData = [
     { name: 'Activos', value: activeCondos },
     { name: 'Inactivos', value: inactiveCondos },
   ].filter(item => item.value > 0);
 
-  // Datos de tendencia (simulados, pero se pueden reemplazar con datos reales si la API los entrega)
-  // Idealmente, la API debería devolver un historial de registros por mes.
-  // Simulamos con datos basados en fechas de creación de condominios recientes
-  const trendData = recentCondos
-    .slice(0, 6)
-    .map((c, i) => ({
-      name: `Mes ${i + 1}`,
-      condominios: Math.floor(Math.random() * 5) + 1, // Simulación
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-
-  // Si no hay datos de tendencia, usamos datos de ejemplo
-  const defaultTrend = [
-    { name: 'Ene', condominios: 2 },
-    { name: 'Feb', condominios: 3 },
-    { name: 'Mar', condominios: 1 },
-    { name: 'Abr', condominios: 4 },
-    { name: 'May', condominios: 2 },
-    { name: 'Jun', condominios: 5 },
-  ];
-
-  const finalTrend = trendData.length > 0 ? trendData : defaultTrend;
+  // Distribución de roles (usando métricas reales)
+  const roleDistribution = [
+    { name: 'Administradores', value: metrics?.totalAdministradores || 0 },
+    { name: 'Propietarios', value: metrics?.totalPropietarios || 0 },
+    {
+      name: 'Agentes Seguridad',
+      value: Math.max(
+        0,
+        (metrics?.totalUsuarios || 0) -
+        (metrics?.totalAdministradores || 0) -
+        (metrics?.totalPropietarios || 0)
+      ),
+    },
+  ].filter(item => item.value > 0);
 
   // Estadísticas para tarjetas
   const stats = [
@@ -195,7 +189,8 @@ export default function DashboardSuperAdmin() {
         </div>
         <Badge
           bg="primary"
-          style={{ fontSize: '0.85rem', padding: '8px 16px' }}>
+          style={{ fontSize: '0.85rem', padding: '8px 20px' }}
+        >
           <FiCalendar className="me-1" /> Actualizado: {new Date().toLocaleDateString()}
         </Badge>
       </div>
@@ -391,7 +386,7 @@ export default function DashboardSuperAdmin() {
                       <div>
                         <div className="fw-bold">{c.nombre}</div>
                         <div className="small text-muted">
-                          {c.direccion} · {c.ciudad || 'Sin ciudad'}
+                          {c.direccion} · {c.nombreCiudad || 'Sin ciudad'}
                         </div>
                       </div>
                       <div className="text-end">
