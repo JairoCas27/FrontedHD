@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiCheckCircle, FiXCircle, FiSearch } from 'react-icons/fi';
+import { useState, useEffect, useMemo } from 'react';
+import { FiPlus, FiEdit2, FiTrash2, FiCheckCircle, FiXCircle, FiSearch, FiArrowUp, FiArrowDown } from 'react-icons/fi';
 import {
   getCondominiums,
   createCondominium,
@@ -9,7 +9,7 @@ import {
   getCountries,
   getCities,
 } from '../../services/api';
-import { Modal, Form, Button, Table, Badge, InputGroup, Row, Col } from 'react-bootstrap';
+import { Modal, Form, Button, Table, Badge, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
 
 export default function Condominios() {
   const [condominios, setCondominios] = useState([]);
@@ -28,6 +28,8 @@ export default function Condominios() {
   const [searchTerm, setSearchTerm] = useState('');
   const [ciudadFilter, setCiudadFilter] = useState('');
   const [estadoFilter, setEstadoFilter] = useState('');
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [sortField, setSortField] = useState('nombre');
 
   // Catálogos
   const [paises, setPaises] = useState([]);
@@ -39,7 +41,6 @@ export default function Condominios() {
     setError(null);
     try {
       const data = await getCondominiums();
-      // La API devuelve un objeto con "items"
       let list = data?.items || data?.content || data?.data || [];
       if (!Array.isArray(list)) list = [];
       setCondominios(list);
@@ -77,16 +78,38 @@ export default function Condominios() {
     loadCatalogs();
   }, []);
 
-  // Lista de ciudades únicas para el filtro (de los condominios cargados)
   const uniqueCities = [...new Set(condominios.map(c => c.nombreCiudad).filter(Boolean))];
 
-  // Filtrar
-  const filtered = condominios.filter(c => {
-    const matchNombre = c.nombre.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchCiudad = ciudadFilter ? c.nombreCiudad === ciudadFilter : true;
-    const matchEstado = estadoFilter !== '' ? (estadoFilter === 'activo' ? c.activo : !c.activo) : true;
-    return matchNombre && matchCiudad && matchEstado;
-  });
+  const filteredAndSorted = useMemo(() => {
+    let result = condominios.filter(c => {
+      const matchNombre = c.nombre.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchCiudad = ciudadFilter ? c.nombreCiudad === ciudadFilter : true;
+      const matchEstado = estadoFilter !== '' ? (estadoFilter === 'activo' ? c.activo : !c.activo) : true;
+      return matchNombre && matchCiudad && matchEstado;
+    });
+
+    result.sort((a, b) => {
+      let valA, valB;
+      if (sortField === 'nombre') {
+        valA = a.nombre.toLowerCase();
+        valB = b.nombre.toLowerCase();
+      } else if (sortField === 'ciudad') {
+        valA = (a.nombreCiudad || '').toLowerCase();
+        valB = (b.nombreCiudad || '').toLowerCase();
+      } else if (sortField === 'estado') {
+        valA = a.activo ? 1 : 0;
+        valB = b.activo ? 1 : 0;
+      } else {
+        return 0;
+      }
+      if (sortOrder === 'asc') {
+        return valA > valB ? 1 : valA < valB ? -1 : 0;
+      } else {
+        return valA < valB ? 1 : valA > valB ? -1 : 0;
+      }
+    });
+    return result;
+  }, [condominios, searchTerm, ciudadFilter, estadoFilter, sortField, sortOrder]);
 
   const handlePaisChange = async (paisId) => {
     setForm({ ...form, idPais: paisId, idCiudad: '' });
@@ -141,50 +164,70 @@ export default function Condominios() {
     }
   };
 
-  if (loading) return <div className="text-center py-5">Cargando condominios...</div>;
-  if (error) return (
-    <div className="text-center text-danger py-5">
-      <p>{error}</p>
-      <Button variant="outline-primary" onClick={load}>Reintentar</Button>
-    </div>
-  );
+  const toggleSort = (field) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const getSortIcon = (field) => {
+    if (sortField !== field) return null;
+    return sortOrder === 'asc' ? <FiArrowUp size={14} /> : <FiArrowDown size={14} />;
+  };
+
+  if (loading)
+    return (
+      <div className="text-center py-5">
+        <Spinner animation="border" variant="primary" />
+        <p className="mt-2">Cargando condominios...</p>
+      </div>
+    );
+  if (error)
+    return (
+      <div className="text-center text-danger py-5">
+        <p>{error}</p>
+        <Button variant="outline-primary" onClick={load}>Reintentar</Button>
+      </div>
+    );
 
   return (
     <div style={{ padding: '1.5rem' }}>
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 style={{ fontWeight: 800, color: '#3b82f6' }}>Condominios</h1>
-        <Button
-          onClick={() => {
-            setEditing(null);
-            setForm({
-              nombre: '',
-              direccion: '',
-              idPais: paises.length > 0 ? paises[0].id : '',
-              idCiudad: '',
-            });
-            setShowModal(true);
-          }}
-        >
+        <h1 style={{ fontWeight: 700, color: '#1e293b' }}>Condominios</h1>
+        <Button variant="primary" onClick={() => {
+          setEditing(null);
+          setForm({
+            nombre: '',
+            direccion: '',
+            idPais: paises.length > 0 ? paises[0].id : '',
+            idCiudad: '',
+          });
+          setShowModal(true);
+        }}>
           <FiPlus className="me-2" /> Nuevo
         </Button>
       </div>
 
-      {/* Filtros */}
-      <Row className="mb-4 g-2">
-        <Col md={4}>
+      <Row className="mb-4 g-2 align-items-end">
+        <Col md={3}>
           <InputGroup>
             <InputGroup.Text><FiSearch /></InputGroup.Text>
             <Form.Control
               placeholder="Buscar por nombre..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
+              aria-label="Buscar condominio"
             />
           </InputGroup>
         </Col>
-        <Col md={3}>
+        <Col md={2}>
           <Form.Select
             value={ciudadFilter}
             onChange={(e) => setCiudadFilter(e.target.value)}
+            aria-label="Filtrar por ciudad"
           >
             <option value="">Todas las ciudades</option>
             {uniqueCities.map(ciudad => (
@@ -192,91 +235,126 @@ export default function Condominios() {
             ))}
           </Form.Select>
         </Col>
-        <Col md={3}>
+        <Col md={2}>
           <Form.Select
             value={estadoFilter}
             onChange={(e) => setEstadoFilter(e.target.value)}
+            aria-label="Filtrar por estado"
           >
             <option value="">Todos los estados</option>
             <option value="activo">Activo</option>
             <option value="inactivo">Inactivo</option>
           </Form.Select>
         </Col>
+        <Col md={2}>
+          <Form.Select
+            value={`${sortField}-${sortOrder}`}
+            onChange={(e) => {
+              const [field, order] = e.target.value.split('-');
+              setSortField(field);
+              setSortOrder(order);
+            }}
+            aria-label="Ordenar por"
+          >
+            <option value="nombre-asc">Nombre A-Z</option>
+            <option value="nombre-desc">Nombre Z-A</option>
+            <option value="ciudad-asc">Ciudad A-Z</option>
+            <option value="ciudad-desc">Ciudad Z-A</option>
+            <option value="estado-asc">Estado (Activo primero)</option>
+            <option value="estado-desc">Estado (Inactivo primero)</option>
+          </Form.Select>
+        </Col>
+        <Col md={3} className="text-end">
+          <Button variant="outline-secondary" onClick={() => {
+            setSearchTerm('');
+            setCiudadFilter('');
+            setEstadoFilter('');
+          }}>
+            Limpiar filtros
+          </Button>
+        </Col>
       </Row>
 
-      {filtered.length === 0 ? (
-        <p>No hay condominios que coincidan con los filtros.</p>
+      {filteredAndSorted.length === 0 ? (
+        <p className="text-center">No hay condominios que coincidan con los filtros.</p>
       ) : (
-        <Table striped bordered hover responsive>
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Nombre</th>
-              <th>Dirección</th>
-              <th>Ciudad</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((c) => (
-              <tr key={c.id}>
-                <td>{c.id}</td>
-                <td>{c.nombre}</td>
-                <td>{c.direccion}</td>
-                <td>{c.nombreCiudad || '-'}</td>   {/* <-- USAMOS nombreCiudad */}
-                <td>
-                  <Badge bg={c.activo ? 'success' : 'secondary'}>
-                    {c.activo ? 'Activo' : 'Inactivo'}
-                  </Badge>
-                </td>
-                <td>
-                  <Button
-                    variant="outline-primary"
-                    size="sm"
-                    className="me-2"
-                    onClick={() => {
-                      setEditing(c);
-                      setForm({
-                        nombre: c.nombre,
-                        direccion: c.direccion || '',
-                        idPais: c.idPais || (paises.length > 0 ? paises[0].id : ''),
-                        idCiudad: c.idCiudad || '',
-                      });
-                      // Cargar ciudades del país seleccionado
-                      if (c.idPais) {
-                        getCities(c.idPais).then(cities => setCiudades(cities)).catch(console.error);
-                      }
-                      setShowModal(true);
-                    }}
-                  >
-                    <FiEdit2 />
-                  </Button>
-                  <Button
-                    variant="outline-warning"
-                    size="sm"
-                    className="me-2"
-                    onClick={() => handleToggleStatus(c.id, c.activo)}
-                  >
-                    {c.activo ? <FiXCircle /> : <FiCheckCircle />}
-                  </Button>
-                  <Button
-                    variant="outline-danger"
-                    size="sm"
-                    onClick={() => handleDelete(c.id)}
-                  >
-                    <FiTrash2 />
-                  </Button>
-                </td>
+        <div className="table-responsive">
+          <Table striped hover bordered={false} className="shadow-sm rounded overflow-hidden">
+            <thead className="bg-light">
+              <tr>
+                <th>ID</th>
+                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('nombre')}>
+                  Nombre {getSortIcon('nombre')}
+                </th>
+                <th>Dirección</th>
+                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('ciudad')}>
+                  Ciudad {getSortIcon('ciudad')}
+                </th>
+                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('estado')}>
+                  Estado {getSortIcon('estado')}
+                </th>
+                <th>Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </Table>
+            </thead>
+            <tbody>
+              {filteredAndSorted.map(c => (
+                <tr key={c.id}>
+                  <td>{c.id}</td>
+                  <td><strong>{c.nombre}</strong></td>
+                  <td>{c.direccion}</td>
+                  <td>{c.nombreCiudad || '-'}</td>
+                  <td>
+                    <Badge bg={c.activo ? 'success' : 'secondary'} pill>
+                      {c.activo ? 'Activo' : 'Inactivo'}
+                    </Badge>
+                  </td>
+                  <td>
+                    <Button
+                      variant="outline-primary"
+                      size="sm"
+                      className="me-2"
+                      onClick={() => {
+                        setEditing(c);
+                        setForm({
+                          nombre: c.nombre,
+                          direccion: c.direccion || '',
+                          idPais: c.idPais || (paises.length > 0 ? paises[0].id : ''),
+                          idCiudad: c.idCiudad || '',
+                        });
+                        if (c.idPais) {
+                          getCities(c.idPais).then(cities => setCiudades(cities)).catch(console.error);
+                        }
+                        setShowModal(true);
+                      }}
+                    >
+                      <FiEdit2 />
+                    </Button>
+                    <Button
+                      variant="outline-warning"
+                      size="sm"
+                      className="me-2"
+                      onClick={() => handleToggleStatus(c.id, c.activo)}
+                    >
+                      {c.activo ? <FiXCircle /> : <FiCheckCircle />}
+                    </Button>
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      onClick={() => handleDelete(c.id)}
+                    >
+                      <FiTrash2 />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+        </div>
       )}
 
-      {/* Modal */}
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
-        <Modal.Header closeButton>
+      {/* Modal igual que antes */}
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+        <Modal.Header closeButton className="bg-light">
           <Modal.Title>{editing ? 'Editar' : 'Nuevo'} condominio</Modal.Title>
         </Modal.Header>
         <Form onSubmit={handleSubmit}>
