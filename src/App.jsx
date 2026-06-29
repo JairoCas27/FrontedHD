@@ -25,12 +25,11 @@ import Terminos from "./pages/public/Terminos"
 
 import DashboardAdmin from "./pages/admin/DashboardAdmin"
 import Usuarios from "./pages/admin/Usuarios"
-import Vehiculos from "./pages/admin/Vehiculos"
 import Estacionamientos from "./pages/admin/Estacionamientos"
-import Accesos from "./pages/admin/Accesos"
-import Visitas from "./pages/admin/Visitas"
+import Departamentos from "./pages/admin/Departamentos"
+import Bienes from "./pages/admin/Bienes"
+import Estructura from "./pages/admin/Estructura"
 import Reportes from "./pages/admin/Reportes"
-import Notificaciones from "./pages/admin/Notificaciones"
 import Configuracion from "./pages/admin/Configuracion"
 import Auditoria from "./pages/admin/Auditoria"
 import Perfil from "./pages/admin/Perfil"
@@ -62,6 +61,7 @@ function App() {
 
       <Routes>
 
+        {/* 🌐 Rutas Públicas */}
         <Route element={<PublicLayout />}>
           <Route path="/" element={<Inicio />} />
           <Route path="/inicio" element={<Inicio />} />
@@ -74,24 +74,26 @@ function App() {
           <Route path="/terminos" element={<Terminos />} />
         </Route>
 
+        {/* 🔑 Autenticación */}
         <Route element={<LoginLayout />}>
           <Route path="/login" element={<Login />} />
         </Route>
 
+        {/* 👔 Rutas Oficiales Protegidas del Administrador */}
         <Route element={<AppLayout Sidebar={SidebarAdmin} allowedRole="admin" />}>
           <Route path="/admin/dashboard" element={<DashboardAdmin />} />
           <Route path="/admin/usuarios" element={<Usuarios />} />
-          <Route path="/admin/vehiculos" element={<Vehiculos />} />
+          <Route path="/admin/departamentos" element={<Departamentos />} />
           <Route path="/admin/estacionamientos" element={<Estacionamientos />} />
-          <Route path="/admin/accesos" element={<Accesos />} />
-          <Route path="/admin/visitas" element={<Visitas />} />
+          <Route path="/admin/bienes" element={<Bienes />} />
+          <Route path="/admin/estructura" element={<Estructura />} />
           <Route path="/admin/reportes" element={<Reportes />} />
-          <Route path="/admin/notificaciones" element={<Notificaciones />} />
           <Route path="/admin/configuracion" element={<Configuracion />} />
           <Route path="/admin/auditoria" element={<Auditoria />} />
           <Route path="/admin/perfil" element={<Perfil />} />
         </Route>
 
+        {/* 👑 Rutas del SuperAdministrador */}
         <Route element={<AppLayout Sidebar={SidebarSuperAdmin} allowedRole="superadmin" />}>
           <Route path="/superadmin/dashboard" element={<DashboardSuperAdmin />} />
           <Route path="/superadmin/condominios" element={<Condominios />} />
@@ -100,6 +102,7 @@ function App() {
           <Route path="/superadmin/perfil" element={<PerfilSuperAdmin />} />
         </Route>
 
+        {/* 🛡️ Rutas de Seguridad (Vigilantes) */}
         <Route element={<AppLayout Sidebar={SidebarSeguridad} allowedRole="seguridad" />}>
           <Route path="/seguridad/accesos" element={<AccesosSeguridad />} />
           <Route path="/seguridad/visitas" element={<VisitasSeguridad />} />
@@ -109,6 +112,7 @@ function App() {
           <Route path="/seguridad/perfil" element={<PerfilSeguridad />} />
         </Route>
 
+        {/* 🏠 Rutas del Propietario / Residente */}
         <Route element={<AppLayout Sidebar={SidebarPropietario} allowedRole="propietario" />}>
           <Route path="/propietario/dashboard" element={<DashboardPropietario />} />
           <Route path="/propietario/apartamento" element={<MiApartamento />} />

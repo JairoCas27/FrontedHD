@@ -1,23 +1,22 @@
+import React from "react"
 import SidebarLayout from "./SidebarLayout"
 import {
-  FiHome, FiUsers, FiTruck, FiMapPin, FiActivity,
-  FiUserCheck, FiBarChart2, FiBell, FiSettings, FiShield, FiUser,
+  FiHome, FiUsers, FiLayers, FiMapPin, FiPackage,
+  FiBarChart2, FiSettings, FiShield, FiUser
 } from "react-icons/fi"
 
 const menuItems = [
   { section: "Principal" },
-  { title: "Dashboard", icon: <FiHome size={20} />, path: "/admin/dashboard" },
-  { section: "Gestión" },
-  { title: "Usuarios", icon: <FiUsers size={20} />, path: "/admin/usuarios" },
-  { title: "Vehículos", icon: <FiTruck size={20} />, path: "/admin/vehiculos" },
-  { title: "Estacionamientos", icon: <FiMapPin size={20} />, path: "/admin/estacionamientos" },
-  { section: "Operaciones" },
-  { title: "Accesos", icon: <FiActivity size={20} />, path: "/admin/accesos" },
-  { title: "Visitas", icon: <FiUserCheck size={20} />, path: "/admin/visitas" },
-  { section: "Análisis" },
+  { title: "Dashboard", icon: <FiHome size={20} />, path: "/dashboard" },
+  
+  { section: "Gestión Inmobiliaria" },
+  { title: "Usuarios", icon: <FiUsers size={20} />, path: "/usuarios-tanteo" },
+  { title: "Departamentos", icon: <FiLayers size={20} />, path: "/departamentos-tanteo" },
+  { title: "Estacionamientos", icon: <FiMapPin size={20} />, path: "/estacionamientos-tanteo" },
+  { title: "Bienes Comunes", icon: <FiPackage size={20} />, path: "/bienes-tanteo" },
+  
+  { section: "Análisis y Sistema" },
   { title: "Reportes", icon: <FiBarChart2 size={20} />, path: "/admin/reportes" },
-  { title: "Notificaciones", icon: <FiBell size={20} />, path: "/admin/notificaciones" },
-  { section: "Sistema" },
   { title: "Configuración", icon: <FiSettings size={20} />, path: "/admin/configuracion" },
   { title: "Auditoría", icon: <FiShield size={20} />, path: "/admin/auditoria" },
   { title: "Perfil", icon: <FiUser size={20} />, path: "/admin/perfil" },

@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import { FiUser, FiMail, FiPhone, FiMapPin, FiSave, FiLock } from "react-icons/fi"
-import { Card, Row, Col, Form, Button, Alert } from 'react-bootstrap'
 
 const perfilInicial = {
   nombre: 'Usuario Demo',
@@ -13,6 +12,8 @@ const perfilInicial = {
 const STORAGE_KEY = 'perfil_condominio_admin'
 
 export default function Perfil() {
+  const colorAdmin = "rgb(52,151,195)"
+
   const [perfil, setPerfil] = useState(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
@@ -31,7 +32,6 @@ export default function Perfil() {
   const [mensaje, setMensaje] = useState('')
   const [tipoMensaje, setTipoMensaje] = useState('success')
 
-  // Sincroniza con localStorage cada vez que perfil cambie
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(perfil))
@@ -40,14 +40,12 @@ export default function Perfil() {
     }
   }, [perfil])
 
-
   const handlePerfilSubmit = (e) => {
     e.preventDefault()
     setMensaje('Perfil actualizado correctamente')
     setTipoMensaje('success')
     setTimeout(() => setMensaje(''), 3000)
   }
-
 
   const handlePasswordSubmit = (e) => {
     e.preventDefault()
@@ -65,165 +63,145 @@ export default function Perfil() {
     setTimeout(() => setMensaje(''), 3000)
   }
 
+  // Estilos base para los inputs y labels
+  const estiloInput = {
+    width: "100%",
+    padding: "0.65rem 0.75rem",
+    borderRadius: "0.5rem",
+    border: "1px solid #cbd5e1",
+    fontSize: "0.9rem",
+    color: "#334155",
+    backgroundColor: "#ffffff",
+    boxSizing: "border-box",
+    outline: "none"
+  }
+
+  const estiloLabel = {
+    display: "block",
+    fontSize: "0.75rem",
+    fontWeight: "700",
+    color: "#475569",
+    marginBottom: "0.4rem",
+    textTransform: "uppercase",
+    letterSpacing: "0.025em"
+  }
 
   return (
-    <div>
-      <div className="mb-4">
-        <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>
-          Mi Perfil
-        </h1>
-        <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>
-          Datos personales y seguridad de cuenta
-        </p>
+    <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
+      
+      {/* 1. Cabecera */}
+      <div style={{ marginBottom: "2rem" }}>
+        <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>Mi Perfil</h1>
+        <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>Datos personales y seguridad de cuenta</p>
       </div>
 
-
+      {/* 2. Caja de Alertas Estilizada */}
       {mensaje && (
-        <Alert variant={tipoMensaje} className="mb-4">
+        <div style={{
+          padding: "1rem",
+          borderRadius: "0.5rem",
+          marginBottom: "1.5rem",
+          fontSize: "0.9rem",
+          fontWeight: "600",
+          backgroundColor: tipoMensaje === 'success' ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
+          color: tipoMensaje === 'success' ? '#10b981' : '#ef4444',
+          border: tipoMensaje === 'success' ? '1px solid rgba(16, 185, 129, 0.2)' : '1px solid rgba(239, 68, 68, 0.2)'
+        }}>
           {mensaje}
-        </Alert>
+        </div>
       )}
 
+      {/* 3. Cuadrícula de Contenedores Asimétricos */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "1.5rem", width: "100%" }}>
+        
+        {/* Columna Izquierda: Información Personal */}
+        <div style={{ flex: 1, minWidth: "300px", backgroundColor: "#ffffff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)" }}>
+          <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: "0.5rem", color: "#1e293b", fontWeight: "700" }}>
+            <FiUser size={18} style={{ color: colorAdmin }} />
+            <span>Información Personal</span>
+          </div>
+          <form onSubmit={handlePerfilSubmit} style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+            <div>
+              <label style={estiloLabel}>Nombre Completo</label>
+              <input type="text" style={estiloInput} value={perfil.nombre} onChange={(e) => setPerfil({ ...perfil, nombre: e.target.value })} />
+            </div>
+            <div>
+              <label style={estiloLabel}><FiMail size={12} /> Email</label>
+              <input type="email" style={estiloInput} value={perfil.email} onChange={(e) => setPerfil({ ...perfil, email: e.target.value })} />
+            </div>
+            <div>
+              <label style={estiloLabel}><FiPhone size={12} /> Teléfono</label>
+              <input type="tel" style={estiloInput} value={perfil.telefono} onChange={(e) => setPerfil({ ...perfil, telefono: e.target.value })} />
+            </div>
+            <div>
+              <label style={estiloLabel}><FiMapPin size={12} /> Dirección</label>
+              <input type="text" style={estiloInput} value={perfil.direccion} onChange={(e) => setPerfil({ ...perfil, direccion: e.target.value })} />
+            </div>
+            <div>
+              <label style={estiloLabel}>Rol</label>
+              <input type="text" style={{ ...estiloInput, backgroundColor: "#f8fafc", color: "#94a3b8", cursor: "not-allowed" }} value={perfil.rol} disabled readOnly />
+              <small style={{ color: "#94a3b8", fontSize: "0.75rem", display: "block", marginTop: "0.25rem" }}>El rol no puede ser modificado</small>
+            </div>
+            <button type="submit" style={{ alignSelf: "flex-start", backgroundColor: colorAdmin, color: "#fff", border: "none", padding: "0.6rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.5rem", boxShadow: "0 4px 6px -1px rgba(52, 151, 195, 0.2)" }}>
+              <FiSave size={16} /> Guardar Cambios
+            </button>
+          </form>
+        </div>
 
-      <Row className="g-4">
-        <Col lg={6}>
-          <Card className="shadow-sm">
-            <Card.Header className="bg-white">
-              <h6 className="mb-0">
-                <FiUser className="me-2" /> Información Personal
-              </h6>
-            </Card.Header>
-            <Card.Body>
-              <Form onSubmit={handlePerfilSubmit}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Nombre Completo</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={perfil.nombre}
-                    onChange={(e) => setPerfil({ ...perfil, nombre: e.target.value })}
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>
-                    <FiMail className="me-1" /> Email
-                  </Form.Label>
-                  <Form.Control
-                    type="email"
-                    value={perfil.email}
-                    onChange={(e) => setPerfil({ ...perfil, email: e.target.value })}
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>
-                    <FiPhone className="me-1" /> Teléfono
-                  </Form.Label>
-                  <Form.Control
-                    type="tel"
-                    value={perfil.telefono}
-                    onChange={(e) => setPerfil({ ...perfil, telefono: e.target.value })}
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>
-                    <FiMapPin className="me-1" /> Dirección
-                  </Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={perfil.direccion}
-                    onChange={(e) => setPerfil({ ...perfil, direccion: e.target.value })}
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Rol</Form.Label>
-                  <Form.Control
-                    type="text"
-                    value={perfil.rol}
-                    disabled
-                    readOnly
-                  />
-                  <Form.Text className="text-muted">
-                    El rol no puede ser modificado
-                  </Form.Text>
-                </Form.Group>
-                <Button type="submit" variant="primary">
-                  <FiSave className="me-2" /> Guardar Cambios
-                </Button>
-              </Form>
-            </Card.Body>
-          </Card>
-        </Col>
-
-
-        <Col lg={6}>
-          <Card className="shadow-sm">
-            <Card.Header className="bg-white">
-              <h6 className="mb-0">
-                <FiLock className="me-2" /> Cambiar Contraseña
-              </h6>
-            </Card.Header>
-            <Card.Body>
-              <Form onSubmit={handlePasswordSubmit}>
-                <Form.Group className="mb-3">
-                  <Form.Label>Contraseña Actual</Form.Label>
-                  <Form.Control
-                    type="password"
-                    value={passwordData.actual}
-                    onChange={(e) => setPasswordData({ ...passwordData, actual: e.target.value })}
-                    required
-                  />
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Nueva Contraseña</Form.Label>
-                  <Form.Control
-                    type="password"
-                    value={passwordData.nueva}
-                    onChange={(e) => setPasswordData({ ...passwordData, nueva: e.target.value })}
-                    required
-                  />
-                  <Form.Text className="text-muted">
-                    Mínimo 6 caracteres
-                  </Form.Text>
-                </Form.Group>
-                <Form.Group className="mb-3">
-                  <Form.Label>Confirmar Nueva Contraseña</Form.Label>
-                  <Form.Control
-                    type="password"
-                    value={passwordData.confirmar}
-                    onChange={(e) => setPasswordData({ ...passwordData, confirmar: e.target.value })}
-                    required
-                  />
-                </Form.Group>
-                <Button type="submit" variant="warning">
-                  <FiLock className="me-2" /> Actualizar Contraseña
-                </Button>
-              </Form>
-            </Card.Body>
-          </Card>
-
-
-          <Card className="shadow-sm mt-4">
-            <Card.Header className="bg-white">
-              <h6 className="mb-0">Información de Sesión</h6>
-            </Card.Header>
-            <Card.Body>
-              <div className="d-flex justify-content-between">
-                <div>
-                  <small className="text-muted">Último acceso</small>
-                  <p className="mb-0">27 de abril de 2026, 08:30 PM</p>
-                </div>
-                <div>
-                  <small className="text-muted">IP</small>
-                  <p className="mb-0">192.168.1.100</p>
-                </div>
-                <div>
-                  <small className="text-muted">Navegador</small>
-                  <p className="mb-0">Edge</p>
-                </div>
+        {/* Columna Derecha: Seguridad e Información de Sesión */}
+        <div style={{ flex: 1, minWidth: "300px", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+          
+          {/* Formulario de Contraseña */}
+          <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)" }}>
+            <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: "0.5rem", color: "#1e293b", fontWeight: "700" }}>
+              <FiLock size={18} style={{ color: "#f59e0b" }} />
+              <span>Cambiar Contraseña</span>
+            </div>
+            <form onSubmit={handlePasswordSubmit} style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+              <div>
+                <label style={estiloLabel}>Contraseña Actual</label>
+                <input type="password" style={estiloInput} value={passwordData.actual} onChange={(e) => setPasswordData({ ...passwordData, actual: e.target.value })} required />
               </div>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+              <div>
+                <label style={estiloLabel}>Nueva Contraseña</label>
+                <input type="password" style={estiloInput} value={passwordData.nueva} onChange={(e) => setPasswordData({ ...passwordData, nueva: e.target.value })} required />
+                <small style={{ color: "#94a3b8", fontSize: "0.75rem", display: "block", marginTop: "0.25rem" }}>Mínimo 6 caracteres</small>
+              </div>
+              <div>
+                <label style={estiloLabel}>Confirmar Nueva Contraseña</label>
+                <input type="password" style={estiloInput} value={passwordData.confirmar} onChange={(e) => setPasswordData({ ...passwordData, confirmar: e.target.value })} required />
+              </div>
+              <button type="submit" style={{ alignSelf: "flex-start", backgroundColor: "#f59e0b", color: "#fff", border: "none", padding: "0.6rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.5rem", boxShadow: "0 4px 6px -1px rgba(245, 158, 11, 0.2)" }}>
+                <FiLock size={16} /> Actualizar Contraseña
+              </button>
+            </form>
+          </div>
+
+          {/* Caja Informativa de Sesión */}
+          <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)" }}>
+            <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", color: "#1e293b", fontWeight: "700" }}>
+              Información de Sesión
+            </div>
+            <div style={{ padding: "1.5rem", display: "flex", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
+              <div>
+                <small style={{ color: "#94a3b8", fontWeight: "700", textTransform: "uppercase", fontSize: "0.7rem", display: "block", marginBottom: "0.25rem" }}>Último acceso</small>
+                <p style={{ margin: 0, fontSize: "0.9rem", fontWeight: "600", color: "#334155" }}>28 de junio de 2026, 01:07 PM</p>
+              </div>
+              <div>
+                <small style={{ color: "#94a3b8", fontWeight: "700", textTransform: "uppercase", fontSize: "0.7rem", display: "block", marginBottom: "0.25rem" }}>Dirección IP</small>
+                <p style={{ margin: 0, fontSize: "0.9rem", fontFamily: "monospace", fontWeight: "700", color: "#334155" }}>192.168.1.100</p>
+              </div>
+              <div>
+                <small style={{ color: "#94a3b8", fontWeight: "700", textTransform: "uppercase", fontSize: "0.7rem", display: "block", marginBottom: "0.25rem" }}>Navegador</small>
+                <p style={{ margin: 0, fontSize: "0.9rem", fontWeight: "600", color: "#334155" }}>Chrome / Edge</p>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
     </div>
   )
 }
