@@ -19,11 +19,10 @@ export default function Condominios() {
   const [form, setForm] = useState({
     nombre: '',
     direccion: '',
-    idPais: '',
-    idCiudad: '',
+    idPais: '',   // Cambiado de paisId
+    idCiudad: '', // Cambiado de ciudadId
   });
   const [error, setError] = useState(null);
-  const [errorDetail, setErrorDetail] = useState('');
 
   // Filtros
   const [searchTerm, setSearchTerm] = useState('');
@@ -33,20 +32,22 @@ export default function Condominios() {
   // Catálogos
   const [paises, setPaises] = useState([]);
   const [ciudades, setCiudades] = useState([]);
+  // Mapa para obtener nombre de ciudad por ID
+  const [ciudadMap, setCiudadMap] = useState({});
   const [loadingCatalogs, setLoadingCatalogs] = useState(false);
 
+  // Cargar condominios y catálogos
   const load = async () => {
     setLoading(true);
     setError(null);
-    setErrorDetail('');
     try {
       const data = await getCondominiums();
       let list = data;
       if (!Array.isArray(list)) list = data?.content || data?.data || data?.items || [];
       setCondominios(list);
     } catch (err) {
-      console.error('Error al cargar condominios:', err);
-      setError(err.message || 'Error al cargar condominios');
+      console.error(err);
+      setError(err.message);
       setCondominios([]);
     } finally {
       setLoading(false);
@@ -62,6 +63,10 @@ export default function Condominios() {
         const firstCountry = paisesData[0].id;
         const citiesData = await getCities(firstCountry);
         setCiudades(citiesData);
+        // Construir mapa ciudadId -> nombre
+        const map = {};
+        citiesData.forEach(c => { map[c.id] = c.nombre; });
+        setCiudadMap(map);
         if (!form.idPais) {
           setForm(prev => ({ ...prev, idPais: firstCountry }));
         }
@@ -78,21 +83,29 @@ export default function Condominios() {
     loadCatalogs();
   }, []);
 
-  const uniqueCities = [...new Set(condominios.map(c => c.ciudad?.nombre).filter(Boolean))];
+  // Obtener lista de ciudades únicas para el filtro (basado en el mapa)
+  const uniqueCities = [...new Set(
+    condominios.map(c => ciudadMap[c.ciudadId]).filter(Boolean)
+  )];
 
+  // Filtrar condominios
   const filtered = condominios.filter(c => {
     const matchNombre = c.nombre.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchCiudad = ciudadFilter ? c.ciudad?.nombre === ciudadFilter : true;
+    const matchCiudad = ciudadFilter ? ciudadMap[c.ciudadId] === ciudadFilter : true;
     const matchEstado = estadoFilter !== '' ? (estadoFilter === 'activo' ? c.activo : !c.activo) : true;
     return matchNombre && matchCiudad && matchEstado;
   });
 
-  const handlePaisChange = async (idPais) => {
-    setForm({ ...form, idPais, idCiudad: '' });
-    if (idPais) {
+  // Manejar cambio de país para cargar ciudades
+  const handlePaisChange = async (paisId) => {
+    setForm({ ...form, idPais: paisId, idCiudad: '' });
+    if (paisId) {
       try {
-        const cities = await getCities(idPais);
+        const cities = await getCities(paisId);
         setCiudades(cities);
+        const map = {};
+        cities.forEach(c => { map[c.id] = c.nombre; });
+        setCiudadMap(map);
       } catch (err) {
         console.error('Error cargando ciudades:', err);
       }
@@ -116,7 +129,7 @@ export default function Condominios() {
       setShowModal(false);
       load();
     } catch (err) {
-      alert(err.message || 'Error al guardar');
+      alert(err.message);
       console.error(err);
     }
   };
@@ -143,7 +156,7 @@ export default function Condominios() {
   if (loading) return <div className="text-center py-5">Cargando condominios...</div>;
   if (error) return (
     <div className="text-center text-danger py-5">
-      <p><strong>Error:</strong> {error}</p>
+      <p>{error}</p>
       <Button variant="outline-primary" onClick={load}>Reintentar</Button>
     </div>
   );
@@ -223,7 +236,7 @@ export default function Condominios() {
                 <td>{c.id}</td>
                 <td>{c.nombre}</td>
                 <td>{c.direccion}</td>
-                <td>{c.ciudad?.nombre || '-'}</td>
+                <td>{ciudadMap[c.ciudadId] || '-'}</td>
                 <td>
                   <Badge bg={c.activo ? 'success' : 'secondary'}>
                     {c.activo ? 'Activo' : 'Inactivo'}
@@ -239,11 +252,17 @@ export default function Condominios() {
                       setForm({
                         nombre: c.nombre,
                         direccion: c.direccion || '',
-                        idPais: c.idPais || (paises.length > 0 ? paises[0].id : ''),
-                        idCiudad: c.idCiudad || '',
+                        idPais: c.paisId || (paises.length > 0 ? paises[0].id : ''),
+                        idCiudad: c.ciudadId || '',
                       });
-                      if (c.idPais) {
-                        getCities(c.idPais).then(cities => setCiudades(cities)).catch(console.error);
+                      // Cargar ciudades del país seleccionado
+                      if (c.paisId) {
+                        getCities(c.paisId).then(cities => {
+                          setCiudades(cities);
+                          const map = {};
+                          cities.forEach(ci => { map[ci.id] = ci.nombre; });
+                          setCiudadMap(map);
+                        }).catch(console.error);
                       }
                       setShowModal(true);
                     }}

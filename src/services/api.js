@@ -85,15 +85,18 @@ export async function getSuperAdminRecentCondos() {
 
 // Condominios
 export async function getCondominiums() {
-  return safeFetch('/api/super-admin/condominiums');
+  return safeFetch('/api/super-admin/condominiums?page=0&size=100');
 }
 
 export async function createCondominium(data) {
-  // data contiene { nombre, direccion, idPais, idCiudad }
+  // El backend espera idPais e idCiudad
   return safeFetch('/api/super-admin/condominiums', {
     method: 'POST',
     body: JSON.stringify({
-      ...data,
+      nombre: data.nombre,
+      direccion: data.direccion,
+      idPais: data.idPais,   // cambiar de paisId a idPais
+      idCiudad: data.idCiudad, // cambiar de ciudadId a idCiudad
       activo: true,
     }),
   });
@@ -103,7 +106,10 @@ export async function updateCondominium(id, data) {
   return safeFetch(`/api/super-admin/condominiums/${id}`, {
     method: 'PUT',
     body: JSON.stringify({
-      ...data,
+      nombre: data.nombre,
+      direccion: data.direccion,
+      idPais: data.idPais,
+      idCiudad: data.idCiudad,
       activo: data.activo !== undefined ? data.activo : true,
     }),
   });
