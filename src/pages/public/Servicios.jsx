@@ -30,34 +30,35 @@ function Servicios() {
 
   const servicios = [
     {
-      titulo: "Control de Accesos Vehiculares",
-      descripcion: "Ingreso automatizado mediante QR o lectura de placas.",
-      imagen: accessImg
+      titulo: "Gestión de Condominios",
+      descripcion: "Administración de condominios, torres, pisos y unidades en una plataforma centralizada.",
+      imagen: dashboardImg
     },
     {
-      titulo: "Gestión de Vehículos Autorizados",
-      descripcion: "Registro y control de residentes y visitantes en tiempo real.",
+      titulo: "Gestión de Residentes",
+      descripcion: "Control de propietarios, inquilinos y usuarios con roles y permisos por condominio.",
       imagen: residentesImg
     },
     {
-      titulo: "Monitoreo en Tiempo Real",
-      descripcion: "Visualización de ocupación y disponibilidad de espacios.",
+      titulo: "Control de Accesos",
+      descripcion: "Registro y validación de ingresos de residentes, visitantes y personal en tiempo real.",
       imagen: monitorImg
     }
   ]
 
   const features = [
-    { icon: "bi-shield-lock", text: "Acceso seguro y controlado" },
-    { icon: "bi-qr-code", text: "Ingreso con QR dinámico" },
-    { icon: "bi-speedometer2", text: "Monitoreo en tiempo real" },
-    { icon: "bi-building", text: "Control independiente por condominio" }
+    { icon: "bi-buildings", text: "Gestión de condominios, torres y apartamentos" },
+    { icon: "bi-people", text: "Administración de residentes y usuarios" },
+    { icon: "bi-car-front", text: "Control de vehículos y accesos" },
+    { icon: "bi-p-square", text: "Gestión de estacionamientos en tiempo real" },
+    { icon: "bi-cart", text: "Administración de carritos compartidos" }
   ]
 
   return (
     <div className="bg-light">
       <Hero
         title="Servicios"
-        description="Control centralizado de accesos, vehículos y espacios de estacionamiento."
+        description="Plataforma integral para la gestión de condominios con control de residentes, carritos y estacionamientos."
         background={parkingHero}
         height="80vh"
       />
@@ -67,7 +68,7 @@ function Servicios() {
           <div className="text-center mb-5 reveal">
             <h2 className="fw-bold">Módulos del Sistema</h2>
             <p className="text-muted">
-              Herramientas para una gestión eficiente de estacionamientos
+              Soluciones completas para la administración moderna de condominios
             </p>
           </div>
 
@@ -87,7 +88,7 @@ function Servicios() {
 
       <ListaConImagen
         title="Panel de Control Centralizado"
-        image={dashboardImg}
+        image={accessImg}
         imagePosition="right"
         features={features}
       />
@@ -96,8 +97,8 @@ function Servicios() {
         <Container>
           <h2 className="fw-bold">Gestión por Condominio</h2>
           <p className="text-muted mx-auto" style={{ maxWidth: "700px" }}>
-            Cada condominio opera de forma independiente dentro del sistema,
-            con control de accesos, usuarios y espacios totalmente administrable.
+            Cada condominio opera de forma independiente dentro de Urbania,
+            con control total de usuarios, accesos, vehículos, estacionamientos y servicios internos.
           </p>
 
           <Link to="/login" className="btn btn-dark mt-3 px-4">

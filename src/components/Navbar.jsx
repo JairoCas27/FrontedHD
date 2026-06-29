@@ -133,6 +133,23 @@ function Navbar() {
             >
               Contacto
             </Nav.Link>
+
+            <Nav.Link
+              as={Link}
+              to="/login"
+              style={{
+                backgroundColor: scrolled || expanded ? "#212B40" : "rgba(255,255,255,0.15)",
+                color: "#ffffff",
+                padding: "8px 20px",
+                borderRadius: "8px",
+                marginLeft: "10px",
+                fontWeight: "600",
+                transition: "all 0.3s ease"
+              }}
+              onClick={() => setExpanded(false)}
+            >
+              Autenticarse
+            </Nav.Link>
           </Nav>
         </NavbarBS.Collapse>
       </Container>

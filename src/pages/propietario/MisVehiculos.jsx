@@ -1,193 +1,276 @@
-import { useState } from "react";
-import { FiTruck } from "react-icons/fi";
-import { Car, Send, Save, X, Plus } from "lucide-react";
+// src/pages/propietario/MisVehiculos.jsx
 
-export default function MisVehiculos() {
-  const getVehiculos = () => {
-    const data = localStorage.getItem("vehiculos");
-    return data ? JSON.parse(data) : [
-      { estacionamiento: "A-1234", marca: "Toyota", modelo: "Camry 2022", color: "Plata", placa: "ABC-1234" },
-      { estacionamiento: "B-5678", marca: "Honda", modelo: "Civic 2023", color: "Negro", placa: "XYZ-5678" }
-    ];
-  };
+import { useEffect, useState } from "react";
+import { Car, Plus, Trash2 } from "lucide-react";
+import {
+  getHomeownerVehicles,
+  createHomeownerVehicle,
+  deleteHomeownerVehicle,
+} from "../../services/api";
+import { colors, radius, shadow, transition } from "../../theme/colors";
+import SectionHeader from "../../components/common/SectionHeader";
+import Loading from "../../components/common/Loading";
+import EmptyState from "../../components/common/EmptyState";
+import ActionButton from "../../components/common/ActionButton";
+import ConfirmModal from "../../components/common/ConfirmModal";
+import Modal from "../../components/common/Modal";
+import FormField from "../../components/common/FormField";
+import { Toast, useToast } from "../../components/common/Toast";
 
-  const [animarModal, setAnimarModal] = useState(false);
-  const [animarNuevo, setAnimarNuevo] = useState(false);
-  const [vehiculos, setVehiculos] = useState(getVehiculos());
-  const [modal, setModal] = useState(false);
-  const [modalNuevo, setModalNuevo] = useState(false);
-  const [indexEditando, setIndexEditando] = useState(null);
-  const [mensaje, setMensaje] = useState("");
-  const [form, setForm] = useState({ marca: "", modelo: "", color: "", placa: "" });
-  const [nuevoVehiculo, setNuevoVehiculo] = useState({ marca: "", modelo: "", color: "", placa: "" });
-  const colores = { naranjaPrincipal: "#f97316", naranjaOscuro: "#ea580c", indigoPalido: "#94a3b8", slate: "#1e293b", lightSlate: "#64748b" };
+const PAGE = {
+  padding: "32px",
+  maxWidth: "1100px",
+  margin: "0 auto",
+  fontFamily: "system-ui, sans-serif",
+};
 
-  const abrirEditarConAnimacion = (v, index) => {
-    setIndexEditando(index);
-    setForm(v);
-    setModal(true);
-    setTimeout(() => setAnimarModal(true), 10);
-  };
+const GRID = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+  gap: "16px",
+};
 
-  const cerrarEditarConAnimacion = () => {
-    setAnimarModal(false);
-    setTimeout(() => setModal(false), 300);
-  };
+const INITIAL_FORM = {
+  marca: "",
+  modelo: "",
+  color: "",
+  placa: "",
+  tipo: "",
+};
 
-  const abrirNuevoConAnimacion = () => {
-    setModalNuevo(true);
-    setTimeout(() => setAnimarNuevo(true), 10);
-  };
+const TIPO_OPTIONS = [
+  { value: "Auto", label: "Auto" },
+  { value: "Camioneta", label: "Camioneta" },
+  { value: "Moto", label: "Moto" },
+  { value: "Otro", label: "Otro" },
+];
 
-  const cerrarNuevoConAnimacion = () => {
-    setAnimarNuevo(false);
-    setTimeout(() => setModalNuevo(false), 300);
-  };
-
-  const handleChange = (e) => setForm({ ...form, [e.target.name]: e.target.value });
-
-  const guardar = () => {
-    const copia = [...vehiculos];
-    copia[indexEditando] = { ...copia[indexEditando], ...form };
-    setVehiculos(copia);
-    localStorage.setItem("vehiculos", JSON.stringify(copia));
-    setMensaje("Cambios guardados correctamente ");
-    cerrarEditarConAnimacion();
-    setTimeout(() => setMensaje(""), 3000);
-  };
-
-  const solicitar = () => {
-    setMensaje("Solicitud enviada correctamente ");
-    cerrarEditarConAnimacion();
-    setTimeout(() => setMensaje(""), 3000);
-  };
-
-  const handleNuevo = (e) => setNuevoVehiculo({ ...nuevoVehiculo, [e.target.name]: e.target.value });
-
-  const enviarNuevo = () => {
-    setMensaje("Solicitud enviada correctamente ");
-    cerrarNuevoConAnimacion();
-    setNuevoVehiculo({ marca: "", modelo: "", color: "", placa: "" });
-    setTimeout(() => setMensaje(""), 3000);
-  };
-
-  const inputStyle = { width: "100%", padding: "10px 0", border: "none", borderBottom: "2px solid #e2e8f0", outline: "none", fontSize: "1rem", color: "#334155", background: "transparent", transition: "border-color 0.2s" };
-  const labelStyle = { fontSize: "0.75rem", fontWeight: 600, color: colores.indigoPalido, textTransform: "uppercase", letterSpacing: "0.5px", marginBottom: "4px", display: "block" };
-  const modalOverlayStyle = { position: "fixed", inset: 0, background: "rgba(15, 23, 42, 0.4)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000, transition: "opacity 0.3s ease" };
-  const modalContentStyle = { background: "#ffffff", padding: "2rem", borderRadius: "28px", width: "90%", maxWidth: "380px", boxShadow: "0 20px 40px rgba(0,0,0,0.1)", border: "1px solid #f1f5f9", transition: "all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)" };
+function VehicleCard({ vehicle, onDelete }) {
+  const [hovered, setHovered] = useState(false);
 
   return (
-    <div style={{ fontFamily: 'system-ui, sans-serif', padding: '1rem' }}>
-      {/* MENSAJE */}
-      {mensaje && (
-        <div style={{ marginBottom: "1rem", padding: "0.8rem", background: colores.naranjaPrincipal, color: "white", borderRadius: "12px", textAlign: "center", boxShadow: "0 4px 12px rgba(249,115,22,0.2)" }}>{mensaje}</div>
-      )}
-
-      {/* HEADER */}
-      <div style={{ marginBottom: "2rem" }}>
-        <h1 style={{ fontSize: "1.8rem", fontWeight: 800, color: colores.slate, margin: 0 }}>Mis Vehículos</h1>
-        <p style={{ color: colores.lightSlate, margin: "4px 0 0 0" }}>Registro y gestión de tus vehículos</p>
-      </div>
-
-      {/* BOTÓN AÑADIR */}
-      <div style={{ marginBottom: "1.5rem" }}>
-        <button onClick={abrirNuevoConAnimacion} onMouseEnter={(e) => { e.currentTarget.style.transform = "scale(1.05)"; e.currentTarget.style.background = colores.naranjaOscuro; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = "scale(1)"; e.currentTarget.style.background = colores.naranjaPrincipal; }} style={{ background: colores.naranjaPrincipal, color: "white", 
-          border: "none", padding: "0.8rem 1.2rem", borderRadius: "14px", display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontWeight: "600", boxShadow: "0 4px 12px rgba(249,115,22,0.2)", transition: "all 0.2s ease" }}>
-          <Plus size={18}/> Añadir vehículo
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: colors.white,
+        borderRadius: radius.lg,
+        padding: "24px",
+        border: `1px solid ${hovered ? colors.orangeBorder : colors.border}`,
+        boxShadow: hovered ? shadow.hover : shadow.sm,
+        transform: hovered ? "translateY(-3px)" : "none",
+        transition,
+        display: "flex",
+        flexDirection: "column",
+        gap: "16px",
+        animation: "fadeIn 0.3s ease both",
+      }}
+    >
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
+        <div
+          style={{
+            width: "48px",
+            height: "48px",
+            borderRadius: radius.md,
+            background: colors.blueLight,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <Car size={22} color={colors.blue} />
+        </div>
+        <button
+          onClick={() => onDelete(vehicle)}
+          style={{
+            background: hovered ? colors.redLight : "transparent",
+            border: "none",
+            cursor: "pointer",
+            borderRadius: "8px",
+            padding: "6px",
+            color: colors.red,
+            display: "flex",
+            transition,
+          }}
+        >
+          <Trash2 size={15} />
         </button>
       </div>
 
-      {/* GRID */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1.5rem" }}>
-        {vehiculos.map((v, index) => (
-          <div key={index} style={{ background: `linear-gradient(135deg, ${colores.naranjaPrincipal} 0%, ${colores.naranjaOscuro} 100%)`, borderRadius: "24px", padding: "2rem", color: "white", position: "relative", overflow: "hidden", transition: "0.3s" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1.5rem" }}>
-              <div style={{ background: "rgba(255,255,255,0.2)", padding: "10px", borderRadius: "12px" }}><Car size={32} /></div>
-              <div><h3 style={{ margin: 0, fontSize: "1.3rem" }}>{v.estacionamiento}</h3><p style={{ margin: 0, fontSize: "0.75rem", opacity: 0.8 }}>UBICACIÓN ASIGNADA</p></div>
-            </div>
-            <div style={{ background: "rgba(0,0,0,0.05)", padding: "1rem", borderRadius: "16px", display: "flex", flexDirection: "column", gap: "0.6rem", marginBottom: "1.5rem" }}>
-              {[{l: "Marca", v: v.marca}, {l: "Modelo", v: v.modelo}, {l: "Color", v: v.color}, {l: "Placa", v: v.placa}].map((item, i) => (
-                <div key={i} style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: "2px" }}>
-                  <span style={{ fontSize: "0.85rem", opacity: 0.9 }}>{item.l}</span><span style={{ fontWeight: 600 }}>{item.v}</span>
-                </div>
-              ))}
-            </div>
-            <button 
-              onClick={() => abrirEditarConAnimacion(v, index)}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "#fff"; e.currentTarget.style.boxShadow = "0 8px 15px rgba(0,0,0,0.1)"; e.currentTarget.style.transform = "translateY(-2px)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "white"; e.currentTarget.style.boxShadow = "none"; e.currentTarget.style.transform = "translateY(0)"; }}
-              style={{ width: "100%", background: "white", padding: "0.7rem", borderRadius: "12px", border: "none", color: colores.naranjaOscuro, fontWeight: "700", cursor: "pointer", transition: "all 0.2s ease" }}>Editar Información
-            </button>
+      <div>
+        <p style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: colors.slate }}>
+          {vehicle.marca} {vehicle.modelo}
+        </p>
+        <p style={{ margin: "2px 0 0", fontSize: "13px", color: colors.slateLight }}>
+          {vehicle.tipo}
+        </p>
+      </div>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "10px",
+        }}
+      >
+        {[
+          { label: "Placa", value: vehicle.placa },
+          { label: "Color", value: vehicle.color },
+          ...(vehicle.idEstacionamiento
+            ? [{ label: "Estacionamiento", value: `#${vehicle.idEstacionamiento}` }]
+            : []),
+        ].map((item) => (
+          <div
+            key={item.label}
+            style={{
+              background: colors.background,
+              borderRadius: radius.sm,
+              padding: "10px 12px",
+            }}
+          >
+            <p style={{ margin: 0, fontSize: "11px", color: colors.slateLighter, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+              {item.label}
+            </p>
+            <p style={{ margin: "2px 0 0", fontSize: "13px", fontWeight: 600, color: colors.slate }}>
+              {item.value}
+            </p>
           </div>
         ))}
       </div>
+    </div>
+  );
+}
 
-      {/* MODAL EDITAR */}
-      {modal && (
-        <div style={{ ...modalOverlayStyle, opacity: animarModal ? 1 : 0 }}>
-          <div style={{ ...modalContentStyle, opacity: animarModal ? 1 : 0, transform: animarModal ? "scale(1) translateY(0)" : "scale(0.9) translateY(-20px)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.8rem" }}>
-              <div><h3 style={{ color: colores.slate, margin: 0, fontSize: "1.3rem", fontWeight: 700 }}>Editar Vehículo</h3><p style={{ margin: 0, fontSize: "0.85rem", color: colores.lightSlate }}>Actualiza los detalles</p></div>
-              <button 
-                onClick={cerrarEditarConAnimacion}
-                onMouseEnter={(e) => e.currentTarget.style.background = "#f3e3ce"}
-                onMouseLeave={(e) => e.currentTarget.style.background = "#f1f5f9"}
-                style={{ background: "#f1f5f9", border: "none", borderRadius: "10px", padding: "6px", cursor: "pointer", color: colores.lightSlate, transition: "0.2s" }}>
-                  <X size={20} /></button>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
-              {["marca", "modelo", "color", "placa"].map(f => (
-                <div key={f}><label style={labelStyle}>{f}</label><input name={f} value={form[f]} onChange={handleChange} style={inputStyle} onFocus={e => e.target.style.borderBottomColor = colores.naranjaPrincipal} onBlur={e => e.target.style.borderBottomColor = "#e2e8f0"}/></div>
-              ))}
-            </div>
-            <div style={{ display: "flex", gap: "0.8rem", marginTop: "2rem" }}>
-              <button 
-                onClick={solicitar}
-                onMouseEnter={(e) => e.currentTarget.style.background = "#cfcfcf"}
-                onMouseLeave={(e) => e.currentTarget.style.background = "transparent"}
-                style={{ flex: 1, background: "transparent", color: colores.lightSlate, border: "1px solid #e2e8f0", padding: "0.8rem", borderRadius: "14px", fontWeight: "600", cursor: "pointer", transition: "0.2s ease" }}
-              >Solicitar</button>
-              <button 
-                onClick={guardar}
-                onMouseEnter={(e) => { e.currentTarget.style.background = colores.naranjaOscuro; e.currentTarget.style.transform = "translateY(-2px)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.background = colores.naranjaPrincipal; e.currentTarget.style.transform = "translateY(0)"; }}
-                style={{ flex: 1, background: colores.naranjaPrincipal, color: "white", border: "none", padding: "0.8rem", borderRadius: "14px", fontWeight: "600", cursor: "pointer", transition: "all 0.2s ease" }}
-              >Guardar</button>
-            </div>
-          </div>
+export default function MisVehiculos() {
+  const [vehicles, setVehicles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showAdd, setShowAdd] = useState(false);
+  const [form, setForm] = useState(INITIAL_FORM);
+  const [saving, setSaving] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const { toast, showToast, clearToast } = useToast();
+
+  const fetchVehicles = () => {
+    setLoading(true);
+    getHomeownerVehicles()
+      .then((data) => setVehicles(Array.isArray(data) ? data : []))
+      .catch(() => showToast("Error al cargar vehículos", "error"))
+      .finally(() => setLoading(false));
+  };
+
+  useEffect(() => { fetchVehicles(); }, []);
+
+  const handleChange = (e) =>
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+
+  const handleAdd = async () => {
+    if (!form.marca || !form.modelo || !form.placa || !form.tipo || !form.color) {
+      showToast("Completa todos los campos requeridos", "error");
+      return;
+    }
+    try {
+      setSaving(true);
+      await createHomeownerVehicle(form);
+      showToast("Vehículo agregado correctamente", "success");
+      setShowAdd(false);
+      setForm(INITIAL_FORM);
+      fetchVehicles();
+    } catch {
+      showToast("Error al agregar vehículo", "error");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      setDeleting(true);
+      await deleteHomeownerVehicle(deleteTarget.id);
+      showToast("Vehículo eliminado", "success");
+      setDeleteTarget(null);
+      fetchVehicles();
+    } catch {
+      showToast("Error al eliminar vehículo", "error");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div style={PAGE}>
+      <SectionHeader
+        title="Mis Vehículos"
+        subtitle={`${vehicles.length} vehículo${vehicles.length !== 1 ? "s" : ""} registrado${vehicles.length !== 1 ? "s" : ""}`}
+        action={
+          <ActionButton icon={Plus} onClick={() => setShowAdd(true)}>
+            Agregar vehículo
+          </ActionButton>
+        }
+      />
+
+      {loading ? (
+        <Loading />
+      ) : vehicles.length === 0 ? (
+        <EmptyState
+          icon={Car}
+          title="Sin vehículos registrados"
+          description="Agrega tu primer vehículo para gestionarlo desde aquí."
+          action={
+            <ActionButton icon={Plus} onClick={() => setShowAdd(true)}>
+              Agregar vehículo
+            </ActionButton>
+          }
+        />
+      ) : (
+        <div style={GRID}>
+          {vehicles.map((v) => (
+            <VehicleCard key={v.id} vehicle={v} onDelete={setDeleteTarget} />
+          ))}
         </div>
       )}
 
-      {/* MODAL NUEVO */}
-      {modalNuevo && (
-        <div style={{ ...modalOverlayStyle, opacity: animarNuevo ? 1 : 0 }}>
-          <div style={{ ...modalContentStyle, opacity: animarNuevo ? 1 : 0, transform: animarNuevo ? "scale(1) translateY(0)" : "scale(0.9) translateY(-20px)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.8rem" }}>
-              <div><h3 style={{ color: colores.slate, margin: 0, fontSize: "1.3rem", fontWeight: 700 }}>Nuevo Vehículo</h3><p style={{ margin: 0, fontSize: "0.85rem", color: colores.lightSlate }}>Envía una solicitud de registro</p></div>
-              <button 
-                onClick={cerrarNuevoConAnimacion}
-                onMouseEnter={(e) => e.currentTarget.style.background = "#f3e3ce"}
-                onMouseLeave={(e) => e.currentTarget.style.background = "#f1f5f9"}
-                style={{ background: "#f1f5f9", border: "none", borderRadius: "10px", padding: "6px", cursor: "pointer", color: colores.lightSlate, transition: "0.2s" }}><X size={20} /></button>
-            </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.2rem" }}>
-              {["marca", "modelo", "color", "placa"].map(f => (
-                <div key={f}><label style={labelStyle}>{f}</label><input name={f} placeholder={`Ingresa ${f}`} onChange={handleNuevo} style={inputStyle} onFocus={e => e.target.style.borderBottomColor = colores.naranjaPrincipal} onBlur={e => e.target.style.borderBottomColor = "#e2e8f0"}/></div>
-              ))}
-            </div>
-            <button 
-              onClick={enviarNuevo} 
-              onMouseEnter={(e) => { e.currentTarget.style.background = colores.naranjaOscuro; e.currentTarget.style.transform = "translateY(-2px)"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = colores.naranjaPrincipal; e.currentTarget.style.transform = "translateY(0)"; }}
-              style={{ width: "100%", background: colores.naranjaPrincipal, color: "white", border: "none", padding: "0.9rem", borderRadius: "14px", fontWeight: "600", cursor: "pointer", marginTop: "2rem", transition: "all 0.2s ease" }}>
-              Enviar solicitud
-            </button>
+      <Modal open={showAdd} title="Agregar vehículo" onClose={() => { setShowAdd(false); setForm(INITIAL_FORM); }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <FormField label="Marca" name="marca" value={form.marca} onChange={handleChange} placeholder="Toyota" required />
+            <FormField label="Modelo" name="modelo" value={form.modelo} onChange={handleChange} placeholder="Corolla" required />
+          </div>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+            <FormField label="Placa" name="placa" value={form.placa} onChange={handleChange} placeholder="ABC123" required />
+            <FormField label="Color" name="color" value={form.color} onChange={handleChange} placeholder="Blanco" required />
+          </div>
+          <FormField
+            label="Tipo"
+            name="tipo"
+            value={form.tipo}
+            onChange={handleChange}
+            options={TIPO_OPTIONS}
+            required
+          />
+          <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", paddingTop: "8px" }}>
+            <ActionButton variant="ghost" onClick={() => { setShowAdd(false); setForm(INITIAL_FORM); }}>
+              Cancelar
+            </ActionButton>
+            <ActionButton onClick={handleAdd} disabled={saving}>
+              {saving ? "Guardando..." : "Guardar vehículo"}
+            </ActionButton>
           </div>
         </div>
-      )}
+      </Modal>
 
-      
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Eliminar vehículo"
+        description={deleteTarget ? `¿Eliminar ${deleteTarget.marca} ${deleteTarget.modelo} (${deleteTarget.placa})?` : ""}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+        loading={deleting}
+      />
+
+      <Toast toast={toast} onClose={clearToast} />
+      <style>{`@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }`}</style>
     </div>
   );
 }

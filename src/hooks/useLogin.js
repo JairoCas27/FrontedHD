@@ -1,22 +1,38 @@
-import { useNavigate } from "react-router-dom"
-import { useAuth } from "../context/AuthContext"
-import { loginDemo } from "../services/api"
-import { toast } from "react-toastify"
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { loginApi } from '../services/api';
+import { toast } from 'react-toastify';
 
 export function useLogin() {
-  const { login } = useAuth()
-  const navigate = useNavigate()
+  const { login } = useAuth();
+  const navigate = useNavigate();
 
-  const handleLogin = ({ correo, password }) => {
-    const result = loginDemo({ correo, password })
-    if (!result.success) {
-      toast.error(result.message)
-      return
+  const handleLogin = async ({ correo, password, recuerdame }) => {
+    try {
+      const result = await loginApi({ correo, password, recuerdame });
+      if (result.token) {
+        login(result.usuario, result.token);
+      } else {
+        login(result.usuario);
+      }
+      toast.success(`Bienvenido, ${result.usuario?.nombres || 'usuario'}`);
+
+      const role = result.usuario?.rol;
+      if (role === 'SUPER_ADMINISTRADOR') {
+        navigate('/superadmin/dashboard');
+      } else if (role === 'ADMINISTRADOR_CONDOMINIO') {
+        navigate('/admin/dashboard');
+      } else if (role === 'AGENTE_SEGURIDAD') {
+        navigate('/seguridad/accesos');
+      } else if (role === 'PROPIETARIO') {
+        navigate('/propietario/dashboard');
+      } else {
+        navigate('/');
+      }
+    } catch (error) {
+      toast.error(error.message || 'Error al iniciar sesión');
     }
-    login(result.user)
-    toast.success(`Bienvenido, ${result.user.rol.toUpperCase()}`)
-    navigate(result.redirect)
-  }
+  };
 
-  return { handleLogin }
+  return { handleLogin };
 }

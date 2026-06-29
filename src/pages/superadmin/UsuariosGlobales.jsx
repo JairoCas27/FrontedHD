@@ -1,203 +1,638 @@
-import { useState, useEffect } from "react";
-import { FiPlus, FiUser, FiMail, FiPhone, FiHome, FiTrash2, FiEdit2, FiShield, FiSave, FiAlertTriangle } from "react-icons/fi";
-import { Card, Button, Table, Modal, Form, Row, Col, Badge } from "react-bootstrap";
-
-const usuariosIniciales = [
-  { id: 1, nombre: "Carlos Martínez", email: "carlos.admin@urbanpark.com", telefono: "987 654 321", condominio: "Jerarquía Residencial I", rol: "Administrador", estado: "Activo" },
-  { id: 2, nombre: "Ana Lucia Rojas", email: "ana.rojas@gmail.com", telefono: "912 345 678", condominio: "Residencial Arboleda", rol: "Administrador", estado: "Activo" },
-  { id: 3, nombre: "Roberto Gómez", email: "roberto.g@outlook.com", telefono: "933 445 566", condominio: "Urban Park Sur", rol: "Administrador", estado: "Activo" },
-  { id: 4, nombre: "Elena Vizcarra", email: "elena.v@urbanpark.pe", telefono: "955 667 788", condominio: "Condominio El Olivar", rol: "Administrador", estado: "Activo" },
-  { id: 5, nombre: "Marcos Peña", email: "m.pena@gmail.com", telefono: "911 223 344", condominio: "Altos de Comas", rol: "Administrador", estado: "Activo" },
-  { id: 6, nombre: "Sofía Luján", email: "sofia.l@urbanpark.com", telefono: "977 889 900", condominio: "Villa Marina", rol: "Administrador", estado: "Activo" },
-  { id: 7, nombre: "Javier Izquierdo", email: "jizquierdo@gmail.com", telefono: "944 556 677", condominio: "Parque San Miguel", rol: "Administrador", estado: "Activo" },
-  { id: 8, nombre: "Patricia Salas", email: "p.salas@outlook.com", telefono: "922 334 455", condominio: "Residencial San Felipe", rol: "Administrador", estado: "Activo" },
-  { id: 9, nombre: "Diego Torres", email: "dtorres@urbanpark.pe", telefono: "966 778 899", condominio: "Praderas del Norte", rol: "Administrador", estado: "Activo" },
-  { id: 10, nombre: "Lucía Méndez", email: "lucia.m@gmail.com", telefono: "988 990 011", condominio: "Mirador de la Costa", rol: "Administrador", estado: "Activo" },
-  { id: 11, nombre: "Ricardo Palma", email: "r.palma@urbanpark.com", telefono: "955 112 233", condominio: "Jerarquía Residencial I", rol: "Administrador", estado: "Activo" },
-  { id: 12, nombre: "Gabriela Mistral", email: "gmistral@gmail.com", telefono: "944 223 344", condominio: "Residencial Las Palmas", rol: "Administrador", estado: "Activo" },
-  { id: 13, nombre: "Andrés Bello", email: "abello@outlook.com", telefono: "933 334 445", condominio: "Urban Park Sur", rol: "Administrador", estado: "Activo" },
-  { id: 14, nombre: "César Vallejo", email: "cvallejo@urbanpark.pe", telefono: "922 445 566", condominio: "Altos de Comas", rol: "Administrador", estado: "Activo" },
-  { id: 15, nombre: "Isabel Allende", email: "iallende@gmail.com", telefono: "911 556 677", condominio: "Villa Marina", rol: "Administrador", estado: "Activo" }
-];
-
-const STORAGE_KEY = 'usuarios_globales_superadmin'
+import { useState, useEffect, useMemo } from 'react';
+import { FiSearch, FiLock, FiRefreshCw, FiX, FiCheck, FiPlus, FiEdit2, FiArrowUp, FiArrowDown } from 'react-icons/fi';
+import {
+  getAllUsers,
+  patchUserStatus,
+  forceUserPassword,
+  invalidateUserSession,
+  getCondominiums,
+  createAdministrator,
+  updateAdministrator,
+  assignAdministratorCondo,
+} from '../../services/api';
+import { Modal, Form, Button, Table, Badge, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
+import { toast } from 'react-toastify';
 
 export default function UsuariosGlobales() {
-  // --- ESTADOS ---
-  const [showModal, setShowModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [userToDelete, setUserToDelete] = useState(null);
-  
-  // --- DATA EXPANDIDA (15 MIEMBROS) ---
-  const [usuarios, setUsuarios] = useState(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      return stored ? JSON.parse(stored) : usuariosIniciales
-    } catch {
-      return usuariosIniciales
-    }
+  const [users, setUsers] = useState([]);
+  const [condominios, setCondominios] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState({
+    search: '',
+    rol: '',
+    estado: '',
+    condominio: '',
   });
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [sortField, setSortField] = useState('nombre');
+  const [showModal, setShowModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [form, setForm] = useState({
+    nombres: '',
+    apellidos: '',
+    correo: '',
+    telefono: '',
+    contrasena: '',
+    rol: 'ADMINISTRADOR_CONDOMINIO',
+    idCondominio: '',
+  });
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
-  // Sincroniza con localStorage cada vez que usuarios cambie
-  useEffect(() => {
+  const ROLES = [
+    { value: 'ADMINISTRADOR_CONDOMINIO', label: 'Administrador de Condominio' },
+    { value: 'AGENTE_SEGURIDAD', label: 'Agente de Seguridad' },
+    { value: 'PROPIETARIO', label: 'Propietario' },
+  ];
+
+  const EDITABLE_ROLES = ['ADMINISTRADOR_CONDOMINIO'];
+
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(usuarios))
-    } catch {
-      console.error('Error al guardar en localStorage')
+      const [usersData, condosData] = await Promise.all([
+        getAllUsers(),
+        getCondominiums(),
+      ]);
+
+      let usersList = [];
+      if (Array.isArray(usersData)) {
+        usersList = usersData;
+      } else if (usersData?.items && Array.isArray(usersData.items)) {
+        usersList = usersData.items;
+      } else if (usersData?.content && Array.isArray(usersData.content)) {
+        usersList = usersData.content;
+      } else if (usersData?.data && Array.isArray(usersData.data)) {
+        usersList = usersData.data;
+      }
+
+      let condosList = [];
+      if (Array.isArray(condosData)) {
+        condosList = condosData;
+      } else if (condosData?.items && Array.isArray(condosData.items)) {
+        condosList = condosData.items;
+      } else if (condosData?.content && Array.isArray(condosData.content)) {
+        condosList = condosData.content;
+      } else if (condosData?.data && Array.isArray(condosData.data)) {
+        condosList = condosData.data;
+      }
+
+      setUsers(usersList);
+      setCondominios(condosList);
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+      setUsers([]);
+      setCondominios([]);
+      toast.error(`Error al cargar datos: ${err.message}`);
+    } finally {
+      setLoading(false);
     }
-  }, [usuarios]);
-
-
-  const [currentUser, setCurrentUser] = useState({ id: null, nombre: "", email: "", telefono: "", condominio: "Jerarquía Residencial I" });
-
-
-  // --- FUNCIONES ---
-  const handleOpenModal = (user = null) => {
-    if (user) {
-      setIsEditing(true);
-      setCurrentUser(user);
-    } else {
-      setIsEditing(false);
-      setCurrentUser({ id: null, nombre: "", email: "", telefono: "", condominio: "Jerarquía Residencial I" });
-    }
-    setShowModal(true);
   };
 
+  useEffect(() => {
+    loadData();
+  }, []);
 
-  const handleSaveUsuario = (e) => {
+  const filteredAndSorted = useMemo(() => {
+    let result = users.filter(u => {
+      const fullName = `${u.nombres || ''} ${u.apellidos || ''}`.toLowerCase();
+      const email = (u.correo || '').toLowerCase();
+      const search = filters.search.toLowerCase();
+      const matchSearch = fullName.includes(search) || email.includes(search);
+      const matchRol = filters.rol ? u.rol === filters.rol : true;
+      const matchEstado = filters.estado !== '' ? (filters.estado === 'activo' ? u.activo : !u.activo) : true;
+      const matchCondo = filters.condominio ? u.idCondominio === parseInt(filters.condominio, 10) : true;
+      return matchSearch && matchRol && matchEstado && matchCondo;
+    });
+
+    result.sort((a, b) => {
+      let valA, valB;
+      if (sortField === 'nombre') {
+        valA = `${a.nombres || ''} ${a.apellidos || ''}`.toLowerCase();
+        valB = `${b.nombres || ''} ${b.apellidos || ''}`.toLowerCase();
+      } else if (sortField === 'correo') {
+        valA = (a.correo || '').toLowerCase();
+        valB = (b.correo || '').toLowerCase();
+      } else if (sortField === 'rol') {
+        valA = a.rol || '';
+        valB = b.rol || '';
+      } else if (sortField === 'estado') {
+        valA = a.activo ? 1 : 0;
+        valB = b.activo ? 1 : 0;
+      } else {
+        return 0;
+      }
+      if (sortOrder === 'asc') {
+        return valA > valB ? 1 : valA < valB ? -1 : 0;
+      } else {
+        return valA < valB ? 1 : valA > valB ? -1 : 0;
+      }
+    });
+    return result;
+  }, [users, filters, sortField, sortOrder]);
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isEditing) {
-      setUsuarios(usuarios.map(u => u.id === currentUser.id ? { ...currentUser } : u));
-    } else {
-      const nuevo = { ...currentUser, id: Date.now(), rol: "Administrador", estado: "Activo" };
-      setUsuarios([...usuarios, nuevo]);
+
+    if (!EDITABLE_ROLES.includes(form.rol)) {
+      toast.warning('Solo se pueden crear/editar usuarios con rol "Administrador de Condominio" desde este panel.');
+      return;
     }
-    setShowModal(false);
+
+    setSubmitting(true);
+    try {
+      if (editingUser) {
+        await updateAdministrator(editingUser.id, {
+          nombres: form.nombres.trim(),
+          apellidos: form.apellidos.trim(),
+          correo: form.correo.trim(),
+          telefono: form.telefono.trim(),
+        });
+
+        const newCondoId = form.idCondominio ? parseInt(form.idCondominio, 10) : null;
+        const oldCondoId = editingUser.idCondominio ? parseInt(editingUser.idCondominio, 10) : null;
+        if (newCondoId !== oldCondoId) {
+          if (newCondoId !== null) {
+            await assignAdministratorCondo(editingUser.id, newCondoId);
+          } else {
+            try {
+              await assignAdministratorCondo(editingUser.id, null);
+            } catch (err) {
+              toast.warning('No se pudo desasignar el condominio.');
+            }
+          }
+        }
+        toast.success('Administrador actualizado correctamente.');
+      } else {
+        const created = await createAdministrator({
+          nombres: form.nombres.trim(),
+          apellidos: form.apellidos.trim(),
+          correo: form.correo.trim(),
+          telefono: form.telefono.trim(),
+          contrasena: form.contrasena.trim(),
+        });
+
+        if (form.idCondominio && created.id) {
+          await assignAdministratorCondo(created.id, parseInt(form.idCondominio, 10));
+        }
+        toast.success('Administrador creado correctamente.');
+      }
+      setShowModal(false);
+      setTimeout(() => loadData(), 300);
+    } catch (err) {
+      console.error(err);
+      toast.error(`Error: ${err.message}`);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-
-  const confirmDelete = (id) => {
-    setUserToDelete(id);
-    setShowDeleteModal(true);
+  const handleToggleStatus = async (userId, activo) => {
+    if (!window.confirm(`¿${activo ? 'Desactivar' : 'Activar'} usuario?`)) return;
+    try {
+      await patchUserStatus(userId, !activo);
+      toast.success(`Usuario ${!activo ? 'activado' : 'desactivado'}.`);
+      await loadData();
+    } catch (err) {
+      toast.error(`Error: ${err.message}`);
+    }
   };
 
-
-  const handleExecuteDelete = () => {
-    setUsuarios(usuarios.filter(u => u.id !== userToDelete));
-    setShowDeleteModal(false);
+  const handleForcePassword = async (userId) => {
+    if (!newPassword || newPassword.trim() === '') {
+      toast.warning('La contraseña no puede estar vacía');
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error('La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+    try {
+      await forceUserPassword(userId, newPassword.trim());
+      toast.success('Contraseña actualizada correctamente.');
+      setShowPasswordModal(false);
+      setNewPassword('');
+      setPasswordError('');
+      await loadData();
+    } catch (err) {
+      toast.error(`Error: ${err.message}`);
+      console.error('Error detallado:', err);
+    }
   };
 
+  const handleInvalidate = async (userId) => {
+    if (!window.confirm('¿Invalidar sesión de este usuario?')) return;
+    try {
+      await invalidateUserSession(userId);
+      toast.success('Sesión invalidada');
+      await loadData();
+    } catch (err) {
+      toast.error(`Error: ${err.message}`);
+    }
+  };
+
+  const toggleSort = (field) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const getSortIcon = (field) => {
+    if (sortField !== field) return null;
+    return sortOrder === 'asc' ? <FiArrowUp size={14} /> : <FiArrowDown size={14} />;
+  };
+
+  if (loading)
+    return (
+      <div className="text-center py-5">
+        <Spinner animation="border" variant="primary" />
+        <p className="mt-2">Cargando usuarios...</p>
+      </div>
+    );
+  if (error)
+    return (
+      <div className="text-center text-danger py-5">
+        <p><strong>Error:</strong> {error}</p>
+        <Button variant="outline-primary" onClick={loadData}>Reintentar</Button>
+      </div>
+    );
+
+  const condominioOptions = condominios.map(c => ({
+    id: c.id,
+    nombre: c.nombre,
+  }));
+
+  const isEditableRole = EDITABLE_ROLES.includes(form.rol);
 
   return (
-    <div style={{ padding: "1.5rem" }}>
-      {/* HEADER */}
+    <div style={{ padding: '1.5rem' }}>
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#3b82f6", margin: 0 }}>Usuarios Globales</h1>
-          <p style={{ color: "#0ea5e9", fontWeight: 600, fontSize: "0.9rem" }}>Control de accesos para {usuarios.length} administradores</p>
-        </div>
-        <Button onClick={() => handleOpenModal()} style={{ background: "#3b82f6", border: "none", borderRadius: "10px" }} className="shadow-sm px-4 py-2 fw-bold">
-          <FiPlus className="me-2" /> Crear Administrador
+        <h1 style={{ fontWeight: 700, color: '#1e293b' }}>Usuarios del Sistema</h1>
+        <Button variant="primary" onClick={() => {
+          setEditingUser(null);
+          setForm({
+            nombres: '',
+            apellidos: '',
+            correo: '',
+            telefono: '',
+            contrasena: '',
+            rol: 'ADMINISTRADOR_CONDOMINIO',
+            idCondominio: '',
+          });
+          setShowModal(true);
+        }}>
+          <FiPlus className="me-2" /> Nuevo Usuario
         </Button>
       </div>
 
+      <Row className="mb-4 g-2 align-items-end">
+        <Col md={3}>
+          <InputGroup>
+            <InputGroup.Text><FiSearch /></InputGroup.Text>
+            <Form.Control
+              id="searchUser"
+              name="searchUser"
+              placeholder="Buscar por nombre o correo..."
+              value={filters.search}
+              onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+              aria-label="Buscar usuario"
+            />
+          </InputGroup>
+        </Col>
+        <Col md={2}>
+          <Form.Label htmlFor="filterRol" srOnly>Filtrar por rol</Form.Label>
+          <Form.Select
+            id="filterRol"
+            name="filterRol"
+            value={filters.rol}
+            onChange={(e) => setFilters({ ...filters, rol: e.target.value })}
+            aria-label="Filtrar por rol"
+          >
+            <option value="">Todos los roles</option>
+            {ROLES.map(r => (
+              <option key={r.value} value={r.value}>{r.label}</option>
+            ))}
+          </Form.Select>
+        </Col>
+        <Col md={2}>
+          <Form.Label htmlFor="filterEstado" srOnly>Filtrar por estado</Form.Label>
+          <Form.Select
+            id="filterEstado"
+            name="filterEstado"
+            value={filters.estado}
+            onChange={(e) => setFilters({ ...filters, estado: e.target.value })}
+            aria-label="Filtrar por estado"
+          >
+            <option value="">Todos los estados</option>
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+          </Form.Select>
+        </Col>
+        <Col md={2}>
+          <Form.Label htmlFor="filterCondo" srOnly>Filtrar por condominio</Form.Label>
+          <Form.Select
+            id="filterCondo"
+            name="filterCondo"
+            value={filters.condominio}
+            onChange={(e) => setFilters({ ...filters, condominio: e.target.value })}
+            aria-label="Filtrar por condominio"
+          >
+            <option value="">Todos los condominios</option>
+            {condominioOptions.map(c => (
+              <option key={c.id} value={c.id}>{c.nombre}</option>
+            ))}
+          </Form.Select>
+        </Col>
+        <Col md={3} className="text-end">
+          <Button variant="outline-secondary" onClick={() => {
+            setFilters({ search: '', rol: '', estado: '', condominio: '' });
+          }}>
+            Limpiar filtros
+          </Button>
+          <Form.Select
+            className="mt-1"
+            value={`${sortField}-${sortOrder}`}
+            onChange={(e) => {
+              const [field, order] = e.target.value.split('-');
+              setSortField(field);
+              setSortOrder(order);
+            }}
+            aria-label="Ordenar por"
+          >
+            <option value="nombre-asc">Nombre A-Z</option>
+            <option value="nombre-desc">Nombre Z-A</option>
+            <option value="correo-asc">Correo A-Z</option>
+            <option value="correo-desc">Correo Z-A</option>
+            <option value="rol-asc">Rol A-Z</option>
+            <option value="rol-desc">Rol Z-A</option>
+            <option value="estado-asc">Estado (Activo primero)</option>
+            <option value="estado-desc">Estado (Inactivo primero)</option>
+          </Form.Select>
+        </Col>
+      </Row>
 
-      {/* TABLA */}
-      <Card className="border-0 shadow-sm" style={{ borderRadius: "18px" }}>
-        <Card.Body className="p-0">
-          <Table responsive hover className="align-middle m-0">
-            <thead style={{ background: "#eff6ff" }}>
-              <tr className="text-muted small text-uppercase fw-bold">
-                <th className="py-3 px-4">Administrador</th>
-                <th className="py-3">Contacto</th>
-                <th className="py-3">Condominio Asignado</th>
-                <th className="py-3 text-end px-4">Acciones</th>
+      {filteredAndSorted.length === 0 ? (
+        <div className="text-center py-4">
+          <p>No hay usuarios que coincidan con los filtros.</p>
+          {users.length === 0 && <p>No hay usuarios registrados en el sistema.</p>}
+        </div>
+      ) : (
+        <div className="table-responsive">
+          <Table striped hover bordered={false} className="shadow-sm rounded overflow-hidden">
+            <thead className="bg-light">
+              <tr>
+                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('nombre')}>
+                  Nombre {getSortIcon('nombre')}
+                </th>
+                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('correo')}>
+                  Correo {getSortIcon('correo')}
+                </th>
+                <th>Teléfono</th>
+                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('rol')}>
+                  Rol {getSortIcon('rol')}
+                </th>
+                <th>Condominio</th>
+                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('estado')}>
+                  Estado {getSortIcon('estado')}
+                </th>
+                <th>Acciones</th>
               </tr>
             </thead>
             <tbody>
-              {usuarios.map((u) => (
-                <tr key={u.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                  <td className="py-3 px-4">
-                    <div className="d-flex align-items-center gap-3">
-                      <div style={{ background: "#eff6ff", padding: "10px", borderRadius: "12px", color: "#3b82f6" }}>
-                        <FiUser size={18} />
-                      </div>
-                      <div className="fw-bold text-dark" style={{ fontSize: "0.9rem" }}>{u.nombre}</div>
-                    </div>
-                  </td>
-                  <td>
-                    <div className="small fw-medium text-primary"><FiMail className="me-1"/> {u.email}</div>
-                    <div className="extra-small text-muted mt-1"><FiPhone className="me-1"/> {u.telefono}</div>
-                  </td>
-                  <td>
-                    <Badge bg="light" text="dark" className="border px-3 py-2 fw-normal" style={{ borderRadius: "8px", fontSize: "0.75rem" }}>
-                      <FiHome size={12} className="me-1 text-info" /> {u.condominio}
-                    </Badge>
-                  </td>
-                  <td className="text-end px-4">
-                    <Button variant="link" className="text-info p-2" onClick={() => handleOpenModal(u)}><FiEdit2 size={16}/></Button>
-                    <Button variant="link" className="text-danger p-2" onClick={() => confirmDelete(u.id)}><FiTrash2 size={16}/></Button>
-                  </td>
-                </tr>
-              ))}
+              {filteredAndSorted.map(u => {
+                const isAdmin = u.rol === 'ADMINISTRADOR_CONDOMINIO';
+                return (
+                  <tr key={u.id}>
+                    <td><strong>{u.nombres} {u.apellidos}</strong></td>
+                    <td>{u.correo}</td>
+                    <td>{u.telefono}</td>
+                    <td><Badge bg="info">{u.rol}</Badge></td>
+                    <td>{u.nombreCondominio || <span className="text-muted">Sin asignar</span>}</td>
+                    <td>
+                      <Badge bg={u.activo ? 'success' : 'secondary'} pill>
+                        {u.activo ? 'Activo' : 'Inactivo'}
+                      </Badge>
+                    </td>
+                    <td>
+                      {isAdmin && (
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
+                          className="me-2"
+                          onClick={() => {
+                            setEditingUser(u);
+                            setForm({
+                              nombres: u.nombres,
+                              apellidos: u.apellidos,
+                              correo: u.correo,
+                              telefono: u.telefono || '',
+                              contrasena: '',
+                              rol: u.rol,
+                              idCondominio: u.idCondominio?.toString() || '',
+                            });
+                            setShowModal(true);
+                          }}
+                        >
+                          <FiEdit2 />
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline-warning"
+                        size="sm"
+                        className="me-2"
+                        onClick={() => handleToggleStatus(u.id, u.activo)}
+                      >
+                        {u.activo ? <FiX /> : <FiCheck />}
+                      </Button>
+                      <Button
+                        variant="outline-primary"
+                        size="sm"
+                        className="me-2"
+                        onClick={() => {
+                          setSelectedUser(u);
+                          setShowPasswordModal(true);
+                        }}
+                      >
+                        <FiLock />
+                      </Button>
+                      <Button
+                        variant="outline-danger"
+                        size="sm"
+                        onClick={() => handleInvalidate(u.id)}
+                      >
+                        <FiRefreshCw />
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </Table>
-        </Card.Body>
-      </Card>
+        </div>
+      )}
 
-
-      {/* MODAL: CREAR / EDITAR */}
+      {/* Modales (igual que antes) */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
-        <Modal.Body className="p-4">
-          <h5 className="fw-bold mb-4 text-primary text-center">{isEditing ? "Editar Acceso" : "Nuevo Administrador"}</h5>
-          <Form onSubmit={handleSaveUsuario}>
+        <Modal.Header closeButton className="bg-light">
+          <Modal.Title>{editingUser ? 'Editar' : 'Nuevo'} usuario</Modal.Title>
+        </Modal.Header>
+        <Form onSubmit={handleSubmit}>
+          <Modal.Body>
             <Form.Group className="mb-3">
-              <Form.Label className="small fw-bold text-muted">NOMBRE COMPLETO</Form.Label>
-              <Form.Control required className="bg-light border-0 py-2" value={currentUser.nombre} onChange={e => setCurrentUser({...currentUser, nombre: e.target.value})} />
+              <Form.Label htmlFor="userNombres">Nombres</Form.Label>
+              <Form.Control
+                id="userNombres"
+                name="userNombres"
+                value={form.nombres}
+                onChange={(e) => setForm({ ...form, nombres: e.target.value })}
+                required
+              />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label className="small fw-bold text-muted">CORREO ELECTRÓNICO</Form.Label>
-              <Form.Control required type="email" className="bg-light border-0 py-2" value={currentUser.email} onChange={e => setCurrentUser({...currentUser, email: e.target.value})} />
+              <Form.Label htmlFor="userApellidos">Apellidos</Form.Label>
+              <Form.Control
+                id="userApellidos"
+                name="userApellidos"
+                value={form.apellidos}
+                onChange={(e) => setForm({ ...form, apellidos: e.target.value })}
+                required
+              />
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label className="small fw-bold text-muted">TELÉFONO</Form.Label>
-              <Form.Control className="bg-light border-0 py-2" value={currentUser.telefono} onChange={e => setCurrentUser({...currentUser, telefono: e.target.value})} />
+              <Form.Label htmlFor="userCorreo">Correo</Form.Label>
+              <Form.Control
+                id="userCorreo"
+                name="userCorreo"
+                type="email"
+                value={form.correo}
+                onChange={(e) => setForm({ ...form, correo: e.target.value })}
+                required
+              />
             </Form.Group>
-            <Form.Group className="mb-4">
-              <Form.Label className="small fw-bold text-muted">ASIGNAR CONDOMINIO</Form.Label>
-              <Form.Select className="bg-light border-0 py-2" value={currentUser.condominio} onChange={e => setCurrentUser({...currentUser, condominio: e.target.value})}>
-                <option>Jerarquía Residencial I</option>
-                <option>Urban Park Sur</option>
-                <option>Residencial Las Palmas</option>
-                <option>Condominio El Olivar</option>
-                <option>Altos de Comas</option>
-                <option>Villa Marina</option>
-                <option>Parque San Miguel</option>
-                <option>Residencial San Felipe</option>
-                <option>Praderas del Norte</option>
-                <option>Mirador de la Costa</option>
+            <Form.Group className="mb-3">
+              <Form.Label htmlFor="userTelefono">Teléfono</Form.Label>
+              <Form.Control
+                id="userTelefono"
+                name="userTelefono"
+                value={form.telefono}
+                onChange={(e) => setForm({ ...form, telefono: e.target.value })}
+              />
+            </Form.Group>
+            {!editingUser && (
+              <Form.Group className="mb-3">
+                <Form.Label htmlFor="userPassword">Contraseña</Form.Label>
+                <Form.Control
+                  id="userPassword"
+                  name="userPassword"
+                  type="password"
+                  value={form.contrasena}
+                  onChange={(e) => setForm({ ...form, contrasena: e.target.value })}
+                  required={!editingUser}
+                />
+              </Form.Group>
+            )}
+            <Form.Group className="mb-3">
+              <Form.Label htmlFor="userRol">Rol</Form.Label>
+              <Form.Select
+                id="userRol"
+                name="userRol"
+                value={form.rol}
+                onChange={(e) => {
+                  const newRol = e.target.value;
+                  setForm({ ...form, rol: newRol });
+                }}
+              >
+                {ROLES.map(r => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))}
+              </Form.Select>
+              {!isEditableRole && (
+                <div className="text-warning mt-1 small">
+                  ⚠️ Solo se pueden crear/editar Administradores de Condominio desde este panel.
+                </div>
+              )}
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label htmlFor="userCondo">Condominio</Form.Label>
+              <Form.Select
+                id="userCondo"
+                name="userCondo"
+                value={form.idCondominio}
+                onChange={(e) => setForm({ ...form, idCondominio: e.target.value })}
+                disabled={!isEditableRole}
+              >
+                <option value="">Sin asignar</option>
+                {condominioOptions.map(c => (
+                  <option key={c.id} value={c.id}>{c.nombre}</option>
+                ))}
               </Form.Select>
             </Form.Group>
-            <Button type="submit" className="w-100 py-3 fw-bold shadow-sm" style={{ background: "#3b82f6", border: "none", borderRadius: "12px" }}>
-              {isEditing ? "Guardar Cambios" : "Vincular Administrador"}
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
+            <Button
+              type="submit"
+              disabled={submitting || !isEditableRole}
+              title={!isEditableRole ? 'Solo se permite crear/editar Administradores de Condominio' : ''}
+            >
+              {submitting ? 'Guardando...' : 'Guardar'}
             </Button>
-          </Form>
-        </Modal.Body>
+          </Modal.Footer>
+        </Form>
       </Modal>
 
-
-      {/* MODAL: ELIMINAR */}
-      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered size="sm">
-        <Modal.Body className="p-4 text-center">
-          <FiAlertTriangle size={50} className="text-danger mb-3" />
-          <h6 className="fw-bold">¿Revocar Acceso?</h6>
-          <p className="text-muted small">Este usuario perderá el control sobre su condominio asignado de forma inmediata.</p>
-          <div className="d-flex gap-2 mt-4">
-            <Button variant="light" className="w-100 fw-bold border" onClick={() => setShowDeleteModal(false)}>No</Button>
-            <Button variant="danger" className="w-100 fw-bold" onClick={handleExecuteDelete}>Sí, Eliminar</Button>
-          </div>
+      <Modal show={showPasswordModal} onHide={() => setShowPasswordModal(false)} centered>
+        <Modal.Header closeButton className="bg-light">
+          <Modal.Title>Forzar cambio de contraseña</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          <p>Usuario: <strong>{selectedUser?.nombres} {selectedUser?.apellidos}</strong></p>
+          <Form.Group>
+            <Form.Label htmlFor="newPassword">Nueva contraseña</Form.Label>
+            <Form.Control
+              id="newPassword"
+              name="newPassword"
+              type="text"
+              value={newPassword}
+              onChange={(e) => {
+                const value = e.target.value;
+                setNewPassword(value);
+                if (value && value.length < 6) {
+                  setPasswordError('La contraseña debe tener al menos 6 caracteres.');
+                } else {
+                  setPasswordError('');
+                }
+              }}
+              placeholder="Ingresa nueva contraseña"
+              isInvalid={!!passwordError}
+            />
+            <Form.Control.Feedback type="invalid">
+              {passwordError}
+            </Form.Control.Feedback>
+            <small className="text-muted">
+              La contraseña debe tener al menos 6 caracteres.
+            </small>
+          </Form.Group>
         </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowPasswordModal(false)}>Cancelar</Button>
+          <Button
+            variant="primary"
+            onClick={() => handleForcePassword(selectedUser?.id)}
+            disabled={!!passwordError || !newPassword || newPassword.length < 6}
+          >
+            Guardar
+          </Button>
+        </Modal.Footer>
       </Modal>
     </div>
   );

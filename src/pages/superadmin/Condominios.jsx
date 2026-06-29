@@ -1,358 +1,419 @@
-import { useState, useEffect } from "react";
-import { FiPlus, FiHome, FiLayers, FiGrid, FiCheckCircle, FiXCircle, FiHash, FiMaximize, FiMapPin } from "react-icons/fi";
-import { Accordion, Badge, Card, Button, Table, Modal, Form, Row, Col } from "react-bootstrap";
-
-const condominiosIniciales = [
-  {
-    id: 1,
-    nombre: "Jerarquía Residencial I",
-    ubicacion: "Puente Piedra",
-    plan: "Premium",
-    torres: [
-      { 
-        id: "T1", 
-        nombre: "Torre A", 
-        pisos: [
-          { nivel: 1, apartamentos: [{ id: "A1", numero: "101", metraje: 85, derecho_estacionamiento: true }] },
-          { nivel: 2, apartamentos: [{ id: "A2", numero: "201", metraje: 70, derecho_estacionamiento: false }] }
-        ] 
-      }
-    ]
-  },
-  {
-    id: 2,
-    nombre: "Urban Park Sur",
-    ubicacion: "Santiago de Surco",
-    plan: "Básico",
-    torres: [
-      { id: "T3", nombre: "Edificio Central", pisos: [{ nivel: 1, apartamentos: [{ id: "A4", numero: "101", metraje: 110, derecho_estacionamiento: true }] }] }
-    ]
-  },
-  {
-    id: 3,
-    nombre: "Residencial Las Palmas",
-    ubicacion: "Los Olivos",
-    plan: "Premium",
-    torres: [
-      { id: "T4", nombre: "Torre Norte", pisos: [{ nivel: 1, apartamentos: [{ id: "A5", numero: "101", metraje: 75, derecho_estacionamiento: true }] }] }
-    ]
-  },
-  {
-    id: 4,
-    nombre: "Condominio El Olivar",
-    ubicacion: "San Isidro",
-    plan: "Premium",
-    torres: [
-      { id: "T5", nombre: "Torre Gold", pisos: [{ nivel: 10, apartamentos: [{ id: "A6", numero: "1001", metraje: 150, derecho_estacionamiento: true }] }] }
-    ]
-  },
-  {
-    id: 5,
-    nombre: "Altos de Comas",
-    ubicacion: "Comas",
-    plan: "Básico",
-    torres: [
-      { id: "T6", nombre: "Block A", pisos: [{ nivel: 1, apartamentos: [{ id: "A7", numero: "101", metraje: 65, derecho_estacionamiento: false }] }] }
-    ]
-  },
-  {
-    id: 6,
-    nombre: "Villa Marina",
-    ubicacion: "Chorrillos",
-    plan: "Premium",
-    torres: [
-      { id: "T7", nombre: "Torre Mar", pisos: [{ nivel: 1, apartamentos: [{ id: "A8", numero: "101", metraje: 95, derecho_estacionamiento: true }] }] }
-    ]
-  },
-  {
-    id: 7,
-    nombre: "Parque San Miguel",
-    ubicacion: "San Miguel",
-    plan: "Básico",
-    torres: [
-      { id: "T8", nombre: "Edificio A", pisos: [{ nivel: 1, apartamentos: [{ id: "A9", numero: "101", metraje: 80, derecho_estacionamiento: true }] }] }
-    ]
-  },
-  {
-    id: 8,
-    nombre: "Residencial San Felipe",
-    ubicacion: "Jesús María",
-    plan: "Premium",
-    torres: [
-      { id: "T9", nombre: "Torre 1", pisos: [{ nivel: 5, apartamentos: [{ id: "A10", numero: "502", metraje: 115, derecho_estacionamiento: true }] }] }
-    ]
-  },
-  {
-    id: 9,
-    nombre: "Praderas del Norte",
-    ubicacion: "Carabayllo",
-    plan: "Básico",
-    torres: [
-      { id: "T10", nombre: "Sector 1", pisos: [{ nivel: 1, apartamentos: [{ id: "A11", numero: "101", metraje: 60, derecho_estacionamiento: false }] }] }
-    ]
-  },
-  {
-    id: 10,
-    nombre: "Mirador de la Costa",
-    ubicacion: "Magdalena del Mar",
-    plan: "Premium",
-    torres: [
-      { id: "T11", nombre: "Torre Pacific", pisos: [{ nivel: 1, apartamentos: [{ id: "A12", numero: "101", metraje: 130, derecho_estacionamiento: true }] }] }
-    ]
-  }
-];
-
-const STORAGE_KEY = 'condominios_superadmin'
+import { useState, useEffect, useMemo } from 'react';
+import { FiPlus, FiEdit2, FiTrash2, FiCheckCircle, FiXCircle, FiSearch, FiArrowUp, FiArrowDown } from 'react-icons/fi';
+import {
+  getCondominiums,
+  createCondominium,
+  updateCondominium,
+  deleteCondominium,
+  patchCondominiumStatus,
+  getCountries,
+  getCities,
+} from '../../services/api';
+import { Modal, Form, Button, Table, Badge, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
 
 export default function Condominios() {
-  // --- ESTADOS DE CONTROL ---
-  const [showCondoModal, setShowCondoModal] = useState(false);
-  const [showTorreModal, setShowTorreModal] = useState(false);
-  const [showPisoModal, setShowPisoModal] = useState(false);
-  const [showAptoModal, setShowAptoModal] = useState(false);
-  
-  const [selectedCondoId, setSelectedCondoId] = useState(null);
-  const [selectedTorreId, setSelectedTorreId] = useState(null);
-  const [selectedPisoNivel, setSelectedPisoNivel] = useState(null);
-
-
-  // --- DATOS INICIALES EXPANDIDOS (10 CONDOMINIOS) ---
-  const [condominios, setCondominios] = useState(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      return stored ? JSON.parse(stored) : condominiosIniciales
-    } catch {
-      return condominiosIniciales
-    }
+  const [condominios, setCondominios] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [editing, setEditing] = useState(null);
+  const [form, setForm] = useState({
+    nombre: '',
+    direccion: '',
+    idPais: '',
+    idCiudad: '',
   });
+  const [error, setError] = useState(null);
 
-  // Sincroniza con localStorage cada vez que condominios cambie
-  useEffect(() => {
+  // Filtros
+  const [searchTerm, setSearchTerm] = useState('');
+  const [ciudadFilter, setCiudadFilter] = useState('');
+  const [estadoFilter, setEstadoFilter] = useState('');
+  const [sortOrder, setSortOrder] = useState('asc');
+  const [sortField, setSortField] = useState('nombre');
+
+  // Catálogos
+  const [paises, setPaises] = useState([]);
+  const [ciudades, setCiudades] = useState([]);
+  const [loadingCatalogs, setLoadingCatalogs] = useState(false);
+
+  const load = async () => {
+    setLoading(true);
+    setError(null);
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(condominios))
-    } catch {
-      console.error('Error al guardar en localStorage')
+      const data = await getCondominiums();
+      let list = data?.items || data?.content || data?.data || [];
+      if (!Array.isArray(list)) list = [];
+      setCondominios(list);
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+      setCondominios([]);
+    } finally {
+      setLoading(false);
     }
-  }, [condominios]);
-
-
-  // Estados de formularios
-  const [newCondo, setNewCondo] = useState({ nombre: "", ubicacion: "", plan: "Básico" });
-  const [newTorreName, setNewTorreName] = useState("");
-  const [newPisoNum, setNewPisoNum] = useState("");
-  const [newApto, setNewApto] = useState({ numero: "", metraje: "", derecho_estacionamiento: true });
-
-
-  // --- LÓGICA DE ACTUALIZACIÓN ---
-
-
-  const handleAddCondominio = (e) => {
-    e.preventDefault();
-    const nuevo = { ...newCondo, id: Date.now(), torres: [] };
-    setCondominios([...condominios, nuevo]);
-    setShowCondoModal(false);
   };
 
-
-  const handleAddTorre = (e) => {
-    e.preventDefault();
-    setCondominios(condominios.map(c => c.id === selectedCondoId 
-      ? { ...c, torres: [...c.torres, { id: `T-${Date.now()}`, nombre: newTorreName, pisos: [] }] } 
-      : c));
-    setShowTorreModal(false);
-    setNewTorreName("");
+  const loadCatalogs = async () => {
+    setLoadingCatalogs(true);
+    try {
+      const paisesData = await getCountries();
+      setPaises(paisesData);
+      if (paisesData.length > 0) {
+        const firstCountry = paisesData[0].id;
+        const citiesData = await getCities(firstCountry);
+        setCiudades(citiesData);
+        if (!form.idPais) {
+          setForm(prev => ({ ...prev, idPais: firstCountry }));
+        }
+      }
+    } catch (err) {
+      console.error('Error cargando catálogos:', err);
+    } finally {
+      setLoadingCatalogs(false);
+    }
   };
 
+  useEffect(() => {
+    load();
+    loadCatalogs();
+  }, []);
 
-  const handleAddPiso = (e) => {
-    e.preventDefault();
-    setCondominios(condominios.map(c => c.id === selectedCondoId ? {
-      ...c, torres: c.torres.map(t => t.id === selectedTorreId 
-        ? { ...t, pisos: [...t.pisos, { nivel: parseInt(newPisoNum), apartamentos: [] }].sort((a,b) => a.nivel - b.nivel) } 
-        : t)
-    } : c));
-    setShowPisoModal(false);
-    setNewPisoNum("");
+  const uniqueCities = [...new Set(condominios.map(c => c.nombreCiudad).filter(Boolean))];
+
+  const filteredAndSorted = useMemo(() => {
+    let result = condominios.filter(c => {
+      const matchNombre = c.nombre.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchCiudad = ciudadFilter ? c.nombreCiudad === ciudadFilter : true;
+      const matchEstado = estadoFilter !== '' ? (estadoFilter === 'activo' ? c.activo : !c.activo) : true;
+      return matchNombre && matchCiudad && matchEstado;
+    });
+
+    result.sort((a, b) => {
+      let valA, valB;
+      if (sortField === 'nombre') {
+        valA = a.nombre.toLowerCase();
+        valB = b.nombre.toLowerCase();
+      } else if (sortField === 'ciudad') {
+        valA = (a.nombreCiudad || '').toLowerCase();
+        valB = (b.nombreCiudad || '').toLowerCase();
+      } else if (sortField === 'estado') {
+        valA = a.activo ? 1 : 0;
+        valB = b.activo ? 1 : 0;
+      } else {
+        return 0;
+      }
+      if (sortOrder === 'asc') {
+        return valA > valB ? 1 : valA < valB ? -1 : 0;
+      } else {
+        return valA < valB ? 1 : valA > valB ? -1 : 0;
+      }
+    });
+    return result;
+  }, [condominios, searchTerm, ciudadFilter, estadoFilter, sortField, sortOrder]);
+
+  const handlePaisChange = async (paisId) => {
+    setForm({ ...form, idPais: paisId, idCiudad: '' });
+    if (paisId) {
+      try {
+        const cities = await getCities(paisId);
+        setCiudades(cities);
+      } catch (err) {
+        console.error(err);
+      }
+    }
   };
 
-
-  const handleAddApto = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setCondominios(condominios.map(c => c.id === selectedCondoId ? {
-      ...c, torres: c.torres.map(t => t.id === selectedTorreId ? {
-        ...t, pisos: t.pisos.map(p => p.nivel === selectedPisoNivel 
-          ? { ...p, apartamentos: [...p.apartamentos, { ...newApto, id: `A-${Date.now()}` }] } 
-          : p)
-      } : t)
-    } : c));
-    setShowAptoModal(false);
-    setNewApto({ numero: "", metraje: "", derecho_estacionamiento: true });
+    try {
+      const payload = {
+        nombre: form.nombre,
+        direccion: form.direccion,
+        idPais: parseInt(form.idPais, 10),
+        idCiudad: parseInt(form.idCiudad, 10),
+      };
+      if (editing) {
+        await updateCondominium(editing.id, payload);
+      } else {
+        await createCondominium(payload);
+      }
+      setShowModal(false);
+      load();
+    } catch (err) {
+      alert(err.message);
+      console.error(err);
+    }
   };
 
+  const handleDelete = async (id) => {
+    if (!window.confirm('¿Eliminar condominio?')) return;
+    try {
+      await deleteCondominium(id);
+      load();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleToggleStatus = async (id, activo) => {
+    try {
+      await patchCondominiumStatus(id, !activo);
+      load();
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const toggleSort = (field) => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortField(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const getSortIcon = (field) => {
+    if (sortField !== field) return null;
+    return sortOrder === 'asc' ? <FiArrowUp size={14} /> : <FiArrowDown size={14} />;
+  };
+
+  if (loading)
+    return (
+      <div className="text-center py-5">
+        <Spinner animation="border" variant="primary" />
+        <p className="mt-2">Cargando condominios...</p>
+      </div>
+    );
+  if (error)
+    return (
+      <div className="text-center text-danger py-5">
+        <p>{error}</p>
+        <Button variant="outline-primary" onClick={load}>Reintentar</Button>
+      </div>
+    );
 
   return (
-    <div style={{ padding: "1.5rem" }}>
-      {/* HEADER PRINCIPAL */}
+    <div style={{ padding: '1.5rem' }}>
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <div>
-          <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#3b82f6", margin: 0 }}>Estructura Física</h1>
-          <p style={{ color: "#0ea5e9", fontWeight: 600, fontSize: "0.9rem" }}>Gestión de unidades residenciales Urban Park</p>
-        </div>
-        <Button onClick={() => setShowCondoModal(true)} style={{ background: "#3b82f6", border: "none", borderRadius: "10px" }} className="shadow-sm px-4 py-2">
-          <FiPlus className="me-2" /> Registrar Condominio
+        <h1 style={{ fontWeight: 700, color: '#1e293b' }}>Condominios</h1>
+        <Button variant="primary" onClick={() => {
+          setEditing(null);
+          setForm({
+            nombre: '',
+            direccion: '',
+            idPais: paises.length > 0 ? paises[0].id : '',
+            idCiudad: '',
+          });
+          setShowModal(true);
+        }}>
+          <FiPlus className="me-2" /> Nuevo
         </Button>
       </div>
 
+      <Row className="mb-4 g-2 align-items-end">
+        <Col md={3}>
+          <InputGroup>
+            <InputGroup.Text><FiSearch /></InputGroup.Text>
+            <Form.Control
+              placeholder="Buscar por nombre..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              aria-label="Buscar condominio"
+            />
+          </InputGroup>
+        </Col>
+        <Col md={2}>
+          <Form.Select
+            value={ciudadFilter}
+            onChange={(e) => setCiudadFilter(e.target.value)}
+            aria-label="Filtrar por ciudad"
+          >
+            <option value="">Todas las ciudades</option>
+            {uniqueCities.map(ciudad => (
+              <option key={ciudad} value={ciudad}>{ciudad}</option>
+            ))}
+          </Form.Select>
+        </Col>
+        <Col md={2}>
+          <Form.Select
+            value={estadoFilter}
+            onChange={(e) => setEstadoFilter(e.target.value)}
+            aria-label="Filtrar por estado"
+          >
+            <option value="">Todos los estados</option>
+            <option value="activo">Activo</option>
+            <option value="inactivo">Inactivo</option>
+          </Form.Select>
+        </Col>
+        <Col md={2}>
+          <Form.Select
+            value={`${sortField}-${sortOrder}`}
+            onChange={(e) => {
+              const [field, order] = e.target.value.split('-');
+              setSortField(field);
+              setSortOrder(order);
+            }}
+            aria-label="Ordenar por"
+          >
+            <option value="nombre-asc">Nombre A-Z</option>
+            <option value="nombre-desc">Nombre Z-A</option>
+            <option value="ciudad-asc">Ciudad A-Z</option>
+            <option value="ciudad-desc">Ciudad Z-A</option>
+            <option value="estado-asc">Estado (Activo primero)</option>
+            <option value="estado-desc">Estado (Inactivo primero)</option>
+          </Form.Select>
+        </Col>
+        <Col md={3} className="text-end">
+          <Button variant="outline-secondary" onClick={() => {
+            setSearchTerm('');
+            setCiudadFilter('');
+            setEstadoFilter('');
+          }}>
+            Limpiar filtros
+          </Button>
+        </Col>
+      </Row>
 
-      {/* RENDERIZADO DE CONDOMINIOS */}
-      {condominios.map((condo) => (
-        <Card key={condo.id} className="border-0 shadow-sm mb-5" style={{ borderRadius: "20px", overflow: "hidden" }}>
-          <Card.Header className="bg-white p-4 border-0">
-            <div className="d-flex align-items-center gap-3">
-              <div style={{ background: "#eff6ff", padding: "12px", borderRadius: "14px", color: "#3b82f6" }}>
-                <FiHome size={24} />
-              </div>
-              <div>
-                <h4 className="m-0 fw-bold" style={{ color: "#1e293b" }}>{condo.nombre}</h4>
-                <div className="d-flex gap-2 align-items-center mt-1">
-                  <Badge bg="light" text="dark" className="border fw-normal"><FiMapPin size={12}/> {condo.ubicacion}</Badge>
-                  <Badge bg={condo.plan === "Premium" ? "success" : "primary"} className="bg-opacity-10 text-success border border-success border-opacity-25">{condo.plan}</Badge>
-                </div>
-              </div>
-            </div>
-          </Card.Header>
-
-
-          <Card.Body className="px-4 pb-4 pt-0">
-            <Accordion>
-              {condo.torres.map((torre, tIdx) => (
-                <Accordion.Item eventKey={tIdx.toString()} key={torre.id} className="border-0 mb-3 shadow-sm rounded-4 overflow-hidden">
-                  <Accordion.Header>
-                    <FiLayers className="me-2 text-primary" /> <span className="fw-bold" style={{ color: "#475569" }}>{torre.nombre}</span>
-                    <Badge bg="primary" className="ms-auto me-3 bg-opacity-10 text-primary">{torre.pisos.length} Niveles</Badge>
-                  </Accordion.Header>
-                  <Accordion.Body className="bg-light bg-opacity-25">
-                    {torre.pisos.map((piso) => (
-                      <div key={piso.nivel} className="bg-white p-3 rounded-4 mb-3 shadow-sm border border-light">
-                        <div className="d-flex justify-content-between align-items-center mb-3">
-                          <div className="d-flex align-items-center gap-2">
-                            <FiGrid className="text-info" /> <span className="fw-bold text-dark">Piso {piso.nivel}</span>
-                          </div>
-                          <Button variant="link" size="sm" className="text-decoration-none fw-bold text-info" onClick={() => { setSelectedCondoId(condo.id); setSelectedTorreId(torre.id); setSelectedPisoNivel(piso.nivel); setShowAptoModal(true); }}>
-                            + Apartamento
-                          </Button>
-                        </div>
-
-
-                        <Table responsive borderless hover className="m-0">
-                          <thead className="small text-muted text-uppercase fw-bold" style={{ fontSize: "0.7rem" }}>
-                            <tr>
-                              <th>Número</th>
-                              <th>Metraje</th>
-                              <th>Cochera</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {piso.apartamentos.map((apto) => (
-                              <tr key={apto.id} className="align-middle">
-                                <td className="fw-bold text-primary">{apto.numero}</td>
-                                <td className="text-muted small">{apto.metraje} m²</td>
-                                <td>
-                                  {apto.derecho_estacionamiento 
-                                    ? <Badge bg="success" className="bg-opacity-10 text-success rounded-pill fw-normal">SÍ</Badge>
-                                    : <Badge bg="secondary" className="bg-opacity-10 text-muted rounded-pill fw-normal">NO</Badge>}
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </Table>
-                      </div>
-                    ))}
-                    <Button variant="outline-primary" size="sm" className="w-100 py-2 border-dashed" style={{ borderStyle: "dashed" }} onClick={() => { setSelectedCondoId(condo.id); setSelectedTorreId(torre.id); setShowPisoModal(true); }}>
-                      <FiPlus /> Añadir Piso a {torre.nombre}
+      {filteredAndSorted.length === 0 ? (
+        <p className="text-center">No hay condominios que coincidan con los filtros.</p>
+      ) : (
+        <div className="table-responsive">
+          <Table striped hover bordered={false} className="shadow-sm rounded overflow-hidden">
+            <thead className="bg-light">
+              <tr>
+                <th>ID</th>
+                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('nombre')}>
+                  Nombre {getSortIcon('nombre')}
+                </th>
+                <th>Dirección</th>
+                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('ciudad')}>
+                  Ciudad {getSortIcon('ciudad')}
+                </th>
+                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('estado')}>
+                  Estado {getSortIcon('estado')}
+                </th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredAndSorted.map(c => (
+                <tr key={c.id}>
+                  <td>{c.id}</td>
+                  <td><strong>{c.nombre}</strong></td>
+                  <td>{c.direccion}</td>
+                  <td>{c.nombreCiudad || '-'}</td>
+                  <td>
+                    <Badge bg={c.activo ? 'success' : 'secondary'} pill>
+                      {c.activo ? 'Activo' : 'Inactivo'}
+                    </Badge>
+                  </td>
+                  <td>
+                    <Button
+                      variant="outline-primary"
+                      size="sm"
+                      className="me-2"
+                      onClick={() => {
+                        setEditing(c);
+                        setForm({
+                          nombre: c.nombre,
+                          direccion: c.direccion || '',
+                          idPais: c.idPais || (paises.length > 0 ? paises[0].id : ''),
+                          idCiudad: c.idCiudad || '',
+                        });
+                        if (c.idPais) {
+                          getCities(c.idPais).then(cities => setCiudades(cities)).catch(console.error);
+                        }
+                        setShowModal(true);
+                      }}
+                    >
+                      <FiEdit2 />
                     </Button>
-                  </Accordion.Body>
-                </Accordion.Item>
+                    <Button
+                      variant="outline-warning"
+                      size="sm"
+                      className="me-2"
+                      onClick={() => handleToggleStatus(c.id, c.activo)}
+                    >
+                      {c.activo ? <FiXCircle /> : <FiCheckCircle />}
+                    </Button>
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      onClick={() => handleDelete(c.id)}
+                    >
+                      <FiTrash2 />
+                    </Button>
+                  </td>
+                </tr>
               ))}
-            </Accordion>
-            <Button variant="light" className="w-100 mt-2 py-2 border rounded-3 fw-bold text-muted" onClick={() => { setSelectedCondoId(condo.id); setShowTorreModal(true); }}>
-              <FiPlus className="me-1" /> Nueva Torre
-            </Button>
-          </Card.Body>
-        </Card>
-      ))}
+            </tbody>
+          </Table>
+        </div>
+      )}
 
-
-      {/* --- MODALES --- */}
-
-
-      {/* MODAL: CONDOMINIO */}
-      <Modal show={showCondoModal} onHide={() => setShowCondoModal(false)} centered>
-        <Modal.Body className="p-4">
-          <h5 className="fw-bold mb-4 text-primary">Registrar Condominio</h5>
-          <Form onSubmit={handleAddCondominio}>
+      {/* Modal igual que antes */}
+      <Modal show={showModal} onHide={() => setShowModal(false)} centered>
+        <Modal.Header closeButton className="bg-light">
+          <Modal.Title>{editing ? 'Editar' : 'Nuevo'} condominio</Modal.Title>
+        </Modal.Header>
+        <Form onSubmit={handleSubmit}>
+          <Modal.Body>
             <Form.Group className="mb-3">
-              <Form.Label className="small fw-bold text-muted">NOMBRE COMERCIAL</Form.Label>
-              <Form.Control required className="bg-light border-0" onChange={e => setNewCondo({...newCondo, nombre: e.target.value})} />
+              <Form.Label htmlFor="condNombre">Nombre</Form.Label>
+              <Form.Control
+                id="condNombre"
+                name="condNombre"
+                value={form.nombre}
+                onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+                required
+              />
             </Form.Group>
-            <Row>
-              <Col><Form.Group className="mb-3"><Form.Label className="small fw-bold text-muted">DISTRITO</Form.Label><Form.Control required className="bg-light border-0" onChange={e => setNewCondo({...newCondo, ubicacion: e.target.value})} /></Form.Group></Col>
-              <Col><Form.Group className="mb-4"><Form.Label className="small fw-bold text-muted">PLAN</Form.Label><Form.Select className="bg-light border-0" onChange={e => setNewCondo({...newCondo, plan: e.target.value})}><option value="Básico">Básico</option><option value="Premium">Premium</option></Form.Select></Form.Group></Col>
-            </Row>
-            <Button type="submit" className="w-100 py-2 fw-bold" style={{ background: "#3b82f6", border: "none", borderRadius: "10px" }}>Guardar Entidad</Button>
-          </Form>
-        </Modal.Body>
-      </Modal>
-
-
-      {/* MODAL: TORRE */}
-      <Modal show={showTorreModal} onHide={() => setShowTorreModal(false)} centered>
-        <Modal.Body className="p-4 text-center">
-          <FiLayers size={40} className="text-primary mb-3" />
-          <h5 className="fw-bold">Vincular Torre</h5>
-          <Form onSubmit={handleAddTorre} className="text-start mt-3">
-            <Form.Control required className="bg-light border-0 mb-4" placeholder="Nombre de torre (Ej. Torre C)" value={newTorreName} onChange={e => setNewTorreName(e.target.value)} />
-            <Button type="submit" className="w-100 py-2 fw-bold" style={{ background: "#3b82f6", border: "none" }}>Confirmar Torre</Button>
-          </Form>
-        </Modal.Body>
-      </Modal>
-
-
-      {/* MODAL: PISO */}
-      <Modal show={showPisoModal} onHide={() => setShowPisoModal(false)} centered size="sm">
-        <Modal.Body className="p-4 text-center">
-          <h6 className="fw-bold mb-3">Definir Piso</h6>
-          <Form onSubmit={handleAddPiso}>
-            <Form.Control required type="number" className="bg-light border-0 text-center mb-3" placeholder="Nivel" value={newPisoNum} onChange={e => setNewPisoNum(e.target.value)} />
-            <Button type="submit" className="w-100 fw-bold" style={{ background: "#3b82f6", border: "none" }}>Crear</Button>
-          </Form>
-        </Modal.Body>
-      </Modal>
-
-
-      {/* MODAL: APARTAMENTO */}
-      <Modal show={showAptoModal} onHide={() => setShowAptoModal(false)} centered>
-        <Modal.Body className="p-4">
-          <h5 className="fw-bold mb-4 text-success"><FiPlus /> Nueva Unidad</h5>
-          <Form onSubmit={handleAddApto}>
-            <Row>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label className="small fw-bold">NÚMERO</Form.Label>
-                  <Form.Control required className="bg-light border-0" placeholder="101" onChange={e => setNewApto({...newApto, numero: e.target.value})} />
-                </Form.Group>
-              </Col>
-              <Col md={6}>
-                <Form.Group className="mb-3">
-                  <Form.Label className="small fw-bold">METRAJE</Form.Label>
-                  <Form.Control required type="number" className="bg-light border-0" placeholder="75" onChange={e => setNewApto({...newApto, metraje: e.target.value})} />
-                </Form.Group>
-              </Col>
-            </Row>
-            <Form.Check type="switch" label="Derecho a estacionamiento" className="mb-4 small fw-bold" checked={newApto.derecho_estacionamiento} onChange={e => setNewApto({...newApto, derecho_estacionamiento: e.target.checked})} />
-            <Button type="submit" className="w-100 py-2 fw-bold" style={{ background: "#10b981", border: "none", borderRadius: "10px" }}>Finalizar</Button>
-          </Form>
-        </Modal.Body>
+            <Form.Group className="mb-3">
+              <Form.Label htmlFor="condDireccion">Dirección</Form.Label>
+              <Form.Control
+                id="condDireccion"
+                name="condDireccion"
+                value={form.direccion}
+                onChange={(e) => setForm({ ...form, direccion: e.target.value })}
+              />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label htmlFor="condPais">País</Form.Label>
+              <Form.Select
+                id="condPais"
+                name="condPais"
+                value={form.idPais}
+                onChange={(e) => handlePaisChange(e.target.value)}
+                disabled={loadingCatalogs}
+              >
+                {paises.map(p => (
+                  <option key={p.id} value={p.id}>{p.nombre}</option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label htmlFor="condCiudad">Ciudad</Form.Label>
+              <Form.Select
+                id="condCiudad"
+                name="condCiudad"
+                value={form.idCiudad}
+                onChange={(e) => setForm({ ...form, idCiudad: e.target.value })}
+                required
+                disabled={!form.idPais || loadingCatalogs}
+              >
+                <option value="">Seleccione ciudad</option>
+                {ciudades.map(c => (
+                  <option key={c.id} value={c.id}>{c.nombre}</option>
+                ))}
+              </Form.Select>
+            </Form.Group>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
+            <Button type="submit">Guardar</Button>
+          </Modal.Footer>
+        </Form>
       </Modal>
     </div>
   );

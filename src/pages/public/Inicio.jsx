@@ -2,46 +2,98 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import Hero from "../../components/Hero";
 import ListaConImagen from "../../components/ListaConImagen";
 import CarruselCard from "../../components/CarruselCard";
-import ParkingVideo from "../../images/ParkingVideo.mp4";
+import SistemaVideo from "../../images/ParkingVideo.mp4";
 
 function Inicio() {
   const listaInicio = [
-    { icon: "bi-check-circle-fill", text: "Gestión en tiempo real de la ocupación de estacionamientos del condominio." },
-    { icon: "bi-check-circle-fill", text: "Control automatizado de ingresos y salidas con registro ordenado de vehículos." },
-    { icon: "bi-check-circle-fill", text: "Reservas digitales rápidas desde web o aplicación móvil." },
-    { icon: "bi-check-circle-fill", text: "Gestión por roles y permisos para mayor seguridad y control operativo." },
-    { icon: "bi-check-circle-fill", text: "Integración flexible con condominios mediante APIs y sistemas existentes." }
+    {
+      icon: "bi-check-circle-fill",
+      text: "Administra condominios, torres, pisos y apartamentos desde una única plataforma centralizada."
+    },
+    {
+      icon: "bi-check-circle-fill",
+      text: "Gestiona residentes, propietarios, inquilinos y personal con control de roles y permisos."
+    },
+    {
+      icon: "bi-check-circle-fill",
+      text: "Controla vehículos, estacionamientos y accesos con trazabilidad completa en tiempo real."
+    },
+    {
+      icon: "bi-check-circle-fill",
+      text: "Administra préstamos y devoluciones de carritos compartidos de forma organizada."
+    },
+    {
+      icon: "bi-check-circle-fill",
+      text: "Obtén reportes, configuraciones y registros históricos para una gestión eficiente."
+    }
   ];
 
   const carruselInicio = [
-    { icon: "bi-speedometer2", title: "Monitoreo en tiempo real", text: "Visualiza en tiempo real la ocupación, disponibilidad y actividad del estacionamiento." },
-    { icon: "bi-shield-lock", title: "Control de acceso seguro", text: "Administra permisos de usuarios y vehículos desde un panel centralizado seguro." },
-    { icon: "bi-graph-up", title: "Analítica inteligente", text: "Genera reportes detallados sobre uso de espacios y flujo vehicular del sistema." },
-    { icon: "bi-phone", title: "Acceso multiplataforma", text: "Gestiona la plataforma desde web o aplicación móvil en cualquier momento disponible." },
-    { icon: "bi-clock-history", title: "Trazabilidad completa", text: "Registra entradas, salidas y movimientos de vehículos con historial completo." },
-    { icon: "bi-building", title: "Gestión multi-condominio", text: "Administra múltiples edificios desde una sola plataforma centralizada escalable." },
-    { icon: "bi-car-front", title: "Optimización de espacios", text: "Mejora la asignación y uso eficiente de todos los estacionamientos disponibles." },
-    { icon: "bi-diagram-3", title: "Arquitectura flexible", text: "Sistema adaptable y escalable para cualquier tipo de condominio o edificio." }
+    {
+      icon: "bi-buildings",
+      title: "Gestión de Condominios",
+      text: "Administra condominios, torres, pisos y apartamentos mediante una estructura organizada y escalable."
+    },
+    {
+      icon: "bi-people",
+      title: "Gestión de Residentes",
+      text: "Controla propietarios, inquilinos y usuarios con roles específicos y acceso seguro."
+    },
+    {
+      icon: "bi-car-front",
+      title: "Control Vehicular",
+      text: "Registra vehículos autorizados y mantiene el historial completo de ingresos y salidas."
+    },
+    {
+      icon: "bi-p-square",
+      title: "Administración de Estacionamientos",
+      text: "Gestiona espacios disponibles y ocupados en tiempo real."
+    },
+    {
+      icon: "bi-cart",
+      title: "Carritos Compartidos",
+      text: "Controla reservas, préstamos y devoluciones de carritos para los residentes."
+    },
+    {
+      icon: "bi-shield-lock",
+      title: "Seguridad y Accesos",
+      text: "Protege la información mediante autenticación segura, permisos y trazabilidad de acciones."
+    },
+    {
+      icon: "bi-bar-chart-line",
+      title: "Reportes y Estadísticas",
+      text: "Genera información clave para optimizar la administración y operación del condominio."
+    },
+    {
+      icon: "bi-phone",
+      title: "Plataforma Moderna",
+      text: "Accede al sistema desde dispositivos web y móviles con una experiencia rápida y eficiente."
+    }
   ];
 
   return (
     <>
       <Hero
-        title="URBAN PARK"
-        description="Gestión inteligente y en tiempo real de estacionamientos para edificios modernos."
-        video={ParkingVideo}
+        title="URBANIA"
+        description="La plataforma integral para administrar condominios, residentes, vehículos, estacionamientos y carritos compartidos desde un solo lugar."
+        video={SistemaVideo}
         height="90vh"
         align="center"
       />
 
       <ListaConImagen
         features={listaInicio}
-        videoUrl="https://www.youtube.com/watch?v=bQ5Uoepy0kg"
+        videoUrl="https://www.youtube.com/watch?v=ED3pxcplf3s"
         imagePosition="right"
-        title="¿Por qué elegir Urban Park?"
+        title="Todo lo que tu condominio necesita en una sola plataforma"
       />
 
-      <section className="py-5" style={{ background: "linear-gradient(135deg,#0F172A,#1E293B)" }}>
+      <section
+        className="py-5"
+        style={{
+          background: "linear-gradient(135deg,#0F172A,#1E293B)"
+        }}
+      >
         <CarruselCard features={carruselInicio} />
       </section>
     </>

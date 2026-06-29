@@ -8,63 +8,67 @@ function Precios() {
     {
       nombre: "Starter",
       precio: "S/ 49 / mes",
-      descripcion: "Ideal para condominios pequeños",
+      descripcion: "Para condominios pequeños o en etapa inicial de digitalización",
       features: [
-        "Hasta 50 residentes",
-        "Control de acceso básico",
-        "Soporte estándar"
+        "Gestión de hasta 50 unidades residenciales",
+        "Control básico de accesos y residentes",
+        "Registro de vehículos y visitantes",
+        "Soporte estándar por correo"
       ]
     },
     {
       nombre: "Business",
       precio: "S/ 129 / mes",
-      descripcion: "Para edificios medianos",
+      descripcion: "Para edificios y condominios en crecimiento",
       features: [
-        "Hasta 200 residentes",
-        "QR + LPR",
-        "Monitoreo en tiempo real"
+        "Hasta 200 unidades residenciales",
+        "Control de accesos con QR",
+        "Monitoreo en tiempo real de ocupación",
+        "Gestión de estacionamientos y reservas"
       ]
     },
     {
       nombre: "Enterprise",
       precio: "S/ 299 / mes",
-      descripcion: "Para múltiples condominios",
+      descripcion: "Para administradoras con múltiples condominios",
       features: [
-        "Multi-tenant",
-        "Roles avanzados",
-        "API + soporte 24/7"
+        "Arquitectura multi-condominio",
+        "Gestión avanzada de roles y permisos",
+        "API para integraciones externas",
+        "Auditoría completa",
+        "Soporte 24/7"
       ]
     }
-  ];
+  ]
 
   const faqs = [
     {
-      pregunta: "¿Qué incluye cada plan?",
+      pregunta: "¿Qué funcionalidades incluye el sistema?",
       respuesta:
-        "Incluye control de accesos, gestión de residentes y funcionalidades según el nivel."
+        "Urbania incluye gestión de condominios, residentes, accesos vehiculares, estacionamientos, carritos compartidos y reportes en tiempo real."
     },
     {
-      pregunta: "¿Puedo escalar mi plan?",
+      pregunta: "¿Puedo cambiar de plan en cualquier momento?",
       respuesta:
-        "Sí, puedes cambiar de plan en cualquier momento sin perder información."
+        "Sí, puedes escalar o reducir tu plan sin pérdida de información ni interrupción del servicio."
     },
     {
-      pregunta: "¿Funciona con cámaras LPR?",
+      pregunta: "¿El sistema soporta reconocimiento de placas?",
       respuesta:
-        "Sí, contamos con integración para reconocimiento de placas en planes superiores."
+        "Sí, los planes Business y Enterprise permiten integración con sistemas LPR para control automático de vehículos."
     },
     {
-      pregunta: "¿Puedo tener múltiples condominios?",
+      pregunta: "¿Es posible administrar varios condominios?",
       respuesta:
-        "Sí, el plan Enterprise está diseñado para gestión multi-condominio."
+        "Sí, el plan Enterprise está diseñado para gestión multi-condominio con control centralizado."
     }
-  ];
+  ]
 
   return (
     <div className="bg-light">
       <Hero
         title="Planes y Precios"
-        description="Paga según tus necesidades y escala tu operación cuando lo requieras."
+        description="Elige el plan adecuado para tu condominio y escala la gestión según el crecimiento de tu operación."
         background={parkingPricing}
         height="80vh"
       />
@@ -75,14 +79,14 @@ function Precios() {
 
       <section className="py-5 text-center bg-white">
         <div className="container">
-          <h3 className="fw-bold">¿Necesitas un plan personalizado?</h3>
+          <h3 className="fw-bold">¿Necesitas una solución a medida?</h3>
           <p className="text-muted">
-            Podemos adaptar el sistema a la cantidad de condominios que administres.
+            Podemos adaptar Urbania según el número de condominios, usuarios y módulos que requieras.
           </p>
         </div>
       </section>
     </div>
-  );
+  )
 }
 
-export default Precios;
+export default Precios

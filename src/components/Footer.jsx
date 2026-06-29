@@ -139,9 +139,7 @@ function Footer() {
               <img src={logo} alt="Urban Park" className="footer-logo" />
 
               <p className="footer-desc">
-                Sistema digital para la administración eficiente de
-                estacionamientos en condominios y edificios, facilitando el
-                control total de espacios por parte del administrador.
+                Sistema digital para la gestión eficiente de condominios, centralizando el control de residentes, accesos y operaciones internas.
               </p>
             </Col>
 
@@ -149,7 +147,6 @@ function Footer() {
               <h5 className="footer-title">Producto</h5>
               <Link to="/servicios">Funcionalidades</Link>
               <Link to="/precios">Planes</Link>
-              <Link to="/login">Login</Link>
             </Col>
 
             <Col lg={2} md={6} className="footer-col">
@@ -162,7 +159,7 @@ function Footer() {
             <Col lg={2} md={6} className="footer-col footer-contact">
               <h5 className="footer-title">Contacto</h5>
               <div>+51 900 123 456</div>
-              <div>soporte@urbanpark.com</div>
+              <div>soporte@urbania.com</div>
               <div>Lima, Perú</div>
             </Col>
 
@@ -217,7 +214,7 @@ function Footer() {
 
       <div className="footer-bottom">
         <Container>
-          © 2026 Urban Park. Todos los derechos reservados.
+          © 2026 Urbania. Todos los derechos reservados.
         </Container>
       </div>
     </footer>

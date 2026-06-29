@@ -7,7 +7,7 @@ function Terminos() {
     <>
       <Hero
         title="Términos y Condiciones"
-        description="Condiciones de uso de la plataforma Urban Park y políticas de servicio."
+        description="Condiciones de uso de la plataforma Urbania y políticas de servicio para la gestión de condominios."
         background={fondoParking}
         height="60vh"
         align="center"
@@ -26,75 +26,69 @@ function Terminos() {
             1. Generalidades
           </h4>
           <p>
-            <strong>URBANK PARK</strong> es una plataforma SaaS de gestión de estacionamientos para condominios,
-            administrada por distintos tipos de usuarios (Super Admin, Administradores de condominio, Seguridad y Propietarios de vehículos).
-            Al acceder o utilizar el sistema, aceptas estos términos.
+            <strong>URBANIA</strong> es una plataforma SaaS para la gestión de condominios que permite administrar residentes,
+            accesos, vehículos, estacionamientos y servicios internos. Al acceder o utilizar el sistema, el usuario acepta estos términos.
           </p>
 
           <h4 className="mt-4" style={{ color: "#1e3a8a" }}>
             2. Uso de la Plataforma
           </h4>
           <p>
-            El uso de URBANK PARK está restringido a usuarios autorizados. Cada usuario debe acceder únicamente
-            con sus credenciales asignadas. Está prohibido compartir cuentas, manipular registros o interferir
-            con el funcionamiento del sistema.
+            El uso de Urbania está restringido a usuarios autorizados según su rol dentro de cada condominio.
+            Cada usuario debe acceder con credenciales personales, siendo responsable del uso de su cuenta.
+            Se prohíbe compartir accesos, manipular datos o afectar el funcionamiento del sistema.
           </p>
 
           <h4 className="mt-4" style={{ color: "#1e3a8a" }}>
             3. Roles del Sistema
           </h4>
           <p>
-            La plataforma opera bajo roles definidos:
-            Super Admin (gestión global del sistema),
-            Administrador de condominio (gestión del estacionamiento),
-            Seguridad (control de accesos),
-            Propietario de vehículo (uso del servicio).
-            Cada rol tiene permisos específicos.
+            La plataforma opera bajo roles definidos como Super Administrador, Administrador de Condominio, Seguridad y Residente.
+            Cada rol cuenta con permisos específicos para garantizar el control y la seguridad de la información.
           </p>
 
           <h4 className="mt-4" style={{ color: "#1e3a8a" }}>
             4. Seguridad y Datos
           </h4>
           <p>
-            URBANK PARK puede almacenar información como placas vehiculares, accesos, horarios y registros de entrada/salida.
-            Nos comprometemos a proteger esta información, aunque el usuario acepta que ningún sistema es 100% infalible.
+            Urbania almacena información operativa como registros de acceso, vehículos, horarios y actividad de usuarios.
+            Se aplican medidas de seguridad para proteger los datos, aunque el usuario reconoce que ningún sistema digital es totalmente infalible.
           </p>
 
           <h4 className="mt-4" style={{ color: "#1e3a8a" }}>
             5. Disponibilidad del Servicio
           </h4>
           <p>
-            El servicio puede estar sujeto a mantenimiento, actualizaciones o fallos técnicos.
-            No garantizamos disponibilidad ininterrumpida, aunque trabajamos para minimizar interrupciones.
+            El sistema puede estar sujeto a mantenimiento, actualizaciones o interrupciones técnicas.
+            Se trabaja continuamente para garantizar la mayor disponibilidad posible del servicio.
           </p>
 
           <h4 className="mt-4" style={{ color: "#1e3a8a" }}>
             6. Responsabilidad
           </h4>
           <p>
-            URBANK PARK no se responsabiliza por el mal uso del sistema por parte de los usuarios,
-            ni por daños derivados de información incorrecta ingresada en la plataforma.
+            Urbania no se hace responsable por el uso indebido de la plataforma ni por información incorrecta ingresada por los usuarios.
+            Cada usuario es responsable del uso adecuado del sistema dentro de su rol asignado.
           </p>
 
           <h4 className="mt-4" style={{ color: "#1e3a8a" }}>
             7. Modificaciones
           </h4>
           <p>
-            Nos reservamos el derecho de actualizar estos términos en cualquier momento.
-            Los cambios serán notificados dentro de la plataforma o vía canales oficiales del sistema.
+            Urbania se reserva el derecho de modificar estos términos en cualquier momento.
+            Las actualizaciones serán comunicadas dentro de la plataforma o por canales oficiales.
           </p>
 
           <h4 className="mt-4" style={{ color: "#1e3a8a" }}>
             8. Contacto
           </h4>
           <p>
-            Para cualquier consulta relacionada con estos términos, puedes comunicarte con el administrador del sistema
-            o con el soporte técnico de <strong>URBANK PARK</strong>.
+            Para consultas relacionadas con estos términos, el usuario puede comunicarse con el administrador del sistema o soporte técnico de Urbania.
           </p>
         </Container>
       </section>
     </>
-  );
+  )
 }
 
-export default Terminos;
+export default Terminos
