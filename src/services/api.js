@@ -168,7 +168,7 @@ export async function patchAdministratorStatus(id, activo) {
 export async function assignAdministratorCondo(adminId, condominioId) {
   return safeFetch(`/api/super-admin/administrators/${adminId}/assign-condo`, {
     method: 'PUT',
-    body: JSON.stringify({ condominioId }),
+    body: JSON.stringify({ idCondominio: condominioId }),
   });
 }
 
