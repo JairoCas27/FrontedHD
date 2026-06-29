@@ -195,7 +195,7 @@ export default function DashboardSuperAdmin() {
         </div>
         <Badge
           bg="primary"
-          style={{ fontSize: '0.85rem', padding: '8px 16px', flexShrink: 0 }}>
+          style={{ fontSize: '0.85rem', padding: '8px 16px' }}>
           <FiCalendar className="me-1" /> Actualizado: {new Date().toLocaleDateString()}
         </Badge>
       </div>
