@@ -1,11 +1,11 @@
-// src/pages/propietario/MisVehiculos.jsx
+// src/pages/propietario/MisInquilinos.jsx
 
 import { useEffect, useState } from "react";
-import { Car, Plus, Trash2 } from "lucide-react";
+import { Users, Plus, Trash2 } from "lucide-react";
 import {
-  getHomeownerVehicles,
-  createHomeownerVehicle,
-  deleteHomeownerVehicle,
+  getHomeownerTenants,
+  createHomeownerTenant,
+  deleteHomeownerTenant,
 } from "../../services/api";
 import { colors, radius, shadow, transition } from "../../theme/colors";
 import SectionHeader from "../../components/common/SectionHeader";
@@ -31,22 +31,22 @@ const GRID = {
 };
 
 const INITIAL_FORM = {
-  marca: "",
-  modelo: "",
-  color: "",
-  placa: "",
-  tipo: "",
+  nombres: "",
+  apellidos: "",
+  tipoDocumento: "",
+  numeroDocumento: "",
 };
 
-const TIPO_OPTIONS = [
-  { value: "Auto", label: "Auto" },
-  { value: "Camioneta", label: "Camioneta" },
-  { value: "Moto", label: "Moto" },
-  { value: "Otro", label: "Otro" },
+const DOC_OPTIONS = [
+  { value: "DNI", label: "DNI" },
+  { value: "CE", label: "Carné de Extranjería" },
+  { value: "PASAPORTE", label: "Pasaporte" },
+  { value: "RUC", label: "RUC" },
 ];
 
-function VehicleCard({ vehicle, onDelete }) {
+function TenantCard({ tenant, onDelete }) {
   const [hovered, setHovered] = useState(false);
+  const initials = `${tenant.nombres?.[0] ?? ""}${tenant.apellidos?.[0] ?? ""}`.toUpperCase();
 
   return (
     <div
@@ -71,17 +71,20 @@ function VehicleCard({ vehicle, onDelete }) {
           style={{
             width: "48px",
             height: "48px",
-            borderRadius: radius.md,
-            background: colors.blueLight,
+            borderRadius: "50%",
+            background: colors.orangeLight,
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            fontWeight: 700,
+            fontSize: "16px",
+            color: colors.orange,
           }}
         >
-          <Car size={22} color={colors.blue} />
+          {initials}
         </div>
         <button
-          onClick={() => onDelete(vehicle)}
+          onClick={() => onDelete(tenant)}
           style={{
             background: hovered ? colors.redLight : "transparent",
             border: "none",
@@ -99,10 +102,10 @@ function VehicleCard({ vehicle, onDelete }) {
 
       <div>
         <p style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: colors.slate }}>
-          {vehicle.marca} {vehicle.modelo}
+          {tenant.nombres} {tenant.apellidos}
         </p>
         <p style={{ margin: "2px 0 0", fontSize: "13px", color: colors.slateLight }}>
-          {vehicle.tipo}
+          Inquilino
         </p>
       </div>
 
@@ -114,11 +117,8 @@ function VehicleCard({ vehicle, onDelete }) {
         }}
       >
         {[
-          { label: "Placa", value: vehicle.placa },
-          { label: "Color", value: vehicle.color },
-          ...(vehicle.idEstacionamiento
-            ? [{ label: "Estacionamiento", value: `#${vehicle.idEstacionamiento}` }]
-            : []),
+          { label: "Tipo doc.", value: tenant.tipoDocumento },
+          { label: "Nro. documento", value: tenant.numeroDocumento },
         ].map((item) => (
           <div
             key={item.label}
@@ -141,8 +141,8 @@ function VehicleCard({ vehicle, onDelete }) {
   );
 }
 
-export default function MisVehiculos() {
-  const [vehicles, setVehicles] = useState([]);
+export default function MisInquilinos() {
+  const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAdd, setShowAdd] = useState(false);
   const [form, setForm] = useState(INITIAL_FORM);
@@ -151,33 +151,33 @@ export default function MisVehiculos() {
   const [deleting, setDeleting] = useState(false);
   const { toast, showToast, clearToast } = useToast();
 
-  const fetchVehicles = () => {
+  const fetchTenants = () => {
     setLoading(true);
-    getHomeownerVehicles()
-      .then((data) => setVehicles(Array.isArray(data) ? data : []))
-      .catch(() => showToast("Error al cargar vehículos", "error"))
+    getHomeownerTenants()
+      .then((data) => setTenants(Array.isArray(data) ? data : []))
+      .catch(() => showToast("Error al cargar inquilinos", "error"))
       .finally(() => setLoading(false));
   };
 
-  useEffect(() => { fetchVehicles(); }, []);
+  useEffect(() => { fetchTenants(); }, []);
 
   const handleChange = (e) =>
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
 
   const handleAdd = async () => {
-    if (!form.marca || !form.modelo || !form.placa || !form.tipo || !form.color) {
+    if (!form.nombres || !form.apellidos || !form.tipoDocumento || !form.numeroDocumento) {
       showToast("Completa todos los campos requeridos", "error");
       return;
     }
     try {
       setSaving(true);
-      await createHomeownerVehicle(form);
-      showToast("Vehículo agregado correctamente", "success");
+      await createHomeownerTenant(form);
+      showToast("Inquilino agregado correctamente", "success");
       setShowAdd(false);
       setForm(INITIAL_FORM);
-      fetchVehicles();
+      fetchTenants();
     } catch {
-      showToast("Error al agregar vehículo", "error");
+      showToast("Error al agregar inquilino", "error");
     } finally {
       setSaving(false);
     }
@@ -187,12 +187,12 @@ export default function MisVehiculos() {
     if (!deleteTarget) return;
     try {
       setDeleting(true);
-      await deleteHomeownerVehicle(deleteTarget.id);
-      showToast("Vehículo eliminado", "success");
+      await deleteHomeownerTenant(deleteTarget.id);
+      showToast("Inquilino eliminado", "success");
       setDeleteTarget(null);
-      fetchVehicles();
+      fetchTenants();
     } catch {
-      showToast("Error al eliminar vehículo", "error");
+      showToast("Error al eliminar inquilino", "error");
     } finally {
       setDeleting(false);
     }
@@ -201,52 +201,56 @@ export default function MisVehiculos() {
   return (
     <div style={PAGE}>
       <SectionHeader
-        title="Mis Vehículos"
-        subtitle={`${vehicles.length} vehículo${vehicles.length !== 1 ? "s" : ""} registrado${vehicles.length !== 1 ? "s" : ""}`}
+        title="Mis Inquilinos"
+        subtitle={`${tenants.length} inquilino${tenants.length !== 1 ? "s" : ""} registrado${tenants.length !== 1 ? "s" : ""}`}
         action={
           <ActionButton icon={Plus} onClick={() => setShowAdd(true)}>
-            Agregar vehículo
+            Agregar inquilino
           </ActionButton>
         }
       />
 
       {loading ? (
         <Loading />
-      ) : vehicles.length === 0 ? (
+      ) : tenants.length === 0 ? (
         <EmptyState
-          icon={Car}
-          title="Sin vehículos registrados"
-          description="Agrega tu primer vehículo para gestionarlo desde aquí."
+          icon={Users}
+          title="Sin inquilinos registrados"
+          description="Agrega los inquilinos de tu apartamento para gestionarlos aquí."
           action={
             <ActionButton icon={Plus} onClick={() => setShowAdd(true)}>
-              Agregar vehículo
+              Agregar inquilino
             </ActionButton>
           }
         />
       ) : (
         <div style={GRID}>
-          {vehicles.map((v) => (
-            <VehicleCard key={v.id} vehicle={v} onDelete={setDeleteTarget} />
+          {tenants.map((t) => (
+            <TenantCard key={t.id} tenant={t} onDelete={setDeleteTarget} />
           ))}
         </div>
       )}
 
-      <Modal open={showAdd} title="Agregar vehículo" onClose={() => { setShowAdd(false); setForm(INITIAL_FORM); }}>
+      <Modal open={showAdd} title="Agregar inquilino" onClose={() => { setShowAdd(false); setForm(INITIAL_FORM); }}>
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-            <FormField label="Marca" name="marca" value={form.marca} onChange={handleChange} placeholder="Toyota" required />
-            <FormField label="Modelo" name="modelo" value={form.modelo} onChange={handleChange} placeholder="Corolla" required />
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-            <FormField label="Placa" name="placa" value={form.placa} onChange={handleChange} placeholder="ABC123" required />
-            <FormField label="Color" name="color" value={form.color} onChange={handleChange} placeholder="Blanco" required />
+            <FormField label="Nombres" name="nombres" value={form.nombres} onChange={handleChange} placeholder="Juan" required />
+            <FormField label="Apellidos" name="apellidos" value={form.apellidos} onChange={handleChange} placeholder="Pérez" required />
           </div>
           <FormField
-            label="Tipo"
-            name="tipo"
-            value={form.tipo}
+            label="Tipo de documento"
+            name="tipoDocumento"
+            value={form.tipoDocumento}
             onChange={handleChange}
-            options={TIPO_OPTIONS}
+            options={DOC_OPTIONS}
+            required
+          />
+          <FormField
+            label="Número de documento"
+            name="numeroDocumento"
+            value={form.numeroDocumento}
+            onChange={handleChange}
+            placeholder="71234567"
             required
           />
           <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", paddingTop: "8px" }}>
@@ -254,7 +258,7 @@ export default function MisVehiculos() {
               Cancelar
             </ActionButton>
             <ActionButton onClick={handleAdd} disabled={saving}>
-              {saving ? "Guardando..." : "Guardar vehículo"}
+              {saving ? "Guardando..." : "Guardar inquilino"}
             </ActionButton>
           </div>
         </div>
@@ -262,8 +266,12 @@ export default function MisVehiculos() {
 
       <ConfirmModal
         open={!!deleteTarget}
-        title="Eliminar vehículo"
-        description={deleteTarget ? `¿Eliminar ${deleteTarget.marca} ${deleteTarget.modelo} (${deleteTarget.placa})?` : ""}
+        title="Eliminar inquilino"
+        description={
+          deleteTarget
+            ? `¿Eliminar a ${deleteTarget.nombres} ${deleteTarget.apellidos} del apartamento?`
+            : ""
+        }
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
         loading={deleting}

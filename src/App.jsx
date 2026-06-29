@@ -49,10 +49,10 @@ import Alertas from "./pages/seguridad/Alertas"
 import PerfilSeguridad from "./pages/seguridad/PerfilSeguridad"
 
 import DashboardPropietario from "./pages/propietario/DashboardPropietario"
+import MiApartamento from "./pages/propietario/MiApartamento"
 import MisVehiculos from "./pages/propietario/MisVehiculos"
-import MisEstacionamientos from "./pages/propietario/MisEstacionamientos"
-import MisVisitas from "./pages/propietario/MisVisitas"
-import MisNotificaciones from "./pages/propietario/MisNotificaciones"
+import MisInquilinos from "./pages/propietario/MisInquilinos"
+import Historial from "./pages/propietario/Historial"
 import PerfilPropietario from "./pages/propietario/PerfilPropietario"
 
 function App() {
@@ -111,13 +111,13 @@ function App() {
 
         <Route element={<AppLayout Sidebar={SidebarPropietario} allowedRole="propietario" />}>
           <Route path="/propietario/dashboard" element={<DashboardPropietario />} />
+          <Route path="/propietario/apartamento" element={<MiApartamento />} />
           <Route path="/propietario/vehiculos" element={<MisVehiculos />} />
-          <Route path="/propietario/estacionamientos" element={<MisEstacionamientos />} />
-          <Route path="/propietario/visitas" element={<MisVisitas />} />
-          <Route path="/propietario/notificaciones" element={<MisNotificaciones />} />
+          <Route path="/propietario/inquilinos" element={<MisInquilinos />} />
+          <Route path="/propietario/historial" element={<Historial />} />
           <Route path="/propietario/perfil" element={<PerfilPropietario />} />
         </Route>
-
+        
       </Routes>
 
       <ToastContainer

@@ -201,18 +201,40 @@ export async function invalidateUserSession(userId) {
   });
 }
 
-// Nuevas funciones para CRUD de usuarios (usando endpoints de admin)
-// Asumimos que el super admin tiene acceso a /api/admin/users
-export async function createUser(data) {
-  return safeFetch('/api/admin/users', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-}
 
-export async function updateUser(id, data) {
-  return safeFetch(`/api/admin/users/${id}`, {
-    method: 'PUT',
+// =========================
+// PROPIETARIO
+// =========================
+ 
+export const getHomeownerDashboard = () =>
+  safeFetch("/api/homeowner/dashboard/summary");
+ 
+export const getHomeownerApartment = () =>
+  safeFetch("/api/homeowner/apartment/details");
+ 
+export const getHomeownerVehicles = () =>
+  safeFetch("/api/homeowner/vehicles");
+ 
+export const createHomeownerVehicle = (data) =>
+  safeFetch("/api/homeowner/vehicles", {
+    method: "POST",
     body: JSON.stringify(data),
   });
-}
+ 
+export const deleteHomeownerVehicle = (id) =>
+  safeFetch(`/api/homeowner/vehicles/${id}`, { method: "DELETE" });
+ 
+export const getHomeownerTenants = () =>
+  safeFetch("/api/homeowner/tenants");
+ 
+export const createHomeownerTenant = (data) =>
+  safeFetch("/api/homeowner/tenants", {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+ 
+export const deleteHomeownerTenant = (id) =>
+  safeFetch(`/api/homeowner/tenants/${id}`, { method: "DELETE" });
+ 
+export const getHomeownerLogs = () =>
+  safeFetch("/api/homeowner/logs");
