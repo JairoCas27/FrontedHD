@@ -23,7 +23,7 @@ export default function Administradores() {
         correo: '',
         telefono: '',
         contrasena: '',
-        idCondominio: '',
+        idCondominio: '', // string vacío para "Sin asignar"
     });
     const [error, setError] = useState(null);
     const [submitting, setSubmitting] = useState(false);
@@ -98,9 +98,6 @@ export default function Administradores() {
         e.preventDefault();
         setSubmitting(true);
         try {
-            const token = localStorage.getItem('token');
-            console.log('Token presente:', !!token);
-
             if (editing) {
                 // 1. Actualizar datos básicos
                 const updatePayload = {
@@ -109,24 +106,29 @@ export default function Administradores() {
                     correo: form.correo.trim(),
                     telefono: form.telefono.trim(),
                 };
-                console.log('Payload update:', updatePayload);
+                console.log('Actualizando administrador:', editing.id, updatePayload);
                 await updateAdministrator(editing.id, updatePayload);
 
                 // 2. Gestionar asignación de condominio
-                const newCondoId = form.idCondominio ? parseInt(form.idCondominio, 10) : null;
-                const oldCondoId = editing.idCondominio ? parseInt(editing.idCondominio, 10) : null;
+                // Convertir idCondominio: string vacío -> null, else número
+                const newCondoId = form.idCondominio === '' ? null : parseInt(form.idCondominio, 10);
+                const oldCondoId = editing.idCondominio !== undefined && editing.idCondominio !== null
+                    ? parseInt(editing.idCondominio, 10)
+                    : null;
                 console.log(`Condo: nuevo=${newCondoId}, anterior=${oldCondoId}`);
 
+                // Si el condominio cambió
                 if (newCondoId !== oldCondoId) {
                     if (newCondoId !== null) {
                         // Asignar condominio
-                        console.log('Asignando condominio ID:', newCondoId);
+                        console.log(`Asignando condominio ID ${newCondoId} al admin ${editing.id}`);
                         try {
                             await assignAdministratorCondo(editing.id, newCondoId);
-                            console.log('Asignación exitosa con condominioId');
+                            console.log('Asignación exitosa.');
                         } catch (assignErr) {
-                            console.error('Error con condominioId, intentando con idCondominio:', assignErr);
-                            // Fallback: intentar con idCondominio (por si el backend espera otro nombre)
+                            console.error('Error en asignación:', assignErr);
+                            // Si falla, intentar con el nombre de campo alternativo usando fetch directo
+                            const token = localStorage.getItem('token');
                             const response = await fetch(
                                 `https://sgc-backend-vfvl.onrender.com/api/super-admin/administrators/${editing.id}/assign-condo`,
                                 {
@@ -140,26 +142,26 @@ export default function Administradores() {
                             );
                             if (!response.ok) {
                                 const errorData = await response.json().catch(() => ({}));
-                                throw new Error(`Falló asignación con idCondominio: ${response.status} ${errorData.message || ''}`);
+                                throw new Error(`Falló asignación: ${response.status} - ${JSON.stringify(errorData)}`);
                             }
-                            console.log('Asignación exitosa con idCondominio');
+                            console.log('Asignación exitosa con idCondominio.');
                         }
                     } else {
-                        // Desasignar (si se selecciona "Sin asignar")
-                        console.warn('Intentando desasignar condominio (no soportado por el backend)');
-                        // Opcional: intentar asignar null
+                        // Desasignar (seleccionó "Sin asignar")
+                        console.warn('Intento desasignar condominio (asignando null)');
                         try {
+                            // Intentar asignar null (puede que el backend no lo permita)
                             await assignAdministratorCondo(editing.id, null);
                         } catch (err) {
-                            console.warn('No se pudo desasignar, el backend no lo permite:', err);
-                            alert('No se puede desasignar el condominio, solo se puede cambiar a otro.');
+                            console.warn('No se puede desasignar, el backend probablemente no lo permite.', err);
+                            alert('No se puede desasignar el condominio. Solo se puede cambiar a otro.');
                         }
                     }
                 } else {
-                    console.log('No hay cambio en el condominio');
+                    console.log('No hay cambio en el condominio.');
                 }
             } else {
-                // Creación
+                // Creación: no se asigna condominio en la creación, se puede editar después
                 const createPayload = {
                     nombres: form.nombres.trim(),
                     apellidos: form.apellidos.trim(),
@@ -167,13 +169,14 @@ export default function Administradores() {
                     telefono: form.telefono.trim(),
                     contrasena: form.contrasena.trim(),
                 };
-                console.log('Payload create:', createPayload);
+                console.log('Creando administrador:', createPayload);
                 await createAdministrator(createPayload);
-                // La creación no asigna condominio automáticamente
+                // Si se seleccionó un condominio, no podemos asignarlo porque no tenemos el ID del nuevo admin
+                // Mejor hacemos una recarga para que el usuario lo asigne manualmente
             }
 
             setShowModal(false);
-            // Recargar con un pequeño retraso para dar tiempo al backend
+            // Recargar lista después de un breve retraso
             setTimeout(() => {
                 loadAll();
             }, 500);
@@ -239,7 +242,7 @@ export default function Administradores() {
                 </Button>
             </div>
 
-            {/* Filtros con accesibilidad */}
+            {/* Filtros */}
             <Row className="mb-4 g-2">
                 <Col md={4}>
                     <InputGroup>
@@ -250,18 +253,15 @@ export default function Administradores() {
                             placeholder="Buscar por nombre o correo..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            aria-label="Buscar administrador"
                         />
                     </InputGroup>
                 </Col>
                 <Col md={3}>
-                    <Form.Label htmlFor="filterCondo" srOnly>Filtrar por condominio</Form.Label>
                     <Form.Select
                         id="filterCondo"
                         name="filterCondo"
                         value={condominioFilter}
                         onChange={(e) => setCondominioFilter(e.target.value)}
-                        aria-label="Filtrar por condominio"
                     >
                         <option value="">Todos los condominios</option>
                         {condominioOptions.map(c => (
@@ -270,13 +270,11 @@ export default function Administradores() {
                     </Form.Select>
                 </Col>
                 <Col md={3}>
-                    <Form.Label htmlFor="filterEstado" srOnly>Filtrar por estado</Form.Label>
                     <Form.Select
                         id="filterEstado"
                         name="filterEstado"
                         value={estadoFilter}
                         onChange={(e) => setEstadoFilter(e.target.value)}
-                        aria-label="Filtrar por estado"
                     >
                         <option value="">Todos los estados</option>
                         <option value="activo">Activo</option>
