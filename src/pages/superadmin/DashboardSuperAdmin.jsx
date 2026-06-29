@@ -6,16 +6,15 @@ import {
   FiGrid,
   FiActivity,
   FiUserCheck,
-  FiUserX,
-  FiTrendingUp,
-  FiTrendingDown,
   FiCalendar,
   FiClock,
+  FiRefreshCw,
 } from 'react-icons/fi';
 import {
   getSuperAdminDashboardMetrics,
   getSuperAdminRecentAdmins,
   getSuperAdminRecentCondos,
+  getCondominiums,
 } from '../../services/api';
 import {
   BarChart,
@@ -29,12 +28,8 @@ import {
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
-  Area,
-  AreaChart,
 } from 'recharts';
-import { Card, Badge, Row, Col, Spinner } from 'react-bootstrap';
+import { Card, Badge, Row, Col, Spinner, Button } from 'react-bootstrap';
 
 // Colores corporativos
 const COLORS = {
@@ -53,30 +48,52 @@ const CHART_COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#e
 export default function DashboardSuperAdmin() {
   const [metrics, setMetrics] = useState(null);
   const [recentAdmins, setRecentAdmins] = useState([]);
-  const [recentCondos, setRecentCondos] = useState([]);
+  const [allCondos, setAllCondos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
 
+  // Función para extraer array de las respuestas de la API
+  const extractItems = (data) => {
+    if (Array.isArray(data)) return data;
+    if (data?.items && Array.isArray(data.items)) return data.items;
+    if (data?.content && Array.isArray(data.content)) return data.content;
+    if (data?.data && Array.isArray(data.data)) return data.data;
+    return [];
+  };
+
+  const loadData = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
+    setError(null);
+    try {
+      const [m, admins, allCondosData] = await Promise.all([
+        getSuperAdminDashboardMetrics(),
+        getSuperAdminRecentAdmins(),
+        getCondominiums(),
+      ]);
+
+      setMetrics(m);
+      setRecentAdmins(extractItems(admins));
+      setAllCondos(extractItems(allCondosData));
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+    } finally {
+      if (showLoading) setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  // Carga inicial
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [m, admins, condos] = await Promise.all([
-          getSuperAdminDashboardMetrics(),
-          getSuperAdminRecentAdmins(),
-          getSuperAdminRecentCondos(),
-        ]);
-        setMetrics(m);
-        setRecentAdmins(admins);
-        setRecentCondos(condos);
-      } catch (err) {
-        console.error(err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+    loadData(true);
   }, []);
+
+  // Función de actualización manual
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadData(false);
+  };
 
   if (loading) {
     return (
@@ -91,24 +108,16 @@ export default function DashboardSuperAdmin() {
     return (
       <div className="text-center py-5 text-danger">
         <p><strong>Error:</strong> {error}</p>
-        <button className="btn btn-primary" onClick={() => window.location.reload()}>
+        <Button variant="primary" onClick={handleRefresh}>
           Reintentar
-        </button>
+        </Button>
       </div>
     );
   }
 
-  // Datos para gráficos (basados en métricas reales)
-  const roleDistribution = [
-    { name: 'Administradores', value: metrics?.totalAdministradores || 0 },
-    { name: 'Propietarios', value: metrics?.totalPropietarios || 0 },
-    // Si hay agentes de seguridad, se pueden agregar; asumimos que el resto son agentes
-    { name: 'Agentes Seguridad', value: Math.max(0, (metrics?.totalUsuarios || 0) - (metrics?.totalAdministradores || 0) - (metrics?.totalPropietarios || 0)) },
-  ].filter(item => item.value > 0);
-
-  // Datos de condominios activos/inactivos (si no vienen, los calculamos de la lista reciente)
-  const totalCondos = metrics?.totalCondominios || 0;
-  const activeCondos = recentCondos.filter(c => c.activo !== false).length || 0;
+  // ---- Cálculo de condominios activos/inactivos ----
+  const totalCondos = allCondos.length;
+  const activeCondos = allCondos.filter(c => c.activo === true).length;
   const inactiveCondos = totalCondos - activeCondos;
 
   const condoStatusData = [
@@ -116,28 +125,25 @@ export default function DashboardSuperAdmin() {
     { name: 'Inactivos', value: inactiveCondos },
   ].filter(item => item.value > 0);
 
-  // Datos de tendencia (simulados, pero se pueden reemplazar con datos reales si la API los entrega)
-  // Idealmente, la API debería devolver un historial de registros por mes.
-  // Simulamos con datos basados en fechas de creación de condominios recientes
-  const trendData = recentCondos
-    .slice(0, 6)
-    .map((c, i) => ({
-      name: `Mes ${i + 1}`,
-      condominios: Math.floor(Math.random() * 5) + 1, // Simulación
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  // Distribución de roles
+  const roleDistribution = [
+    { name: 'Administradores', value: metrics?.totalAdministradores || 0 },
+    { name: 'Propietarios', value: metrics?.totalPropietarios || 0 },
+    {
+      name: 'Agentes Seguridad',
+      value: Math.max(
+        0,
+        (metrics?.totalUsuarios || 0) -
+        (metrics?.totalAdministradores || 0) -
+        (metrics?.totalPropietarios || 0)
+      ),
+    },
+  ].filter(item => item.value > 0);
 
-  // Si no hay datos de tendencia, usamos datos de ejemplo
-  const defaultTrend = [
-    { name: 'Ene', condominios: 2 },
-    { name: 'Feb', condominios: 3 },
-    { name: 'Mar', condominios: 1 },
-    { name: 'Abr', condominios: 4 },
-    { name: 'May', condominios: 2 },
-    { name: 'Jun', condominios: 5 },
-  ];
-
-  const finalTrend = trendData.length > 0 ? trendData : defaultTrend;
+  // Últimos condominios (ordenados por fecha, los 5 más recientes)
+  const lastCondos = [...allCondos]
+    .sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
+    .slice(0, 5);
 
   // Estadísticas para tarjetas
   const stats = [
@@ -186,18 +192,37 @@ export default function DashboardSuperAdmin() {
 
   return (
     <div style={{ padding: '1.5rem', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
-      {/* Encabezado */}
+      {/* Encabezado con botón de actualizar */}
       <div className="d-flex justify-content-between align-items-start mb-4">
         <div>
           <h1 style={{ fontWeight: 800, color: '#0f172a', marginBottom: '4px' }}>
             Dashboard Global del Sistema
           </h1>
         </div>
-        <Badge
-          bg="primary"
-          style={{ fontSize: '0.85rem', padding: '16px 16px' }}>
-          <FiCalendar className="me-1" /> Actualizado: {new Date().toLocaleDateString()}
-        </Badge>
+        <div className="d-flex align-items-center gap-2">
+          <Badge bg="primary" style={{ fontSize: '0.85rem', padding: '8px 16px' }}>
+            <FiCalendar className="me-1" /> {new Date().toLocaleDateString()}
+          </Badge>
+          <Button
+            variant="outline-primary"
+            size="sm"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+          >
+            {refreshing ? (
+              <>
+                <Spinner as="span" animation="border" size="sm" />
+                Actualizando...
+              </>
+            ) : (
+              <>
+                <FiRefreshCw size={16} />
+                Actualizar
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Tarjetas de estadísticas */}
@@ -235,7 +260,6 @@ export default function DashboardSuperAdmin() {
 
       {/* Gráficos */}
       <Row className="g-4 mb-4">
-        {/* Gráfico de barras: Distribución de roles */}
         <Col lg={8}>
           <Card className="border-0 shadow-sm h-100">
             <Card.Header className="bg-white fw-bold">
@@ -255,14 +279,12 @@ export default function DashboardSuperAdmin() {
                       labelStyle={{ fontWeight: 600 }}
                     />
                     <Legend />
-                    <Bar
-                      dataKey="value"
-                      fill={COLORS.primary}
-                      radius={[4, 4, 0, 0]}
-                      barSize={40}
-                    >
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={40}>
                       {roleDistribution.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={CHART_COLORS[index % CHART_COLORS.length]}
+                        />
                       ))}
                     </Bar>
                   </BarChart>
@@ -272,7 +294,6 @@ export default function DashboardSuperAdmin() {
           </Card>
         </Col>
 
-        {/* Gráfico de torta: Estado de condominios */}
         <Col lg={4}>
           <Card className="border-0 shadow-sm h-100">
             <Card.Header className="bg-white fw-bold">
@@ -375,15 +396,15 @@ export default function DashboardSuperAdmin() {
             <Card.Header className="bg-white fw-bold d-flex justify-content-between align-items-center">
               <span>🏢 Últimos condominios</span>
               <Badge bg="primary" pill>
-                {recentCondos.length}
+                {lastCondos.length}
               </Badge>
             </Card.Header>
             <Card.Body style={{ maxHeight: '400px', overflowY: 'auto' }}>
-              {recentCondos.length === 0 ? (
+              {lastCondos.length === 0 ? (
                 <p className="text-muted text-center">Sin registros</p>
               ) : (
                 <ul className="list-unstyled m-0">
-                  {recentCondos.map((c) => (
+                  {lastCondos.map((c) => (
                     <li
                       key={c.id}
                       className="d-flex justify-content-between align-items-center border-bottom py-3"
@@ -391,7 +412,7 @@ export default function DashboardSuperAdmin() {
                       <div>
                         <div className="fw-bold">{c.nombre}</div>
                         <div className="small text-muted">
-                          {c.direccion} · {c.ciudad || 'Sin ciudad'}
+                          {c.direccion} · {c.nombreCiudad || 'Sin ciudad'}
                         </div>
                       </div>
                       <div className="text-end">
