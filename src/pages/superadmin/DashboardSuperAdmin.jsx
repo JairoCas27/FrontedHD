@@ -200,7 +200,7 @@ export default function DashboardSuperAdmin() {
           </h1>
         </div>
         <div className="d-flex align-items-center gap-2">
-          <Badge bg="primary" style={{ fontSize: '0.85rem', padding: '8px 16px' }}>
+          <Badge bg="primary" className="text-nowrap" style={{ fontSize: '0.85rem', padding: '8px 16px' }}>
             <FiCalendar className="me-1" /> {new Date().toLocaleDateString()}
           </Badge>
           <Button
