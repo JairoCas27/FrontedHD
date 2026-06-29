@@ -10,6 +10,7 @@ import {
     getCondominiums,
 } from '../../services/api';
 import { Modal, Form, Button, Table, Badge, InputGroup, Row, Col } from 'react-bootstrap';
+import { toast } from 'react-toastify';
 
 export default function Administradores() {
     const [admins, setAdmins] = useState([]);
@@ -23,7 +24,7 @@ export default function Administradores() {
         correo: '',
         telefono: '',
         contrasena: '',
-        idCondominio: '', // string vacío para "Sin asignar"
+        idCondominio: '',
     });
     const [error, setError] = useState(null);
     const [submitting, setSubmitting] = useState(false);
@@ -98,6 +99,12 @@ export default function Administradores() {
         e.preventDefault();
         setSubmitting(true);
         try {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                toast.error('Sesión no válida, por favor inicia sesión nuevamente.');
+                return;
+            }
+
             if (editing) {
                 // 1. Actualizar datos básicos
                 const updatePayload = {
@@ -106,62 +113,36 @@ export default function Administradores() {
                     correo: form.correo.trim(),
                     telefono: form.telefono.trim(),
                 };
-                console.log('Actualizando administrador:', editing.id, updatePayload);
                 await updateAdministrator(editing.id, updatePayload);
 
                 // 2. Gestionar asignación de condominio
-                // Convertir idCondominio: string vacío -> null, else número
-                const newCondoId = form.idCondominio === '' ? null : parseInt(form.idCondominio, 10);
-                const oldCondoId = editing.idCondominio !== undefined && editing.idCondominio !== null
-                    ? parseInt(editing.idCondominio, 10)
-                    : null;
-                console.log(`Condo: nuevo=${newCondoId}, anterior=${oldCondoId}`);
+                const newCondoId = form.idCondominio ? parseInt(form.idCondominio, 10) : null;
+                const oldCondoId = editing.idCondominio ? parseInt(editing.idCondominio, 10) : null;
 
-                // Si el condominio cambió
                 if (newCondoId !== oldCondoId) {
                     if (newCondoId !== null) {
-                        // Asignar condominio
-                        console.log(`Asignando condominio ID ${newCondoId} al admin ${editing.id}`);
+                        // Intentar asignar
                         try {
                             await assignAdministratorCondo(editing.id, newCondoId);
-                            console.log('Asignación exitosa.');
+                            toast.success('Condominio asignado correctamente.');
                         } catch (assignErr) {
-                            console.error('Error en asignación:', assignErr);
-                            // Si falla, intentar con el nombre de campo alternativo usando fetch directo
-                            const token = localStorage.getItem('token');
-                            const response = await fetch(
-                                `https://sgc-backend-vfvl.onrender.com/api/super-admin/administrators/${editing.id}/assign-condo`,
-                                {
-                                    method: 'PUT',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        Authorization: `Bearer ${token}`,
-                                    },
-                                    body: JSON.stringify({ idCondominio: newCondoId }),
-                                }
-                            );
-                            if (!response.ok) {
-                                const errorData = await response.json().catch(() => ({}));
-                                throw new Error(`Falló asignación: ${response.status} - ${JSON.stringify(errorData)}`);
+                            // Extraer mensaje del error
+                            let errorMsg = assignErr.message || 'Error al asignar condominio';
+                            // Si el error contiene "ya tiene un administrador" o similar, personalizar
+                            if (errorMsg.toLowerCase().includes('administrador')) {
+                                errorMsg = 'Este condominio ya tiene un administrador asignado o no está activo.';
                             }
-                            console.log('Asignación exitosa con idCondominio.');
+                            toast.error(`Error al asignar condominio: ${errorMsg}`);
+                            // Lanzar el error para que no continúe
+                            throw new Error(errorMsg);
                         }
                     } else {
                         // Desasignar (seleccionó "Sin asignar")
-                        console.warn('Intento desasignar condominio (asignando null)');
-                        try {
-                            // Intentar asignar null (puede que el backend no lo permita)
-                            await assignAdministratorCondo(editing.id, null);
-                        } catch (err) {
-                            console.warn('No se puede desasignar, el backend probablemente no lo permite.', err);
-                            alert('No se puede desasignar el condominio. Solo se puede cambiar a otro.');
-                        }
+                        toast.warning('No se puede desasignar un condominio; solo se puede cambiar a otro.');
                     }
-                } else {
-                    console.log('No hay cambio en el condominio.');
                 }
             } else {
-                // Creación: no se asigna condominio en la creación, se puede editar después
+                // Creación
                 const createPayload = {
                     nombres: form.nombres.trim(),
                     apellidos: form.apellidos.trim(),
@@ -169,20 +150,22 @@ export default function Administradores() {
                     telefono: form.telefono.trim(),
                     contrasena: form.contrasena.trim(),
                 };
-                console.log('Creando administrador:', createPayload);
                 await createAdministrator(createPayload);
-                // Si se seleccionó un condominio, no podemos asignarlo porque no tenemos el ID del nuevo admin
-                // Mejor hacemos una recarga para que el usuario lo asigne manualmente
+                toast.success('Administrador creado correctamente.');
+                // Nota: si se seleccionó un condominio, se puede asignar después manualmente
             }
 
             setShowModal(false);
-            // Recargar lista después de un breve retraso
+            // Recargar con retraso
             setTimeout(() => {
                 loadAll();
             }, 500);
         } catch (err) {
             console.error('Error en handleSubmit:', err);
-            alert(`Error: ${err.message}`);
+            // Si no se mostró ya un toast, mostrar uno genérico
+            if (!err.message?.toLowerCase().includes('condominio')) {
+                toast.error(`Error: ${err.message || 'Ocurrió un error inesperado'}`);
+            }
         } finally {
             setSubmitting(false);
         }
@@ -192,18 +175,20 @@ export default function Administradores() {
         if (!window.confirm('¿Eliminar administrador?')) return;
         try {
             await deleteAdministrator(id);
+            toast.success('Administrador eliminado');
             await loadAll();
         } catch (err) {
-            alert(err.message);
+            toast.error(`Error: ${err.message}`);
         }
     };
 
     const handleToggleStatus = async (id, activo) => {
         try {
             await patchAdministratorStatus(id, !activo);
+            toast.success(`Estado actualizado a ${!activo ? 'Activo' : 'Inactivo'}`);
             await loadAll();
         } catch (err) {
-            alert(err.message);
+            toast.error(`Error: ${err.message}`);
         }
     };
 
@@ -253,15 +238,18 @@ export default function Administradores() {
                             placeholder="Buscar por nombre o correo..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
+                            aria-label="Buscar administrador"
                         />
                     </InputGroup>
                 </Col>
                 <Col md={3}>
+                    <Form.Label htmlFor="filterCondo" srOnly>Filtrar por condominio</Form.Label>
                     <Form.Select
                         id="filterCondo"
                         name="filterCondo"
                         value={condominioFilter}
                         onChange={(e) => setCondominioFilter(e.target.value)}
+                        aria-label="Filtrar por condominio"
                     >
                         <option value="">Todos los condominios</option>
                         {condominioOptions.map(c => (
@@ -270,11 +258,13 @@ export default function Administradores() {
                     </Form.Select>
                 </Col>
                 <Col md={3}>
+                    <Form.Label htmlFor="filterEstado" srOnly>Filtrar por estado</Form.Label>
                     <Form.Select
                         id="filterEstado"
                         name="filterEstado"
                         value={estadoFilter}
                         onChange={(e) => setEstadoFilter(e.target.value)}
+                        aria-label="Filtrar por estado"
                     >
                         <option value="">Todos los estados</option>
                         <option value="activo">Activo</option>
@@ -436,6 +426,9 @@ export default function Administradores() {
                                     <option key={c.id} value={c.id}>{c.nombre}</option>
                                 ))}
                             </Form.Select>
+                            <Form.Text className="text-muted">
+                                Nota: Un condominio solo puede tener un administrador activo.
+                            </Form.Text>
                         </Form.Group>
                     </Modal.Body>
                     <Modal.Footer>
