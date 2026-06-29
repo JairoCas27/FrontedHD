@@ -10,6 +10,7 @@ import {
     getCondominiums,
 } from '../../services/api';
 import { Modal, Form, Button, Table, Badge, InputGroup, Row, Col } from 'react-bootstrap';
+import { toast } from 'react-toastify';
 
 export default function Administradores() {
     const [admins, setAdmins] = useState([]);
@@ -23,7 +24,7 @@ export default function Administradores() {
         correo: '',
         telefono: '',
         contrasena: '',
-        idCondominio: '', // string vacío para "Sin asignar"
+        idCondominio: '',
     });
     const [error, setError] = useState(null);
     const [submitting, setSubmitting] = useState(false);
@@ -32,6 +33,9 @@ export default function Administradores() {
     const [searchTerm, setSearchTerm] = useState('');
     const [condominioFilter, setCondominioFilter] = useState('');
     const [estadoFilter, setEstadoFilter] = useState('');
+
+    // Mapa de condominios ocupados (con administrador activo)
+    const [occupiedCondos, setOccupiedCondos] = useState(new Set());
 
     const loadAll = async () => {
         setLoading(true);
@@ -42,6 +46,7 @@ export default function Administradores() {
                 getCondominiums(),
             ]);
 
+            // Extraer administradores
             let adminsList = [];
             if (Array.isArray(adminsData)) {
                 adminsList = adminsData;
@@ -51,10 +56,9 @@ export default function Administradores() {
                 adminsList = adminsData.content;
             } else if (adminsData?.data && Array.isArray(adminsData.data)) {
                 adminsList = adminsData.data;
-            } else {
-                console.warn('Formato inesperado de administradores:', adminsData);
             }
 
+            // Extraer condominios
             let condosList = [];
             if (Array.isArray(condosData)) {
                 condosList = condosData;
@@ -64,9 +68,16 @@ export default function Administradores() {
                 condosList = condosData.content;
             } else if (condosData?.data && Array.isArray(condosData.data)) {
                 condosList = condosData.data;
-            } else {
-                console.warn('Formato inesperado de condominios:', condosData);
             }
+
+            // Construir set de condominios ocupados (solo administradores activos)
+            const occupied = new Set();
+            adminsList.forEach(admin => {
+                if (admin.activo && admin.idCondominio !== null && admin.idCondominio !== undefined) {
+                    occupied.add(admin.idCondominio);
+                }
+            });
+            setOccupiedCondos(occupied);
 
             setAdmins(adminsList);
             setCondominios(condosList);
@@ -84,6 +95,7 @@ export default function Administradores() {
         loadAll();
     }, []);
 
+    // Filtrar administradores
     const filtered = admins.filter(a => {
         const fullName = `${a.nombres || ''} ${a.apellidos || ''}`.toLowerCase();
         const email = (a.correo || '').toLowerCase();
@@ -106,62 +118,48 @@ export default function Administradores() {
                     correo: form.correo.trim(),
                     telefono: form.telefono.trim(),
                 };
-                console.log('Actualizando administrador:', editing.id, updatePayload);
                 await updateAdministrator(editing.id, updatePayload);
 
                 // 2. Gestionar asignación de condominio
-                // Convertir idCondominio: string vacío -> null, else número
-                const newCondoId = form.idCondominio === '' ? null : parseInt(form.idCondominio, 10);
-                const oldCondoId = editing.idCondominio !== undefined && editing.idCondominio !== null
-                    ? parseInt(editing.idCondominio, 10)
-                    : null;
-                console.log(`Condo: nuevo=${newCondoId}, anterior=${oldCondoId}`);
+                const newCondoId = form.idCondominio ? parseInt(form.idCondominio, 10) : null;
+                const oldCondoId = editing.idCondominio ? parseInt(editing.idCondominio, 10) : null;
 
-                // Si el condominio cambió
                 if (newCondoId !== oldCondoId) {
                     if (newCondoId !== null) {
-                        // Asignar condominio
-                        console.log(`Asignando condominio ID ${newCondoId} al admin ${editing.id}`);
-                        try {
-                            await assignAdministratorCondo(editing.id, newCondoId);
-                            console.log('Asignación exitosa.');
-                        } catch (assignErr) {
-                            console.error('Error en asignación:', assignErr);
-                            // Si falla, intentar con el nombre de campo alternativo usando fetch directo
-                            const token = localStorage.getItem('token');
-                            const response = await fetch(
-                                `https://sgc-backend-vfvl.onrender.com/api/super-admin/administrators/${editing.id}/assign-condo`,
-                                {
-                                    method: 'PUT',
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        Authorization: `Bearer ${token}`,
-                                    },
-                                    body: JSON.stringify({ idCondominio: newCondoId }),
-                                }
-                            );
-                            if (!response.ok) {
-                                const errorData = await response.json().catch(() => ({}));
-                                throw new Error(`Falló asignación: ${response.status} - ${JSON.stringify(errorData)}`);
-                            }
-                            console.log('Asignación exitosa con idCondominio.');
+                        // Verificar si el condominio ya está ocupado por otro administrador
+                        if (occupiedCondos.has(newCondoId)) {
+                            toast.error('Este condominio ya tiene un administrador asignado. Solo puede tener uno.');
+                            setSubmitting(false);
+                            return;
                         }
+                        // Verificar si el condominio está activo (opcional, el backend lo valida)
+                        const selectedCondo = condominios.find(c => c.id === newCondoId);
+                        if (selectedCondo && !selectedCondo.activo) {
+                            toast.error('No se puede asignar un condominio desactivado.');
+                            setSubmitting(false);
+                            return;
+                        }
+                        // Asignar
+                        await assignAdministratorCondo(editing.id, newCondoId);
+                        toast.success('Condominio asignado correctamente.');
                     } else {
-                        // Desasignar (seleccionó "Sin asignar")
-                        console.warn('Intento desasignar condominio (asignando null)');
+                        // Desasignar (si el backend lo permite)
                         try {
-                            // Intentar asignar null (puede que el backend no lo permita)
                             await assignAdministratorCondo(editing.id, null);
+                            toast.info('Administrador desasignado del condominio.');
                         } catch (err) {
-                            console.warn('No se puede desasignar, el backend probablemente no lo permite.', err);
-                            alert('No se puede desasignar el condominio. Solo se puede cambiar a otro.');
+                            if (err.message.includes('no puede ser null')) {
+                                toast.warning('El backend no permite desasignar. Solo se puede cambiar a otro condominio.');
+                            } else {
+                                toast.error(`Error al desasignar: ${err.message}`);
+                            }
+                            setSubmitting(false);
+                            return;
                         }
                     }
-                } else {
-                    console.log('No hay cambio en el condominio.');
                 }
             } else {
-                // Creación: no se asigna condominio en la creación, se puede editar después
+                // Creación
                 const createPayload = {
                     nombres: form.nombres.trim(),
                     apellidos: form.apellidos.trim(),
@@ -169,20 +167,21 @@ export default function Administradores() {
                     telefono: form.telefono.trim(),
                     contrasena: form.contrasena.trim(),
                 };
-                console.log('Creando administrador:', createPayload);
                 await createAdministrator(createPayload);
-                // Si se seleccionó un condominio, no podemos asignarlo porque no tenemos el ID del nuevo admin
-                // Mejor hacemos una recarga para que el usuario lo asigne manualmente
+                toast.success('Administrador creado correctamente.');
+                // Si se seleccionó un condominio, asignarlo después de crear
+                if (form.idCondominio) {
+                    // No tenemos el ID del nuevo admin, se puede hacer manualmente o
+                    // recargar la lista y el usuario asigna después.
+                    toast.info('Condominio no asignado automáticamente. Edita el administrador para asignarlo.');
+                }
             }
-
             setShowModal(false);
-            // Recargar lista después de un breve retraso
-            setTimeout(() => {
-                loadAll();
-            }, 500);
+            // Recargar con retraso para dar tiempo al backend
+            setTimeout(() => loadAll(), 300);
         } catch (err) {
             console.error('Error en handleSubmit:', err);
-            alert(`Error: ${err.message}`);
+            toast.error(`Error: ${err.message}`);
         } finally {
             setSubmitting(false);
         }
@@ -192,18 +191,20 @@ export default function Administradores() {
         if (!window.confirm('¿Eliminar administrador?')) return;
         try {
             await deleteAdministrator(id);
+            toast.success('Administrador eliminado.');
             await loadAll();
         } catch (err) {
-            alert(err.message);
+            toast.error(`Error al eliminar: ${err.message}`);
         }
     };
 
     const handleToggleStatus = async (id, activo) => {
         try {
             await patchAdministratorStatus(id, !activo);
+            toast.success(`Administrador ${!activo ? 'activado' : 'desactivado'}.`);
             await loadAll();
         } catch (err) {
-            alert(err.message);
+            toast.error(`Error al cambiar estado: ${err.message}`);
         }
     };
 
@@ -215,10 +216,31 @@ export default function Administradores() {
         </div>
     );
 
-    const condominioOptions = condominios.map(c => ({
-        id: c.id,
-        nombre: c.nombre,
-    }));
+    // Construir opciones de condominios para el dropdown
+    const getCondoOptions = () => {
+        const options = [];
+        condominios.forEach(c => {
+            // Si el condominio está ocupado y NO estamos editando al administrador que lo tiene,
+            // no lo mostramos.
+            const isOccupied = occupiedCondos.has(c.id);
+            const isCurrentAdminCondo = editing && editing.idCondominio === c.id;
+            // Para creación, mostramos solo los no ocupados
+            if (!editing && isOccupied) return;
+            // Para edición, mostramos todos, pero marcamos los ocupados como deshabilitados
+            const disabled = isOccupied && !isCurrentAdminCondo;
+            options.push({
+                id: c.id,
+                nombre: c.nombre,
+                activo: c.activo,
+                disabled: disabled,
+                // Mostrar etiqueta si está ocupado y no es el actual
+                label: disabled ? `${c.nombre} (ocupado)` : c.nombre,
+            });
+        });
+        return options;
+    };
+
+    const condominioOptions = getCondoOptions();
 
     return (
         <div style={{ padding: '1.5rem' }}>
@@ -253,28 +275,35 @@ export default function Administradores() {
                             placeholder="Buscar por nombre o correo..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
+                            aria-label="Buscar administrador"
                         />
                     </InputGroup>
                 </Col>
                 <Col md={3}>
+                    <Form.Label htmlFor="filterCondo" srOnly>Filtrar por condominio</Form.Label>
                     <Form.Select
                         id="filterCondo"
                         name="filterCondo"
                         value={condominioFilter}
                         onChange={(e) => setCondominioFilter(e.target.value)}
+                        aria-label="Filtrar por condominio"
                     >
                         <option value="">Todos los condominios</option>
-                        {condominioOptions.map(c => (
-                            <option key={c.id} value={c.id}>{c.nombre}</option>
+                        {condominios.map(c => (
+                            <option key={c.id} value={c.id}>
+                                {c.nombre} {!c.activo ? '(inactivo)' : ''}
+                            </option>
                         ))}
                     </Form.Select>
                 </Col>
                 <Col md={3}>
+                    <Form.Label htmlFor="filterEstado" srOnly>Filtrar por estado</Form.Label>
                     <Form.Select
                         id="filterEstado"
                         name="filterEstado"
                         value={estadoFilter}
                         onChange={(e) => setEstadoFilter(e.target.value)}
+                        aria-label="Filtrar por estado"
                     >
                         <option value="">Todos los estados</option>
                         <option value="activo">Activo</option>
@@ -433,9 +462,17 @@ export default function Administradores() {
                             >
                                 <option value="">Sin asignar</option>
                                 {condominioOptions.map(c => (
-                                    <option key={c.id} value={c.id}>{c.nombre}</option>
+                                    <option key={c.id} value={c.id} disabled={c.disabled}>
+                                        {c.label}
+                                    </option>
                                 ))}
                             </Form.Select>
+                            <small className="text-muted">
+                                {editing && form.idCondominio &&
+                                    condominios.find(c => c.id === parseInt(form.idCondominio))?.activo === false &&
+                                    ' ⚠️ Este condominio está inactivo'
+                                }
+                            </small>
                         </Form.Group>
                     </Modal.Body>
                     <Modal.Footer>
