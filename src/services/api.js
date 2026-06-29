@@ -91,16 +91,23 @@ export async function getCondominiums() {
 export async function createCondominium(data) {
   return safeFetch('/api/super-admin/condominiums', {
     method: 'POST',
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      ...data,
+      activo: true, // el backend podría requerirlo
+    }),
   });
 }
 
 export async function updateCondominium(id, data) {
   return safeFetch(`/api/super-admin/condominiums/${id}`, {
     method: 'PUT',
-    body: JSON.stringify(data),
+    body: JSON.stringify({
+      ...data,
+      activo: data.activo !== undefined ? data.activo : true,
+    }),
   });
 }
+
 
 export async function deleteCondominium(id) {
   return safeFetch(`/api/super-admin/condominiums/${id}`, {

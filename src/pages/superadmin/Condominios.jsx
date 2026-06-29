@@ -23,6 +23,7 @@ export default function Condominios() {
     ciudadId: '',
   });
   const [error, setError] = useState(null);
+  const [errorDetail, setErrorDetail] = useState('');
 
   // Filtros
   const [searchTerm, setSearchTerm] = useState('');
@@ -37,14 +38,20 @@ export default function Condominios() {
   // Cargar condominios y catálogos
   const load = async () => {
     setLoading(true);
+    setError(null);
+    setErrorDetail('');
     try {
       const data = await getCondominiums();
       let list = data;
       if (!Array.isArray(list)) list = data?.content || data?.data || data?.items || [];
       setCondominios(list);
-      setError(null);
     } catch (err) {
-      setError(err.message);
+      console.error('Error al cargar condominios:', err);
+      setError(err.message || 'Error al cargar condominios');
+      // Mostrar más detalle si existe
+      if (err.response) {
+        setErrorDetail(JSON.stringify(err.response));
+      }
       setCondominios([]);
     } finally {
       setLoading(false);
@@ -60,7 +67,6 @@ export default function Condominios() {
         const firstCountry = paisesData[0].id;
         const citiesData = await getCities(firstCountry);
         setCiudades(citiesData);
-        // Si no hay país seleccionado, seleccionar el primero
         if (!form.paisId) {
           setForm(prev => ({ ...prev, paisId: firstCountry }));
         }
@@ -92,8 +98,12 @@ export default function Condominios() {
   const handlePaisChange = async (paisId) => {
     setForm({ ...form, paisId, ciudadId: '' });
     if (paisId) {
-      const cities = await getCities(paisId);
-      setCiudades(cities);
+      try {
+        const cities = await getCities(paisId);
+        setCiudades(cities);
+      } catch (err) {
+        console.error('Error cargando ciudades:', err);
+      }
     }
   };
 
@@ -103,8 +113,8 @@ export default function Condominios() {
       const payload = {
         nombre: form.nombre,
         direccion: form.direccion,
-        paisId: parseInt(form.paisId),
-        ciudadId: parseInt(form.ciudadId),
+        paisId: parseInt(form.paisId, 10),
+        ciudadId: parseInt(form.ciudadId, 10),
       };
       if (editing) {
         await updateCondominium(editing.id, payload);
@@ -114,7 +124,8 @@ export default function Condominios() {
       setShowModal(false);
       load();
     } catch (err) {
-      alert(err.message);
+      alert(err.message || 'Error al guardar');
+      console.error(err);
     }
   };
 
@@ -138,7 +149,13 @@ export default function Condominios() {
   };
 
   if (loading) return <div className="text-center py-5">Cargando condominios...</div>;
-  if (error) return <div className="text-danger text-center">{error}</div>;
+  if (error) return (
+    <div className="text-center text-danger py-5">
+      <p><strong>Error:</strong> {error}</p>
+      {errorDetail && <pre className="small bg-light p-2 rounded">{errorDetail}</pre>}
+      <Button variant="outline-primary" onClick={load}>Reintentar</Button>
+    </div>
+  );
 
   return (
     <div style={{ padding: '1.5rem' }}>
@@ -234,9 +251,8 @@ export default function Condominios() {
                         paisId: c.paisId || (paises.length > 0 ? paises[0].id : ''),
                         ciudadId: c.ciudadId || '',
                       });
-                      // Cargar ciudades para el país seleccionado
                       if (c.paisId) {
-                        getCities(c.paisId).then(cities => setCiudades(cities));
+                        getCities(c.paisId).then(cities => setCiudades(cities)).catch(console.error);
                       }
                       setShowModal(true);
                     }}
@@ -265,7 +281,7 @@ export default function Condominios() {
         </Table>
       )}
 
-      {/* Modal de creación/edición */}
+      {/* Modal */}
       <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
           <Modal.Title>{editing ? 'Editar' : 'Nuevo'} condominio</Modal.Title>
