@@ -1,14 +1,13 @@
-import { useState, useMemo } from 'react'
-import { FiMapPin, FiFilter, FiX } from "react-icons/fi"
-import { Card, Row, Col, Button, Badge, Modal, Form, Pagination, InputGroup } from 'react-bootstrap'
+import React, { useState, useMemo } from 'react'
+import { FiMapPin, FiFilter, FiX, FiChevronLeft, FiChevronRight } from "react-icons/fi"
+import EncabezadoTabla from '../../components/EncabezadoTabla'
+import BadgeEstado from '../../components/BadgeEstado'
 
-// Configuración de plazas
 const TOTAL_PLAZAS = 342
 const OCUPADAS = 267
 const DISPONIBLES = 45
 const MANTENCION = 30
 
-// Generar espacios automáticamente
 const generarEspacios = () => {
   const espacios = []
   const bloques = ['A', 'B', 'C', 'D', 'E', 'F']
@@ -29,7 +28,6 @@ const generarEspacios = () => {
       let residente = null
       let vehiculo = null
 
-      // Asignar estados según los totales deseados
       if (contadorOcupados < OCUPADAS) {
         estado = 'Ocupado'
         residente = `Residente ${Math.floor(Math.random() * 100) + 1}`
@@ -53,11 +51,12 @@ const generarEspacios = () => {
       })
     }
   }
-
   return espacios
 }
 
 export default function Estacionamientos() {
+  const colorAdmin = "rgb(52,151,195)"
+  
   const [espacios] = useState(generarEspacios())
   const [showModal, setShowModal] = useState(false)
   const [espacioSeleccionado, setEspacioSeleccionado] = useState(null)
@@ -67,92 +66,43 @@ export default function Estacionamientos() {
   const [filtroEstado, setFiltroEstado] = useState('todos')
   const plazasPorPagina = 24
 
-  // Calcular estadísticas
   const totalPlazas = espacios.length
   const plazasOcupadas = espacios.filter(e => e.estado === 'Ocupado').length
   const plazasDisponibles = espacios.filter(e => e.estado === 'Disponible').length
   const plazasMantención = espacios.filter(e => e.estado === 'Mantención').length
   const porcentajeOcupacion = Math.round((plazasOcupadas / totalPlazas) * 100)
 
-  // Obtener lista única de bloques
-  const bloques = ['todos', ...new Set(espacios.map(e => e.bloque))]
-
-  // Aplicar filtros
   const espaciosFiltrados = useMemo(() => {
     let resultado = espacios
-    
-    if (filtroBloque !== 'todos') {
-      resultado = resultado.filter(e => e.bloque === filtroBloque)
-    }
-    
-    if (filtroEstado !== 'todos') {
-      resultado = resultado.filter(e => e.estado === filtroEstado)
-    }
-    
+    if (filtroBloque !== 'todos') resultado = resultado.filter(e => e.bloque === filtroBloque)
+    if (filtroEstado !== 'todos') resultado = resultado.filter(e => e.estado === filtroEstado)
     return resultado
   }, [espacios, filtroBloque, filtroEstado])
 
-  // Calcular estadísticas de los filtrados
-  const filtradosOcupados = espaciosFiltrados.filter(e => e.estado === 'Ocupado').length
-  const filtradosDisponibles = espaciosFiltrados.filter(e => e.estado === 'Disponible').length
-  const filtradosMantención = espaciosFiltrados.filter(e => e.estado === 'Mantención').length
-
-  // Paginación
   const indexUltimo = paginaActual * plazasPorPagina
   const indexPrimero = indexUltimo - plazasPorPagina
   const espaciosPaginados = espaciosFiltrados.slice(indexPrimero, indexUltimo)
   const totalPaginas = Math.ceil(espaciosFiltrados.length / plazasPorPagina)
 
-  // Resetear página cuando cambian los filtros
   const handleFilterChange = (tipo, valor) => {
     setPaginaActual(1)
-    if (tipo === 'bloque') {
-      setFiltroBloque(valor)
-    } else {
-      setFiltroEstado(valor)
-    }
+    if (tipo === 'bloque') setFiltroBloque(valor)
+    else setFiltroEstado(valor)
   }
 
-  // Función para limpiar filtros
   const limpiarFiltros = () => {
     setFiltroBloque('todos')
     setFiltroEstado('todos')
     setPaginaActual(1)
   }
 
-  // Función para manejar cambios en el formulario
-  const getEstadoColor = (estado) => {
-    switch(estado) {
-      case 'Disponible': return 'success'
-      case 'Ocupado': return 'danger'
-      case 'Mantención': return 'warning'
-      default: return 'secondary'
-    }
-  }
-
-  const getEstadoIcono = (estado) => {
-    switch(estado) {
-      case 'Disponible': return '🟢'
-      case 'Ocupado': return '🔴'
-      case 'Mantención': return '🟡'
-      default: return '⚪'
-    }
-  }
-
-  // Función para abrir el modal con los datos del espacio seleccionado
   const handleEspacioClick = (espacio) => {
     setEspacioSeleccionado(espacio)
-    setFormData({
-      residente: espacio.residente || '',
-      vehiculo: espacio.vehiculo || '',
-      estado: espacio.estado
-    })
+    setFormData({ residente: espacio.residente || '', vehiculo: espacio.vehiculo || '', estado: espacio.estado })
     setShowModal(true)
   }
 
-  // Función para actualizar el espacio (simulado)
   const handleUpdateEspacio = () => {
-    // Actualizar el espacio en el array (simulado)
     const index = espacios.findIndex(e => e.id === espacioSeleccionado.id)
     if (index !== -1) {
       espacios[index] = { ...espacios[index], ...formData }
@@ -162,282 +112,226 @@ export default function Estacionamientos() {
 
   const handlePageChange = (pageNumber) => {
     setPaginaActual(pageNumber)
-    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-    return (
-    <div>
-      <div className="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
-        <div>
-          <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>
-            Estacionamientos
-          </h1>
-          <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>
-            Gestión de espacios de estacionamiento
-          </p>
+  // Estilos fijos para mantener la coherencia SaaS
+  const estiloInput = {
+    width: "100%",
+    padding: "0.65rem 0.75rem",
+    borderRadius: "0.5rem",
+    border: "1px solid #cbd5e1",
+    fontSize: "0.9rem",
+    color: "#334155",
+    backgroundColor: "#ffffff",
+    boxSizing: "border-box",
+    outline: "none"
+  }
+
+  const estiloLabel = {
+    display: "block",
+    fontSize: "0.75rem",
+    fontWeight: "700",
+    color: "#475569",
+    marginBottom: "0.4rem",
+    textTransform: "uppercase",
+    letterSpacing: "0.025em"
+  }
+
+  return (
+    <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
+      
+      {/* 1. Encabezado */}
+      <EncabezadoTabla 
+        titulo="Estacionamientos" 
+        subtitulo="Gestión, asignación y estado operativo de plazas de parqueo" 
+        accentColor={colorAdmin}
+      />
+
+      {/* 2. Tarjetas de Métricas Rediseñadas */}
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "1.5rem", marginBottom: "2rem", width: "100%" }}>
+        <div style={{ flex: 1, minWidth: "200px", bg: "#fff", backgroundColor: "#fff", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", boxShadow: "0 2px 4px rgba(0,0,0,0.01)" }}>
+          <h3 style={{ margin: 0, color: "#ef4444", fontSize: "1.5rem", fontWeight: "800" }}>{plazasOcupadas}</h3>
+          <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Plazas Ocupadas</span>
+          <div style={{ width: "100%", height: "4px", backgroundColor: "#f1f5f9", borderRadius: "2px", marginTop: "0.5rem", overflow: "hidden" }}>
+            <div style={{ width: `${(plazasOcupadas / totalPlazas) * 100}%`, backgroundColor: "#ef4444", hfull: "100%", height: "100%" }} />
+          </div>
         </div>
-        <div>
-          <Badge bg="danger" className="me-2">Ocupados: {plazasOcupadas}</Badge>
-          <Badge bg="success" className="me-2">Disponibles: {plazasDisponibles}</Badge>
-          <Badge bg="warning">Mantención: {plazasMantención}</Badge>
+        <div style={{ flex: 1, minWidth: "200px", backgroundColor: "#fff", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", boxShadow: "0 2px 4px rgba(0,0,0,0.01)" }}>
+          <h3 style={{ margin: 0, color: "#10b981", fontSize: "1.5rem", fontWeight: "800" }}>{plazasDisponibles}</h3>
+          <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Plazas Disponibles</span>
+          <div style={{ width: "100%", height: "4px", backgroundColor: "#f1f5f9", borderRadius: "2px", marginTop: "0.5rem", overflow: "hidden" }}>
+            <div style={{ width: `${(plazasDisponibles / totalPlazas) * 100}%`, backgroundColor: "#10b981", height: "100%" }} />
+          </div>
+        </div>
+        <div style={{ flex: 1, minWidth: "200px", backgroundColor: "#fff", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", boxShadow: "0 2px 4px rgba(0,0,0,0.01)" }}>
+          <h3 style={{ margin: 0, color: "#f59e0b", fontSize: "1.5rem", fontWeight: "800" }}>{plazasMantención}</h3>
+          <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>En Mantención</span>
+          <div style={{ width: "100%", height: "4px", backgroundColor: "#f1f5f9", borderRadius: "2px", marginTop: "0.5rem", overflow: "hidden" }}>
+            <div style={{ width: `${(plazasMantención / totalPlazas) * 100}%`, backgroundColor: "#f59e0b", height: "100%" }} />
+          </div>
+        </div>
+        <div style={{ flex: 1, minWidth: "200px", backgroundColor: colorAdmin, padding: "1.25rem", borderRadius: "1rem", color: "#fff", boxShadow: "0 4px 6px rgba(52,151,195,0.15)" }}>
+          <h3 style={{ margin: 0, fontSize: "1.5rem", fontWeight: "800" }}>{totalPlazas}</h3>
+          <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "rgba(255,255,255,0.8)", textTransform: "uppercase" }}>Total de Plazas</span>
+          <p style={{ margin: "0.25rem 0 0 0", fontSize: "0.75rem", fontWeight: "600" }}>Ocupación Global: {porcentajeOcupacion}%</p>
         </div>
       </div>
 
-      {/* Tarjeta de resumen */}
-      <Row className="g-3 mb-4">
-        <Col md={3}>
-          <Card className="text-center shadow-sm border-danger">
-            <Card.Body>
-              <h3 className="text-danger mb-0">{plazasOcupadas}</h3>
-              <small className="text-muted">Plazas Ocupadas</small>
-              <div className="progress mt-2" style={{ height: '5px' }}>
-                <div className="progress-bar bg-danger" style={{ width: `${(plazasOcupadas / totalPlazas) * 100}%` }}></div>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={3}>
-          <Card className="text-center shadow-sm border-success">
-            <Card.Body>
-              <h3 className="text-success mb-0">{plazasDisponibles}</h3>
-              <small className="text-muted">Plazas Disponibles</small>
-              <div className="progress mt-2" style={{ height: '5px' }}>
-                <div className="progress-bar bg-success" style={{ width: `${(plazasDisponibles / totalPlazas) * 100}%` }}></div>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={3}>
-          <Card className="text-center shadow-sm border-warning">
-            <Card.Body>
-              <h3 className="text-warning mb-0">{plazasMantención}</h3>
-              <small className="text-muted">En Mantención</small>
-              <div className="progress mt-2" style={{ height: '5px' }}>
-                <div className="progress-bar bg-warning" style={{ width: `${(plazasMantención / totalPlazas) * 100}%` }}></div>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={3}>
-          <Card className="text-center shadow-sm bg-primary text-white">
-            <Card.Body>
-              <h3 className="mb-0">{totalPlazas}</h3>
-              <small>Total de Plazas</small>
-              <small className="d-block mt-1">Ocupación: {porcentajeOcupacion}%</small>
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Filtros */}
-      <Card className="shadow-sm mb-4">
-        <Card.Body>
-          <Row className="align-items-end">
-            <Col md={4}>
-              <Form.Label>
-                <FiFilter className="me-1" /> Filtrar por Zona/Bloque
-              </Form.Label>
-              <Form.Select
-                value={filtroBloque}
-                onChange={(e) => handleFilterChange('bloque', e.target.value)}
-              >
-                <option value="todos">Todas las zonas</option>
-                <option value="A">Zona A (Norte)</option>
-                <option value="B">Zona B (Este)</option>
-                <option value="C">Zona C (Sur)</option>
-                <option value="D">Zona D (Oeste)</option>
-                <option value="E">Zona E (Central)</option>
-                <option value="F">Zona F (Visitas)</option>
-              </Form.Select>
-            </Col>
-            <Col md={4}>
-              <Form.Label>
-                <FiFilter className="me-1" /> Filtrar por Estado
-              </Form.Label>
-              <Form.Select
-                value={filtroEstado}
-                onChange={(e) => handleFilterChange('estado', e.target.value)}
-              >
-                <option value="todos">Todos los estados</option>
-                <option value="Ocupado">🔴 Ocupados</option>
-                <option value="Disponible">🟢 Disponibles</option>
-                <option value="Mantención">🟡 En Mantención</option>
-              </Form.Select>
-            </Col>
-            <Col md={4}>
-              <Button 
-                variant="outline-secondary" 
-                onClick={limpiarFiltros}
-                className="w-100"
-              >
-                <FiX className="me-1" /> Limpiar Filtros
-              </Button>
-            </Col>
-          </Row>
-          
-          {/* Resumen de filtros aplicados */}
-          {(filtroBloque !== 'todos' || filtroEstado !== 'todos') && (
-            <div className="mt-3 pt-2 border-top">
-              <small className="text-muted">
-                <strong>Filtros aplicados:</strong>
-                {filtroBloque !== 'todos' && <Badge bg="info" className="ms-2">Zona {filtroBloque}</Badge>}
-                {filtroEstado !== 'todos' && <Badge bg="secondary" className="ms-2">{filtroEstado}</Badge>}
-                <span className="ms-3">
-                  Mostrando {espaciosFiltrados.length} de {totalPlazas} plazas
-                </span>
-                <span className="ms-2">
-                  ({filtradosOcupados} ocupadas, {filtradosDisponibles} disponibles, {filtradosMantención} mantención)
-                </span>
-              </small>
-            </div>
-          )}
-        </Card.Body>
-      </Card>
-
-      {/* Grid de estacionamientos */}
-      {espaciosPaginados.length === 0 ? (
-        <Card className="text-center py-5">
-          <Card.Body>
-            <FiMapPin size={48} className="text-muted mb-3 opacity-50" />
-            <h5>No hay plazas que coincidan con los filtros</h5>
-            <Button variant="outline-primary" onClick={limpiarFiltros}>
-              Limpiar filtros
-            </Button>
-          </Card.Body>
-        </Card>
-      ) : (
-        <>
-          <Row className="g-3 mb-4">
-            {espaciosPaginados.map((espacio) => (
-              <Col key={espacio.id} xs={6} sm={4} md={3} lg={2}>
-                <Card 
-                  className={`text-center shadow-sm ${espacio.estado === 'Disponible' ? 'border-success' : espacio.estado === 'Mantención' ? 'border-warning' : 'border-danger'}`}
-                  style={{ cursor: 'pointer', height: '100%' }}
-                  onClick={() => handleEspacioClick(espacio)}
-                >
-                  <Card.Body>
-                    <div className="mb-2">
-                      <span style={{ fontSize: '1.2rem' }}>{getEstadoIcono(espacio.estado)}</span>
-                    </div>
-                    <h6 className="mb-1">
-                      <strong>{espacio.numero}</strong>
-                    </h6>
-                    <Badge 
-                      bg={getEstadoColor(espacio.estado)} 
-                      style={{ fontSize: '0.7rem' }}
-                    >
-                      {espacio.estado}
-                    </Badge>
-                    {espacio.residente && (
-                      <small className="d-block text-muted mt-1" style={{ fontSize: '0.65rem' }}>
-                        {espacio.residente.split(' ')[0]}
-                      </small>
-                    )}
-                    <small className="d-block text-muted" style={{ fontSize: '0.6rem' }}>
-                      Zona {espacio.bloque}
-                    </small>
-                  </Card.Body>
-                </Card>
-              </Col>
-            ))}
-          </Row>
-
-          {/* Paginación */}
-          {totalPaginas > 1 && (
-            <div className="d-flex justify-content-center mt-4">
-              <Pagination>
-                <Pagination.First onClick={() => handlePageChange(1)} disabled={paginaActual === 1} />
-                <Pagination.Prev onClick={() => handlePageChange(paginaActual - 1)} disabled={paginaActual === 1} />
-                
-                {[...Array(Math.min(5, totalPaginas))].map((_, index) => {
-                  let pageNum
-                  if (totalPaginas <= 5) {
-                    pageNum = index + 1
-                  } else if (paginaActual <= 3) {
-                    pageNum = index + 1
-                  } else if (paginaActual >= totalPaginas - 2) {
-                    pageNum = totalPaginas - 4 + index
-                  } else {
-                    pageNum = paginaActual - 2 + index
-                  }
-                  
-                  return (
-                    <Pagination.Item
-                      key={pageNum}
-                      active={pageNum === paginaActual}
-                      onClick={() => handlePageChange(pageNum)}
-                    >
-                      {pageNum}
-                    </Pagination.Item>
-                  )
-                })}
-                
-                <Pagination.Next onClick={() => handlePageChange(paginaActual + 1)} disabled={paginaActual === totalPaginas} />
-                <Pagination.Last onClick={() => handlePageChange(totalPaginas)} disabled={paginaActual === totalPaginas} />
-              </Pagination>
-            </div>
-          )}
-
-          {/* Información de paginación */}
-          <div className="text-center text-muted mt-2">
-            <small>
-              Mostrando {indexPrimero + 1} - {Math.min(indexUltimo, espaciosFiltrados.length)} de {espaciosFiltrados.length} plazas
-              {filtroBloque !== 'todos' && ` (Zona ${filtroBloque})`}
-              {filtroEstado !== 'todos' && ` - Estado: ${filtroEstado}`}
-            </small>
+      {/* 3. Filtros Estilizados */}
+      <div style={{ backgroundColor: "#ffffff", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #e2e8f0", marginBottom: "2rem", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "end" }}>
+          <div style={{ flex: 1, minWidth: "200px" }}>
+            <label style={estiloLabel}><FiFilter style={{ marginRight: "4px" }} /> Filtrar por Zona</label>
+            <select style={estiloInput} value={filtroBloque} onChange={(e) => handleFilterChange('bloque', e.target.value)}>
+              <option value="todos">Todas las zonas</option>
+              <option value="A">Zona A (Norte)</option>
+              <option value="B">Zona B (Este)</option>
+              <option value="C">Zona C (Sur)</option>
+              <option value="D">Zona D (Oeste)</option>
+              <option value="E">Zona E (Central)</option>
+              <option value="F">Zona F (Visitas)</option>
+            </select>
           </div>
-        </>
+          <div style={{ flex: 1, minWidth: "200px" }}>
+            <label style={estiloLabel}><FiFilter style={{ marginRight: "4px" }} /> Filtrar por Estado</label>
+            <select style={estiloInput} value={filtroEstado} onChange={(e) => handleFilterChange('estado', e.target.value)}>
+              <option value="todos">Todos los estados</option>
+              <option value="Ocupado">Ocupados</option>
+              <option value="Disponible">Disponibles</option>
+              <option value="Mantención">En Mantención</option>
+            </select>
+          </div>
+          <div style={{ minWidth: "150px" }}>
+            <button 
+              onClick={limpiarFiltros}
+              style={{ width: "100%", padding: "0.65rem 1rem", border: "1px solid #cbd5e1", backgroundColor: "#ffffff", color: "#64748b", borderRadius: "0.5rem", fontSize: "0.9rem", fontWeight: "600", cursor: "pointer" }}
+            >
+              <FiX style={{ marginRight: "4px" }} /> Limpiar
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Malla o Grid de Plazas Premium */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
+        {espaciosPaginados.map((espacio) => {
+          let colorBorde = "#ef4444"
+          if (espacio.estado === 'Disponible') colorBorde = "#10b981"
+          if (espacio.estado === 'Mantención') colorBorde = "#f59e0b"
+
+          return (
+            <div 
+              key={espacio.id}
+              onClick={() => handleEspacioClick(espacio)}
+              style={{ backgroundColor: "#ffffff", border: `1px solid ${colorBorde}`, padding: "1.25rem 0.75rem", borderRadius: "0.75rem", textAlign: "center", cursor: "pointer", transition: "transform 0.2s", boxShadow: "0 2px 4px rgba(0,0,0,0.01)" }}
+            >
+              <h5 style={{ margin: "0 0 0.5rem 0", fontSize: "1.1rem", fontWeight: "800", color: "#0f172a" }}>{espacio.numero}</h5>
+              <BadgeEstado estado={espacio.estado} />
+              {espacio.residente && (
+                <small style={{ display: "block", color: "#64748b", fontSize: "0.7rem", fontWeight: "600", marginTop: "0.5rem", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {espacio.residente.split(' ')[0]}
+                </small>
+              )}
+              <small style={{ display: "block", color: "#94a3b8", fontSize: "0.65rem", marginTop: "0.25rem", fontStyle: "italic" }}>Zona {espacio.bloque}</small>
+            </div>
+          )
+        })}
+      </div>
+
+      {/* 5. Paginación Pro sin dependencias de Bootstrap */}
+      {totalPaginas > 1 && (
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "0.5rem", marginTop: "2.5rem" }}>
+          <button 
+            disabled={paginaActual === 1} 
+            onClick={() => handlePageChange(paginaActual - 1)}
+            style={{ padding: "0.5rem", border: "1px solid #cbd5e1", backgroundColor: "#fff", borderRadius: "0.375rem", cursor: paginaActual === 1 ? "not-allowed" : "pointer" }}
+          >
+            <FiChevronLeft size={16} />
+          </button>
+          
+          {[...Array(totalPaginas)].map((_, i) => (
+            <button
+              key={i + 1}
+              onClick={() => handlePageChange(i + 1)}
+              style={{
+                padding: "0.4rem 0.8rem",
+                borderRadius: "0.375rem",
+                border: "1px solid #cbd5e1",
+                fontWeight: "700",
+                fontSize: "0.85rem",
+                cursor: "pointer",
+                backgroundColor: paginaActual === i + 1 ? colorAdmin : "#ffffff",
+                color: paginaActual === i + 1 ? "#ffffff" : "#334155"
+              }}
+            >
+              {i + 1}
+            </button>
+          ))}
+
+          <button 
+            disabled={paginaActual === totalPaginas} 
+            onClick={() => handlePageChange(paginaActual + 1)}
+            style={{ padding: "0.5rem", border: "1px solid #cbd5e1", backgroundColor: "#fff", borderRadius: "0.375rem", cursor: paginaActual === totalPaginas ? "not-allowed" : "pointer" }}
+          >
+            <FiChevronRight size={16} />
+          </button>
+        </div>
       )}
 
-      {/* Modal para editar espacio de estacionamiento */}
-      <Modal show={showModal} onHide={() => setShowModal(false)}>
-        <Modal.Header closeButton>
-          <Modal.Title>Espacio {espacioSeleccionado?.numero} - Zona {espacioSeleccionado?.bloque}</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group className="mb-3">
-              <Form.Label>Estado</Form.Label>
-              <Form.Select
-                value={formData.estado}
-                onChange={(e) => setFormData({ ...formData, estado: e.target.value })}
-              >
-                <option value="Disponible">🟢 Disponible</option>
-                <option value="Ocupado">🔴 Ocupado</option>
-                <option value="Mantención">🟡 Mantención</option>
-              </Form.Select>
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Residente/Propietario</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Nombre del residente"
-                value={formData.residente || ''}
-                onChange={(e) => setFormData({ ...formData, residente: e.target.value })}
-                disabled={formData.estado !== 'Ocupado'}
-              />
-            </Form.Group>
-            <Form.Group className="mb-3">
-              <Form.Label>Vehículo (Placa)</Form.Label>
-              <Form.Control
-                type="text"
-                placeholder="Placa del vehículo"
-                value={formData.vehiculo || ''}
-                onChange={(e) => setFormData({ ...formData, vehiculo: e.target.value.toUpperCase() })}
-                disabled={formData.estado !== 'Ocupado'}
-              />
-            </Form.Group>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowModal(false)}>
-            Cancelar
-          </Button>
-          <Button variant="primary" onClick={handleUpdateEspacio}>
-            Guardar Cambios
-          </Button>
-        </Modal.Footer>
-      </Modal>
+      {/* 6. Modal de Edición Estructurado con Labels */}
+      {showModal && (
+        <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" }}>
+          <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "460px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.08)", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+            
+            <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: "800", color: "#1e293b" }}>Plaza {espacioSeleccionado?.numero} — Zona {espacioSeleccionado?.bloque}</h3>
+              <button onClick={() => setShowModal(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={18} /></button>
+            </div>
+
+            <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+              <div>
+                <label style={estiloLabel}>Estado de la Plaza</label>
+                <select style={estiloInput} value={formData.estado} onChange={(e) => setFormData({ ...formData, estado: e.target.value })}>
+                  <option value="Disponible">🟢 Disponible</option>
+                  <option value="Ocupado">🔴 Ocupado</option>
+                  <option value="Mantención">🟡 En Mantención</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={estiloLabel}>Residente / Titular</label>
+                <input 
+                  type="text" 
+                  style={estiloInput} 
+                  placeholder="Nombre completo" 
+                  value={formData.residente} 
+                  onChange={(e) => setFormData({ ...formData, residente: e.target.value })}
+                  disabled={formData.estado !== 'Ocupado'} 
+                />
+              </div>
+
+              <div>
+                <label style={estiloLabel}>Vehículo Asignado (Placa)</label>
+                <input 
+                  type="text" 
+                  style={estiloInput} 
+                  placeholder="Ej: ABC-123" 
+                  value={formData.vehiculo} 
+                  onChange={(e) => setFormData({ ...formData, vehiculo: e.target.value.toUpperCase() })}
+                  disabled={formData.estado !== 'Ocupado'} 
+                />
+              </div>
+            </div>
+
+            <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: "0.75rem", backgroundColor: "#f8fafc" }}>
+              <button onClick={() => setShowModal(false)} style={{ backgroundColor: "#ffffff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Cancelar</button>
+              <button onClick={handleUpdateEspacio} style={{ backgroundColor: colorAdmin, border: "none", color: "#ffffff", padding: "0.5rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Guardar Cambios</button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   )
 }
