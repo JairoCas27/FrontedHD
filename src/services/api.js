@@ -89,11 +89,12 @@ export async function getCondominiums() {
 }
 
 export async function createCondominium(data) {
+  // data contiene { nombre, direccion, idPais, idCiudad }
   return safeFetch('/api/super-admin/condominiums', {
     method: 'POST',
     body: JSON.stringify({
       ...data,
-      activo: true, // el backend podría requerirlo
+      activo: true,
     }),
   });
 }
