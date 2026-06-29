@@ -31,12 +31,13 @@ export default function UsuariosGlobales() {
     correo: '',
     telefono: '',
     contrasena: '',
-    rol: 'PROPIETARIO',
+    rol: 'ADMINISTRADOR_CONDOMINIO',
     idCondominio: '',
   });
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [newPassword, setNewPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -46,7 +47,6 @@ export default function UsuariosGlobales() {
     { value: 'PROPIETARIO', label: 'Propietario' },
   ];
 
-  // Roles que se pueden crear/editar desde este módulo
   const EDITABLE_ROLES = ['ADMINISTRADOR_CONDOMINIO'];
 
   const loadData = async () => {
@@ -111,7 +111,6 @@ export default function UsuariosGlobales() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validar que solo se pueda crear/editar administradores
     if (!EDITABLE_ROLES.includes(form.rol)) {
       toast.warning('Solo se pueden crear/editar usuarios con rol "Administrador de Condominio" desde este panel.');
       return;
@@ -120,7 +119,6 @@ export default function UsuariosGlobales() {
     setSubmitting(true);
     try {
       if (editingUser) {
-        // 1. Actualizar datos básicos del administrador
         await updateAdministrator(editingUser.id, {
           nombres: form.nombres.trim(),
           apellidos: form.apellidos.trim(),
@@ -128,24 +126,21 @@ export default function UsuariosGlobales() {
           telefono: form.telefono.trim(),
         });
 
-        // 2. Asignar condominio si cambió
         const newCondoId = form.idCondominio ? parseInt(form.idCondominio, 10) : null;
         const oldCondoId = editingUser.idCondominio ? parseInt(editingUser.idCondominio, 10) : null;
         if (newCondoId !== oldCondoId) {
           if (newCondoId !== null) {
             await assignAdministratorCondo(editingUser.id, newCondoId);
           } else {
-            // Intentar desasignar (si el backend lo permite)
             try {
               await assignAdministratorCondo(editingUser.id, null);
             } catch (err) {
-              toast.warning('No se pudo desasignar el condominio. El backend podría no permitirlo.');
+              toast.warning('No se pudo desasignar el condominio.');
             }
           }
         }
         toast.success('Administrador actualizado correctamente.');
       } else {
-        // Crear nuevo administrador
         const created = await createAdministrator({
           nombres: form.nombres.trim(),
           apellidos: form.apellidos.trim(),
@@ -154,7 +149,6 @@ export default function UsuariosGlobales() {
           contrasena: form.contrasena.trim(),
         });
 
-        // Si se seleccionó condominio, asignarlo
         if (form.idCondominio && created.id) {
           await assignAdministratorCondo(created.id, parseInt(form.idCondominio, 10));
         }
@@ -182,18 +176,25 @@ export default function UsuariosGlobales() {
   };
 
   const handleForcePassword = async (userId) => {
+    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
     if (!newPassword) {
       toast.warning('Ingresa una contraseña');
       return;
     }
+    if (!passwordRegex.test(newPassword)) {
+      toast.error('La contraseña debe tener al menos 6 caracteres, incluyendo letras y números.');
+      return;
+    }
     try {
       await forceUserPassword(userId, newPassword);
-      toast.success('Contraseña actualizada');
+      toast.success('Contraseña actualizada correctamente.');
       setShowPasswordModal(false);
       setNewPassword('');
+      setPasswordError('');
       await loadData();
     } catch (err) {
       toast.error(`Error: ${err.message}`);
+      console.error('Error detallado:', err);
     }
   };
 
@@ -221,7 +222,6 @@ export default function UsuariosGlobales() {
     nombre: c.nombre,
   }));
 
-  // Determinar si el rol seleccionado es editable
   const isEditableRole = EDITABLE_ROLES.includes(form.rol);
 
   return (
@@ -237,7 +237,7 @@ export default function UsuariosGlobales() {
               correo: '',
               telefono: '',
               contrasena: '',
-              rol: 'ADMINISTRADOR_CONDOMINIO', // por defecto el único editable
+              rol: 'ADMINISTRADOR_CONDOMINIO',
               idCondominio: '',
             });
             setShowModal(true);
@@ -247,7 +247,6 @@ export default function UsuariosGlobales() {
         </Button>
       </div>
 
-      {/* Filtros */}
       <Row className="mb-4 g-2">
         <Col md={3}>
           <InputGroup>
@@ -356,7 +355,6 @@ export default function UsuariosGlobales() {
                     </Badge>
                   </td>
                   <td>
-                    {/* Botón Editar: solo visible si es administrador */}
                     {isAdmin && (
                       <Button
                         variant="outline-primary"
@@ -537,14 +535,36 @@ export default function UsuariosGlobales() {
               name="newPassword"
               type="text"
               value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setNewPassword(value);
+                const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
+                if (value && !regex.test(value)) {
+                  setPasswordError('Mínimo 6 caracteres, letras y números.');
+                } else {
+                  setPasswordError('');
+                }
+              }}
               placeholder="Ingresa nueva contraseña"
+              isInvalid={!!passwordError}
             />
+            <Form.Control.Feedback type="invalid">
+              {passwordError}
+            </Form.Control.Feedback>
+            <small className="text-muted">
+              Requisitos: mínimo 6 caracteres, al menos una letra y un número.
+            </small>
           </Form.Group>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowPasswordModal(false)}>Cancelar</Button>
-          <Button variant="primary" onClick={() => handleForcePassword(selectedUser?.id)}>Guardar</Button>
+          <Button
+            variant="primary"
+            onClick={() => handleForcePassword(selectedUser?.id)}
+            disabled={!!passwordError || !newPassword}
+          >
+            Guardar
+          </Button>
         </Modal.Footer>
       </Modal>
     </div>
