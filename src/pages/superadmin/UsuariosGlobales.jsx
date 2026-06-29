@@ -10,6 +10,7 @@ import {
   updateUser,
 } from '../../services/api';
 import { Modal, Form, Button, Table, Badge, InputGroup, Row, Col } from 'react-bootstrap';
+import { toast } from 'react-toastify';
 
 export default function UsuariosGlobales() {
   const [users, setUsers] = useState([]);
@@ -30,32 +31,73 @@ export default function UsuariosGlobales() {
     telefono: '',
     contrasena: '',
     rol: 'PROPIETARIO',
-    condominioId: '',
+    idCondominio: '',
   });
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [newPassword, setNewPassword] = useState('');
   const [error, setError] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Lista de roles permitidos
+  const ROLES = [
+    { value: 'SUPER_ADMINISTRADOR', label: 'Super Administrador' },
+    { value: 'ADMINISTRADOR_CONDOMINIO', label: 'Administrador de Condominio' },
+    { value: 'AGENTE_SEGURIDAD', label: 'Agente de Seguridad' },
+    { value: 'PROPIETARIO', label: 'Propietario' },
+  ];
 
   const loadData = async () => {
     setLoading(true);
+    setError(null);
     try {
       const [usersData, condosData] = await Promise.all([
         getAllUsers(),
         getCondominiums(),
       ]);
-      let usersList = usersData;
-      if (!Array.isArray(usersList)) usersList = usersData?.content || usersData?.data || [];
-      let condosList = condosData;
-      if (!Array.isArray(condosList)) condosList = condosData?.content || condosData?.data || [];
+
+      console.log('Respuesta de usuarios (raw):', usersData);
+      console.log('Respuesta de condominios (raw):', condosData);
+
+      // Extraer lista de usuarios
+      let usersList = [];
+      if (Array.isArray(usersData)) {
+        usersList = usersData;
+      } else if (usersData?.items && Array.isArray(usersData.items)) {
+        usersList = usersData.items;
+      } else if (usersData?.content && Array.isArray(usersData.content)) {
+        usersList = usersData.content;
+      } else if (usersData?.data && Array.isArray(usersData.data)) {
+        usersList = usersData.data;
+      } else {
+        console.warn('Formato inesperado de usuarios:', usersData);
+      }
+
+      // Extraer condominios
+      let condosList = [];
+      if (Array.isArray(condosData)) {
+        condosList = condosData;
+      } else if (condosData?.items && Array.isArray(condosData.items)) {
+        condosList = condosData.items;
+      } else if (condosData?.content && Array.isArray(condosData.content)) {
+        condosList = condosData.content;
+      } else if (condosData?.data && Array.isArray(condosData.data)) {
+        condosList = condosData.data;
+      } else {
+        console.warn('Formato inesperado de condominios:', condosData);
+      }
+
+      console.log('Usuarios procesados:', usersList);
+      console.log('Condominios procesados:', condosList);
+
       setUsers(usersList);
       setCondominios(condosList);
-      setError(null);
     } catch (err) {
-      console.error(err);
+      console.error('Error en loadData:', err);
       setError(err.message);
       setUsers([]);
       setCondominios([]);
+      toast.error(`Error al cargar datos: ${err.message}`);
     } finally {
       setLoading(false);
     }
@@ -65,36 +107,57 @@ export default function UsuariosGlobales() {
     loadData();
   }, []);
 
+  // Filtrar usuarios
   const filtered = users.filter(u => {
-    const fullName = `${u.nombres} ${u.apellidos}`.toLowerCase();
-    const matchSearch = fullName.includes(filters.search.toLowerCase()) ||
-      u.correo.toLowerCase().includes(filters.search.toLowerCase());
+    const fullName = `${u.nombres || ''} ${u.apellidos || ''}`.toLowerCase();
+    const email = (u.correo || '').toLowerCase();
+    const search = filters.search.toLowerCase();
+    const matchSearch = fullName.includes(search) || email.includes(search);
     const matchRol = filters.rol ? u.rol === filters.rol : true;
     const matchEstado = filters.estado !== '' ? (filters.estado === 'activo' ? u.activo : !u.activo) : true;
-    const matchCondo = filters.condominio ? u.condominio?.id === parseInt(filters.condominio) : true;
+    const matchCondo = filters.condominio ? u.idCondominio === parseInt(filters.condominio, 10) : true;
     return matchSearch && matchRol && matchEstado && matchCondo;
   });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
     try {
-      const payload = {
-        nombres: form.nombres,
-        apellidos: form.apellidos,
-        correo: form.correo,
-        telefono: form.telefono,
-        rol: form.rol,
-        condominioId: form.condominioId || null,
-      };
       if (editingUser) {
-        await updateUser(editingUser.id, payload);
+        // Actualizar usuario
+        const updatePayload = {
+          nombres: form.nombres.trim(),
+          apellidos: form.apellidos.trim(),
+          correo: form.correo.trim(),
+          telefono: form.telefono.trim(),
+          rol: form.rol,
+          condominioId: form.idCondominio ? parseInt(form.idCondominio, 10) : null,
+        };
+        console.log('Payload update:', updatePayload);
+        await updateUser(editingUser.id, updatePayload);
+        toast.success('Usuario actualizado correctamente.');
       } else {
-        await createUser({ ...payload, contrasena: form.contrasena });
+        // Crear usuario
+        const createPayload = {
+          nombres: form.nombres.trim(),
+          apellidos: form.apellidos.trim(),
+          correo: form.correo.trim(),
+          telefono: form.telefono.trim(),
+          contrasena: form.contrasena.trim(),
+          rol: form.rol,
+          condominioId: form.idCondominio ? parseInt(form.idCondominio, 10) : null,
+        };
+        console.log('Payload create:', createPayload);
+        await createUser(createPayload);
+        toast.success('Usuario creado correctamente.');
       }
       setShowModal(false);
-      loadData();
+      setTimeout(() => loadData(), 300);
     } catch (err) {
-      alert(err.message);
+      console.error('Error en handleSubmit:', err);
+      toast.error(`Error: ${err.message}`);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -102,22 +165,26 @@ export default function UsuariosGlobales() {
     if (!window.confirm(`¿${activo ? 'Desactivar' : 'Activar'} usuario?`)) return;
     try {
       await patchUserStatus(userId, !activo);
-      loadData();
+      toast.success(`Usuario ${!activo ? 'activado' : 'desactivado'}.`);
+      await loadData();
     } catch (err) {
-      alert(err.message);
+      toast.error(`Error: ${err.message}`);
     }
   };
 
   const handleForcePassword = async (userId) => {
-    if (!newPassword) return alert('Ingresa una contraseña');
+    if (!newPassword) {
+      toast.warning('Ingresa una contraseña');
+      return;
+    }
     try {
       await forceUserPassword(userId, newPassword);
-      alert('Contraseña actualizada');
+      toast.success('Contraseña actualizada');
       setShowPasswordModal(false);
       setNewPassword('');
-      loadData();
+      await loadData();
     } catch (err) {
-      alert(err.message);
+      toast.error(`Error: ${err.message}`);
     }
   };
 
@@ -125,15 +192,26 @@ export default function UsuariosGlobales() {
     if (!window.confirm('¿Invalidar sesión de este usuario?')) return;
     try {
       await invalidateUserSession(userId);
-      alert('Sesión invalidada');
-      loadData();
+      toast.success('Sesión invalidada');
+      await loadData();
     } catch (err) {
-      alert(err.message);
+      toast.error(`Error: ${err.message}`);
     }
   };
 
   if (loading) return <div className="text-center py-5">Cargando usuarios...</div>;
-  if (error) return <div className="text-danger text-center">{error}</div>;
+  if (error) return (
+    <div className="text-center text-danger py-5">
+      <p><strong>Error:</strong> {error}</p>
+      <Button variant="outline-primary" onClick={loadData}>Reintentar</Button>
+    </div>
+  );
+
+  // Opciones para condominios
+  const condominioOptions = condominios.map(c => ({
+    id: c.id,
+    nombre: c.nombre,
+  }));
 
   return (
     <div style={{ padding: '1.5rem' }}>
@@ -149,7 +227,7 @@ export default function UsuariosGlobales() {
               telefono: '',
               contrasena: '',
               rol: 'PROPIETARIO',
-              condominioId: '',
+              idCondominio: '',
             });
             setShowModal(true);
           }}
@@ -158,33 +236,44 @@ export default function UsuariosGlobales() {
         </Button>
       </div>
 
-      {/* Filtros */}
+      {/* Filtros con accesibilidad */}
       <Row className="mb-4 g-2">
         <Col md={3}>
           <InputGroup>
             <InputGroup.Text><FiSearch /></InputGroup.Text>
             <Form.Control
+              id="searchUser"
+              name="searchUser"
               placeholder="Buscar por nombre o correo..."
               value={filters.search}
               onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+              aria-label="Buscar usuario"
             />
           </InputGroup>
         </Col>
         <Col md={2}>
+          <Form.Label htmlFor="filterRol" srOnly>Filtrar por rol</Form.Label>
           <Form.Select
+            id="filterRol"
+            name="filterRol"
             value={filters.rol}
             onChange={(e) => setFilters({ ...filters, rol: e.target.value })}
+            aria-label="Filtrar por rol"
           >
             <option value="">Todos los roles</option>
-            <option value="ADMINISTRADOR_CONDOMINIO">Administrador</option>
-            <option value="AGENTE_SEGURIDAD">Seguridad</option>
-            <option value="PROPIETARIO">Propietario</option>
+            {ROLES.map(r => (
+              <option key={r.value} value={r.value}>{r.label}</option>
+            ))}
           </Form.Select>
         </Col>
         <Col md={2}>
+          <Form.Label htmlFor="filterEstado" srOnly>Filtrar por estado</Form.Label>
           <Form.Select
+            id="filterEstado"
+            name="filterEstado"
             value={filters.estado}
             onChange={(e) => setFilters({ ...filters, estado: e.target.value })}
+            aria-label="Filtrar por estado"
           >
             <option value="">Todos los estados</option>
             <option value="activo">Activo</option>
@@ -192,20 +281,41 @@ export default function UsuariosGlobales() {
           </Form.Select>
         </Col>
         <Col md={3}>
+          <Form.Label htmlFor="filterCondo" srOnly>Filtrar por condominio</Form.Label>
           <Form.Select
+            id="filterCondo"
+            name="filterCondo"
             value={filters.condominio}
             onChange={(e) => setFilters({ ...filters, condominio: e.target.value })}
+            aria-label="Filtrar por condominio"
           >
             <option value="">Todos los condominios</option>
-            {condominios.map(c => (
+            {condominioOptions.map(c => (
               <option key={c.id} value={c.id}>{c.nombre}</option>
             ))}
           </Form.Select>
         </Col>
+        <Col md={2} className="text-end">
+          <Button variant="outline-secondary" onClick={() => {
+            setFilters({ search: '', rol: '', estado: '', condominio: '' });
+          }}>
+            Limpiar filtros
+          </Button>
+        </Col>
       </Row>
 
       {filtered.length === 0 ? (
-        <p>No hay usuarios que coincidan con los filtros.</p>
+        <div className="text-center py-4">
+          <p>No hay usuarios que coincidan con los filtros.</p>
+          {users.length === 0 && <p>No hay usuarios registrados en el sistema.</p>}
+          {users.length > 0 && (
+            <Button variant="outline-secondary" onClick={() => {
+              setFilters({ search: '', rol: '', estado: '', condominio: '' });
+            }}>
+              Limpiar filtros
+            </Button>
+          )}
+        </div>
       ) : (
         <Table striped bordered hover responsive>
           <thead>
@@ -226,7 +336,7 @@ export default function UsuariosGlobales() {
                 <td>{u.correo}</td>
                 <td>{u.telefono}</td>
                 <td><Badge bg="info">{u.rol}</Badge></td>
-                <td>{u.condominio?.nombre || '-'}</td>
+                <td>{u.nombreCondominio || 'Sin asignar'}</td>
                 <td>
                   <Badge bg={u.activo ? 'success' : 'secondary'}>
                     {u.activo ? 'Activo' : 'Inactivo'}
@@ -246,7 +356,7 @@ export default function UsuariosGlobales() {
                         telefono: u.telefono || '',
                         contrasena: '',
                         rol: u.rol,
-                        condominioId: u.condominio?.id?.toString() || '',
+                        idCondominio: u.idCondominio?.toString() || '',
                       });
                       setShowModal(true);
                     }}
@@ -354,9 +464,9 @@ export default function UsuariosGlobales() {
                 value={form.rol}
                 onChange={(e) => setForm({ ...form, rol: e.target.value })}
               >
-                <option value="PROPIETARIO">Propietario</option>
-                <option value="ADMINISTRADOR_CONDOMINIO">Administrador de condominio</option>
-                <option value="AGENTE_SEGURIDAD">Agente de seguridad</option>
+                {ROLES.map(r => (
+                  <option key={r.value} value={r.value}>{r.label}</option>
+                ))}
               </Form.Select>
             </Form.Group>
             <Form.Group className="mb-3">
@@ -364,11 +474,11 @@ export default function UsuariosGlobales() {
               <Form.Select
                 id="userCondo"
                 name="userCondo"
-                value={form.condominioId}
-                onChange={(e) => setForm({ ...form, condominioId: e.target.value })}
+                value={form.idCondominio}
+                onChange={(e) => setForm({ ...form, idCondominio: e.target.value })}
               >
                 <option value="">Sin asignar</option>
-                {condominios.map(c => (
+                {condominioOptions.map(c => (
                   <option key={c.id} value={c.id}>{c.nombre}</option>
                 ))}
               </Form.Select>
@@ -376,7 +486,9 @@ export default function UsuariosGlobales() {
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
-            <Button type="submit">Guardar</Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? 'Guardando...' : 'Guardar'}
+            </Button>
           </Modal.Footer>
         </Form>
       </Modal>
@@ -396,6 +508,7 @@ export default function UsuariosGlobales() {
               type="text"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="Ingresa nueva contraseña"
             />
           </Form.Group>
         </Modal.Body>
