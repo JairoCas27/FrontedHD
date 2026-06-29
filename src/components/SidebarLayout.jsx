@@ -1,3 +1,5 @@
+// src/components/SidebarLayout.jsx
+
 import { useState, useEffect } from "react"
 import { NavLink } from "react-router-dom"
 import { FiChevronLeft, FiChevronRight, FiLogOut, FiCreditCard, FiUser, FiMail } from "react-icons/fi"
@@ -15,6 +17,7 @@ export default function SidebarLayout({
   accentDark,
   menuItems,
   storageKey,
+  userInfo: userInfoProp,
 }) {
   const { handleLogout } = useLogout()
 
@@ -39,11 +42,13 @@ export default function SidebarLayout({
     return () => window.removeEventListener('storage', sync)
   }, [storageKey])
 
-  const userInfo = [
+  const defaultUserInfo = [
     { icon: <FiCreditCard size={18} />, value: "12345678" },
     { icon: <FiUser size={18} />, value: perfilGuardado.nombre },
     { icon: <FiMail size={18} />, value: perfilGuardado.email },
   ]
+
+  const userInfo = userInfoProp ?? defaultUserInfo
 
   return (
     <div
