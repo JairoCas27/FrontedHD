@@ -1,349 +1,213 @@
-// src/pages/superadmin/DashboardSuperAdmin.jsx
 import { useEffect, useState } from 'react';
 import {
-  FiHome,
-  FiUsers,
-  FiGrid,
-  FiActivity,
-  FiTrendingUp,
-  FiUserCheck,
-  FiUserX,
-  FiRefreshCw,
+  FiHome, FiUsers, FiGrid, FiActivity, FiUserCheck, FiUserX, FiTrendingUp,
+  FiBarChart2, FiPieChart, FiCalendar,
 } from 'react-icons/fi';
 import {
   getSuperAdminDashboardMetrics,
   getSuperAdminRecentAdmins,
   getSuperAdminRecentCondos,
+  getAllUsers,
+  getCondominiums,
 } from '../../services/api';
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  PointElement,
-  LineElement,
-  ArcElement,
-} from 'chart.js';
-import { Bar, Line, Doughnut } from 'react-chartjs-2';
-import { Card, Row, Col, Spinner, Button, Badge } from 'react-bootstrap';
-
-// Registrar componentes de Chart.js
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-  PointElement,
-  LineElement,
-  ArcElement
-);
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
+  PieChart, Pie, Cell, AreaChart, Area,
+} from 'recharts';
+import { Card, Row, Col, Badge, Table } from 'react-bootstrap';
 
 export default function DashboardSuperAdmin() {
   const [metrics, setMetrics] = useState(null);
   const [recentAdmins, setRecentAdmins] = useState([]);
   const [recentCondos, setRecentCondos] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
+  const [allCondos, setAllCondos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-
-  const loadData = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [m, admins, condos] = await Promise.all([
-        getSuperAdminDashboardMetrics(),
-        getSuperAdminRecentAdmins(),
-        getSuperAdminRecentCondos(),
-      ]);
-      setMetrics(m);
-      setRecentAdmins(admins);
-      setRecentCondos(condos);
-    } catch (err) {
-      console.error(err);
-      setError('Error al cargar el dashboard');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   useEffect(() => {
-    loadData();
+    const load = async () => {
+      try {
+        const [m, admins, condos, users, condosAll] = await Promise.all([
+          getSuperAdminDashboardMetrics(),
+          getSuperAdminRecentAdmins(),
+          getSuperAdminRecentCondos(),
+          getAllUsers(),
+          getCondominiums(),
+        ]);
+        setMetrics(m);
+        setRecentAdmins(admins);
+        setRecentCondos(condos);
+        setAllUsers(users);
+        setAllCondos(condosAll);
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
   }, []);
 
-  if (loading) {
-    return (
-      <div className="d-flex justify-content-center align-items-center" style={{ minHeight: '60vh' }}>
-        <Spinner animation="border" variant="primary" />
-        <span className="ms-3">Cargando dashboard...</span>
-      </div>
-    );
-  }
+  if (loading) return <div className="text-center py-5">Cargando...</div>;
 
-  if (error) {
-    return (
-      <div className="text-center text-danger py-5">
-        <p>{error}</p>
-        <Button variant="outline-primary" onClick={loadData}>
-          Reintentar
-        </Button>
-      </div>
-    );
-  }
+  // Procesar datos para gráficos
+  const totalUsuarios = allUsers.length || metrics?.totalUsuarios || 0;
+  const totalAdmins = allUsers.filter(u => u.rol === 'ADMINISTRADOR_CONDOMINIO').length || metrics?.totalAdministradores || 0;
+  const totalPropietarios = allUsers.filter(u => u.rol === 'PROPIETARIO').length || metrics?.totalPropietarios || 0;
+  const totalSeguridad = allUsers.filter(u => u.rol === 'AGENTE_SEGURIDAD').length || 0;
+  const totalSuperAdmins = allUsers.filter(u => u.rol === 'SUPER_ADMINISTRADOR').length || 0;
 
-  // --- Datos para gráficos (simulados, pero pueden adaptarse a la API) ---
-  // Distribución de roles (basado en métricas, si no existen, usamos valores ficticios)
-  const totalAdmins = metrics?.totalAdministradores || 0;
-  const totalPropietarios = metrics?.totalPropietarios || 0;
-  const totalSeguridad = metrics?.totalSeguridad || 0; // si no existe, estimar
-  const totalUsuarios = metrics?.totalUsuarios || 0;
+  // Distribución de roles para gráfico de pastel
+  const roleDistribution = [
+    { name: 'Propietarios', value: totalPropietarios, color: '#f59e0b' },
+    { name: 'Administradores', value: totalAdmins, color: '#10b981' },
+    { name: 'Agentes Seguridad', value: totalSeguridad, color: '#3b82f6' },
+    { name: 'Super Admins', value: totalSuperAdmins, color: '#8b5cf6' },
+  ].filter(item => item.value > 0);
 
-  // Datos para gráfico de barras: usuarios por rol
-  const barData = {
-    labels: ['Administradores', 'Propietarios', 'Seguridad', 'Total'],
-    datasets: [
-      {
-        label: 'Usuarios por rol',
-        data: [totalAdmins, totalPropietarios, totalSeguridad || 5, totalUsuarios],
-        backgroundColor: ['#4f46e5', '#f59e0b', '#10b981', '#8b5cf6'],
-        borderRadius: 6,
-      },
-    ],
-  };
+  // Datos de condominios: activos vs inactivos
+  const totalCondos = allCondos.length || metrics?.totalCondominios || 0;
+  const activeCondos = allCondos.filter(c => c.activo).length;
+  const inactiveCondos = totalCondos - activeCondos;
 
-  // Datos para gráfico de líneas: crecimiento de condominios (últimos 6 meses)
-  // Si no hay datos históricos, generamos una tendencia ficticia basada en totalCondominios
-  const condoGrowth = metrics?.condominiosPorMes || [2, 4, 3, 5, 6, 8];
-  const lineData = {
-    labels: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun'],
-    datasets: [
-      {
-        label: 'Condominios nuevos',
-        data: condoGrowth,
-        borderColor: '#4f46e5',
-        backgroundColor: 'rgba(79, 70, 229, 0.1)',
-        fill: true,
-        tension: 0.4,
-      },
-    ],
-  };
+  // Datos de barras: cantidad de usuarios por mes (usando fechaCreacion)
+  const months = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+  const currentYear = new Date().getFullYear();
+  const usersByMonth = months.map((month, index) => {
+    const monthIndex = index;
+    const count = allUsers.filter(u => {
+      const date = new Date(u.fechaCreacion);
+      return date.getFullYear() === currentYear && date.getMonth() === monthIndex;
+    }).length;
+    return { month, usuarios: count };
+  });
 
-  // Datos para gráfico de doughnut: distribución de condominios por ciudad (si tenemos datos)
-  // Ejemplo: si la API devuelve condominios con ciudad, podemos procesarlo, pero usamos dummy
-  const ciudadCounts = metrics?.condominiosPorCiudad || { Lima: 5, Callao: 2, Arequipa: 1 };
-  const doughnutData = {
-    labels: Object.keys(ciudadCounts),
-    datasets: [
-      {
-        data: Object.values(ciudadCounts),
-        backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'],
-        borderWidth: 0,
-      },
-    ],
-  };
+  // Datos de condominios creados por mes
+  const condosByMonth = months.map((month, index) => {
+    const monthIndex = index;
+    const count = allCondos.filter(c => {
+      const date = new Date(c.fechaCreacion);
+      return date.getFullYear() === currentYear && date.getMonth() === monthIndex;
+    }).length;
+    return { month, condominios: count };
+  });
 
-  // Estadísticas adicionales (simuladas)
-  const growth = {
-    condominios: '+12%',
-    administradores: '+8%',
-    propietarios: '+15%',
-  };
+  // Combinar ambos en un solo gráfico de área (pueden ser dos líneas)
+  const combinedData = months.map((month, index) => ({
+    month,
+    usuarios: usersByMonth[index].usuarios,
+    condominios: condosByMonth[index].condominios,
+  }));
+
+  const stats = [
+    { title: 'Condominios', value: totalCondos, icon: <FiHome size={24} />, color: '#4f46e5', subtitle: `${activeCondos} activos` },
+    { title: 'Administradores', value: totalAdmins, icon: <FiUsers size={24} />, color: '#10b981', subtitle: `${totalAdmins} registrados` },
+    { title: 'Propietarios', value: totalPropietarios, icon: <FiUserCheck size={24} />, color: '#f59e0b', subtitle: `${totalPropietarios} activos` },
+    { title: 'Usuarios Totales', value: totalUsuarios, icon: <FiActivity size={24} />, color: '#8b5cf6', subtitle: `${totalUsuarios} en sistema` },
+  ];
+
+  // Últimos 5 usuarios registrados
+  const recentUsers = allUsers
+    .sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
+    .slice(0, 5);
 
   return (
     <div style={{ padding: '1.5rem', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
-      {/* Encabezado con botón de actualizar */}
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 style={{ fontWeight: 800, color: '#1e293b' }}>Dashboard Global</h1>
-        <Button variant="outline-primary" onClick={loadData} disabled={loading}>
-          <FiRefreshCw className={loading ? 'spin' : ''} /> Actualizar
-        </Button>
-      </div>
+      <h1 className="mb-4" style={{ fontWeight: 800, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <FiBarChart2 size={28} /> Dashboard Global
+        <Badge bg="info" className="ms-2">Super Admin</Badge>
+      </h1>
 
       {/* Tarjetas de métricas */}
       <Row className="g-4 mb-4">
-        <Col md={3}>
-          <Card className="border-0 shadow-sm h-100">
-            <Card.Body>
-              <div className="d-flex justify-content-between align-items-center">
+        {stats.map((stat, idx) => (
+          <Col md={3} key={idx}>
+            <Card className="border-0 shadow-sm h-100">
+              <Card.Body className="d-flex justify-content-between align-items-center">
                 <div>
-                  <div className="text-muted small fw-bold">Condominios</div>
-                  <div className="fs-2 fw-bold">{metrics?.totalCondominios ?? 0}</div>
-                  <div className="text-success small">
-                    <FiTrendingUp /> {growth.condominios} este mes
-                  </div>
+                  <div className="text-muted small fw-bold">{stat.title}</div>
+                  <div className="fs-2 fw-bold">{stat.value}</div>
+                  <div className="text-muted small">{stat.subtitle}</div>
                 </div>
-                <div
-                  style={{
-                    background: 'rgba(79, 70, 229, 0.15)',
-                    padding: '12px',
-                    borderRadius: '12px',
-                    color: '#4f46e5',
-                  }}
-                >
-                  <FiGrid size={28} />
+                <div style={{ color: stat.color, background: `${stat.color}15`, padding: '12px', borderRadius: '12px' }}>
+                  {stat.icon}
                 </div>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={3}>
-          <Card className="border-0 shadow-sm h-100">
-            <Card.Body>
-              <div className="d-flex justify-content-between align-items-center">
-                <div>
-                  <div className="text-muted small fw-bold">Administradores</div>
-                  <div className="fs-2 fw-bold">{metrics?.totalAdministradores ?? 0}</div>
-                  <div className="text-success small">
-                    <FiTrendingUp /> {growth.administradores} este mes
-                  </div>
-                </div>
-                <div
-                  style={{
-                    background: 'rgba(16, 185, 129, 0.15)',
-                    padding: '12px',
-                    borderRadius: '12px',
-                    color: '#10b981',
-                  }}
-                >
-                  <FiUsers size={28} />
-                </div>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={3}>
-          <Card className="border-0 shadow-sm h-100">
-            <Card.Body>
-              <div className="d-flex justify-content-between align-items-center">
-                <div>
-                  <div className="text-muted small fw-bold">Propietarios</div>
-                  <div className="fs-2 fw-bold">{metrics?.totalPropietarios ?? 0}</div>
-                  <div className="text-success small">
-                    <FiTrendingUp /> {growth.propietarios} este mes
-                  </div>
-                </div>
-                <div
-                  style={{
-                    background: 'rgba(245, 158, 11, 0.15)',
-                    padding: '12px',
-                    borderRadius: '12px',
-                    color: '#f59e0b',
-                  }}
-                >
-                  <FiUserCheck size={28} />
-                </div>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
-        <Col md={3}>
-          <Card className="border-0 shadow-sm h-100">
-            <Card.Body>
-              <div className="d-flex justify-content-between align-items-center">
-                <div>
-                  <div className="text-muted small fw-bold">Total Usuarios</div>
-                  <div className="fs-2 fw-bold">{metrics?.totalUsuarios ?? 0}</div>
-                  <div className="text-muted small">Activos: {metrics?.totalUsuariosActivos ?? 0}</div>
-                </div>
-                <div
-                  style={{
-                    background: 'rgba(139, 92, 246, 0.15)',
-                    padding: '12px',
-                    borderRadius: '12px',
-                    color: '#8b5cf6',
-                  }}
-                >
-                  <FiActivity size={28} />
-                </div>
-              </div>
-            </Card.Body>
-          </Card>
-        </Col>
+              </Card.Body>
+            </Card>
+          </Col>
+        ))}
       </Row>
 
       {/* Gráficos */}
       <Row className="g-4 mb-4">
         <Col md={8}>
           <Card className="border-0 shadow-sm">
-            <Card.Header className="bg-white fw-bold">Crecimiento de condominios (últimos 6 meses)</Card.Header>
-            <Card.Body>
-              <Line
-                data={lineData}
-                options={{
-                  responsive: true,
-                  plugins: {
-                    legend: { display: false },
-                  },
-                  scales: {
-                    y: { beginAtZero: true },
-                  },
-                }}
-              />
+            <Card.Header className="bg-white fw-bold">
+              <FiTrendingUp className="me-2" /> Evolución de registros ({currentYear})
+            </Card.Header>
+            <Card.Body style={{ height: '300px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={combinedData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" />
+                  <YAxis yAxisId="left" />
+                  <YAxis yAxisId="right" orientation="right" />
+                  <Tooltip />
+                  <Legend />
+                  <Area yAxisId="left" type="monotone" dataKey="usuarios" stackId="1" stroke="#8b5cf6" fill="#8b5cf6" fillOpacity={0.3} name="Usuarios" />
+                  <Area yAxisId="right" type="monotone" dataKey="condominios" stackId="2" stroke="#4f46e5" fill="#4f46e5" fillOpacity={0.3} name="Condominios" />
+                </AreaChart>
+              </ResponsiveContainer>
             </Card.Body>
           </Card>
         </Col>
         <Col md={4}>
           <Card className="border-0 shadow-sm">
-            <Card.Header className="bg-white fw-bold">Condominios por ciudad</Card.Header>
-            <Card.Body>
-              <Doughnut
-                data={doughnutData}
-                options={{
-                  plugins: {
-                    legend: { position: 'bottom' },
-                  },
-                  cutout: '70%',
-                }}
-              />
+            <Card.Header className="bg-white fw-bold">
+              <FiPieChart className="me-2" /> Distribución de roles
+            </Card.Header>
+            <Card.Body style={{ height: '300px' }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={roleDistribution}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={100}
+                    fill="#8884d8"
+                    paddingAngle={5}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {roleDistribution.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
             </Card.Body>
           </Card>
         </Col>
       </Row>
 
+      {/* Tablas de actividad reciente y condominios */}
       <Row className="g-4">
-        <Col md={12}>
-          <Card className="border-0 shadow-sm">
-            <Card.Header className="bg-white fw-bold">Distribución de usuarios por rol</Card.Header>
-            <Card.Body>
-              <Bar
-                data={barData}
-                options={{
-                  responsive: true,
-                  plugins: {
-                    legend: { display: false },
-                  },
-                  scales: {
-                    y: { beginAtZero: true },
-                  },
-                }}
-              />
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Tablas recientes */}
-      <Row className="g-4 mt-3">
         <Col md={6}>
           <Card className="border-0 shadow-sm">
-            <Card.Header className="bg-white fw-bold d-flex justify-content-between align-items-center">
-              Últimos administradores
-              <Badge bg="primary">{recentAdmins.length}</Badge>
+            <Card.Header className="bg-white fw-bold">
+              <FiUsers className="me-2" /> Últimos administradores
             </Card.Header>
-            <Card.Body style={{ maxHeight: '300px', overflowY: 'auto' }}>
+            <Card.Body>
               {recentAdmins.length === 0 ? (
-                <p className="text-muted text-center">Sin administradores registrados</p>
+                <p className="text-muted">Sin datos</p>
               ) : (
                 <ul className="list-unstyled">
                   {recentAdmins.map((admin) => (
                     <li key={admin.id} className="border-bottom py-2 d-flex justify-content-between align-items-center">
                       <div>
-                        <div className="fw-bold">
-                          {admin.nombres} {admin.apellidos}
-                        </div>
+                        <div className="fw-bold">{admin.nombres} {admin.apellidos}</div>
                         <div className="small text-muted">{admin.correo}</div>
                       </div>
                       <Badge bg={admin.activo ? 'success' : 'secondary'}>
@@ -358,19 +222,23 @@ export default function DashboardSuperAdmin() {
         </Col>
         <Col md={6}>
           <Card className="border-0 shadow-sm">
-            <Card.Header className="bg-white fw-bold d-flex justify-content-between align-items-center">
-              Últimos condominios
-              <Badge bg="primary">{recentCondos.length}</Badge>
+            <Card.Header className="bg-white fw-bold">
+              <FiHome className="me-2" /> Últimos condominios
             </Card.Header>
-            <Card.Body style={{ maxHeight: '300px', overflowY: 'auto' }}>
+            <Card.Body>
               {recentCondos.length === 0 ? (
-                <p className="text-muted text-center">Sin condominios registrados</p>
+                <p className="text-muted">Sin datos</p>
               ) : (
                 <ul className="list-unstyled">
                   {recentCondos.map((c) => (
-                    <li key={c.id} className="border-bottom py-2">
-                      <div className="fw-bold">{c.nombre}</div>
-                      <div className="small text-muted">{c.direccion} · {c.ciudad || 'Sin ciudad'}</div>
+                    <li key={c.id} className="border-bottom py-2 d-flex justify-content-between align-items-center">
+                      <div>
+                        <div className="fw-bold">{c.nombre}</div>
+                        <div className="small text-muted">{c.direccion} · {c.ciudad || 'Sin ciudad'}</div>
+                      </div>
+                      <Badge bg={c.activo ? 'success' : 'secondary'}>
+                        {c.activo ? 'Activo' : 'Inactivo'}
+                      </Badge>
                     </li>
                   ))}
                 </ul>
@@ -380,15 +248,44 @@ export default function DashboardSuperAdmin() {
         </Col>
       </Row>
 
-      <style>{`
-        .spin {
-          animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
+      {/* Tabla de usuarios recientes (opcional) */}
+      <Row className="mt-4">
+        <Col>
+          <Card className="border-0 shadow-sm">
+            <Card.Header className="bg-white fw-bold">
+              <FiActivity className="me-2" /> Últimos usuarios registrados
+            </Card.Header>
+            <Card.Body>
+              <Table responsive striped bordered hover size="sm">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Correo</th>
+                    <th>Rol</th>
+                    <th>Condominio</th>
+                    <th>Fecha</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentUsers.length === 0 ? (
+                    <tr><td colSpan="5" className="text-center">Sin datos</td></tr>
+                  ) : (
+                    recentUsers.map(u => (
+                      <tr key={u.id}>
+                        <td>{u.nombres} {u.apellidos}</td>
+                        <td>{u.correo}</td>
+                        <td><Badge bg="info">{u.rol}</Badge></td>
+                        <td>{u.nombreCondominio || 'Sin asignar'}</td>
+                        <td>{new Date(u.fechaCreacion).toLocaleDateString()}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </Table>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
     </div>
   );
 }
