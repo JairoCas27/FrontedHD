@@ -176,17 +176,20 @@ export default function UsuariosGlobales() {
   };
 
   const handleForcePassword = async (userId) => {
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
-    if (!newPassword) {
-      toast.warning('Ingresa una contraseña');
+    // Validar que no esté vacío
+    if (!newPassword || newPassword.trim() === '') {
+      toast.warning('La contraseña no puede estar vacía');
       return;
     }
-    if (!passwordRegex.test(newPassword)) {
-      toast.error('La contraseña debe tener al menos 6 caracteres, incluyendo letras y números.');
+
+    // Validar longitud mínima (6 caracteres)
+    if (newPassword.length < 6) {
+      toast.error('La contraseña debe tener al menos 6 caracteres.');
       return;
     }
+
     try {
-      await forceUserPassword(userId, newPassword);
+      await forceUserPassword(userId, newPassword.trim());
       toast.success('Contraseña actualizada correctamente.');
       setShowPasswordModal(false);
       setNewPassword('');
@@ -538,9 +541,8 @@ export default function UsuariosGlobales() {
               onChange={(e) => {
                 const value = e.target.value;
                 setNewPassword(value);
-                const regex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{6,}$/;
-                if (value && !regex.test(value)) {
-                  setPasswordError('Mínimo 6 caracteres, letras y números.');
+                if (value && value.length < 6) {
+                  setPasswordError('La contraseña debe tener al menos 6 caracteres.');
                 } else {
                   setPasswordError('');
                 }
@@ -552,7 +554,7 @@ export default function UsuariosGlobales() {
               {passwordError}
             </Form.Control.Feedback>
             <small className="text-muted">
-              Requisitos: mínimo 6 caracteres, al menos una letra y un número.
+              La contraseña debe tener al menos 6 caracteres.
             </small>
           </Form.Group>
         </Modal.Body>
@@ -561,7 +563,7 @@ export default function UsuariosGlobales() {
           <Button
             variant="primary"
             onClick={() => handleForcePassword(selectedUser?.id)}
-            disabled={!!passwordError || !newPassword}
+            disabled={!!passwordError || !newPassword || newPassword.length < 6}
           >
             Guardar
           </Button>

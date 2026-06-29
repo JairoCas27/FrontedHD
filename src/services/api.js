@@ -191,7 +191,7 @@ export async function patchUserStatus(userId, activo) {
 export async function forceUserPassword(userId, nuevaContrasena) {
   return safeFetch(`/api/super-admin/users/${userId}/force-password`, {
     method: 'PUT',
-    body: JSON.stringify({ contrasena: nuevaContrasena }),
+    body: JSON.stringify({ nuevaContrasena }),
   });
 }
 
