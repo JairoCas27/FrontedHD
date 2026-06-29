@@ -19,8 +19,8 @@ export default function Condominios() {
   const [form, setForm] = useState({
     nombre: '',
     direccion: '',
-    idPais: '',   // Cambiado de paisId
-    idCiudad: '', // Cambiado de ciudadId
+    idPais: '',
+    idCiudad: '',
   });
   const [error, setError] = useState(null);
 
@@ -32,11 +32,9 @@ export default function Condominios() {
   // Catálogos
   const [paises, setPaises] = useState([]);
   const [ciudades, setCiudades] = useState([]);
-  // Mapa para obtener nombre de ciudad por ID
   const [ciudadMap, setCiudadMap] = useState({});
   const [loadingCatalogs, setLoadingCatalogs] = useState(false);
 
-  // Cargar condominios y catálogos
   const load = async () => {
     setLoading(true);
     setError(null);
@@ -45,6 +43,24 @@ export default function Condominios() {
       let list = data;
       if (!Array.isArray(list)) list = data?.content || data?.data || data?.items || [];
       setCondominios(list);
+      // Construir mapa de ciudades a partir de la lista (si cada condominio tiene ciudadId)
+      // También se podría hacer un map global desde las ciudades cargadas, pero si no están cargadas, lo hacemos aquí.
+      const map = {};
+      list.forEach(c => {
+        if (c.ciudadId) {
+          // Si no está en el mapa aún, lo añadimos con un valor temporal (se actualizará después)
+          if (!map[c.ciudadId]) {
+            // Intentar obtener el nombre de la ciudad desde el objeto ciudad si existe
+            if (c.ciudad && c.ciudad.nombre) {
+              map[c.ciudadId] = c.ciudad.nombre;
+            } else {
+              // Si no, lo dejamos como pendiente; se actualizará cuando carguemos las ciudades
+              map[c.ciudadId] = null;
+            }
+          }
+        }
+      });
+      setCiudadMap(prev => ({ ...prev, ...map }));
     } catch (err) {
       console.error(err);
       setError(err.message);
@@ -63,10 +79,9 @@ export default function Condominios() {
         const firstCountry = paisesData[0].id;
         const citiesData = await getCities(firstCountry);
         setCiudades(citiesData);
-        // Construir mapa ciudadId -> nombre
         const map = {};
         citiesData.forEach(c => { map[c.id] = c.nombre; });
-        setCiudadMap(map);
+        setCiudadMap(prev => ({ ...prev, ...map }));
         if (!form.idPais) {
           setForm(prev => ({ ...prev, idPais: firstCountry }));
         }
@@ -83,20 +98,31 @@ export default function Condominios() {
     loadCatalogs();
   }, []);
 
-  // Obtener lista de ciudades únicas para el filtro (basado en el mapa)
+  // Obtener lista de ciudades únicas para el filtro
   const uniqueCities = [...new Set(
-    condominios.map(c => ciudadMap[c.ciudadId]).filter(Boolean)
+    condominios.map(c => {
+      if (c.ciudad && c.ciudad.nombre) return c.ciudad.nombre;
+      if (c.ciudadId) return ciudadMap[c.ciudadId] || null;
+      return null;
+    }).filter(Boolean)
   )];
+
+  // Función para obtener el nombre de la ciudad de un condominio
+  const getCiudadNombre = (c) => {
+    if (c.ciudad && c.ciudad.nombre) return c.ciudad.nombre;
+    if (c.ciudadId) return ciudadMap[c.ciudadId] || '-';
+    return '-';
+  };
 
   // Filtrar condominios
   const filtered = condominios.filter(c => {
     const matchNombre = c.nombre.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchCiudad = ciudadFilter ? ciudadMap[c.ciudadId] === ciudadFilter : true;
+    const ciudadNombre = getCiudadNombre(c);
+    const matchCiudad = ciudadFilter ? ciudadNombre === ciudadFilter : true;
     const matchEstado = estadoFilter !== '' ? (estadoFilter === 'activo' ? c.activo : !c.activo) : true;
     return matchNombre && matchCiudad && matchEstado;
   });
 
-  // Manejar cambio de país para cargar ciudades
   const handlePaisChange = async (paisId) => {
     setForm({ ...form, idPais: paisId, idCiudad: '' });
     if (paisId) {
@@ -105,7 +131,7 @@ export default function Condominios() {
         setCiudades(cities);
         const map = {};
         cities.forEach(c => { map[c.id] = c.nombre; });
-        setCiudadMap(map);
+        setCiudadMap(prev => ({ ...prev, ...map }));
       } catch (err) {
         console.error('Error cargando ciudades:', err);
       }
@@ -187,6 +213,8 @@ export default function Condominios() {
           <InputGroup>
             <InputGroup.Text><FiSearch /></InputGroup.Text>
             <Form.Control
+              id="searchNombre"
+              name="searchNombre"
               placeholder="Buscar por nombre..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -195,6 +223,8 @@ export default function Condominios() {
         </Col>
         <Col md={3}>
           <Form.Select
+            id="filtroCiudad"
+            name="filtroCiudad"
             value={ciudadFilter}
             onChange={(e) => setCiudadFilter(e.target.value)}
           >
@@ -206,6 +236,8 @@ export default function Condominios() {
         </Col>
         <Col md={3}>
           <Form.Select
+            id="filtroEstado"
+            name="filtroEstado"
             value={estadoFilter}
             onChange={(e) => setEstadoFilter(e.target.value)}
           >
@@ -236,7 +268,7 @@ export default function Condominios() {
                 <td>{c.id}</td>
                 <td>{c.nombre}</td>
                 <td>{c.direccion}</td>
-                <td>{ciudadMap[c.ciudadId] || '-'}</td>
+                <td>{getCiudadNombre(c)}</td>
                 <td>
                   <Badge bg={c.activo ? 'success' : 'secondary'}>
                     {c.activo ? 'Activo' : 'Inactivo'}
@@ -255,13 +287,12 @@ export default function Condominios() {
                         idPais: c.paisId || (paises.length > 0 ? paises[0].id : ''),
                         idCiudad: c.ciudadId || '',
                       });
-                      // Cargar ciudades del país seleccionado
                       if (c.paisId) {
                         getCities(c.paisId).then(cities => {
                           setCiudades(cities);
                           const map = {};
                           cities.forEach(ci => { map[ci.id] = ci.nombre; });
-                          setCiudadMap(map);
+                          setCiudadMap(prev => ({ ...prev, ...map }));
                         }).catch(console.error);
                       }
                       setShowModal(true);
