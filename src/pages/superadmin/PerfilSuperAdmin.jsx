@@ -50,13 +50,13 @@ export default function PerfilSuperAdmin() {
     e.preventDefault();
     setError('');
 
-    // Validaciones
-    if (!passwordData.currentPassword || passwordData.currentPassword.length < 6) {
-      setError('La contraseña actual debe tener al menos 6 caracteres.');
+    // Validaciones: mínimo 8 caracteres (requerido por el backend)
+    if (!passwordData.currentPassword || passwordData.currentPassword.length < 8) {
+      setError('La contraseña actual debe tener al menos 8 caracteres.');
       return;
     }
-    if (!passwordData.newPassword || passwordData.newPassword.length < 6) {
-      setError('La nueva contraseña debe tener al menos 6 caracteres.');
+    if (!passwordData.newPassword || passwordData.newPassword.length < 8) {
+      setError('La nueva contraseña debe tener al menos 8 caracteres.');
       return;
     }
     if (passwordData.newPassword !== passwordData.confirmPassword) {
@@ -175,7 +175,7 @@ export default function PerfilSuperAdmin() {
                   type={showPasswords.current ? 'text' : 'password'}
                   value={passwordData.currentPassword}
                   onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                  minLength="6"
+                  minLength="8"
                   required
                   isInvalid={!!error && error.includes('actual')}
                 />
@@ -187,7 +187,7 @@ export default function PerfilSuperAdmin() {
                   {showPasswords.current ? <FiEyeOff /> : <FiEye />}
                 </Button>
               </InputGroup>
-              <Form.Text className="text-muted">Mínimo 6 caracteres.</Form.Text>
+              <Form.Text className="text-muted">Mínimo 8 caracteres.</Form.Text>
             </Form.Group>
 
             {/* Nueva contraseña */}
@@ -201,7 +201,7 @@ export default function PerfilSuperAdmin() {
                   type={showPasswords.new ? 'text' : 'password'}
                   value={passwordData.newPassword}
                   onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
-                  minLength="6"
+                  minLength="8"
                   required
                   isInvalid={!!error && error.includes('nueva')}
                 />
@@ -213,7 +213,7 @@ export default function PerfilSuperAdmin() {
                   {showPasswords.new ? <FiEyeOff /> : <FiEye />}
                 </Button>
               </InputGroup>
-              <Form.Text className="text-muted">Mínimo 6 caracteres.</Form.Text>
+              <Form.Text className="text-muted">Mínimo 8 caracteres.</Form.Text>
             </Form.Group>
 
             {/* Confirmar nueva contraseña */}
@@ -227,7 +227,7 @@ export default function PerfilSuperAdmin() {
                   type={showPasswords.confirm ? 'text' : 'password'}
                   value={passwordData.confirmPassword}
                   onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
-                  minLength="6"
+                  minLength="8"
                   required
                   isInvalid={!!error && error.includes('coinciden')}
                 />
