@@ -6,6 +6,8 @@ import { FiChevronLeft, FiChevronRight, FiLogOut, FiCreditCard, FiUser, FiMail }
 import logo2 from "../images/logo.png"
 import { useLogout } from "../hooks/useLogout"
 
+const perfilFallback = { nombre: 'Usuario Demo', email: 'usuario@demo.com' }
+
 export default function SidebarLayout({
   isOpen,
   setIsOpen,
@@ -14,14 +16,36 @@ export default function SidebarLayout({
   accentLight,
   accentDark,
   menuItems,
-  user, // recibimos el usuario desde el contexto
+  storageKey,
+  userInfo: userInfoProp,
 }) {
   const { handleLogout } = useLogout()
 
-  const userInfo = [
-    { icon: <FiCreditCard size={18} />, value: "ID: 12345678" }, // o algún identificador
-    { icon: <FiUser size={18} />, value: user?.nombres + ' ' + user?.apellidos || 'Usuario' },
-    { icon: <FiMail size={18} />, value: user?.correo || '' },
+  const [perfilGuardado, setPerfilGuardado] = useState(() => {
+    try {
+      const stored = storageKey ? localStorage.getItem(storageKey) : null
+      return stored ? JSON.parse(stored) : perfilFallback
+    } catch {
+      return perfilFallback
+    }
+  })
+
+  useEffect(() => {
+    if (!storageKey) return
+    const sync = () => {
+      try {
+        const stored = localStorage.getItem(storageKey)
+        if (stored) setPerfilGuardado(JSON.parse(stored))
+      } catch {}
+    }
+    window.addEventListener('storage', sync)
+    return () => window.removeEventListener('storage', sync)
+  }, [storageKey])
+
+  const defaultUserInfo = [
+    { icon: <FiCreditCard size={18} />, value: "12345678" },
+    { icon: <FiUser size={18} />, value: perfilGuardado.nombre },
+    { icon: <FiMail size={18} />, value: perfilGuardado.email },
   ]
 
   const userInfo = userInfoProp ?? defaultUserInfo
