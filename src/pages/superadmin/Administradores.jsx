@@ -42,9 +42,6 @@ export default function Administradores() {
                 getCondominiums(),
             ]);
 
-            console.log('Respuesta de administradores (raw):', adminsData);
-            console.log('Respuesta de condominios (raw):', condosData);
-
             let adminsList = [];
             if (Array.isArray(adminsData)) {
                 adminsList = adminsData;
@@ -70,9 +67,6 @@ export default function Administradores() {
             } else {
                 console.warn('Formato inesperado de condominios:', condosData);
             }
-
-            console.log('Administradores procesados:', adminsList);
-            console.log('Condominios procesados:', condosList);
 
             setAdmins(adminsList);
             setCondominios(condosList);
@@ -104,12 +98,11 @@ export default function Administradores() {
         e.preventDefault();
         setSubmitting(true);
         try {
-            // Verificar token antes de enviar
             const token = localStorage.getItem('token');
-            console.log('Token actual:', token ? 'Presente' : 'No encontrado');
+            console.log('Token presente:', !!token);
 
             if (editing) {
-                // Preparar payload para actualizar
+                // 1. Actualizar datos básicos
                 const updatePayload = {
                     nombres: form.nombres.trim(),
                     apellidos: form.apellidos.trim(),
@@ -119,20 +112,54 @@ export default function Administradores() {
                 console.log('Payload update:', updatePayload);
                 await updateAdministrator(editing.id, updatePayload);
 
-                // Asignar condominio si cambió y no está vacío
+                // 2. Gestionar asignación de condominio
                 const newCondoId = form.idCondominio ? parseInt(form.idCondominio, 10) : null;
                 const oldCondoId = editing.idCondominio ? parseInt(editing.idCondominio, 10) : null;
                 console.log(`Condo: nuevo=${newCondoId}, anterior=${oldCondoId}`);
-                if (newCondoId !== null && newCondoId !== oldCondoId) {
-                    console.log('Asignando condominio:', newCondoId);
-                    await assignAdministratorCondo(editing.id, newCondoId);
-                } else if (newCondoId === null && oldCondoId !== null) {
-                    // Si se selecciona "Sin asignar", no se puede desasignar con el endpoint actual
-                    // Se podría implementar un endpoint para desasignar, pero por ahora no.
-                    console.warn('No se puede desasignar condominio con el endpoint actual');
+
+                if (newCondoId !== oldCondoId) {
+                    if (newCondoId !== null) {
+                        // Asignar condominio
+                        console.log('Asignando condominio ID:', newCondoId);
+                        try {
+                            await assignAdministratorCondo(editing.id, newCondoId);
+                            console.log('Asignación exitosa con condominioId');
+                        } catch (assignErr) {
+                            console.error('Error con condominioId, intentando con idCondominio:', assignErr);
+                            // Fallback: intentar con idCondominio (por si el backend espera otro nombre)
+                            const response = await fetch(
+                                `https://sgc-backend-vfvl.onrender.com/api/super-admin/administrators/${editing.id}/assign-condo`,
+                                {
+                                    method: 'PUT',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        Authorization: `Bearer ${token}`,
+                                    },
+                                    body: JSON.stringify({ idCondominio: newCondoId }),
+                                }
+                            );
+                            if (!response.ok) {
+                                const errorData = await response.json().catch(() => ({}));
+                                throw new Error(`Falló asignación con idCondominio: ${response.status} ${errorData.message || ''}`);
+                            }
+                            console.log('Asignación exitosa con idCondominio');
+                        }
+                    } else {
+                        // Desasignar (si se selecciona "Sin asignar")
+                        console.warn('Intentando desasignar condominio (no soportado por el backend)');
+                        // Opcional: intentar asignar null
+                        try {
+                            await assignAdministratorCondo(editing.id, null);
+                        } catch (err) {
+                            console.warn('No se pudo desasignar, el backend no lo permite:', err);
+                            alert('No se puede desasignar el condominio, solo se puede cambiar a otro.');
+                        }
+                    }
+                } else {
+                    console.log('No hay cambio en el condominio');
                 }
             } else {
-                // Crear nuevo
+                // Creación
                 const createPayload = {
                     nombres: form.nombres.trim(),
                     apellidos: form.apellidos.trim(),
@@ -142,10 +169,14 @@ export default function Administradores() {
                 };
                 console.log('Payload create:', createPayload);
                 await createAdministrator(createPayload);
-                // La creación no asigna condominio automáticamente; se puede editar después
+                // La creación no asigna condominio automáticamente
             }
+
             setShowModal(false);
-            await loadAll();
+            // Recargar con un pequeño retraso para dar tiempo al backend
+            setTimeout(() => {
+                loadAll();
+            }, 500);
         } catch (err) {
             console.error('Error en handleSubmit:', err);
             alert(`Error: ${err.message}`);
@@ -208,7 +239,7 @@ export default function Administradores() {
                 </Button>
             </div>
 
-            {/* Filtros */}
+            {/* Filtros con accesibilidad */}
             <Row className="mb-4 g-2">
                 <Col md={4}>
                     <InputGroup>
