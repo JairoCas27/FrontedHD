@@ -41,27 +41,35 @@ export default function Administradores() {
                 getCondominiums(),
             ]);
 
-            console.log('Datos de administradores (raw):', adminsData);
-            console.log('Datos de condominios (raw):', condosData);
+            console.log('Respuesta de administradores (raw):', adminsData);
+            console.log('Respuesta de condominios (raw):', condosData);
 
-            // Extraer lista de administradores
-            let adminsList = adminsData?.items;
-            if (!Array.isArray(adminsList)) {
-                adminsList = adminsData?.content || adminsData?.data || [];
-            }
-            // Si aún no es array, intentar convertir
-            if (!Array.isArray(adminsList)) {
-                console.warn('La respuesta de administradores no es un array:', adminsData);
-                adminsList = [];
+            // Extraer lista de administradores (array directo o dentro de items)
+            let adminsList = [];
+            if (Array.isArray(adminsData)) {
+                adminsList = adminsData;
+            } else if (adminsData?.items && Array.isArray(adminsData.items)) {
+                adminsList = adminsData.items;
+            } else if (adminsData?.content && Array.isArray(adminsData.content)) {
+                adminsList = adminsData.content;
+            } else if (adminsData?.data && Array.isArray(adminsData.data)) {
+                adminsList = adminsData.data;
+            } else {
+                console.warn('Formato inesperado de administradores:', adminsData);
             }
 
             // Extraer lista de condominios
-            let condosList = condosData?.items;
-            if (!Array.isArray(condosList)) {
-                condosList = condosData?.content || condosData?.data || [];
-            }
-            if (!Array.isArray(condosList)) {
-                condosList = [];
+            let condosList = [];
+            if (Array.isArray(condosData)) {
+                condosList = condosData;
+            } else if (condosData?.items && Array.isArray(condosData.items)) {
+                condosList = condosData.items;
+            } else if (condosData?.content && Array.isArray(condosData.content)) {
+                condosList = condosData.content;
+            } else if (condosData?.data && Array.isArray(condosData.data)) {
+                condosList = condosData.data;
+            } else {
+                console.warn('Formato inesperado de condominios:', condosData);
             }
 
             console.log('Administradores procesados:', adminsList);
@@ -98,19 +106,16 @@ export default function Administradores() {
         e.preventDefault();
         try {
             if (editing) {
-                // Actualizar datos básicos
                 await updateAdministrator(editing.id, {
                     nombres: form.nombres,
                     apellidos: form.apellidos,
                     correo: form.correo,
                     telefono: form.telefono,
                 });
-                // Asignar condominio si cambió
                 if (form.idCondominio && form.idCondominio !== editing.idCondominio?.toString()) {
                     await assignAdministratorCondo(editing.id, form.idCondominio);
                 }
             } else {
-                // Crear nuevo
                 await createAdministrator({
                     nombres: form.nombres,
                     apellidos: form.apellidos,
@@ -153,7 +158,6 @@ export default function Administradores() {
         </div>
     );
 
-    // Preparar opciones de condominios para el select
     const condominioOptions = condominios.map(c => ({
         id: c.id,
         nombre: c.nombre,
@@ -181,7 +185,7 @@ export default function Administradores() {
                 </Button>
             </div>
 
-            {/* Filtros */}
+            {/* Filtros con labels ocultos para accesibilidad */}
             <Row className="mb-4 g-2">
                 <Col md={4}>
                     <InputGroup>
@@ -192,15 +196,18 @@ export default function Administradores() {
                             placeholder="Buscar por nombre o correo..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
+                            aria-label="Buscar administrador"
                         />
                     </InputGroup>
                 </Col>
                 <Col md={3}>
+                    <Form.Label htmlFor="filterCondo" srOnly>Filtrar por condominio</Form.Label>
                     <Form.Select
                         id="filterCondo"
                         name="filterCondo"
                         value={condominioFilter}
                         onChange={(e) => setCondominioFilter(e.target.value)}
+                        aria-label="Filtrar por condominio"
                     >
                         <option value="">Todos los condominios</option>
                         {condominioOptions.map(c => (
@@ -209,11 +216,13 @@ export default function Administradores() {
                     </Form.Select>
                 </Col>
                 <Col md={3}>
+                    <Form.Label htmlFor="filterEstado" srOnly>Filtrar por estado</Form.Label>
                     <Form.Select
                         id="filterEstado"
                         name="filterEstado"
                         value={estadoFilter}
                         onChange={(e) => setEstadoFilter(e.target.value)}
+                        aria-label="Filtrar por estado"
                     >
                         <option value="">Todos los estados</option>
                         <option value="activo">Activo</option>
@@ -225,6 +234,7 @@ export default function Administradores() {
             {filtered.length === 0 ? (
                 <div className="text-center py-4">
                     <p>No hay administradores que coincidan con los filtros.</p>
+                    {admins.length === 0 && <p>No hay administradores registrados en el sistema.</p>}
                     {admins.length > 0 && (
                         <Button variant="outline-secondary" onClick={() => {
                             setSearchTerm('');
