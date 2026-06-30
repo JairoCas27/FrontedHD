@@ -1,35 +1,20 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { FiHome, FiUserCheck, FiX } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
-import { getAdminApartments, assignApartmentOwner } from '../../services/api' // Ajusta la ruta según tu estructura
+import { useAdminApartments } from '../../hooks/Admin/useAdminApartments' 
 
 export default function Departamentos() {
   const colorAdmin = "rgb(52,151,195)"
   
-  const [departamentos, setDepartamentos] = useState([])
-  const [loading, setLoading] = useState(true)
+  //  Cargamos los estados y la persistencia directamente desde el Hook
+  const { departamentos, loading, asignarPropietario } = useAdminApartments()
+  
   const [filtroTorre, setFiltroTorre] = useState('todos')
   const [showModal, setShowModal] = useState(false)
   const [deptoSeleccionado, setDeptoSeleccionado] = useState(null)
   const [nuevoPropietario, setNuevoPropietario] = useState('')
 
-  //  Carga de datos reales desde el backend
-  useEffect(() => {
-    cargarDepartamentos()
-  }, [])
-
-  const cargarDepartamentos = async () => {
-    try {
-      setLoading(true)
-      const data = await getAdminApartments()
-      setDepartamentos(data || [])
-    } catch (error) {
-      console.error("Error al traer los departamentos del servidor:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
+  // Filtrado local basado en el estado del filtro de la vista
   const deptosFiltrados = departamentos.filter(d => {
     if (filtroTorre !== 'todos' && d.torre !== filtroTorre) return false
     return true
@@ -41,17 +26,15 @@ export default function Departamentos() {
     setShowModal(true)
   }
 
-  // 💾 Persistencia real mediante PUT /api/admin/apartments/{id}/assign-owner
+  // 💾 Guardado real delegando la acción al Hook
   const handleSaveOwner = async () => {
     if (!deptoSeleccionado) return
 
     try {
       const nombreLimpio = nuevoPropietario.trim()
-      // Llamada real al backend
-      await assignApartmentOwner(deptoSeleccionado.id, nombreLimpio)
       
-      // Si la API responde con éxito, refrescamos la lista localmente
-      await cargarDepartamentos()
+      // Llamada al método expuesto por el Hook
+      await asignarPropietario(deptoSeleccionado.id, nombreLimpio)
       setShowModal(false)
     } catch (error) {
       console.error("Error al asignar el dueño en el servidor:", error)
