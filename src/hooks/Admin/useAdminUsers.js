@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getAdminUsers, createAdminUser, updateAdminUser, patchAdminUserStatus } from '../services/api';
+import { getAdminUsers, createAdminUser, updateAdminUser, patchAdminUserStatus } from '../../services/api';
 
 export function useAdminUsers() {
   const [usuarios, setUsuarios] = useState([]);
