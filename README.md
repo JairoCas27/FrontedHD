@@ -103,10 +103,7 @@ Disponibles directamente en los formularios de login como panel de acceso rápid
 
 | Rol | Correo | Contraseña |
 |---|---|---|
-| Super Administrador | superadmin@parking.com | super123 |
-| Administrador | admin@parking.com | admin123 |
-| Seguridad | seguridad@parking.com | seg123 |
-| Propietario | propietario@parking.com | prop123 |
+
 
 ***
 
