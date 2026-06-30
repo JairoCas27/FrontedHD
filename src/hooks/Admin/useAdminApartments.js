@@ -4,12 +4,19 @@ import { getAdminApartments, assignApartmentOwner, updateApartmentOccupants } fr
 export function useAdminApartments() {
   const [departamentos, setDepartamentos] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [meta, setMeta] = useState({});
 
   const cargarDepartamentos = async () => {
     try {
       setLoading(true);
       const data = await getAdminApartments();
-      setDepartamentos(data || []);
+      //  Mapeo de la propiedad 'items' según el Swagger
+      setDepartamentos(data?.items || []);
+      setMeta({
+        total: data?.total,
+        pagina: data?.pagina,
+        totalPaginas: data?.totalPaginas
+      });
     } catch (error) {
       console.error("Error cargando departamentos:", error);
     } finally {
@@ -17,10 +24,9 @@ export function useAdminApartments() {
     }
   };
 
-  const asignarPropietario = async (id, nombre) => {
+  const asignarPropietario = async (id, ownerName) => {
     try {
-      
-      await assignApartmentOwner(id, nombre);
+      await assignApartmentOwner(id, ownerName);
       await cargarDepartamentos();
     } catch (error) {
       console.error("Error al asignar propietario:", error);
@@ -28,10 +34,10 @@ export function useAdminApartments() {
     }
   };
 
-  
-  const actualizarOcupantes = async (id, datosOcupantes) => {
+  const actualizarOcupantes = async (id, listaInquilinos) => {
     try {
-      await updateApartmentOccupants(id, datosOcupantes);
+      // El Swagger espera un objeto con la propiedad { inquilinos: [...] }
+      await updateApartmentOccupants(id, { inquilinos: listaInquilinos });
       await cargarDepartamentos();
     } catch (error) {
       console.error("Error al actualizar ocupantes:", error);
@@ -43,11 +49,5 @@ export function useAdminApartments() {
     cargarDepartamentos();
   }, []);
 
-  return { 
-    departamentos, 
-    loading, 
-    asignarPropietario, 
-    actualizarOcupantes, // 🟢 Expuesto para cuando implementen la gestión de inquilinos en las tarjetas
-    refrescar: cargarDepartamentos 
-  };
+  return { departamentos, loading, meta, asignarPropietario, actualizarOcupantes, refrescar: cargarDepartamentos };
 }

@@ -8,46 +8,50 @@ export default function Bienes() {
   const colorAdmin = "rgb(52,151,195)"
   
   
-  const { bienes, loading, guardarActivo, actualizarEstadoActivo } = useAdminAssets()
+  const { bienes, loading, registrarBien, actualizarEstadoBien } = useAdminAssets()
   
   const [busqueda, setBusqueda] = useState('')
   const [showModal, setShowModal] = useState(false)
-  const [formData, setFormData] = useState({ nombre: '', categoria: 'Seguridad', ubicacion: '', estado: 'Disponible' })
-
   
+  
+  const [formData, setFormData] = useState({ tipo: 'Estacionamiento', codigo: '', numero: '' })
+
+ 
   const bienesFiltrados = bienes.filter(b => 
-    b.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
-    b.ubicacion?.toLowerCase().includes(busqueda.toLowerCase())
+    b.codigo?.toLowerCase().includes(busqueda.toLowerCase()) ||
+    b.tipo?.toLowerCase().includes(busqueda.toLowerCase())
   )
 
-  
+ 
   const handleSaveAsset = async (e) => {
     e.preventDefault()
-    if (!formData.nombre.trim() || !formData.ubicacion.trim()) {
+    if (!formData.codigo.trim() || !formData.numero) {
       alert('Por favor, completa todos los campos requeridos')
       return
     }
 
     try {
-      await guardarActivo({
-        nombre: formData.nombre.trim(),
-        categoria: formData.categoria,
-        ubicacion: formData.ubicacion.trim(),
-        estado: formData.estado
+      await registrarBien({
+        tipo: formData.tipo,
+        codigo: formData.codigo.trim(),
+        numero: Number(formData.numero) || 0
       })
       
       setShowModal(false)
-      setFormData({ nombre: '', categoria: 'Seguridad', ubicacion: '', estado: 'Disponible' })
+      setFormData({ tipo: 'Estacionamiento', codigo: '', numero: '' })
     } catch (error) {
       console.error("Error al crear el activo:", error)
       alert("Hubo un error al inventariar el nuevo activo.")
     }
   }
 
-  // 🔄 Alternar estado técnico por medio del Hook
-  const toggleStatus = async (id, estadoActual) => {
+  //  Alternar estado técnico delegando el string al PUT del Swagger
+  const toggleStatus = async (bien) => {
+    // Alternamos de forma simple entre estados comunes para el PUT /status
+    const nuevoEstado = bien.estado === 'Disponible' ? 'Mantenimiento' : 'Disponible'
+    
     try {
-      await actualizarEstadoActivo(id, estadoActual)
+      await actualizarEstadoBien(bien.id, nuevoEstado)
     } catch (error) {
       console.error("Error al cambiar el estado del activo:", error)
       alert("No se pudo actualizar el estado técnico en el servidor.")
@@ -83,7 +87,7 @@ export default function Bienes() {
       {/* 1. Encabezado Reutilizable */}
       <EncabezadoTabla 
         titulo="Bienes y Activos" 
-        subtitulo="Inventariado, ubicación y control de estado técnico de los bienes comunes del condominio"
+        subtitulo="Inventariado, códigos de barra y control de estado técnico de los bienes del condominio"
         botonTexto="Registrar Activo"
         accentColor={colorAdmin}
         onBotonClick={() => setShowModal(true)}
@@ -96,7 +100,7 @@ export default function Bienes() {
             <input 
               type="text" 
               style={estiloInput} 
-              placeholder="🔍 Buscar por nombre o ubicación..." 
+              placeholder="🔍 Buscar por código o tipo..." 
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
             />
@@ -107,7 +111,7 @@ export default function Bienes() {
         </div>
       </div>
 
-      {/* 3. Tabla Premium o Estado de Carga */}
+      {/* 3. Tabla Premium Mapeada al Backend */}
       {loading ? (
         <div style={{ textAlign: "center", padding: "4rem", color: "#64748b", fontWeight: "600" }}>
           🔄 Sincronizando inventario con el servidor central...
@@ -118,11 +122,11 @@ export default function Bienes() {
             <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
               <thead>
                 <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: "700", fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
-                  <th style={{ padding: "1rem 1.5rem", width: "10%" }}>ID</th>
-                  <th style={{ padding: "1rem", width: "30%" }}>Descripción del Bien</th>
-                  <th style={{ padding: "1rem", width: "20%" }}>Categoría</th>
-                  <th style={{ padding: "1rem", width: "25%" }}>Ubicación Física</th>
-                  <th style={{ padding: "1rem", width: "10%" }}>Estado</th>
+                  <th style={{ padding: "1rem 1.5rem", width: "15%" }}>ID</th>
+                  <th style={{ padding: "1rem", width: "25%" }}>Código de Barra</th>
+                  <th style={{ padding: "1rem", width: "25%" }}>Tipo de Activo</th>
+                  <th style={{ padding: "1rem", width: "15%" }}>Número Asignado</th>
+                  <th style={{ padding: "1rem", width: "15%" }}>Estado</th>
                   <th style={{ padding: "1rem 1.5rem", width: "5%", textAlign: "center" }}>Acción</th>
                 </tr>
               </thead>
@@ -135,18 +139,21 @@ export default function Bienes() {
                         <div style={{ width: "30px", height: "30px", borderRadius: "0.5rem", backgroundColor: "rgba(52,151,195,0.08)", color: colorAdmin, display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <FiPackage size={16} />
                         </div>
-                        <span style={{ fontWeight: "700", color: "#0f172a" }}>{bien.nombre}</span>
+                        {/* 🟢 Renderiza el código real */}
+                        <span style={{ fontWeight: "700", color: "#0f172a" }}>{bien.codigo || 'S/C'}</span>
                       </div>
                     </td>
-                    <td style={{ padding: "1rem", color: "#64748b", fontWeight: "600" }}>{bien.categoria}</td>
-                    <td style={{ padding: "1rem", color: "#334155", fontWeight: "500" }}>{bien.ubicacion}</td>
+                    {/* 🟢 Renderiza el tipo real */}
+                    <td style={{ padding: "1rem", color: "#64748b", fontWeight: "600" }}>{bien.tipo}</td>
+                    {/* 🟢 Renderiza el número real */}
+                    <td style={{ padding: "1rem", color: "#334155", fontWeight: "700", fontFamily: "monospace" }}>N° {bien.numero ?? 0}</td>
                     <td style={{ padding: "1rem" }}>
-                      <BadgeEstado estado={bien.estado} />
+                      <BadgeEstado estado={bien.estado || (bien.disponible ? 'Disponible' : 'Mantenimiento')} />
                     </td>
                     <td style={{ padding: "1rem 1.5rem", textAlign: "center" }}>
                       <button 
                         title="Cambiar estado técnico"
-                        onClick={() => toggleStatus(bien.id, bien.estado)}
+                        onClick={() => toggleStatus(bien)}
                         style={{ background: "none", border: "1px solid #e2e8f0", padding: "0.4rem", borderRadius: "0.5rem", cursor: "pointer", color: colorAdmin, display: "flex", alignItems: "center", justifyContent: "center" }}
                       >
                         <FiRefreshCw size={14} />
@@ -160,7 +167,7 @@ export default function Bienes() {
         </div>
       )}
 
-      {/* 4. Modal de Registro */}
+      {/* 4. Modal de Registro Adaptado */}
       {showModal && (
         <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" }}>
           <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "440px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.08)", border: "1px solid #e2e8f0", overflow: "hidden" }}>
@@ -173,23 +180,23 @@ export default function Bienes() {
             <form onSubmit={handleSaveAsset}>
               <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
                 <div>
-                  <label style={estiloLabel}>Descripción / Nombre del Bien</label>
-                  <input type="text" style={estiloInput} placeholder="Ej: Extintor PQS 6kg" value={formData.nombre} onChange={(e) => setFormData({ ...formData, nombre: e.target.value })} required />
+                  <label style={estiloLabel}>Código del Activo</label>
+                  <input type="text" style={estiloInput} placeholder="Ej: EST-042 o CARR-01" value={formData.codigo} onChange={(e) => setFormData({ ...formData, codigo: e.target.value })} required />
                 </div>
 
                 <div>
-                  <label style={estiloLabel}>Categoría Logística</label>
-                  <select style={estiloInput} value={formData.categoria} onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}>
-                    <option value="Seguridad">Seguridad</option>
-                    <option value="Infraestructura">Infraestructura</option>
-                    <option value="Iluminación">Iluminación</option>
-                    <option value="Mobiliario">Mobiliario</option>
+                  <label style={estiloLabel}>Tipo de Activo Común</label>
+                  <select style={estiloInput} value={formData.tipo} onChange={(e) => setFormData({ ...formData, tipo: e.target.value })}>
+                    <option value="Estacionamiento">Estacionamiento</option>
+                    <option value="Carrito">Carrito de Compras</option>
+                    <option value="Seguridad">Equipamiento Seguridad</option>
+                    <option value="Otros">Otros Bienes</option>
                   </select>
                 </div>
 
                 <div>
-                  <label style={estiloLabel}>Ubicación Exacta</label>
-                  <input type="text" style={estiloInput} placeholder="Ej: Pasillo Piso 2 - Torre A" value={formData.ubicacion} onChange={(e) => setFormData({ ...formData, ubicacion: e.target.value })} required />
+                  <label style={estiloLabel}>Número Identificador único</label>
+                  <input type="number" min="1" style={estiloInput} placeholder="Ej: 104" value={formData.numero} onChange={(e) => setFormData({ ...formData, numero: e.target.value })} required />
                 </div>
               </div>
 

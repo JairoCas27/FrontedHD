@@ -9,7 +9,8 @@ export function useAdminUsers() {
     try {
       setLoading(true);
       const data = await getAdminUsers();
-      setUsuarios(data || []);
+    
+      setUsuarios(data?.items || []);
     } catch (error) {
       console.error("Error cargando usuarios:", error);
     } finally {
@@ -17,27 +18,33 @@ export function useAdminUsers() {
     }
   };
 
-  const persistirUsuario = async (id, userData) => {
+  const registrarUsuario = async (userData) => {
     try {
-      if (id) {
-        await updateAdminUser(id, userData);
-      } else {
-        await createAdminUser(userData);
-      }
+      await createAdminUser(userData);
       await cargarUsuarios();
     } catch (error) {
-      console.error("Error al guardar usuario:", error);
+      console.error("Error al registrar usuario:", error);
       throw error;
     }
   };
 
-  const alternarAccesoUsuario = async (usuario) => {
-    const nuevoEstado = usuario.estado === 'Activo' ? 'Inactivo' : 'Activo';
+  const modificarUsuario = async (id, userData) => {
     try {
-      await patchAdminUserStatus(usuario.id, nuevoEstado === 'Activo');
+      await updateAdminUser(id, userData);
       await cargarUsuarios();
     } catch (error) {
-      console.error("Error al cambiar estado:", error);
+      console.error("Error al modificar usuario:", error);
+      throw error;
+    }
+  };
+
+  const cambiarEstadoUsuario = async (id, activo) => {
+    try {
+      await patchAdminUserStatus(id, activo);
+      // Actualización optimista local para evitar recargas molestas de pantalla
+      setUsuarios(prev => prev.map(u => u.id === id ? { ...u, activo } : u));
+    } catch (error) {
+      console.error("Error al cambiar estado del usuario:", error);
       throw error;
     }
   };
@@ -46,5 +53,5 @@ export function useAdminUsers() {
     cargarUsuarios();
   }, []);
 
-  return { usuarios, loading, persistirUsuario, alternarAccesoUsuario, refrescar: cargarUsuarios };
+  return { usuarios, loading, registrarUsuario, modificarUsuario, cambiarEstadoUsuario, refrescar: cargarUsuarios };
 }

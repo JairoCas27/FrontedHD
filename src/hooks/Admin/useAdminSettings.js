@@ -3,48 +3,50 @@ import { getAdminCondoConfig, updateAdminCondoConfig, getAdminMyInfo, updateAdmi
 
 export function useAdminSettings() {
   const [config, setConfig] = useState(null);
-  const [perfil, setPerfil] = useState(null);
+  const [condoInfo, setCondoInfo] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const cargarDatosGlobales = async () => {
+  const cargarParametrosSystem = async () => {
     try {
       setLoading(true);
-      const [configData, perfilData] = await Promise.all([
+      const [configData, infoData] = await Promise.all([
         getAdminCondoConfig(),
         getAdminMyInfo()
       ]);
       setConfig(configData);
-      setPerfil(perfilData);
+      setCondoInfo(infoData);
     } catch (error) {
-      console.error("Error cargando configuraciones:", error);
+      console.error("Error al inicializar configuraciones del sistema:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const guardarConfig = async (nuevaConfig) => {
+  const guardarConfiguracion = async (nuevosDatos) => {
     try {
-      await updateAdminCondoConfig(nuevaConfig);
-      setConfig(nuevaConfig);
+      const data = await updateAdminCondoConfig(nuevosDatos);
+      setConfig(data);
     } catch (error) {
-      console.error("Error al guardar configuración:", error);
+      console.error("Error actualizando reglas de negocio:", error);
       throw error;
     }
   };
 
-  const guardarPerfil = async (nuevoPerfil) => {
+  const guardarPerfilCondominio = async (datosPerfil) => {
     try {
-      await updateAdminMyInfo(nuevoPerfil);
-      setPerfil(nuevoPerfil);
+      await updateAdminMyInfo(datosPerfil);
+      // Recarga para refrescar los nombres y direcciones actualizados
+      const infoData = await getAdminMyInfo();
+      setCondoInfo(infoData);
     } catch (error) {
-      console.error("Error al guardar perfil:", error);
+      console.error("Error actualizando perfil del condominio:", error);
       throw error;
     }
   };
 
   useEffect(() => {
-    cargarDatosGlobales();
+    cargarParametrosSystem();
   }, []);
 
-  return { config, perfil, loading, guardarConfig, guardarPerfil, refrescar: cargarDatosGlobales };
+  return { config, condoInfo, loading, guardarConfiguracion, guardarPerfilCondominio, refrescar: cargarParametrosSystem };
 }

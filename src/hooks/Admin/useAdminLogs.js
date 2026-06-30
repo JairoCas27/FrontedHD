@@ -9,9 +9,10 @@ export function useAdminLogs() {
     try {
       setLoading(true);
       const data = await getAdminLogs();
-      setLogs(data || []);
+      //  Mapeo seguro con la propiedad 'items' de logs
+      setLogs(data?.items || []);
     } catch (error) {
-      console.error("Error cargando logs:", error);
+      console.error("Error cargando auditoría:", error);
     } finally {
       setLoading(false);
     }

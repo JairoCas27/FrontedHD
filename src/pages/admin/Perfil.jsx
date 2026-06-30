@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
-import { FiUser, FiMail, FiPhone, FiMapPin, FiSave, FiLock } from "react-icons/fi"
+import { FiHome, FiMapPin, FiSave, FiLock, FiGlobe, FiCheckCircle } from "react-icons/fi"
 import { useAdminSettings } from '../../hooks/Admin/useAdminSettings' 
 
 export default function Perfil() {
   const colorAdmin = "rgb(52,151,195)"
 
-  
-  const { perfil, loading, guardarPerfil } = useAdminSettings()
+
+  const { condoInfo, loading, guardarPerfilCondominio } = useAdminSettings()
 
   const [passwordData, setPasswordData] = useState({
     actual: '',
@@ -17,12 +17,11 @@ export default function Perfil() {
   const [mensaje, setMensaje] = useState('')
   const [tipoMensaje, setTipoMensaje] = useState('success')
 
-
   const handlePerfilSubmit = async (e) => {
     e.preventDefault()
     try {
-      await guardarPerfil(perfil)
-      setMensaje('Perfil actualizado correctamente')
+      await guardarPerfilCondominio(condoInfo)
+      setMensaje('Información del condominio actualizada con éxito')
       setTipoMensaje('success')
       setTimeout(() => setMensaje(''), 3000)
     } catch (error) {
@@ -42,7 +41,6 @@ export default function Perfil() {
       setMensaje('La contraseña debe tener al menos 6 caracteres')
       setTipoMensaje('danger')
     } else {
-      // Nota: Si manejas endpoint global de auth /change-password, puedes inyectarlo aquí
       setMensaje('Contraseña actualizada correctamente')
       setTipoMensaje('success')
       setPasswordData({ actual: '', nueva: '', confirmar: '' })
@@ -50,14 +48,14 @@ export default function Perfil() {
     setTimeout(() => setMensaje(''), 3000)
   }
 
-  // Interceptor local para actualizar dinámicamente las propiedades del objeto perfil en el hook
+  // Interceptor para mutar las propiedades del condominio dinámicamente antes del PUT
   const handleFieldChange = (campo, valor) => {
-    if (perfil) {
-      perfil[campo] = valor
+    if (condoInfo) {
+      condoInfo[campo] = valor
     }
   }
 
-  // Estilos base para los inputs y labels
+  // Estilos base
   const estiloInput = {
     width: "100%",
     padding: "0.65rem 0.75rem",
@@ -80,10 +78,10 @@ export default function Perfil() {
     letterSpacing: "0.025em"
   }
 
-  if (loading || !perfil) {
+  if (loading || !condoInfo) {
     return (
       <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", color: "#64748b", fontWeight: "600", textAlign: "center" }}>
-        🔄 Cargando datos del perfil administrador desde el servidor...
+        🔄 Cargando datos de perfil operativo desde el servidor...
       </div>
     )
   }
@@ -94,10 +92,10 @@ export default function Perfil() {
       {/* 1. Cabecera */}
       <div style={{ marginBottom: "2rem" }}>
         <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>Mi Perfil</h1>
-        <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>Datos personales y seguridad de cuenta</p>
+        <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>Datos operacionales del condominio y seguridad de cuenta</p>
       </div>
 
-      {/* 2. Caja de Alertas Estilizada */}
+      {/* 2. Caja de Alertas */}
       {mensaje && (
         <div style={{
           padding: "1rem",
@@ -113,36 +111,37 @@ export default function Perfil() {
         </div>
       )}
 
-      {/* 3. Cuadrícula de Contenedores Asimétricos */}
+      {/* 3. Cuadrícula Asimétrica */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: "1.5rem", width: "100%" }}>
         
-        {/* Columna Izquierda: Información Personal */}
+        {/* Columna Izquierda: Datos del Condominio */}
         <div style={{ flex: 1, minWidth: "300px", backgroundColor: "#ffffff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)" }}>
           <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: "0.5rem", color: "#1e293b", fontWeight: "700" }}>
-            <FiUser size={18} style={{ color: colorAdmin }} />
-            <span>Información Personal</span>
+            <FiHome size={18} style={{ color: colorAdmin }} />
+            <span>Datos de Copropiedad</span>
           </div>
           <form onSubmit={handlePerfilSubmit} style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
             <div>
-              <label style={estiloLabel}>Nombre Completo</label>
-              <input type="text" style={estiloInput} defaultValue={perfil.nombre || ''} onChange={(e) => handleFieldChange('nombre', e.target.value)} />
+              <label style={estiloLabel}>Nombre del Condominio</label>
+              <input type="text" style={estiloInput} defaultValue={condoInfo.nombre || ''} onChange={(e) => handleFieldChange('nombre', e.target.value)} required />
             </div>
             <div>
-              <label style={estiloLabel}><FiMail size={12} /> Email</label>
-              <input type="email" style={estiloInput} defaultValue={perfil.email || ''} onChange={(e) => handleFieldChange('email', e.target.value)} />
+              <label style={estiloLabel}><FiMapPin size={12} /> Dirección Física</label>
+              <input type="text" style={estiloInput} defaultValue={condoInfo.direccion || ''} onChange={(e) => handleFieldChange('direccion', e.target.value)} required />
             </div>
             <div>
-              <label style={estiloLabel}><FiPhone size={12} /> Teléfono</label>
-              <input type="tel" style={estiloInput} defaultValue={perfil.telefono || ''} onChange={(e) => handleFieldChange('telefono', e.target.value)} />
+              <label style={estiloLabel}><FiGlobe size={12} /> Ciudad / Distrito</label>
+              <input type="text" style={{ ...estiloInput, backgroundColor: "#f8fafc", color: "#94a3b8", cursor: "not-allowed" }} value={condoInfo.nombreCiudad || 'No especificado'} disabled readOnly />
             </div>
             <div>
-              <label style={estiloLabel}><FiMapPin size={12} /> Dirección</label>
-              <input type="text" style={estiloInput} defaultValue={perfil.direccion || ''} onChange={(e) => handleFieldChange('direccion', e.target.value)} />
+              <label style={estiloLabel}><FiGlobe size={12} /> País</label>
+              <input type="text" style={{ ...estiloInput, backgroundColor: "#f8fafc", color: "#94a3b8", cursor: "not-allowed" }} value={condoInfo.nombrePais || 'No especificado'} disabled readOnly />
             </div>
             <div>
-              <label style={estiloLabel}>Rol</label>
-              <input type="text" style={{ ...estiloInput, backgroundColor: "#f8fafc", color: "#94a3b8", cursor: "not-allowed" }} value={perfil.rol || 'Administrador'} disabled readOnly />
-              <small style={{ color: "#94a3b8", fontSize: "0.75rem", display: "block", marginTop: "0.25rem" }}>El rol no puede ser modificado</small>
+              <label style={estiloLabel}>Estado Operativo</label>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: condoInfo.activo ? "#10b981" : "#64748b", fontWeight: "700", fontSize: "0.9rem", padding: "0.25rem 0" }}>
+                <FiCheckCircle /> {condoInfo.activo ? "Residencia Activa y Vigente" : "Inactivo"}
+              </div>
             </div>
             <button type="submit" style={{ alignSelf: "flex-start", backgroundColor: colorAdmin, color: "#fff", border: "none", padding: "0.6rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.5rem", boxShadow: "0 4px 6px -1px rgba(52, 151, 195, 0.2)" }}>
               <FiSave size={16} /> Guardar Cambios
@@ -150,7 +149,7 @@ export default function Perfil() {
           </form>
         </div>
 
-        {/* Columna Derecha: Seguridad e Información de Sesión */}
+        {/* Columna Derecha: Seguridad y Sesión */}
         <div style={{ flex: 1, minWidth: "300px", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
           
           {/* Formulario de Contraseña */}

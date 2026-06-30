@@ -1,28 +1,19 @@
 import React, { useState } from 'react'
-import { FiBarChart2, FiDownload, FiPieChart } from "react-icons/fi"
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
+import { FiBarChart2, FiDownload, FiPieChart, FiHome } from "react-icons/fi"
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
 import { useAdminDashboard } from '../../hooks/Admin/useAdminDashboard' 
 
 const COLORS = ['#3497C3', '#10b981', '#f59e0b']
 
 export default function Reportes() {
   const colorAdmin = "rgb(52,151,195)"
-  const [reporteSeleccionado, setReporteSeleccionado] = useState('accesos')
+  const [reporteSeleccionado, setReporteSeleccionado] = useState('censo')
 
-  
-  const { metrics, loading } = useAdminDashboard()
+  //  Consumimos 'metricas' tal como lo estructuramos en el hook adaptado
+  const { metricas, loading } = useAdminDashboard()
 
   const handleExportar = () => {
     alert('Función de exportación de reportes en desarrollo')
-  }
-
-  const formatCurrency = (value) => {
-    return new Intl.NumberFormat('es-PE', {
-      style: 'currency',
-      currency: 'PEN',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
-    }).format(value)
   }
 
   // Estilos fijos comunes
@@ -36,7 +27,7 @@ export default function Reportes() {
     outline: "none"
   }
 
-  if (loading || !metrics) {
+  if (loading || !metricas) {
     return (
       <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", color: "#64748b", fontWeight: "600", textAlign: "center" }}>
          Sincronizando reportes y balances con el servidor de base de datos...
@@ -44,34 +35,26 @@ export default function Reportes() {
     )
   }
 
-  // Mapear estructuras del backend reales o usar fallbacks limpios
-  const datosAccesos = metrics.datosAccesos || [
-    { tipo: 'Residentes', cantidad: metrics.totalUsuarios || 120, name: 'Residentes' },
-    { tipo: 'Visitas', cantidad: metrics.visitasHoy || 15, name: 'Visitas' }
+  // 🟢 Mapeamos los datos reales del censo e inventario para los gráficos de torta y barras
+  const datosDistribuciónInmuebles = [
+    { name: 'Apartamentos', cantidad: metricas.totalApartamentos || 0 },
+    { name: 'Propietarios', cantidad: metricas.totalPropietarios || 0 }
   ]
-  const datosIngresos = metrics.datosIngresos || []
-  const espaciosPorBloque = metrics.espaciosPorBloque || []
 
-  // Estructurar distribución de estacionamientos sumando los bloques del servidor
-  const totalOcupados = espaciosPorBloque.reduce((sum, b) => sum + (b.ocupados || 0), 0)
-  const totalDisponibles = espaciosPorBloque.reduce((sum, b) => sum + (b.disponibles || 0), 0)
-  const totalMantencion = espaciosPorBloque.reduce((sum, b) => sum + (b.mantención || b.mantener || 0), 0)
-  const totalPlazas = totalOcupados + totalDisponibles + totalMantencion
-
-  const datosEstacionamientos = [
-    { estado: 'Ocupados', cantidad: totalOcupados, explicacion: 'Plazas con vehículo estacionado', color: '#ef4444' },
-    { estado: 'Disponibles', cantidad: totalDisponibles, explicacion: 'Plazas libres para usar', color: '#10b981' },
-    { estado: 'Mantención', cantidad: totalMantencion, explicacion: 'Plazas en reparación o limpieza', color: '#f59e0b' },
+  const datosInventarioBienes = [
+    { name: 'Vehículos', cantidad: metricas.totalVehiculos || 0, fill: '#3497C3' },
+    { name: 'Carritos', cantidad: metricas.totalCarritos || 0, fill: '#10b981' },
+    { name: 'Agentes Seg.', cantidad: metricas.totalAgentes || 0, fill: '#f59e0b' }
   ]
 
   return (
     <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
       
-      {/* 1. Encabezado Reutilizable */}
+      {/* 1. Encabezado */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
           <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>Reportes</h1>
-          <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem", margin: '0.25rem 0 0 0' }}>Métricas y exportación de datos operativos</p>
+          <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem", margin: '0.25rem 0 0 0' }}>Métricas consolidadas y balances operativos del censo</p>
         </div>
         <button 
           onClick={handleExportar}
@@ -81,191 +64,103 @@ export default function Reportes() {
         </button>
       </div>
 
-      {/* 2. Selector de Pestañas Tipo Tarjeta */}
+      {/* 2. Selector de Pestañas Real */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
         <button
-          onClick={() => setReporteSeleccionado('accesos')}
-          style={{ padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", backgroundColor: reporteSeleccionado === 'accesos' ? "#ffffff" : "transparent", boxShadow: reporteSeleccionado === 'accesos' ? "0 4px 6px -1px rgba(0,0,0,0.02)" : "none", borderLeft: reporteSeleccionado === 'accesos' ? `4px solid ${colorAdmin}` : "1px solid #e2e8f0", cursor: "pointer", textAlign: "left" }}
+          onClick={() => setReporteSeleccionado('censo')}
+          style={{ padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", backgroundColor: reporteSeleccionado === 'censo' ? "#ffffff" : "transparent", boxShadow: reporteSeleccionado === 'censo' ? "0 4px 6px -1px rgba(0,0,0,0.02)" : "none", borderLeft: reporteSeleccionado === 'censo' ? `4px solid ${colorAdmin}` : "1px solid #e2e8f0", cursor: "pointer", textAlign: "left" }}
         >
-          <FiBarChart2 size={20} style={{ color: reporteSeleccionado === 'accesos' ? colorAdmin : "#94a3b8", marginBottom: "0.5rem" }} />
-          <div style={{ fontWeight: "700", color: "#1e293b", fontSize: "0.9rem" }}>Reporte de Accesos</div>
-          <small style={{ color: "#64748b", fontSize: "0.75rem" }}>Tráfico de personas y visitas</small>
+          <FiPieChart size={20} style={{ color: reporteSeleccionado === 'censo' ? colorAdmin : "#94a3b8", marginBottom: "0.5rem" }} />
+          <div style={{ fontWeight: "700", color: "#1e293b", fontSize: "0.9rem" }}>Distribución Inmobiliaria</div>
+          <small style={{ color: "#64748b", fontSize: "0.75rem" }}>Censo de departamentos y titulares</small>
         </button>
 
         <button
-          onClick={() => setReporteSeleccionado('financiero')}
-          style={{ padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", backgroundColor: reporteSeleccionado === 'financiero' ? "#ffffff" : "transparent", boxShadow: reporteSeleccionado === 'financiero' ? "0 4px 6px -1px rgba(0,0,0,0.02)" : "none", borderLeft: reporteSeleccionado === 'financiero' ? `4px solid ${colorAdmin}` : "1px solid #e2e8f0", cursor: "pointer", textAlign: "left" }}
+          onClick={() => setReporteSeleccionado('inventario')}
+          style={{ padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", backgroundColor: reporteSeleccionado === 'inventario' ? "#ffffff" : "transparent", boxShadow: reporteSeleccionado === 'inventario' ? "0 4px 6px -1px rgba(0,0,0,0.02)" : "none", borderLeft: reporteSeleccionado === 'inventario' ? `4px solid ${colorAdmin}` : "1px solid #e2e8f0", cursor: "pointer", textAlign: "left" }}
         >
-          <FiPieChart size={20} style={{ color: reporteSeleccionado === 'financiero' ? colorAdmin : "#94a3b8", marginBottom: "0.5rem" }} />
-          <div style={{ fontWeight: "700", color: "#1e293b", fontSize: "0.9rem" }}>Reporte Financiero</div>
-          <small style={{ color: "#64748b", fontSize: "0.75rem" }}>Balance de fondo común (S/.)</small>
-        </button>
-
-        <button
-          onClick={() => setReporteSeleccionado('estacionamientos')}
-          style={{ padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", backgroundColor: reporteSeleccionado === 'estacionamientos' ? "#ffffff" : "transparent", boxShadow: reporteSeleccionado === 'estacionamientos' ? "0 4px 6px -1px rgba(0,0,0,0.02)" : "none", borderLeft: reporteSeleccionado === 'estacionamientos' ? `4px solid ${colorAdmin}` : "1px solid #e2e8f0", cursor: "pointer", textAlign: "left" }}
-        >
-          <FiBarChart2 size={20} style={{ color: reporteSeleccionado === 'estacionamientos' ? colorAdmin : "#94a3b8", marginBottom: "0.5rem" }} />
-          <div style={{ fontWeight: "700", color: "#1e293b", fontSize: "0.9rem" }}>Estacionamientos</div>
-          <small style={{ color: "#64748b", fontSize: "0.75rem" }}>Estado de ocupación de cocheras</small>
+          <FiBarChart2 size={20} style={{ color: reporteSeleccionado === 'inventario' ? colorAdmin : "#94a3b8", marginBottom: "0.5rem" }} />
+          <div style={{ fontWeight: "700", color: "#1e293b", fontSize: "0.9rem" }}>Inventario Logístico</div>
+          <small style={{ color: "#64748b", fontSize: "0.75rem" }}>Vehículos, carritos y personal</small>
         </button>
       </div>
 
-      {/* 3. Panel de Gráficos según Pestaña */}
+      {/* 3. Panel de Gráficos */}
       <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", border: "1px solid #e2e8f0", padding: "1.5rem", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)" }}>
         
-        {/* PESTAÑA ACCESOS */}
-        {reporteSeleccionado === 'accesos' && (
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", borderBottom: "1px solid #f1f5f9", paddingBottom: "1rem", flexWrap: "wrap", gap: "1rem" }}>
-              <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: "700", color: "#1e293b" }}>Tráfico de Accesos Semanal por Tipo</h3>
-              <div style={{ display: "flex", gap: "0.5rem" }}>
-                <input type="date" style={estiloInput} />
-                <input type="date" style={estiloInput} />
-              </div>
-            </div>
-
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem" }}>
-              <div style={{ flex: "2", minWidth: "300px" }}>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={metrics.traficoSemanal || []}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="dia" stroke="#64748b" style={{ fontSize: '12px' }} />
-                    <YAxis stroke="#64748b" style={{ fontSize: '12px' }} />
-                    <Tooltip />
-                    <Legend />
-                    <Bar dataKey="residentes" fill="#3497C3" name="Residentes" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="visitas" fill="#10b981" name="Visitas" radius={[4, 4, 0, 0]} />
-                    <Bar dataKey="proveedores" fill="#f59e0b" name="Proveedores" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div style={{ flex: "1", minWidth: "250px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
-                <ResponsiveContainer width="100%" height={200}>
-                  <PieChart>
-                    <Pie
-                      data={datosAccesos}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ tipo, percent }) => `${tipo || ''} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={70}
-                      dataKey="cantidad"
-                    >
-                      {datosAccesos.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => [`${value} ingresos`, 'Cantidad']} />
-                  </PieChart>
-                </ResponsiveContainer>
-                <p style={{ margin: "1rem 0 0 0", fontSize: "0.8rem", color: "#64748b", textAlign: "center", fontWeight: "500" }}>Distribución porcentual de ingresos registrados en el periodo</p>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* PESTAÑA FINANCIERO */}
-        {reporteSeleccionado === 'financiero' && (
+        {/* PESTAÑA CENSO */}
+        {reporteSeleccionado === 'censo' && (
           <div>
             <div style={{ borderBottom: "1px solid #f1f5f9", paddingBottom: "1rem", marginBottom: "1.5rem" }}>
-              <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: "700", color: "#1e293b" }}>Historial del Fondo Común (Soles Peruanos)</h3>
+              <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: "700", color: "#1e293b" }}>Relación de Unidades versus Propietarios Titulares</h3>
             </div>
 
-            <ResponsiveContainer width="100%" height={320}>
-              <LineChart data={datosIngresos}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                <XAxis dataKey="mes" stroke="#64748b" style={{ fontSize: '12px' }} />
-                <YAxis tickFormatter={(value) => `S/ ${value}`} stroke="#64748b" style={{ fontSize: '12px' }} />
-                <Tooltip formatter={(value) => [`S/ ${value.toLocaleString()}`, '']} />
-                <Legend />
-                <Line type="monotone" dataKey="ingresos" stroke="#3497C3" strokeWidth={3} name="Ingresos" activeDot={{ r: 6 }} />
-                <Line type="monotone" dataKey="egresos" stroke="#ef4444" strokeWidth={3} name="Egresos" />
-              </LineChart>
-            </ResponsiveContainer>
-
-            <div style={{ marginTop: "2rem", borderRadius: "0.75rem", border: "1px solid #e2e8f0", overflow: "hidden" }}>
-              <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.875rem" }}>
-                <thead>
-                  <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: "700", textTransform: "uppercase", fontSize: "11px", borderBottom: "1px solid #e2e8f0" }}>
-                    <th style={{ padding: "0.75rem 1rem" }}>Mes</th>
-                    <th style={{ padding: "0.75rem 1rem" }}>Ingresos Totales</th>
-                    <th style={{ padding: "0.75rem 1rem" }}>Egresos Ejecutados</th>
-                    <th style={{ padding: "0.75rem 1rem" }}>Balance Neto</th>
-                  </tr>
-                </thead>
-                <tbody style={{ color: "#334155", fontWeight: "600" }}>
-                  {datosIngresos.map((item, index) => (
-                    <tr key={index} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                      <td style={{ padding: "0.75rem 1rem", color: "#0f172a", fontWeight: "700" }}>{item.mes}</td>
-                      <td style={{ padding: "0.75rem 1rem", color: "#10b981" }}>{formatCurrency(item.ingresos)}</td>
-                      <td style={{ padding: "0.75rem 1rem", color: "#ef4444" }}>{formatCurrency(item.egresos)}</td>
-                      <td style={{ padding: "0.75rem 1rem", color: "#3497C3" }}>{formatCurrency(item.ingresos - item.egresos)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* PESTAÑA ESTACIONAMIENTOS */}
-        {reporteSeleccionado === 'estacionamientos' && (
-          <div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", borderBottom: "1px solid #f1f5f9", paddingBottom: "1rem" }}>
-              <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: "700", color: "#1e293b" }}>Estado de Ocupación Global</h3>
-              <span style={{ fontSize: "0.75rem", backgroundColor: "#f1f5f9", color: "#475569", fontWeight: "700", padding: "0.25rem 0.6rem", borderRadius: "0.5rem" }}>Total: {totalPlazas} cocheras</span>
-            </div>
-
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem", alignItems: "center" }}>
               <div style={{ flex: "1", minWidth: "260px" }}>
                 <ResponsiveContainer width="100%" height={260}>
                   <PieChart>
                     <Pie
-                      data={datosEstacionamientos}
+                      data={datosDistribuciónInmuebles}
                       cx="50%"
                       cy="50%"
                       labelLine={true}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
                       outerRadius={80}
                       dataKey="cantidad"
                     >
-                      {datosEstacionamientos.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      {datosDistribuciónInmuebles.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value, name, props) => [`${value} plazas`, props.payload.estado]} />
+                    <Tooltip formatter={(value) => [`${value} registros`, 'Cantidad']} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
 
-              <div style={{ flex: "1", minWidth: "280px", display: "flex", flexDirection: "column", gap: "1rem", justifyContent: "center" }}>
-                <h4 style={{ margin: 0, fontSize: "0.9rem", fontWeight: "700", color: "#334155" }}>Desglose Operativo</h4>
-                {datosEstacionamientos.map((item, index) => (
-                  <div key={index}>
-                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", marginBottom: "0.25rem" }}>
-                      <span style={{ fontWeight: "600" }}><span style={{ color: item.color, marginRight: "4px" }}>●</span> {item.estado}</span>
-                      <strong style={{ color: "#0f172a" }}>{item.cantidad} cocheras</strong>
-                    </div>
-                    <div style={{ width: "100%", height: "6px", backgroundColor: "#f1f5f9", borderRadius: "9999px", overflow: "hidden" }}>
-                      <div style={{ width: `${totalPlazas > 0 ? (item.cantidad / totalPlazas) * 100 : 0}%`, backgroundColor: item.color, height: "100%" }} />
-                    </div>
-                    <small style={{ color: "#94a3b8", fontSize: "0.7rem", display: "block", marginTop: "0.2" }}>{item.explicacion}</small>
-                  </div>
-                ))}
+              <div style={{ flex: "1", minWidth: "280px", display: "flex", flexDirection: "column", gap: "1rem" }}>
+                <h4 style={{ margin: 0, fontSize: "0.9rem", fontWeight: "700", color: "#334155" }}>Resumen Estructural</h4>
+                <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "0.5rem" }}>
+                  <span style={{ fontSize: "0.85rem", color: "#64748b" }}>Total Torres Físicas</span>
+                  <strong style={{ color: "#0f172a" }}>{metricas.totalTorres} bloques</strong>
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "0.5rem" }}>
+                  <span style={{ fontSize: "0.85rem", color: "#64748b" }}>Total Pisos Distribuidos</span>
+                  <strong style={{ color: "#0f172a" }}>{metricas.totalPisos} niveles</strong>
+                </div>
               </div>
             </div>
           </div>
         )}
 
-        {/* 4. Glosa Explicativa Informativa Unificada */}
+        {/* PESTAÑA INVENTARIO */}
+        {reporteSeleccionado === 'inventario' && (
+          <div>
+            <div style={{ borderBottom: "1px solid #f1f5f9", paddingBottom: "1rem", marginBottom: "1.5rem" }}>
+              <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: "700", color: "#1e293b" }}>Métricas de Activos Circulantes y Personal</h3>
+            </div>
+
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={datosInventarioBienes}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                <XAxis dataKey="name" stroke="#64748b" style={{ fontSize: '12px' }} />
+                <YAxis stroke="#64748b" style={{ fontSize: '12px' }} />
+                <Tooltip formatter={(value) => [`${value} asignados`, 'Total']} />
+                <Bar dataKey="cantidad" radius={[4, 4, 0, 0]}>
+                  {datosInventarioBienes.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                  ))}
+                </Bar>
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
+
+        {/* 4. Glosa Unificada */}
         <div style={{ marginTop: "2rem", padding: "1rem", backgroundColor: "#f8fafc", borderRadius: "0.75rem", border: "1px solid #e2e8f0" }}>
           <small style={{ color: "#64748b", fontSize: "0.8rem", display: "block", fontWeight: "500" }}>
-            <strong>Glosa del Sistema:</strong> Este panel compila métricas consolidadas del condominio. 
-            {reporteSeleccionado === 'accesos' && " Los accesos diferencian flujos de residentes frente a visitas y personal externo para auditorías de seguridad."}
-            {reporteSeleccionado === 'financiero' && " El reporte financiero detalla ingresos por cuotas frente a egresos logísticos de mantenimiento técnico."}
-            {reporteSeleccionado === 'estacionamientos' && " La ocupación de cocheras refleja la disponibilidad en tiempo real de espacios asignados versus zonas de mantenimiento."}
+            <strong>Glosa Informativa:</strong> Este módulo compila las analíticas consolidadas de la base de datos de Spring Boot. 
+            {reporteSeleccionado === 'censo' && " Los datos de distribución inmobiliaria facilitan la auditoría censal de torres y departamentos frente a sus titulares."}
+            {reporteSeleccionado === 'inventario' && " Las barras reflejan el inventario total de activos vehiculares, carritos comunes de compras y personal de vigilancia."}
           </small>
         </div>
 

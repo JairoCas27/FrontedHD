@@ -7,25 +7,36 @@ import { useAdminUsers } from '../../hooks/Admin/useAdminUsers'
 export default function Usuarios() {
   const colorAdmin = "rgb(52,151,195)"
 
-  
-  const { usuarios, loading, persistirUsuario, alternarAccesoUsuario } = useAdminUsers()
+  //  Cargamos los métodos corregidos desde el hook (que ya lee data.items)
+  const { usuarios, loading, registrarUsuario, modificarUsuario, cambiarEstadoUsuario } = useAdminUsers()
 
   const [showModal, setShowModal] = useState(false)
   const [editando, setEditando] = useState(null)
-  const [formData, setFormData] = useState({ nombre: '', email: '', rol: 'Residente', estado: 'Activo' })
+  
+  //  formData reestructurado con las variables numéricas y strings del Swagger
+  const [formData, setFormData] = useState({ 
+    nombres: '', 
+    apellidos: '', 
+    correo: '', 
+    telefono: '', 
+    contrasena: '', 
+    rol: 'Residente' 
+  })
 
   const handleOpenModal = (usuario = null) => {
     if (usuario) {
       setEditando(usuario)
       setFormData({
-        nombre: usuario.nombre || '',
-        email: usuario.email || '',
-        rol: usuario.rol || 'Residente',
-        estado: usuario.estado || 'Activo'
+        nombres: usuario.nombres || '',
+        apellidos: usuario.apellidos || '',
+        correo: usuario.correo || '',
+        telefono: usuario.telefono || '',
+        contrasena: '', // Vacío por seguridad en edición
+        rol: usuario.rol || 'Residente'
       })
     } else {
       setEditando(null)
-      setFormData({ nombre: '', email: '', rol: 'Residente', estado: 'Activo' })
+      setFormData({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', rol: 'Residente' })
     }
     setShowModal(true)
   }
@@ -35,16 +46,30 @@ export default function Usuarios() {
     setEditando(null)
   }
 
-  // 💾 Guardado real (delegando POST/PUT al Hook)
+  // 💾 Guardado real adaptado a las estructuras de los Request Bodies
   const handleSave = async () => {
-    if (formData.nombre.trim() === '' || formData.email.trim() === '') {
+    if (formData.nombres.trim() === '' || formData.apellidos.trim() === '') {
       alert('Por favor, completa los campos requeridos')
       return
     }
 
     try {
-      // Pasamos el ID (si se está editando) junto a los datos del formulario
-      await persistirUsuario(editando ? editando.id : null, formData)
+      if (editando) {
+        // El PUT solo toma nombres, apellidos y telefono según el Swagger
+        const putBody = {
+          nombres: formData.nombres,
+          apellidos: formData.apellidos,
+          telefono: formData.telefono
+        }
+        await modificarUsuario(editando.id, putBody)
+      } else {
+        // El POST toma todos los datos incluyendo contrasena
+        if (formData.correo.trim() === '' || formData.contrasena.trim() === '') {
+          alert('El correo y la contraseña son obligatorios para nuevos usuarios')
+          return
+        }
+        await registrarUsuario(formData)
+      }
       handleCloseModal()
     } catch (error) {
       console.error('Error al guardar el usuario:', error)
@@ -52,14 +77,15 @@ export default function Usuarios() {
     }
   }
 
-  // 🔄 Cambiar estado real (delegando PATCH al Hook)
+  // 🔄 Cambiar estado real (delegando PATCH de booleano al Hook)
   const handleToggleStatus = async (usuario) => {
-    const nuevoEstado = usuario.estado === 'Activo' ? 'Inactivo' : 'Activo'
+    const nuevoEstadoBooleano = !usuario.activo
+    const textoConfirmar = nuevoEstadoBooleano ? 'Activo' : 'Inactivo'
     
-    if (!window.confirm(`¿Seguro que deseas marcar al usuario como ${nuevoEstado}?`)) return
+    if (!window.confirm(`¿Seguro que deseas marcar al usuario como ${textoConfirmar}?`)) return
 
     try {
-      await alternarAccesoUsuario(usuario)
+      await cambiarEstadoUsuario(usuario.id, nuevoEstadoBooleano)
     } catch (error) {
       console.error('Error al cambiar el estado del usuario:', error)
       alert('No se pudo actualizar el estado de acceso del usuario.')
@@ -120,54 +146,48 @@ export default function Usuarios() {
               <thead>
                 <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: "700", fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
                   <th style={{ padding: "1rem 1.5rem", width: "10%" }}>ID</th>
-                  <th style={{ padding: "1rem", width: "35%" }}>Nombre Completo</th>
+                  <th style={{ padding: "1rem", width: "30%" }}>Nombre Completo</th>
                   <th style={{ padding: "1rem", width: "25%" }}>Correo Electrónico</th>
                   <th style={{ padding: "1rem", width: "15%" }}>Rol asignado</th>
-                  <th style={{ padding: "1rem", width: "15%" }}>Estado</th>
+                  <th style={{ padding: "1rem", width: "10%" }}>Estado</th>
                   <th style={{ padding: "1rem 1.5rem", width: "10%", textAlign: "center" }}>Acciones</th>
                 </tr>
               </thead>
               <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
                 {usuarios.map((usuario) => {
                   const configRol = obtenerEstiloRol(usuario.rol);
+                  // 🟢 Combinamos nombres y apellidos del Swagger
+                  const nombreCompleto = `${usuario.nombres || ''} ${usuario.apellidos || ''}`.trim() || 'Sin registrar';
+                  const estadoTexto = usuario.activo ? 'Activo' : 'Inactivo';
+
                   return (
                     <tr key={usuario.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
                       <td style={{ padding: "1rem 1.5rem", fontFamily: "monospace", fontWeight: "700", color: "#94a3b8" }}>#{usuario.id}</td>
                       <td style={{ padding: "1rem" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                           <div style={{ 
-                            width: "32px", 
-                            height: "32px", 
-                            borderRadius: "50%", 
-                            backgroundColor: "rgba(52,151,195,0.08)", 
-                            color: colorAdmin, 
-                            display: "flex", 
-                            alignItems: "center", 
-                            justifyContent: "center", 
-                            fontWeight: "700", 
-                            fontSize: "0.75rem",
-                            border: "1px solid rgba(52,151,195,0.15)"
+                            width: "32px", height: "32px", borderRadius: "50%", 
+                            backgroundColor: "rgba(52,151,195,0.08)", color: colorAdmin, 
+                            display: "flex", alignItems: "center", justifyContent: "center", 
+                            fontWeight: "700", fontSize: "0.75rem", border: "1px solid rgba(52,151,195,0.15)"
                           }}>
-                            {usuario.nombre ? usuario.nombre.charAt(0) : '?'}
+                            {nombreCompleto.charAt(0).toUpperCase()}
                           </div>
-                          <span style={{ fontWeight: "700", color: "#0f172a" }}>{usuario.nombre}</span>
+                          <span style={{ fontWeight: "700", color: "#0f172a" }}>{nombreCompleto}</span>
                         </div>
                       </td>
-                      <td style={{ padding: "1rem", color: "#64748b", fontWeight: "500" }}>{usuario.email}</td>
+                      {/* 🟢 Cambiado a usuario.correo */}
+                      <td style={{ padding: "1rem", color: "#64748b", fontWeight: "500" }}>{usuario.correo}</td>
                       <td style={{ padding: "1rem" }}>
                         <span style={{
-                          backgroundColor: configRol.bg,
-                          color: configRol.color,
-                          padding: '0.25rem 0.6rem',
-                          borderRadius: '0.5rem',
-                          fontSize: '0.7rem',
-                          fontWeight: '700'
+                          backgroundColor: configRol.bg, color: configRol.color,
+                          padding: '0.25rem 0.6rem', borderRadius: '0.5rem', fontSize: '0.7rem', fontWeight: '700'
                         }}>
                           {usuario.rol}
                         </span>
                       </td>
                       <td style={{ padding: "1rem" }}>
-                        <BadgeEstado estado={usuario.estado} />
+                        <BadgeEstado estado={estadoTexto} />
                       </td>
                       <td style={{ padding: "1rem 1.5rem", textAlign: "center" }}>
                         <div style={{ display: "flex", justifyContent: "center", gap: "0.5rem" }}>
@@ -207,31 +227,44 @@ export default function Usuarios() {
             </div>
 
             <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+              {/* 🟢 Campos separados requeridos por Spring Boot */}
+              <div style={{ display: "flex", gap: "1rem" }}>
+                <div style={{ flex: 1 }}>
+                  <label style={estiloLabel}>Nombres</label>
+                  <input type="text" style={estiloInput} placeholder="Ej: Juan" value={formData.nombres} onChange={(e) => setFormData({ ...formData, nombres: e.target.value })} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label style={estiloLabel}>Apellidos</label>
+                  <input type="text" style={estiloInput} placeholder="Ej: Pérez" value={formData.apellidos} onChange={(e) => setFormData({ ...formData, apellidos: e.target.value })} />
+                </div>
+              </div>
+
               <div>
-                <label style={estiloLabel}>Nombre Completo</label>
-                <input type="text" style={estiloInput} placeholder="Ej: Juan Pérez" value={formData.nombre} onChange={(e) => setFormData({ ...formData, nombre: e.target.value })} />
+                <label style={estiloLabel}>Teléfono</label>
+                <input type="text" style={estiloInput} placeholder="Ej: 987654321" value={formData.telefono} onChange={(e) => setFormData({ ...formData, telefono: e.target.value })} />
               </div>
 
               <div>
                 <label style={estiloLabel}>Correo Electrónico</label>
-                <input type="email" style={estiloInput} placeholder="juan@ejemplo.com" value={formData.email} onChange={(e) => setFormData({ ...formData, email: e.target.value })} />
+                <input type="email" style={estiloInput} placeholder="juan@ejemplo.com" value={formData.correo} onChange={(e) => setFormData({ ...formData, correo: e.target.value })} disabled={!!editando} style={{ ...estiloInput, backgroundColor: editando ? "#f8fafc" : "#ffffff", color: editando ? "#94a3b8" : "#334155", cursor: editando ? "not-allowed" : "text" }} />
               </div>
 
+              {/* 🟢 Campo obligatorio condicional solo para creación */}
+              {!editando && (
+                <div>
+                  <label style={estiloLabel}>Contraseña Inicial</label>
+                  <input type="password" style={estiloInput} placeholder="Mínimo 6 caracteres" value={formData.contrasena} onChange={(e) => setFormData({ ...formData, contrasena: e.target.value })} />
+                </div>
+              )}
+
+              {/* 🟢 Selección de Rol inhabilitada en edición según parámetros de PUT */}
               <div>
                 <label style={estiloLabel}>Rol del Usuario</label>
-                <select style={estiloInput} value={formData.rol} onChange={(e) => setFormData({ ...formData, rol: e.target.value })}>
+                <select style={estiloInput} value={formData.rol} onChange={(e) => setFormData({ ...formData, rol: e.target.value })} disabled={!!editando} style={{ ...estiloInput, backgroundColor: editando ? "#f8fafc" : "#ffffff", color: editando ? "#94a3b8" : "#334155", cursor: editando ? "not-allowed" : "pointer" }}>
                   <option value="Residente">Residente</option>
                   <option value="Administrador">Administrador</option>
                   <option value="Seguridad">Seguridad</option>
                   <option value="Proveedor">Proveedor</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={estiloLabel}>Estado Inicial</label>
-                <select style={estiloInput} value={formData.estado} onChange={(e) => setFormData({ ...formData, estado: e.target.value })}>
-                  <option value="Activo">Activo</option>
-                  <option value="Inactivo">Inactivo</option>
                 </select>
               </div>
             </div>
