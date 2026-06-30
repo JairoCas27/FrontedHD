@@ -1,13 +1,8 @@
 const BASE_URL = import.meta.env.VITE_API_URL;
 
-// --- Helper con autenticación ---
-const getHeaders = () => {
-  const token = localStorage.getItem('token');
-  return {
-    'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
-  };
-};
+const getHeaders = () => ({
+  'Content-Type': 'application/json',
+});
 
 async function safeFetch(path, options = {}) {
   const response = await fetch(`${BASE_URL}${path}`, {
@@ -24,13 +19,11 @@ async function safeFetch(path, options = {}) {
   return data;
 }
 
-// ===== AUTENTICACIÓN =====
 export async function loginApi({ correo, password, recuerdame }) {
-  const data = await safeFetch('/api/auth/login', {
+  return safeFetch('/api/auth/login', {
     method: 'POST',
     body: JSON.stringify({ correo, contrasena: password, recuerdame }),
   });
-  return data;
 }
 
 export async function logoutApi() {
@@ -48,7 +41,6 @@ export async function changePassword(data) {
   });
 }
 
-// ===== PERFIL =====
 export async function getProfile() {
   return safeFetch('/api/profile');
 }
@@ -60,7 +52,6 @@ export async function updateProfile(data) {
   });
 }
 
-// ===== CATÁLOGOS =====
 export async function getCountries() {
   return safeFetch('/api/catalogs/countries');
 }
@@ -69,8 +60,6 @@ export async function getCities(countryId) {
   return safeFetch(`/api/catalogs/countries/${countryId}/cities`);
 }
 
-// ===== SUPER ADMIN =====
-// Dashboard
 export async function getSuperAdminDashboardMetrics() {
   return safeFetch('/api/super-admin/dashboard/metrics');
 }
@@ -83,20 +72,18 @@ export async function getSuperAdminRecentCondos() {
   return safeFetch('/api/super-admin/dashboard/recent-condos');
 }
 
-// Condominios
 export async function getCondominiums() {
   return safeFetch('/api/super-admin/condominiums?page=0&size=100');
 }
 
 export async function createCondominium(data) {
-  // El backend espera idPais e idCiudad
   return safeFetch('/api/super-admin/condominiums', {
     method: 'POST',
     body: JSON.stringify({
       nombre: data.nombre,
       direccion: data.direccion,
-      idPais: data.idPais,   // cambiar de paisId a idPais
-      idCiudad: data.idCiudad, // cambiar de ciudadId a idCiudad
+      idPais: data.idPais,
+      idCiudad: data.idCiudad,
       activo: true,
     }),
   });
@@ -115,7 +102,6 @@ export async function updateCondominium(id, data) {
   });
 }
 
-
 export async function deleteCondominium(id) {
   return safeFetch(`/api/super-admin/condominiums/${id}`, {
     method: 'DELETE',
@@ -133,7 +119,6 @@ export async function getUnassignedCondominiums() {
   return safeFetch('/api/super-admin/condominiums/unassigned');
 }
 
-// Administradores
 export async function getAdministrators() {
   return safeFetch('/api/super-admin/administrators?page=0&size=100');
 }
@@ -176,7 +161,6 @@ export async function getAvailableAdministrators() {
   return safeFetch('/api/super-admin/administrators/available');
 }
 
-// Usuarios globales (CRUD usando endpoints de admin)
 export async function getAllUsers() {
   return safeFetch('/api/super-admin/users');
 }
@@ -201,40 +185,35 @@ export async function invalidateUserSession(userId) {
   });
 }
 
-
-// =========================
-// PROPIETARIO
-// =========================
- 
 export const getHomeownerDashboard = () =>
-  safeFetch("/api/homeowner/dashboard/summary");
- 
+  safeFetch('/api/homeowner/dashboard/summary');
+
 export const getHomeownerApartment = () =>
-  safeFetch("/api/homeowner/apartment/details");
- 
+  safeFetch('/api/homeowner/apartment/details');
+
 export const getHomeownerVehicles = () =>
-  safeFetch("/api/homeowner/vehicles");
- 
+  safeFetch('/api/homeowner/vehicles');
+
 export const createHomeownerVehicle = (data) =>
-  safeFetch("/api/homeowner/vehicles", {
-    method: "POST",
+  safeFetch('/api/homeowner/vehicles', {
+    method: 'POST',
     body: JSON.stringify(data),
   });
- 
+
 export const deleteHomeownerVehicle = (id) =>
-  safeFetch(`/api/homeowner/vehicles/${id}`, { method: "DELETE" });
- 
+  safeFetch(`/api/homeowner/vehicles/${id}`, { method: 'DELETE' });
+
 export const getHomeownerTenants = () =>
-  safeFetch("/api/homeowner/tenants");
- 
+  safeFetch('/api/homeowner/tenants');
+
 export const createHomeownerTenant = (data) =>
-  safeFetch("/api/homeowner/tenants", {
-    method: "POST",
+  safeFetch('/api/homeowner/tenants', {
+    method: 'POST',
     body: JSON.stringify(data),
   });
- 
+
 export const deleteHomeownerTenant = (id) =>
-  safeFetch(`/api/homeowner/tenants/${id}`, { method: "DELETE" });
- 
+  safeFetch(`/api/homeowner/tenants/${id}`, { method: 'DELETE' });
+
 export const getHomeownerLogs = () =>
-  safeFetch("/api/homeowner/logs");
+  safeFetch('/api/homeowner/logs');

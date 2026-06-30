@@ -1,11 +1,7 @@
-// src/components/SidebarLayout.jsx
-import { useState, useEffect } from "react";
 import { NavLink } from "react-router-dom";
-import { FiChevronLeft, FiChevronRight, FiLogOut, FiCreditCard, FiUser, FiMail } from "react-icons/fi";
+import { FiChevronLeft, FiChevronRight, FiLogOut, FiUser, FiMail } from "react-icons/fi";
 import logo2 from "../images/logo.png";
 import { useLogout } from "../hooks/useLogout";
-
-const perfilFallback = { nombre: 'Usuario Demo', email: 'usuario@demo.com' };
 
 export default function SidebarLayout({
   isOpen,
@@ -15,51 +11,10 @@ export default function SidebarLayout({
   accentLight,
   accentDark,
   menuItems,
-  storageKey,
-  userInfo: userInfoProp,
-  user, // <-- nueva prop para recibir el usuario autenticado
+  userInfo,
 }) {
   const { handleLogout } = useLogout();
 
-  // Si se pasa user, construimos userInfo a partir de él
-  const userInfoFromUser = user
-    ? [
-      { icon: <FiCreditCard size={18} />, value: user.id ? `ID: ${user.id}` : "—" },
-      { icon: <FiUser size={18} />, value: user.nombres ? `${user.nombres} ${user.apellidos || ''}`.trim() : "—" },
-      { icon: <FiMail size={18} />, value: user.correo || "—" },
-    ]
-    : null;
-
-  // Si no se pasa user, intentar con storageKey (fallback)
-  const [perfilGuardado, setPerfilGuardado] = useState(() => {
-    try {
-      const stored = storageKey ? localStorage.getItem(storageKey) : null;
-      return stored ? JSON.parse(stored) : perfilFallback;
-    } catch {
-      return perfilFallback;
-    }
-  });
-
-  useEffect(() => {
-    if (!storageKey) return;
-    const sync = () => {
-      try {
-        const stored = localStorage.getItem(storageKey);
-        if (stored) setPerfilGuardado(JSON.parse(stored));
-      } catch { }
-    };
-    window.addEventListener('storage', sync);
-    return () => window.removeEventListener('storage', sync);
-  }, [storageKey]);
-
-  // Prioridad: userInfoProp > userInfoFromUser > perfilGuardado
-  const userInfo = userInfoProp ?? userInfoFromUser ?? [
-    { icon: <FiCreditCard size={18} />, value: "12345678" },
-    { icon: <FiUser size={18} />, value: perfilGuardado.nombre },
-    { icon: <FiMail size={18} />, value: perfilGuardado.email },
-  ];
-
-  // El resto del componente se mantiene igual...
   return (
     <div
       style={{
@@ -77,7 +32,6 @@ export default function SidebarLayout({
         overflow: "hidden",
       }}
     >
-      {/* Logo y panelLabel (sin cambios) */}
       <div
         style={{
           padding: isOpen ? "1.25rem 1rem" : "1.25rem 0",
@@ -125,7 +79,6 @@ export default function SidebarLayout({
         </div>
       </div>
 
-      {/* Menú (sin cambios) */}
       <nav
         style={{
           flex: 1,
@@ -196,14 +149,7 @@ export default function SidebarLayout({
                 }
               }}
             >
-              <span
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  minWidth: "20px",
-                  transition: "transform 0.2s ease",
-                }}
-              >
+              <span style={{ display: "flex", alignItems: "center", minWidth: "20px", transition: "transform 0.2s ease" }}>
                 {item.icon}
               </span>
               <span
@@ -225,7 +171,6 @@ export default function SidebarLayout({
         )}
       </nav>
 
-      {/* Información del usuario y botón de cerrar sesión */}
       <div
         style={{
           padding: isOpen ? "1rem 1rem" : "1rem 0",
@@ -246,7 +191,7 @@ export default function SidebarLayout({
                 alignItems: "center",
                 gap: "0.65rem",
                 width: "100%",
-                opacity: isOpen ? 1 : 0,
+                opacity: 1,
                 transition: "opacity 0.25s ease",
               }}
             >
@@ -331,9 +276,9 @@ export default function SidebarLayout({
           fontWeight: 600,
         }}
         onMouseEnter={(e) =>
-        (e.currentTarget.style.backgroundColor = accentColor
-          .replace(")", ", 0.15)")
-          .replace("rgb", "rgba"))
+          (e.currentTarget.style.backgroundColor = accentColor
+            .replace(")", ", 0.15)")
+            .replace("rgb", "rgba"))
         }
         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = accentLight)}
       >

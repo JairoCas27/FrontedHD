@@ -1,20 +1,19 @@
-// SidebarSuperAdmin.jsx
-import SidebarLayout from './SidebarLayout';
-import { FiHome, FiGrid, FiUsers, FiUser } from 'react-icons/fi';
-import { useAuth } from '../context/AuthContext';
+import SidebarLayout from "./SidebarLayout";
+import { FiHome, FiGrid, FiUsers, FiUser } from "react-icons/fi";
+import { useSidebarUser } from "../hooks/useSidebarUser";
 
 const menuItems = [
-  { section: 'Principal' },
-  { title: 'Dashboard', icon: <FiHome size={20} />, path: '/superadmin/dashboard' },
-  { section: 'Gestión' },
-  { title: 'Condominios', icon: <FiGrid size={20} />, path: '/superadmin/condominios' },
-  { title: 'Administradores', icon: <FiUsers size={20} />, path: '/superadmin/administradores' },
-  { title: 'Usuarios', icon: <FiUsers size={20} />, path: '/superadmin/usuarios' },
-  { title: 'Perfil', icon: <FiUser size={20} />, path: '/superadmin/perfil' },
+  { section: "Principal" },
+  { title: "Dashboard", icon: <FiHome size={20} />, path: "/superadmin/dashboard" },
+  { section: "Gestión" },
+  { title: "Condominios", icon: <FiGrid size={20} />, path: "/superadmin/condominios" },
+  { title: "Administradores", icon: <FiUsers size={20} />, path: "/superadmin/administradores" },
+  { title: "Usuarios", icon: <FiUsers size={20} />, path: "/superadmin/usuarios" },
+  { title: "Perfil", icon: <FiUser size={20} />, path: "/superadmin/perfil" },
 ];
 
 export default function SidebarSuperAdmin({ isOpen, setIsOpen }) {
-  const { user } = useAuth();
+  const userInfo = useSidebarUser();
   return (
     <SidebarLayout
       isOpen={isOpen}
@@ -24,7 +23,7 @@ export default function SidebarSuperAdmin({ isOpen, setIsOpen }) {
       accentLight="rgba(124,58,237,0.1)"
       accentDark="rgb(91,33,182)"
       menuItems={menuItems}
-      user={user}
+      userInfo={userInfo}
     />
   );
 }
