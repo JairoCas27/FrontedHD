@@ -1,45 +1,44 @@
 import React, { useState, useEffect } from 'react'
-import { FiEdit2, FiTrash2, FiX } from "react-icons/fi"
+import { FiEdit2, FiRefreshCw, FiX } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import BadgeEstado from '../../components/BadgeEstado'
-
-const usuariosIniciales = [
-  { id: 1, nombre: 'Carlos López', email: 'carlos@example.com', rol: 'Residente', estado: 'Activo' },
-  { id: 2, nombre: 'Ana Martínez', email: 'ana@example.com', rol: 'Administrador', estado: 'Activo' },
-  { id: 3, nombre: 'Juan Pérez', email: 'juan@example.com', rol: 'Seguridad', estado: 'Inactivo' },
-  { id: 4, nombre: 'María García', email: 'maria@example.com', rol: 'Residente', estado: 'Activo' },
-]
-
-const STORAGE_KEY = 'usuarios_condominio_admin'
+import { getAdminUsers, createAdminUser, updateAdminUser, patchAdminUserStatus } from '../../services/api' 
 
 export default function Usuarios() {
   const colorAdmin = "rgb(52,151,195)"
 
-  const [usuarios, setUsuarios] = useState(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      return stored ? JSON.parse(stored) : usuariosIniciales
-    } catch {
-      return usuariosIniciales
-    }
-  })
-  
+  const [usuarios, setUsuarios] = useState([])
+  const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [editando, setEditando] = useState(null)
   const [formData, setFormData] = useState({ nombre: '', email: '', rol: 'Residente', estado: 'Activo' })
 
+  //  Carga inicial de datos reales desde el servidor
   useEffect(() => {
+    cargarUsuarios()
+  }, [])
+
+  const cargarUsuarios = async () => {
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(usuarios))
-    } catch {
-      console.error('Error al guardar en localStorage')
+      setLoading(true)
+      const data = await getAdminUsers()
+      setUsuarios(data || [])
+    } catch (error) {
+      console.error('Error al traer los usuarios del servidor:', error)
+    } finally {
+      setLoading(false)
     }
-  }, [usuarios])
+  }
 
   const handleOpenModal = (usuario = null) => {
     if (usuario) {
       setEditando(usuario)
-      setFormData(usuario)
+      setFormData({
+        nombre: usuario.nombre || '',
+        email: usuario.email || '',
+        rol: usuario.rol || 'Residente',
+        estado: usuario.estado || 'Activo'
+      })
     } else {
       setEditando(null)
       setFormData({ nombre: '', email: '', rol: 'Residente', estado: 'Activo' })
@@ -52,28 +51,45 @@ export default function Usuarios() {
     setEditando(null)
   }
 
-  const handleSave = () => {
+  // 💾 Persistencia real (POST /api/admin/users y PUT /api/admin/users/{id})
+  const handleSave = async () => {
     if (formData.nombre.trim() === '' || formData.email.trim() === '') {
-      alert('Por favor, completa los campos requeridos');
-      return;
+      alert('Por favor, completa los campos requeridos')
+      return
     }
 
-    if (editando) {
-      setUsuarios(usuarios.map(u => u.id === editando.id ? { ...formData, id: u.id } : u))
-    } else {
-      const newId = usuarios.length > 0 ? Math.max(...usuarios.map(u => u.id)) + 1 : 1
-      setUsuarios([...usuarios, { ...formData, id: newId }])
+    try {
+      if (editando) {
+        // Llamada PUT para actualizar
+        await updateAdminUser(editando.id, formData)
+      } else {
+        // Llamada POST para registrar
+        await createAdminUser(formData)
+      }
+      await cargarUsuarios() // Refrescar la grilla de datos
+      handleCloseModal()
+    } catch (error) {
+      console.error('Error al guardar el usuario en el servidor:', error)
+      alert('Hubo un problema al intentar guardar los datos en el servidor.')
     }
-    handleCloseModal()
   }
 
-  const handleDelete = (id) => {
-    if (window.confirm('¿Seguro que deseas eliminar este usuario del sistema?')) {
-      setUsuarios(usuarios.filter(u => u.id !== id))
+  // 🔄 Alternar estado real a través de PATCH /api/admin/users/{id}/status
+  const handleToggleStatus = async (usuario) => {
+    const nuevoEstado = usuario.estado === 'Activo' ? 'Inactivo' : 'Activo'
+    const esActivo = nuevoEstado === 'Activo'
+    
+    if (!window.confirm(`¿Seguro que deseas marcar al usuario como ${nuevoEstado}?`)) return
+
+    try {
+      await patchAdminUserStatus(usuario.id, esActivo)
+      await cargarUsuarios() // Refrescar la tabla
+    } catch (error) {
+      console.error('Error al cambiar el estado del usuario:', error)
+      alert('No se pudo actualizar el estado de acceso del usuario.')
     }
   }
 
-  // Estilos fijos para mantener el estándar visual premium
   const estiloInput = {
     width: "100%",
     padding: "0.65rem 0.75rem",
@@ -116,85 +132,93 @@ export default function Usuarios() {
         onBotonClick={() => handleOpenModal()}
       />
 
-      {/* 2. Tabla de Datos Premium Estilizada */}
-      <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden", width: "100%", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)" }}>
-        <div style={{ overflowX: "auto", width: "100%" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
-            <thead>
-              <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: "700", fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
-                <th style={{ padding: "1rem 1.5rem", width: "10%" }}>ID</th>
-                <th style={{ padding: "1rem", width: "35%" }}>Nombre Completo</th>
-                <th style={{ padding: "1rem", width: "25%" }}>Correo Electrónico</th>
-                <th style={{ padding: "1rem", width: "15%" }}>Rol asignado</th>
-                <th style={{ padding: "1rem", width: "15%" }}>Estado</th>
-                <th style={{ padding: "1rem 1.5rem", width: "10%", textAlign: "center" }}>Acciones</th>
-              </tr>
-            </thead>
-            <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
-              {usuarios.map((usuario) => {
-                const configRol = obtenerEstiloRol(usuario.rol);
-                return (
-                  <tr key={usuario.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <td style={{ padding: "1rem 1.5rem", fontFamily: "monospace", fontWeight: "700", color: "#94a3b8" }}>#{usuario.id}</td>
-                    <td style={{ padding: "1rem" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                        <div style={{ 
-                          width: "32px", 
-                          height: "32px", 
-                          borderRadius: "50%", 
-                          backgroundColor: "rgba(52,151,195,0.08)", 
-                          color: colorAdmin, 
-                          display: "flex", 
-                          alignItems: "center", 
-                          justifyContent: "center", 
-                          fontWeight: "700", 
-                          fontSize: "0.75rem",
-                          border: "1px solid rgba(52,151,195,0.15)"
-                        }}>
-                          {usuario.nombre.charAt(0)}
-                        </div>
-                        <span style={{ fontWeight: "700", color: "#0f172a" }}>{usuario.nombre}</span>
-                      </div>
-                    </td>
-                    <td style={{ padding: "1rem", color: "#64748b", fontWeight: "500" }}>{usuario.email}</td>
-                    <td style={{ padding: "1rem" }}>
-                      <span style={{
-                        backgroundColor: configRol.bg,
-                        color: configRol.color,
-                        padding: '0.25rem 0.6rem',
-                        borderRadius: '0.5rem',
-                        fontSize: '0.7rem',
-                        fontWeight: '700'
-                      }}>
-                        {usuario.rol}
-                      </span>
-                    </td>
-                    <td style={{ padding: "1rem" }}>
-                      <BadgeEstado estado={usuario.estado} />
-                    </td>
-                    <td style={{ padding: "1rem 1.5rem", textAlign: "center" }}>
-                      <div style={{ display: "flex", justifyContent: "center", gap: "0.5rem" }}>
-                        <button 
-                          onClick={() => handleOpenModal(usuario)}
-                          style={{ background: "none", border: "1px solid #e2e8f0", padding: "0.4rem", borderRadius: "0.5rem", cursor: "pointer", color: colorAdmin }}
-                        >
-                          <FiEdit2 size={14} />
-                        </button>
-                        <button 
-                          onClick={() => handleDelete(usuario.id)}
-                          style={{ background: "none", border: "1px solid #e2e8f0", padding: "0.4rem", borderRadius: "0.5rem", cursor: "pointer", color: "#ef4444" }}
-                        >
-                          <FiTrash2 size={14} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                )
-              })}
-            </tbody>
-          </table>
+      {/* 2. Tabla de Datos Real Premium o Spinner de Carga */}
+      {loading ? (
+        <div style={{ textAlign: "center", padding: "4rem", color: "#64748b", fontWeight: "600" }}>
+          🔄 Cargando la lista de usuarios desde el backend...
         </div>
-      </div>
+      ) : (
+        <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden", width: "100%", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)" }}>
+          <div style={{ overflowX: "auto", width: "100%" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+              <thead>
+                <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: "700", fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
+                  <th style={{ padding: "1rem 1.5rem", width: "10%" }}>ID</th>
+                  <th style={{ padding: "1rem", width: "35%" }}>Nombre Completo</th>
+                  <th style={{ padding: "1rem", width: "25%" }}>Correo Electrónico</th>
+                  <th style={{ padding: "1rem", width: "15%" }}>Rol asignado</th>
+                  <th style={{ padding: "1rem", width: "15%" }}>Estado</th>
+                  <th style={{ padding: "1rem 1.5rem", width: "10%", textAlign: "center" }}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
+                {usuarios.map((usuario) => {
+                  const configRol = obtenerEstiloRol(usuario.rol);
+                  return (
+                    <tr key={usuario.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                      <td style={{ padding: "1rem 1.5rem", fontFamily: "monospace", fontWeight: "700", color: "#94a3b8" }}>#{usuario.id}</td>
+                      <td style={{ padding: "1rem" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                          <div style={{ 
+                            width: "32px", 
+                            height: "32px", 
+                            borderRadius: "50%", 
+                            backgroundColor: "rgba(52,151,195,0.08)", 
+                            color: colorAdmin, 
+                            display: "flex", 
+                            alignItems: "center", 
+                            justifyContent: "center", 
+                            fontWeight: "700", 
+                            fontSize: "0.75rem",
+                            border: "1px solid rgba(52,151,195,0.15)"
+                          }}>
+                            {usuario.nombre ? usuario.nombre.charAt(0) : '?'}
+                          </div>
+                          <span style={{ fontWeight: "700", color: "#0f172a" }}>{usuario.nombre}</span>
+                        </div>
+                      </td>
+                      <td style={{ padding: "1rem", color: "#64748b", fontWeight: "500" }}>{usuario.email}</td>
+                      <td style={{ padding: "1rem" }}>
+                        <span style={{
+                          backgroundColor: configRol.bg,
+                          color: configRol.color,
+                          padding: '0.25rem 0.6rem',
+                          borderRadius: '0.5rem',
+                          fontSize: '0.7rem',
+                          fontWeight: '700'
+                        }}>
+                          {usuario.rol}
+                        </span>
+                      </td>
+                      <td style={{ padding: "1rem" }}>
+                        <BadgeEstado estado={usuario.estado} />
+                      </td>
+                      <td style={{ padding: "1rem 1.5rem", textAlign: "center" }}>
+                        <div style={{ display: "flex", justifyContent: "center", gap: "0.5rem" }}>
+                          <button 
+                            title="Editar información"
+                            onClick={() => handleOpenModal(usuario)}
+                            style={{ background: "none", border: "1px solid #e2e8f0", padding: "0.4rem", borderRadius: "0.5rem", cursor: "pointer", color: colorAdmin }}
+                          >
+                            <FiEdit2 size={14} />
+                          </button>
+                          <button 
+                            title="Cambiar estado de acceso"
+                            onClick={() => handleToggleStatus(usuario)}
+                            style={{ background: "none", border: "1px solid #e2e8f0", padding: "0.4rem", borderRadius: "0.5rem", cursor: "pointer", color: "#64748b" }}
+                          >
+                            <FiRefreshCw size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* 3. Modal de Creación / Edición Con Labels Orgánicos */}
       {showModal && (
