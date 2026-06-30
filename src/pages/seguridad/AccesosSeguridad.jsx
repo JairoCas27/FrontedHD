@@ -1,17 +1,6 @@
 import { useState, useEffect } from "react";
 import { FiActivity, FiSearch, FiLogIn, FiLogOut, FiClock, FiUser, FiTruck, FiLoader } from "react-icons/fi";
-
-const API_URL = "https://sgc-backend-vfvl.onrender.com/api/security";
-
-// Helper para headers con token (usando "usuario" de tu localStorage)
-const getHeaders = () => {
-  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
-  const token = usuario?.token || "";
-  return {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${token}`
-  };
-};
+import { verifyVehicle, registerEntry, registerExit } from "../../services/api";
 
 export default function AccesosSeguridad() {
   const [placaInput, setPlacaInput] = useState("");
@@ -20,19 +9,16 @@ export default function AccesosSeguridad() {
   const [accesosHoy, setAccesosHoy] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  // Cargar accesos del día al iniciar
   useEffect(() => {
     cargarAccesosHoy();
   }, []);
 
   const cargarAccesosHoy = () => {
-    const accesosGuardados = JSON.parse(localStorage.getItem("accesosSeguridad") || "[]");
+    const guardados = JSON.parse(localStorage.getItem("accesosSeguridad") || "[]");
     const hoy = new Date().toDateString();
-    const accesosHoyFiltrados = accesosGuardados.filter(a => new Date(a.fecha).toDateString() === hoy);
-    setAccesosHoy(accesosHoyFiltrados);
+    setAccesosHoy(guardados.filter(a => new Date(a.fecha).toDateString() === hoy));
   };
 
-  // Verificar placa en la API
   const verificarPlaca = async () => {
     setMensaje(null);
     setVehiculoInfo(null);
@@ -44,31 +30,20 @@ export default function AccesosSeguridad() {
 
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/vehicles/verify/${placaInput.trim().toUpperCase()}`, {
-        headers: getHeaders()
-      });
-
-      if (!res.ok) {
-        if (res.status === 404) {
-          setMensaje({ tipo: "danger", texto: "❌ Placa no registrada. Registrar como visita." });
-        } else {
-          throw new Error("Error al verificar vehículo");
-        }
-        setLoading(false);
-        return;
-      }
-
-      const data = await res.json();
+      const data = await verifyVehicle(placaInput.trim().toUpperCase());
       setVehiculoInfo(data);
       setMensaje({ tipo: "success", texto: `✅ Vehículo verificado - Propietario: ${data.nombrePropietario || "Residente"}` });
     } catch (err) {
-      setMensaje({ tipo: "danger", texto: `❌ Error: ${err.message}` });
+      if (err.message.includes("404") || err.message.includes("no registrado")) {
+        setMensaje({ tipo: "danger", texto: "❌ Placa no registrada. Registrar como visita." });
+      } else {
+        setMensaje({ tipo: "danger", texto: `❌ Error: ${err.message}` });
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  // Registrar ENTRADA en la API
   const registrarEntrada = async () => {
     setLoading(true);
     try {
@@ -80,17 +55,8 @@ export default function AccesosSeguridad() {
         fechaInquilino: new Date().toISOString()
       };
 
-      const res = await fetch(`${API_URL}/access-logs/entry`, {
-        method: "POST",
-        headers: getHeaders(),
-        body: JSON.stringify(body)
-      });
+      const data = await registerEntry(body);
 
-      if (!res.ok) throw new Error("Error al registrar entrada");
-
-      const data = await res.json();
-
-      // Guardar en localStorage para mostrar en tabla
       const nuevoAcceso = {
         id: data.id || Date.now(),
         placa: placaInput.toUpperCase(),
@@ -101,12 +67,12 @@ export default function AccesosSeguridad() {
         nombreResidente: vehiculoInfo ? vehiculoInfo.nombrePropietario || "Residente" : "VISITANTE"
       };
 
-      const accesosGuardados = JSON.parse(localStorage.getItem("accesosSeguridad") || "[]");
-      const nuevosAccesos = [nuevoAcceso, ...accesosGuardados];
-      localStorage.setItem("accesosSeguridad", JSON.stringify(nuevosAccesos));
+      const guardados = JSON.parse(localStorage.getItem("accesosSeguridad") || "[]");
+      const nuevos = [nuevoAcceso, ...guardados];
+      localStorage.setItem("accesosSeguridad", JSON.stringify(nuevos));
       
       const hoy = new Date().toDateString();
-      setAccesosHoy(nuevosAccesos.filter(a => new Date(a.fecha).toDateString() === hoy));
+      setAccesosHoy(nuevos.filter(a => new Date(a.fecha).toDateString() === hoy));
       
       setMensaje({ tipo: "success", texto: "✅ ENTRADA registrada correctamente" });
       setPlacaInput("");
@@ -118,33 +84,19 @@ export default function AccesosSeguridad() {
     }
   };
 
-  // Registrar SALIDA en la API
   const registrarSalida = async () => {
     setLoading(true);
     try {
-      // Buscar el último acceso de entrada con esta placa
-      const accesosGuardados = JSON.parse(localStorage.getItem("accesosSeguridad") || "[]");
-      const ultimaEntrada = accesosGuardados.find(a => 
+      const guardados = JSON.parse(localStorage.getItem("accesosSeguridad") || "[]");
+      const ultimaEntrada = guardados.find(a => 
         a.placa === placaInput.toUpperCase() && a.tipo === "ENTRADA"
       );
-
       const idRegistro = ultimaEntrada ? ultimaEntrada.id : 0;
 
-      const body = { idRegistro };
+      await registerExit(idRegistro);
 
-      const res = await fetch(`${API_URL}/access-logs/exit`, {
-        method: "PUT",
-        headers: getHeaders(),
-        body: JSON.stringify(body)
-      });
-
-      if (!res.ok) throw new Error("Error al registrar salida");
-
-      const data = await res.json();
-
-      // Guardar en localStorage para mostrar en tabla
       const nuevoAcceso = {
-        id: data.id || Date.now(),
+        id: Date.now(),
         placa: placaInput.toUpperCase(),
         tipo: "SALIDA",
         fecha: new Date().toISOString(),
@@ -153,11 +105,11 @@ export default function AccesosSeguridad() {
         nombreResidente: vehiculoInfo ? vehiculoInfo.nombrePropietario || "Residente" : "VISITANTE"
       };
 
-      const nuevosAccesos = [nuevoAcceso, ...accesosGuardados];
-      localStorage.setItem("accesosSeguridad", JSON.stringify(nuevosAccesos));
+      const nuevos = [nuevoAcceso, ...guardados];
+      localStorage.setItem("accesosSeguridad", JSON.stringify(nuevos));
       
       const hoy = new Date().toDateString();
-      setAccesosHoy(nuevosAccesos.filter(a => new Date(a.fecha).toDateString() === hoy));
+      setAccesosHoy(nuevos.filter(a => new Date(a.fecha).toDateString() === hoy));
       
       setMensaje({ tipo: "success", texto: "✅ SALIDA registrada correctamente" });
       setPlacaInput("");
@@ -171,20 +123,17 @@ export default function AccesosSeguridad() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      {/* HEADER */}
       <div className="mb-8">
         <h1 className="text-2xl font-extrabold text-slate-800">Accesos</h1>
         <p className="text-slate-500 mt-1 text-sm">Registro de ingresos y salidas del día</p>
       </div>
 
-      {/* SECCIÓN DE VERIFICACIÓN */}
       <div className="bg-white rounded-2xl p-8 shadow-md mb-8">
         <h5 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
           <FiTruck size={20} />
           Verificar Vehículo
         </h5>
 
-        {/* INPUT Y BOTÓN */}
         <div className="flex gap-4 mb-6 flex-wrap">
           <input
             type="text"
@@ -204,7 +153,6 @@ export default function AccesosSeguridad() {
           </button>
         </div>
 
-        {/* MENSAJE */}
         {mensaje && (
           <div className={`p-4 rounded-xl mb-4 border ${
             mensaje.tipo === "success" 
@@ -217,7 +165,6 @@ export default function AccesosSeguridad() {
           </div>
         )}
 
-        {/* INFO DEL VEHÍCULO */}
         {vehiculoInfo && (
           <div className="p-6 rounded-xl bg-emerald-50 border border-emerald-500 mb-4">
             <div className="flex justify-between items-center flex-wrap gap-4">
@@ -226,19 +173,13 @@ export default function AccesosSeguridad() {
                   <FiUser size={18} />
                   {vehiculoInfo.nombrePropietario || "Propietario"}
                 </h6>
-                <p className="text-sm text-slate-500 my-1">
-                  Placa: {vehiculoInfo.placa || placaInput}
-                </p>
+                <p className="text-sm text-slate-500 my-1">Placa: {vehiculoInfo.placa || placaInput}</p>
                 {vehiculoInfo.marca && (
                   <p className="text-sm text-slate-500 my-1">
                     Marca: {vehiculoInfo.marca} {vehiculoInfo.modelo ? `- ${vehiculoInfo.modelo}` : ""} {vehiculoInfo.color ? `(${vehiculoInfo.color})` : ""}
                   </p>
                 )}
-                {vehiculoInfo.tipo && (
-                  <p className="text-sm text-slate-500 my-1">
-                    Tipo: {vehiculoInfo.tipo}
-                  </p>
-                )}
+                {vehiculoInfo.tipo && <p className="text-sm text-slate-500 my-1">Tipo: {vehiculoInfo.tipo}</p>}
               </div>
               <div className="flex gap-3">
                 <button
@@ -263,7 +204,6 @@ export default function AccesosSeguridad() {
         )}
       </div>
 
-      {/* TABLA DE ACCESOS */}
       <div className="bg-white rounded-2xl p-8 shadow-md">
         <div className="flex justify-between items-center mb-6">
           <h5 className="font-bold text-slate-800 flex items-center gap-2">
@@ -300,9 +240,7 @@ export default function AccesosSeguridad() {
                     <td className="p-4 text-slate-500">{acceso.placa}</td>
                     <td className="p-4">
                       <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${
-                        acceso.tipo === "ENTRADA" 
-                          ? "bg-emerald-100 text-emerald-800" 
-                          : "bg-red-100 text-red-800"
+                        acceso.tipo === "ENTRADA" ? "bg-emerald-100 text-emerald-800" : "bg-red-100 text-red-800"
                       }`}>
                         {acceso.tipo}
                       </span>
@@ -310,9 +248,7 @@ export default function AccesosSeguridad() {
                     <td className="p-4 text-slate-500">{acceso.nombreResidente}</td>
                     <td className="p-4">
                       <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${
-                        acceso.esResidente 
-                          ? "bg-blue-100 text-blue-800" 
-                          : "bg-amber-100 text-amber-800"
+                        acceso.esResidente ? "bg-blue-100 text-blue-800" : "bg-amber-100 text-amber-800"
                       }`}>
                         {acceso.esResidente ? "Residente" : "Visitante"}
                       </span>

@@ -1,16 +1,18 @@
 import { useState, useEffect } from "react";
-import { FiUser, FiMail, FiPhone, FiShield, FiEdit2, FiSave, FiLock, FiX } from "react-icons/fi";
+import { FiUser, FiMail, FiPhone, FiShield, FiEdit2, FiSave, FiLock, FiX, FiLoader } from "react-icons/fi";
+import { getCurrentUser } from "../../services/api";
 
 export default function PerfilSeguridad() {
   const [editando, setEditando] = useState(false);
   const [mensaje, setMensaje] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const [perfil, setPerfil] = useState({
-    nombres: "Usuario",
-    apellidos: "Demo",
-    dni: "12345678",
-    email: "seguridad@parking.com",
-    telefono: "999999999",
+    nombres: "",
+    apellidos: "",
+    dni: "",
+    email: "",
+    telefono: "",
     rol: "Seguridad",
     turno: "Noche (22:00 - 06:00)",
     fechaIngreso: "2024-01-15",
@@ -20,11 +22,37 @@ export default function PerfilSeguridad() {
   const [formData, setFormData] = useState({ ...perfil });
 
   useEffect(() => {
-    const guardado = JSON.parse(localStorage.getItem("perfilSeguridad") || "null");
-    if (guardado) {
-      setPerfil(guardado);
-      setFormData(guardado);
-    }
+    const cargarPerfil = async () => {
+      setLoading(true);
+      try {
+        const data = await getCurrentUser();
+        const nuevoPerfil = {
+          nombres: data.nombre || data.nombres || data.firstName || "",
+          apellidos: data.apellidos || data.lastName || "",
+          dni: data.dni || data.documento || "",
+          email: data.correo || data.email || "",
+          telefono: data.telefono || data.celular || "",
+          rol: data.rol || "Seguridad",
+          turno: data.turno || "Noche (22:00 - 06:00)",
+          fechaIngreso: data.fechaIngreso || "2024-01-15",
+          ultimoAcceso: new Date().toLocaleString(),
+        };
+        setPerfil(nuevoPerfil);
+        setFormData(nuevoPerfil);
+        localStorage.setItem("perfilSeguridad", JSON.stringify(nuevoPerfil));
+      } catch (err) {
+        const guardado = JSON.parse(localStorage.getItem("perfilSeguridad") || "null");
+        if (guardado) {
+          setPerfil(guardado);
+          setFormData(guardado);
+        }
+        console.error("Error cargando perfil:", err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    cargarPerfil();
   }, []);
 
   const handleChange = (e) => {
@@ -34,10 +62,7 @@ export default function PerfilSeguridad() {
 
   const guardar = (e) => {
     e.preventDefault();
-    const nuevo = {
-      ...formData,
-      ultimoAcceso: new Date().toLocaleString(),
-    };
+    const nuevo = { ...formData, ultimoAcceso: new Date().toLocaleString() };
     localStorage.setItem("perfilSeguridad", JSON.stringify(nuevo));
     setPerfil(nuevo);
     setEditando(false);
@@ -51,7 +76,7 @@ export default function PerfilSeguridad() {
     setMensaje(null);
   };
 
-  const iniciales = `${perfil.nombres.charAt(0)}${perfil.apellidos.charAt(0)}`;
+  const iniciales = `${(perfil.nombres || "U").charAt(0)}${(perfil.apellidos || "D").charAt(0)}`;
 
   const InfoRow = ({ label, icon: Icon, value, children }) => (
     <div>
@@ -74,27 +99,30 @@ export default function PerfilSeguridad() {
           value={value}
           onChange={onChange}
           readOnly={readOnly}
-          className={`w-full px-3 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-emerald-400 ${
-            readOnly ? "bg-slate-50" : ""
-          }`}
+          className={`w-full px-3 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-emerald-400 ${readOnly ? "bg-slate-50" : ""}`}
         />
       </div>
     </div>
   );
 
+  if (loading) {
+    return (
+      <div className="p-6 max-w-6xl mx-auto flex items-center justify-center h-64">
+        <FiLoader size={32} className="animate-spin text-emerald-500" />
+      </div>
+    );
+  }
+
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-extrabold text-slate-800">Perfil</h1>
         <p className="text-slate-500 mt-1 text-sm">Información del agente de seguridad</p>
       </div>
 
-      {/* Tarjeta de perfil */}
       <div className="bg-white rounded-2xl p-8 shadow-md mb-8">
         <div className="flex justify-between items-start flex-wrap gap-4 mb-8">
           <div className="flex items-center gap-4">
-            {/* Avatar */}
             <div className="w-20 h-20 rounded-full bg-emerald-500 flex items-center justify-center text-white text-2xl font-extrabold">
               {iniciales}
             </div>
@@ -123,14 +151,12 @@ export default function PerfilSeguridad() {
           )}
         </div>
 
-        {/* Mensaje */}
         {mensaje && (
           <div className="p-4 rounded-xl mb-6 bg-emerald-50 border border-emerald-500 text-emerald-800">
             {mensaje.texto}
           </div>
         )}
 
-        {/* Formulario o datos */}
         {editando ? (
           <form onSubmit={guardar}>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
@@ -172,7 +198,6 @@ export default function PerfilSeguridad() {
         )}
       </div>
 
-      {/* Información del sistema */}
       <div className="bg-white rounded-2xl p-8 shadow-md">
         <h5 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
           <FiLock size={20} />

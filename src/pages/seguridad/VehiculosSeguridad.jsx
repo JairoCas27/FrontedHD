@@ -1,15 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { FiActivity, FiSearch, FiTruck, FiShield, FiLoader } from "react-icons/fi";
-
-const API_URL = "https://sgc-backend-vfvl.onrender.com/api/security";
-
-const getHeaders = () => {
-  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
-  return {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${usuario?.token || ""}`
-  };
-};
+import { verifyVehicle } from "../../services/api";
 
 export default function VehiculosSeguridad() {
   const [placaBusqueda, setPlacaBusqueda] = useState("");
@@ -28,25 +19,15 @@ export default function VehiculosSeguridad() {
 
     setLoading(true);
     try {
-      const res = await fetch(`${API_URL}/vehicles/verify/${placaBusqueda.trim().toUpperCase()}`, {
-        headers: getHeaders()
-      });
-
-      if (!res.ok) {
-        if (res.status === 404) {
-          setMensaje({ tipo: "danger", texto: "❌ Vehículo no registrado en el sistema" });
-        } else {
-          throw new Error("Error al verificar vehículo");
-        }
-        setLoading(false);
-        return;
-      }
-
-      const data = await res.json();
+      const data = await verifyVehicle(placaBusqueda.trim().toUpperCase());
       setResultado(data);
       setMensaje({ tipo: "success", texto: "✅ Vehículo encontrado" });
     } catch (err) {
-      setMensaje({ tipo: "danger", texto: `❌ Error: ${err.message}` });
+      if (err.message.includes("404") || err.message.includes("no registrado")) {
+        setMensaje({ tipo: "danger", texto: "❌ Vehículo no registrado en el sistema" });
+      } else {
+        setMensaje({ tipo: "danger", texto: `❌ Error: ${err.message}` });
+      }
     } finally {
       setLoading(false);
     }
@@ -61,13 +42,11 @@ export default function VehiculosSeguridad() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-extrabold text-slate-800">Vehículos</h1>
         <p className="text-slate-500 mt-1 text-sm">Verificación de vehículos registrados</p>
       </div>
 
-      {/* Búsqueda */}
       <div className="bg-white rounded-2xl p-8 shadow-md mb-8">
         <h5 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
           <FiSearch size={20} />
@@ -105,7 +84,6 @@ export default function VehiculosSeguridad() {
           </div>
         )}
 
-        {/* Resultado */}
         {resultado && (
           <div className="p-6 rounded-xl bg-emerald-50 border border-emerald-500">
             <div className="flex items-center gap-2 mb-4">
@@ -125,7 +103,6 @@ export default function VehiculosSeguridad() {
         )}
       </div>
 
-      {/* Nota: Lista de vehículos registrados */}
       <div className="bg-white rounded-2xl p-8 shadow-md">
         <div className="flex justify-between items-center mb-6">
           <h5 className="font-bold text-slate-800 flex items-center gap-2">

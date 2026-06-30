@@ -1,15 +1,6 @@
 import { useState, useEffect } from "react";
 import { FiActivity, FiUserPlus, FiClock, FiLogOut, FiUsers, FiLoader } from "react-icons/fi";
-
-const API_URL = "https://sgc-backend-vfvl.onrender.com/api/security";
-
-const getHeaders = () => {
-  const usuario = JSON.parse(localStorage.getItem("usuario") || "{}");
-  return {
-    "Content-Type": "application/json",
-    "Authorization": `Bearer ${usuario?.token || ""}`
-  };
-};
+import { registerEntry, registerExit } from "../../services/api";
 
 export default function VisitasSeguridad() {
   const [formData, setFormData] = useState({
@@ -59,15 +50,7 @@ export default function VisitasSeguridad() {
         fechaInquilino: new Date().toISOString()
       };
 
-      const res = await fetch(`${API_URL}/access-logs/entry`, {
-        method: "POST",
-        headers: getHeaders(),
-        body: JSON.stringify(body)
-      });
-
-      if (!res.ok) throw new Error("Error al registrar visita");
-
-      const data = await res.json();
+      const data = await registerEntry(body);
 
       const nuevaVisita = {
         id: data.id || Date.now(),
@@ -99,15 +82,7 @@ export default function VisitasSeguridad() {
   const marcarSalida = async (id) => {
     setLoading(true);
     try {
-      const body = { idRegistro: id };
-
-      const res = await fetch(`${API_URL}/access-logs/exit`, {
-        method: "PUT",
-        headers: getHeaders(),
-        body: JSON.stringify(body)
-      });
-
-      if (!res.ok) throw new Error("Error al registrar salida");
+      await registerExit(id);
 
       const guardadas = JSON.parse(localStorage.getItem("visitasSeguridad") || "[]");
       const actualizadas = guardadas.map(v => 
@@ -146,13 +121,11 @@ export default function VisitasSeguridad() {
 
   return (
     <div className="p-6 max-w-6xl mx-auto">
-      {/* Header */}
       <div className="mb-8">
         <h1 className="text-2xl font-extrabold text-slate-800">Visitas</h1>
         <p className="text-slate-500 mt-1 text-sm">Registro de visitantes del condominio</p>
       </div>
 
-      {/* Formulario */}
       <div className="bg-white rounded-2xl p-8 shadow-md mb-8">
         <h5 className="font-bold text-slate-800 mb-6 flex items-center gap-2">
           <FiUserPlus size={20} />
@@ -202,7 +175,6 @@ export default function VisitasSeguridad() {
         </form>
       </div>
 
-      {/* Visitas Activas */}
       <div className="bg-white rounded-2xl p-8 shadow-md">
         <div className="flex justify-between items-center mb-6">
           <h5 className="font-bold text-slate-800 flex items-center gap-2">
