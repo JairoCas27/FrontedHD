@@ -1,34 +1,18 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { FiEdit2, FiRefreshCw, FiX } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import BadgeEstado from '../../components/BadgeEstado'
-import { getAdminUsers, createAdminUser, updateAdminUser, patchAdminUserStatus } from '../../services/api' 
+import { useAdminUsers } from '../../hooks/Admin/useAdminUsers' 
 
 export default function Usuarios() {
   const colorAdmin = "rgb(52,151,195)"
 
-  const [usuarios, setUsuarios] = useState([])
-  const [loading, setLoading] = useState(true)
+  
+  const { usuarios, loading, persistirUsuario, alternarAccesoUsuario } = useAdminUsers()
+
   const [showModal, setShowModal] = useState(false)
   const [editando, setEditando] = useState(null)
   const [formData, setFormData] = useState({ nombre: '', email: '', rol: 'Residente', estado: 'Activo' })
-
-  //  Carga inicial de datos reales desde el servidor
-  useEffect(() => {
-    cargarUsuarios()
-  }, [])
-
-  const cargarUsuarios = async () => {
-    try {
-      setLoading(true)
-      const data = await getAdminUsers()
-      setUsuarios(data || [])
-    } catch (error) {
-      console.error('Error al traer los usuarios del servidor:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleOpenModal = (usuario = null) => {
     if (usuario) {
@@ -51,7 +35,7 @@ export default function Usuarios() {
     setEditando(null)
   }
 
-  // 💾 Persistencia real (POST /api/admin/users y PUT /api/admin/users/{id})
+  // 💾 Guardado real (delegando POST/PUT al Hook)
   const handleSave = async () => {
     if (formData.nombre.trim() === '' || formData.email.trim() === '') {
       alert('Por favor, completa los campos requeridos')
@@ -59,31 +43,23 @@ export default function Usuarios() {
     }
 
     try {
-      if (editando) {
-        // Llamada PUT para actualizar
-        await updateAdminUser(editando.id, formData)
-      } else {
-        // Llamada POST para registrar
-        await createAdminUser(formData)
-      }
-      await cargarUsuarios() // Refrescar la grilla de datos
+      // Pasamos el ID (si se está editando) junto a los datos del formulario
+      await persistirUsuario(editando ? editando.id : null, formData)
       handleCloseModal()
     } catch (error) {
-      console.error('Error al guardar el usuario en el servidor:', error)
+      console.error('Error al guardar el usuario:', error)
       alert('Hubo un problema al intentar guardar los datos en el servidor.')
     }
   }
 
-  // 🔄 Alternar estado real a través de PATCH /api/admin/users/{id}/status
+  // 🔄 Cambiar estado real (delegando PATCH al Hook)
   const handleToggleStatus = async (usuario) => {
     const nuevoEstado = usuario.estado === 'Activo' ? 'Inactivo' : 'Activo'
-    const esActivo = nuevoEstado === 'Activo'
     
     if (!window.confirm(`¿Seguro que deseas marcar al usuario como ${nuevoEstado}?`)) return
 
     try {
-      await patchAdminUserStatus(usuario.id, esActivo)
-      await cargarUsuarios() // Refrescar la tabla
+      await alternarAccesoUsuario(usuario)
     } catch (error) {
       console.error('Error al cambiar el estado del usuario:', error)
       alert('No se pudo actualizar el estado de acceso del usuario.')
@@ -220,7 +196,7 @@ export default function Usuarios() {
         </div>
       )}
 
-      {/* 3. Modal de Creación / Edición Con Labels Orgánicos */}
+      {/* 3. Modal de Creación / Edición */}
       {showModal && (
         <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" }}>
           <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "460px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.08)", border: "1px solid #e2e8f0", overflow: "hidden" }}>
