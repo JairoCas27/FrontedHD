@@ -1,31 +1,16 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { FiBarChart2, FiDownload, FiPieChart } from "react-icons/fi"
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import { getAdminDashboardMetrics } from '../../services/api' // Ajusta la ruta a tus apis
+import { useAdminDashboard } from '../../hooks/Admin/useAdminDashboard' 
 
 const COLORS = ['#3497C3', '#10b981', '#f59e0b']
 
 export default function Reportes() {
   const colorAdmin = "rgb(52,151,195)"
   const [reporteSeleccionado, setReporteSeleccionado] = useState('accesos')
-  const [metrics, setMetrics] = useState(null)
-  const [loading, setLoading] = useState(true)
 
-  // 🔄 Carga de métricas y analíticas reales desde Spring Boot
-  useEffect(() => {
-    async function cargarReportes() {
-      try {
-        setLoading(true)
-        const data = await getAdminDashboardMetrics()
-        setMetrics(data)
-      } catch (error) {
-        console.error("Error al cargar analíticas en Reportes:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    cargarReportes()
-  }, [])
+  
+  const { metrics, loading } = useAdminDashboard()
 
   const handleExportar = () => {
     alert('Función de exportación de reportes en desarrollo')
@@ -54,7 +39,7 @@ export default function Reportes() {
   if (loading || !metrics) {
     return (
       <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", color: "#64748b", fontWeight: "600", textAlign: "center" }}>
-        🔄 Sincronizando reportes y balances con el servidor de base de datos...
+         Sincronizando reportes y balances con el servidor de base de datos...
       </div>
     )
   }
@@ -266,7 +251,7 @@ export default function Reportes() {
                     <div style={{ width: "100%", height: "6px", backgroundColor: "#f1f5f9", borderRadius: "9999px", overflow: "hidden" }}>
                       <div style={{ width: `${totalPlazas > 0 ? (item.cantidad / totalPlazas) * 100 : 0}%`, backgroundColor: item.color, height: "100%" }} />
                     </div>
-                    <small style={{ color: "#94a3b8", fontSize: "0.7rem", display: "block", marginTop: "0.2rem" }}>{item.explicacion}</small>
+                    <small style={{ color: "#94a3b8", fontSize: "0.7rem", display: "block", marginTop: "0.2" }}>{item.explicacion}</small>
                   </div>
                 ))}
               </div>
