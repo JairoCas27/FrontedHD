@@ -1,45 +1,28 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { FiGitCommit, FiTrash2, FiFolder, FiX } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
-import { getAdminStructure, createAdminStructureNode, deleteAdminStructureNode } from '../../services/api' // Ajusta de apis
+import { useAdminStructure } from '../../hooks/Admin/useAdminStructure' 
 
 export default function Estructura() {
   const colorAdmin = "rgb(52,151,195)"
   
-  const [estructura, setEstructura] = useState([])
-  const [loading, setLoading] = useState(true)
+  
+  const { estructura, loading, insertarNodo, eliminarNodo } = useAdminStructure()
+  
   const [showModal, setShowModal] = useState(false)
   const [nuevoNodo, setNuevoNodo] = useState({ nombre: '', padreId: '' })
 
-  // Carga inicial del árbol desde el backend
-  useEffect(() => {
-    cargarEstructura()
-  }, [])
-
-  const cargarEstructura = async () => {
-    try {
-      setLoading(true)
-      const data = await getAdminStructure()
-      setEstructura(data || [])
-    } catch (error) {
-      console.error("Error al traer el mapa de estructura:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  //  Persistencia real POST /api/admin/structure/nodes
+  
   const handleAddNode = async (e) => {
     e.preventDefault()
     if (!nuevoNodo.nombre.trim()) return
 
     try {
-      await createAdminStructureNode({
+      await insertarNodo({
         nombre: nuevoNodo.nombre.trim(),
         padreId: nuevoNodo.padreId ? parseInt(nuevoNodo.padreId) : null
       })
       
-      await cargarEstructura() // Recargar el árbol actualizado
       setShowModal(false)
       setNuevoNodo({ nombre: '', padreId: '' })
     } catch (error) {
@@ -48,13 +31,12 @@ export default function Estructura() {
     }
   }
 
-  // 🗑️ Persistencia real DELETE /api/admin/structure/nodes/{id}
+  // 🗑️ Eliminación real a través del Hook
   const handleDeleteNode = async (id) => {
     if (!window.confirm("¿Seguro que deseas eliminar este nodo de la estructura arquitectónica?")) return
 
     try {
-      await deleteAdminStructureNode(id)
-      await cargarEstructura() // Refrescar vista instantáneamente
+      await eliminarNodo(id)
     } catch (error) {
       console.error("Error al eliminar el nodo:", error)
       alert("No se pudo eliminar el nodo. Asegúrate de que no contenga subelementos activos.")
@@ -160,7 +142,7 @@ export default function Estructura() {
         </div>
       )}
 
-      {/* 3. Modal de Creación (POST) */}
+      {/* 3. Modal de Creación */}
       {showModal && (
         <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" }}>
           <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "420px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.08)", border: "1px solid #e2e8f0", overflow: "hidden" }}>
