@@ -1,31 +1,16 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { FiShield, FiSearch, FiFilter, FiX } from "react-icons/fi"
 import BadgeEstado from '../../components/BadgeEstado'
-import { getAdminLogs } from '../../services/api' // Ajusta la ruta a tu archivo de apis
+import { useAdminLogs } from '../../hooks/Admin/useAdminLogs' 
 
 export default function Auditoria() {
   const colorAdmin = "rgb(52,151,195)"
   
-  const [logs, setLogs] = useState([])
-  const [loading, setLoading] = useState(true)
+  
+  const { logs, loading } = useAdminLogs()
+  
   const [filtroModulo, setFiltroModulo] = useState('')
   const [filtroUsuario, setFiltroUsuario] = useState('')
-
-  // 🔄 Carga de la bitácora real desde el servidor
-  useEffect(() => {
-    async function cargarLogs() {
-      try {
-        setLoading(true)
-        const data = await getAdminLogs()
-        setLogs(data || [])
-      } catch (error) {
-        console.error("Error al traer la bitácora de auditoría:", error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    cargarLogs()
-  }, [])
 
   // Filtrado dinámico sobre los logs de la base de datos
   const logsFiltrados = logs.filter(log => {
@@ -138,7 +123,6 @@ export default function Auditoria() {
                     </td>
                     <td style={{ padding: "1rem", fontFamily: "monospace", color: "#64748b", fontWeight: "700" }}>{log.ip}</td>
                     <td style={{ padding: "1rem 1.5rem" }}>
-                      {/* Adaptado para renderizar con BadgeEstado inteligente */}
                       <BadgeEstado estado={log.estado === 'Dentro' || log.estado === 'Éxito' || log.estado === 'Activo' ? 'Activo' : 'Inactivo'} />
                     </td>
                   </tr>
