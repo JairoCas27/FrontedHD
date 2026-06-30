@@ -8,6 +8,7 @@ export function useAdminStructure() {
   const cargarEstructura = async () => {
     try {
       setLoading(true);
+      
       const data = await getAdminStructure();
       setEstructura(data || []);
     } catch (error) {
@@ -41,5 +42,11 @@ export function useAdminStructure() {
     cargarEstructura();
   }, []);
 
-  return { estructura, loading, insertarNodo, eliminarNodo, refrescar: cargarEstructura };
+  return { 
+    estructura, 
+    loading, 
+    insertarNodo, 
+    eliminarNodo, 
+    refrescar: cargarEstructura 
+  };
 }
