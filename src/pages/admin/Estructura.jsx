@@ -1,76 +1,63 @@
-import React, { useState } from 'react'
-import { FiGitCommit, FiPlus, FiTrash2, FiFolder, FiFolderPlus, FiX } from "react-icons/fi"
+import React, { useState, useEffect } from 'react'
+import { FiGitCommit, FiTrash2, FiFolder, FiX } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
-
-// Simulación de datos de la estructura arbórea jerárquica
-const estructuraInicial = [
-  {
-    id: 1,
-    nombre: "Torre A",
-    tipo: "Torre",
-    pisos: [
-      { id: 11, nombre: "Piso 1", departamentos: ["Dpto 101", "Dpto 102", "Dpto 103"] },
-      { id: 12, nombre: "Piso 2", departamentos: ["Dpto 201", "Dpto 202"] }
-    ]
-  },
-  {
-    id: 2,
-    nombre: "Torre B",
-    tipo: "Torre",
-    pisos: [
-      { id: 21, nombre: "Piso 1", departamentos: ["Dpto 101", "Dpto 102"] }
-    ]
-  }
-]
+import { getAdminStructure, createAdminStructureNode, deleteAdminStructureNode } from '../../services/api' // Ajusta de apis
 
 export default function Estructura() {
   const colorAdmin = "rgb(52,151,195)"
   
-  const [estructura, setEstructura] = useState(estructuraInicial)
+  const [estructura, setEstructura] = useState([])
+  const [loading, setLoading] = useState(true)
   const [showModal, setShowModal] = useState(false)
   const [nuevoNodo, setNuevoNodo] = useState({ nombre: '', padreId: '' })
 
-  // Simulación de POST /api/admin/structure/nodes
-  const handleAddNode = (e) => {
+  // Carga inicial del árbol desde el backend
+  useEffect(() => {
+    cargarEstructura()
+  }, [])
+
+  const cargarEstructura = async () => {
+    try {
+      setLoading(true)
+      const data = await getAdminStructure()
+      setEstructura(data || [])
+    } catch (error) {
+      console.error("Error al traer el mapa de estructura:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  //  Persistencia real POST /api/admin/structure/nodes
+  const handleAddNode = async (e) => {
     e.preventDefault()
     if (!nuevoNodo.nombre.trim()) return
 
-    if (!nuevoNodo.padreId) {
-      // Agregar nueva Torre raíz
-      const newId = Date.now()
-      setEstructura([...estructura, { id: newId, nombre: nuevoNodo.nombre, tipo: "Torre", pisos: [] }])
-    } else {
-      // Agregar Piso a una Torre existente
-      setEstructura(estructura.map(torre => {
-        if (torre.id === parseInt(nuevoNodo.padreId)) {
-          return {
-            ...torre,
-            pisos: [...torre.pisos, { id: Date.now(), nombre: nuevoNodo.nombre, departamentos: [] }]
-          }
-        }
-        return torre
-      }))
+    try {
+      await createAdminStructureNode({
+        nombre: nuevoNodo.nombre.trim(),
+        padreId: nuevoNodo.padreId ? parseInt(nuevoNodo.padreId) : null
+      })
+      
+      await cargarEstructura() // Recargar el árbol actualizado
+      setShowModal(false)
+      setNuevoNodo({ nombre: '', padreId: '' })
+    } catch (error) {
+      console.error("Error al insertar el nodo estructural:", error)
+      alert("Hubo un problema al crear la sección en el servidor.")
     }
-    
-    setShowModal(false)
-    setNuevoNodo({ nombre: '', padreId: '' })
   }
 
-  // Simulación de DELETE /api/admin/structure/nodes/{id}
-  const handleDeleteNode = (torreId, pisoId = null) => {
+  // 🗑️ Persistencia real DELETE /api/admin/structure/nodes/{id}
+  const handleDeleteNode = async (id) => {
     if (!window.confirm("¿Seguro que deseas eliminar este nodo de la estructura arquitectónica?")) return
 
-    if (pisoId === null) {
-      // Eliminar Torre completa
-      setEstructura(estructura.filter(t => t.id !== torreId))
-    } else {
-      // Eliminar Piso dentro de una torre
-      setEstructura(estructura.map(t => {
-        if (t.id === torreId) {
-          return { ...t, pisos: t.pisos.filter(p => p.id !== pisoId) }
-        }
-        return t
-      }))
+    try {
+      await deleteAdminStructureNode(id)
+      await cargarEstructura() // Refrescar vista instantáneamente
+    } catch (error) {
+      console.error("Error al eliminar el nodo:", error)
+      alert("No se pudo eliminar el nodo. Asegúrate de que no contenga subelementos activos.")
     }
   }
 
@@ -106,67 +93,74 @@ export default function Estructura() {
         onBotonClick={() => setShowModal(true)}
       />
 
-      {/* 2. Árbol de Estructura Jerárquica */}
-      <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", width: "100%" }}>
-        {estructura.map((torre) => (
-          <div key={torre.id} style={{ backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "1rem", padding: "1.5rem", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.01)" }}>
-            
-            {/* Nivel 1: Torre */}
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: "1rem", marginBottom: "1rem" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <FiFolder size={20} style={{ color: colorAdmin }} />
-                <span style={{ fontSize: "1.1rem", fontWeight: "800", color: "#0f172a" }}>{torre.nombre}</span>
-                <span style={{ fontSize: "0.75rem", backgroundColor: "rgba(52,151,195,0.1)", color: colorAdmin, padding: "0.2rem 0.5rem", borderRadius: "0.375rem", fontWeight: "700" }}>
-                  {torre.pisos.length} Niveles
-                </span>
-              </div>
-              <button 
-                onClick={() => handleDeleteNode(torre.id)}
-                style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: "0.25rem" }}
-                title="Eliminar Torre"
-              >
-                <FiTrash2 size={16} />
-              </button>
-            </div>
-
-            {/* Nivel 2: Pisos / Subnodos */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "1rem", paddingLeft: "1.25rem", borderLeft: "2px dashed #cbd5e1" }}>
-              {torre.pisos.map((piso) => (
-                <div key={piso.id} style={{ backgroundColor: "#f8fafc", padding: "1rem", borderRadius: "0.75rem", border: "1px solid #e2e8f0" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontWeight: "700", color: "#334155", fontSize: "0.9rem" }}>
-                      <FiGitCommit style={{ color: "#94a3b8" }} />
-                      <span>{piso.nombre}</span>
-                    </div>
-                    <button 
-                      onClick={() => handleDeleteNode(torre.id, piso.id)}
-                      style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer" }}
-                    >
-                      <FiTrash2 size={14} />
-                    </button>
-                  </div>
-
-                  {/* Nivel 3: Unidades / Hojas del árbol */}
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", paddingLeft: "1rem" }}>
-                    {piso.departamentos.length > 0 ? (
-                      piso.departamentos.map((dpto, idx) => (
-                        <span key={idx} style={{ fontSize: "0.75rem", backgroundColor: "#ffffff", border: "1px solid #e2e8f0", padding: "0.2rem 0.5rem", borderRadius: "0.375rem", color: "#475569", fontWeight: "600" }}>
-                          {dpto}
-                        </span>
-                      ))
-                    ) : (
-                      <span style={{ fontSize: "0.75rem", color: "#94a3b8", fontStyle: "italic" }}>Sin unidades vinculadas</span>
-                    )}
-                  </div>
+      {/* 2. Árbol de Estructura Jerárquica o Spinner */}
+      {loading ? (
+        <div style={{ textAlign: "center", padding: "4rem", color: "#64748b", fontWeight: "600" }}>
+          🔄 Dibujando organigrama arquitectónico desde el servidor...
+        </div>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", width: "100%" }}>
+          {estructura.map((torre) => (
+            <div key={torre.id} style={{ backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "1rem", padding: "1.5rem", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.01)" }}>
+              
+              {/* Nivel 1: Torre */}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: "1rem", marginBottom: "1rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <FiFolder size={20} style={{ color: colorAdmin }} />
+                  <span style={{ fontSize: "1.1rem", fontWeight: "800", color: "#0f172a" }}>{torre.nombre}</span>
+                  <span style={{ fontSize: "0.75rem", backgroundColor: "rgba(52,151,195,0.1)", color: colorAdmin, padding: "0.2rem 0.5rem", borderRadius: "0.375rem", fontWeight: "700" }}>
+                    {torre.pisos?.length || 0} Niveles
+                  </span>
                 </div>
-              ))}
+                <button 
+                  onClick={() => handleDeleteNode(torre.id)}
+                  style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: "0.25rem" }}
+                  title="Eliminar Torre"
+                >
+                  <FiTrash2 size={16} />
+                </button>
+              </div>
+
+              {/* Nivel 2: Pisos / Subnodos */}
+              <div style={{ display: "flex", flexDirection: "column", gap: "1rem", paddingLeft: "1.25rem", borderLeft: "2px dashed #cbd5e1" }}>
+                {torre.pisos?.map((piso) => (
+                  <div key={piso.id} style={{ backgroundColor: "#f8fafc", padding: "1rem", borderRadius: "0.75rem", border: "1px solid #e2e8f0" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontWeight: "700", color: "#334155", fontSize: "0.9rem" }}>
+                        <FiGitCommit style={{ color: "#94a3b8" }} />
+                        <span>{piso.nombre}</span>
+                      </div>
+                      <button 
+                        onClick={() => handleDeleteNode(piso.id)}
+                        style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer" }}
+                        title="Eliminar Nivel"
+                      >
+                        <FiTrash2 size={14} />
+                      </button>
+                    </div>
+
+                    {/* Nivel 3: Unidades / Hojas del árbol */}
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", paddingLeft: "1rem" }}>
+                      {piso.departamentos?.length > 0 ? (
+                        piso.departamentos.map((dpto, idx) => (
+                          <span key={idx} style={{ fontSize: "0.75rem", backgroundColor: "#ffffff", border: "1px solid #e2e8f0", padding: "0.2rem 0.5rem", borderRadius: "0.375rem", color: "#475569", fontWeight: "600" }}>
+                            {dpto}
+                          </span>
+                        ))
+                      ) : (
+                        <span style={{ fontSize: "0.75rem", color: "#94a3b8", fontStyle: "italic" }}>Sin unidades vinculadas</span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
             </div>
+          ))}
+        </div>
+      )}
 
-          </div>
-        ))}
-      </div>
-
-      {/* 3. Modal de Creación (POST /api/admin/structure/nodes) */}
+      {/* 3. Modal de Creación (POST) */}
       {showModal && (
         <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" }}>
           <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "420px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.08)", border: "1px solid #e2e8f0", overflow: "hidden" }}>
