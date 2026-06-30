@@ -2,25 +2,22 @@ import React, { useState } from 'react'
 import { FiEdit2, FiRefreshCw, FiX } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import BadgeEstado from '../../components/BadgeEstado'
-import { useAdminUsers } from '../../hooks/Admin/useAdminUsers' 
+import { useAdminUsers } from '../../hooks/Admin/useAdminUsers'
 
 export default function Usuarios() {
   const colorAdmin = "rgb(52,151,195)"
 
-  //  Cargamos los métodos corregidos desde el hook (que ya lee data.items)
   const { usuarios, loading, registrarUsuario, modificarUsuario, cambiarEstadoUsuario } = useAdminUsers()
 
   const [showModal, setShowModal] = useState(false)
   const [editando, setEditando] = useState(null)
-  
-  //  formData reestructurado con las variables numéricas y strings del Swagger
-  const [formData, setFormData] = useState({ 
-    nombres: '', 
-    apellidos: '', 
-    correo: '', 
-    telefono: '', 
-    contrasena: '', 
-    rol: 'Residente' 
+  const [formData, setFormData] = useState({
+    nombres: '',
+    apellidos: '',
+    correo: '',
+    telefono: '',
+    contrasena: '',
+    rol: 'Residente'
   })
 
   const handleOpenModal = (usuario = null) => {
@@ -31,7 +28,7 @@ export default function Usuarios() {
         apellidos: usuario.apellidos || '',
         correo: usuario.correo || '',
         telefono: usuario.telefono || '',
-        contrasena: '', // Vacío por seguridad en edición
+        contrasena: '',
         rol: usuario.rol || 'Residente'
       })
     } else {
@@ -46,7 +43,6 @@ export default function Usuarios() {
     setEditando(null)
   }
 
-  // 💾 Guardado real adaptado a las estructuras de los Request Bodies
   const handleSave = async () => {
     if (formData.nombres.trim() === '' || formData.apellidos.trim() === '') {
       alert('Por favor, completa los campos requeridos')
@@ -55,15 +51,12 @@ export default function Usuarios() {
 
     try {
       if (editando) {
-        // El PUT solo toma nombres, apellidos y telefono según el Swagger
-        const putBody = {
+        await modificarUsuario(editando.id, {
           nombres: formData.nombres,
           apellidos: formData.apellidos,
           telefono: formData.telefono
-        }
-        await modificarUsuario(editando.id, putBody)
+        })
       } else {
-        // El POST toma todos los datos incluyendo contrasena
         if (formData.correo.trim() === '' || formData.contrasena.trim() === '') {
           alert('El correo y la contraseña son obligatorios para nuevos usuarios')
           return
@@ -72,22 +65,16 @@ export default function Usuarios() {
       }
       handleCloseModal()
     } catch (error) {
-      console.error('Error al guardar el usuario:', error)
       alert('Hubo un problema al intentar guardar los datos en el servidor.')
     }
   }
 
-  // 🔄 Cambiar estado real (delegando PATCH de booleano al Hook)
   const handleToggleStatus = async (usuario) => {
-    const nuevoEstadoBooleano = !usuario.activo
-    const textoConfirmar = nuevoEstadoBooleano ? 'Activo' : 'Inactivo'
-    
-    if (!window.confirm(`¿Seguro que deseas marcar al usuario como ${textoConfirmar}?`)) return
-
+    const nuevoEstado = !usuario.activo
+    if (!window.confirm(`¿Seguro que deseas marcar al usuario como ${nuevoEstado ? 'Activo' : 'Inactivo'}?`)) return
     try {
-      await cambiarEstadoUsuario(usuario.id, nuevoEstadoBooleano)
+      await cambiarEstadoUsuario(usuario.id, nuevoEstado)
     } catch (error) {
-      console.error('Error al cambiar el estado del usuario:', error)
       alert('No se pudo actualizar el estado de acceso del usuario.')
     }
   }
@@ -124,17 +111,15 @@ export default function Usuarios() {
 
   return (
     <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
-      
-      {/* 1. Encabezado Reutilizable */}
-      <EncabezadoTabla 
-        titulo="Usuarios" 
-        subtitulo="Gestión de residentes, personal de seguridad y administración del condominio" 
+
+      <EncabezadoTabla
+        titulo="Usuarios"
+        subtitulo="Gestión de residentes, personal de seguridad y administración del condominio"
         botonTexto="Nuevo Usuario"
         accentColor={colorAdmin}
         onBotonClick={() => handleOpenModal()}
       />
 
-      {/* 2. Tabla de Datos Real Premium o Spinner de Carga */}
       {loading ? (
         <div style={{ textAlign: "center", padding: "4rem", color: "#64748b", fontWeight: "600" }}>
           🔄 Cargando la lista de usuarios desde el backend...
@@ -155,20 +140,19 @@ export default function Usuarios() {
               </thead>
               <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
                 {usuarios.map((usuario) => {
-                  const configRol = obtenerEstiloRol(usuario.rol);
-                  // 🟢 Combinamos nombres y apellidos del Swagger
-                  const nombreCompleto = `${usuario.nombres || ''} ${usuario.apellidos || ''}`.trim() || 'Sin registrar';
-                  const estadoTexto = usuario.activo ? 'Activo' : 'Inactivo';
+                  const configRol = obtenerEstiloRol(usuario.rol)
+                  const nombreCompleto = `${usuario.nombres || ''} ${usuario.apellidos || ''}`.trim() || 'Sin registrar'
+                  const estadoTexto = usuario.activo ? 'Activo' : 'Inactivo'
 
                   return (
                     <tr key={usuario.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
                       <td style={{ padding: "1rem 1.5rem", fontFamily: "monospace", fontWeight: "700", color: "#94a3b8" }}>#{usuario.id}</td>
                       <td style={{ padding: "1rem" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                          <div style={{ 
-                            width: "32px", height: "32px", borderRadius: "50%", 
-                            backgroundColor: "rgba(52,151,195,0.08)", color: colorAdmin, 
-                            display: "flex", alignItems: "center", justifyContent: "center", 
+                          <div style={{
+                            width: "32px", height: "32px", borderRadius: "50%",
+                            backgroundColor: "rgba(52,151,195,0.08)", color: colorAdmin,
+                            display: "flex", alignItems: "center", justifyContent: "center",
                             fontWeight: "700", fontSize: "0.75rem", border: "1px solid rgba(52,151,195,0.15)"
                           }}>
                             {nombreCompleto.charAt(0).toUpperCase()}
@@ -176,7 +160,6 @@ export default function Usuarios() {
                           <span style={{ fontWeight: "700", color: "#0f172a" }}>{nombreCompleto}</span>
                         </div>
                       </td>
-                      {/* 🟢 Cambiado a usuario.correo */}
                       <td style={{ padding: "1rem", color: "#64748b", fontWeight: "500" }}>{usuario.correo}</td>
                       <td style={{ padding: "1rem" }}>
                         <span style={{
@@ -191,14 +174,14 @@ export default function Usuarios() {
                       </td>
                       <td style={{ padding: "1rem 1.5rem", textAlign: "center" }}>
                         <div style={{ display: "flex", justifyContent: "center", gap: "0.5rem" }}>
-                          <button 
+                          <button
                             title="Editar información"
                             onClick={() => handleOpenModal(usuario)}
                             style={{ background: "none", border: "1px solid #e2e8f0", padding: "0.4rem", borderRadius: "0.5rem", cursor: "pointer", color: colorAdmin }}
                           >
                             <FiEdit2 size={14} />
                           </button>
-                          <button 
+                          <button
                             title="Cambiar estado de acceso"
                             onClick={() => handleToggleStatus(usuario)}
                             style={{ background: "none", border: "1px solid #e2e8f0", padding: "0.4rem", borderRadius: "0.5rem", cursor: "pointer", color: "#64748b" }}
@@ -216,18 +199,16 @@ export default function Usuarios() {
         </div>
       )}
 
-      {/* 3. Modal de Creación / Edición */}
       {showModal && (
         <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" }}>
           <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "460px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.08)", border: "1px solid #e2e8f0", overflow: "hidden" }}>
-            
+
             <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: "800", color: "#1e293b" }}>{editando ? 'Modificar Usuario' : 'Registrar Nuevo Usuario'}</h3>
               <button onClick={handleCloseModal} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={18} /></button>
             </div>
 
             <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-              {/* 🟢 Campos separados requeridos por Spring Boot */}
               <div style={{ display: "flex", gap: "1rem" }}>
                 <div style={{ flex: 1 }}>
                   <label style={estiloLabel}>Nombres</label>
@@ -246,10 +227,21 @@ export default function Usuarios() {
 
               <div>
                 <label style={estiloLabel}>Correo Electrónico</label>
-                <input type="email" style={estiloInput} placeholder="juan@ejemplo.com" value={formData.correo} onChange={(e) => setFormData({ ...formData, correo: e.target.value })} disabled={!!editando} style={{ ...estiloInput, backgroundColor: editando ? "#f8fafc" : "#ffffff", color: editando ? "#94a3b8" : "#334155", cursor: editando ? "not-allowed" : "text" }} />
+                <input
+                  type="email"
+                  placeholder="juan@ejemplo.com"
+                  value={formData.correo}
+                  onChange={(e) => setFormData({ ...formData, correo: e.target.value })}
+                  disabled={!!editando}
+                  style={{
+                    ...estiloInput,
+                    backgroundColor: editando ? "#f8fafc" : "#ffffff",
+                    color: editando ? "#94a3b8" : "#334155",
+                    cursor: editando ? "not-allowed" : "text"
+                  }}
+                />
               </div>
 
-              {/* 🟢 Campo obligatorio condicional solo para creación */}
               {!editando && (
                 <div>
                   <label style={estiloLabel}>Contraseña Inicial</label>
@@ -257,10 +249,19 @@ export default function Usuarios() {
                 </div>
               )}
 
-              {/* 🟢 Selección de Rol inhabilitada en edición según parámetros de PUT */}
               <div>
                 <label style={estiloLabel}>Rol del Usuario</label>
-                <select style={estiloInput} value={formData.rol} onChange={(e) => setFormData({ ...formData, rol: e.target.value })} disabled={!!editando} style={{ ...estiloInput, backgroundColor: editando ? "#f8fafc" : "#ffffff", color: editando ? "#94a3b8" : "#334155", cursor: editando ? "not-allowed" : "pointer" }}>
+                <select
+                  value={formData.rol}
+                  onChange={(e) => setFormData({ ...formData, rol: e.target.value })}
+                  disabled={!!editando}
+                  style={{
+                    ...estiloInput,
+                    backgroundColor: editando ? "#f8fafc" : "#ffffff",
+                    color: editando ? "#94a3b8" : "#334155",
+                    cursor: editando ? "not-allowed" : "pointer"
+                  }}
+                >
                   <option value="Residente">Residente</option>
                   <option value="Administrador">Administrador</option>
                   <option value="Seguridad">Seguridad</option>
