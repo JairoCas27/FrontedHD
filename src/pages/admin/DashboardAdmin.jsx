@@ -1,30 +1,47 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { FiUsers, FiTruck, FiMapPin, FiActivity, FiBell } from "react-icons/fi";
-
-const espaciosPorBloque = [
-  { bloque: 'Bloque A', total: 60, ocupados: 48, disponibles: 8, mantención: 4 },
-  { bloque: 'Bloque B', total: 60, ocupados: 47, disponibles: 9, mantención: 4 },
-  { bloque: 'Bloque C', total: 60, ocupados: 46, disponibles: 8, mantención: 6 },
-  { bloque: 'Bloque D', total: 60, ocupados: 45, disponibles: 9, mantención: 6 },
-  { bloque: 'Bloque E', total: 60, ocupados: 48, disponibles: 6, mantención: 6 },
-  { bloque: 'Visitas', total: 42, ocupados: 33, disponibles: 5, mantención: 4 },
-];
-
-const accesosRecientes = [
-  { id: 1, nombre: 'Carlos López', tipo: 'Residente', hora: '08:30', estado: 'Ingreso' },
-  { id: 2, nombre: 'Ana Martínez', tipo: 'Visita', hora: '09:15', estado: 'Ingreso' },
-  { id: 3, nombre: 'Juan Pérez', tipo: 'Residente', hora: '10:00', estado: 'Salida' },
-  { id: 4, nombre: 'María García', tipo: 'Proveedor', hora: '11:20', estado: 'Ingreso' },
-];
-
-const totalPlazas = espaciosPorBloque.reduce((sum, b) => sum + b.total, 0);
-const totalOcupados = espaciosPorBloque.reduce((sum, b) => sum + b.ocupados, 0);
-const totalDisponibles = espaciosPorBloque.reduce((sum, b) => sum + b.disponibles, 0);
-const totalMantención = espaciosPorBloque.reduce((sum, b) => sum + (b.mantención || 0), 0);
-const porcentajeOcupacion = Math.round((totalOcupados / totalPlazas) * 100);
+import { getAdminDashboardMetrics } from '../../services/api'; 
 
 export default function DashboardAdmin() {
   const colorAdmin = "rgb(52,151,195)";
+
+  const [metrics, setMetrics] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  // 🔄 Carga de métricas reales desde Spring Boot
+  useEffect(() => {
+    async function cargarMetrics() {
+      try {
+        setLoading(true);
+        const data = await getAdminDashboardMetrics();
+        setMetrics(data);
+      } catch (error) {
+        console.error("Error al cargar métricas del dashboard:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    cargarMetrics();
+  }, []);
+
+  if (loading || !metrics) {
+    return (
+      <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", color: "#64748b", fontWeight: "600", textAlign: "center" }}>
+        🔄 Sincronizando panel operativo con el servidor central...
+      </div>
+    );
+  }
+
+  // Desestructuración y cálculos dinámicos basados en la respuesta real de la API
+  // El backend debe retornar una estructura limpia equivalente a tus kpis y arreglos
+  const espaciosPorBloque = metrics.espaciosPorBloque || [];
+  const accesosRecientes = metrics.accesosRecientes || [];
+
+  const totalPlazas = espaciosPorBloque.reduce((sum, b) => sum + (b.total || 0), 0);
+  const totalOcupados = espaciosPorBloque.reduce((sum, b) => sum + (b.ocupados || 0), 0);
+  const totalDisponibles = espaciosPorBloque.reduce((sum, b) => sum + (b.disponibles || 0), 0);
+  const totalMantencion = espaciosPorBloque.reduce((sum, b) => sum + (b.mantención || b.mantener || 0), 0);
+  const porcentajeOcupacion = totalPlazas > 0 ? Math.round((totalOcupados / totalPlazas) * 100) : 0;
 
   return (
     <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box" }}>
@@ -35,15 +52,15 @@ export default function DashboardAdmin() {
         <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.9rem", fontWeight: "500" }}>Resumen operativo del condominio</p>
       </div>
 
-      {/* 2. Cuadrícula de Tarjetas Horizontal Blindada */}
+      {/* 2. Cuadrícula de Tarjetas Horizontal */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: "1.5rem", marginBottom: "2rem", width: "100%" }}>
         
         {/* Usuarios */}
         <div style={{ flex: 1, minWidth: "220px", backgroundColor: "#ffffff", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "left" }}>
           <div>
             <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Total Usuarios</span>
-            <h2 style={{ fontSize: "1.75rem", fontWeight: "800", color: "#0f172a", margin: "0.25rem 0 0 0" }}>1,234</h2>
-            <span style={{ fontSize: "0.7rem", color: "#10b981", fontWeight: "700", backgroundColor: "rgba(16,185,129,0.08)", padding: "0.15rem 0.4rem", borderRadius: "0.25rem", display: "inline-block", marginTop: "0.5rem" }}>+12% vs mes anterior</span>
+            <h2 style={{ fontSize: "1.75rem", fontWeight: "800", color: "#0f172a", margin: "0.25rem 0 0 0" }}>{metrics.totalUsuarios || 0}</h2>
+            <span style={{ fontSize: "0.7rem", color: "#10b981", fontWeight: "700", backgroundColor: "rgba(16,185,129,0.08)", padding: "0.15rem 0.4rem", borderRadius: "0.25rem", display: "inline-block", marginTop: "0.5rem" }}>Cuentas del condominio</span>
           </div>
           <div style={{ color: colorAdmin, backgroundColor: "rgba(52,151,195,0.08)", padding: "0.75rem", borderRadius: "0.75rem" }}>
             <FiUsers size={24} />
@@ -54,8 +71,8 @@ export default function DashboardAdmin() {
         <div style={{ flex: 1, minWidth: "220px", backgroundColor: "#ffffff", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "left" }}>
           <div>
             <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Vehículos</span>
-            <h2 style={{ fontSize: "1.75rem", fontWeight: "800", color: "#0f172a", margin: "0.25rem 0 0 0" }}>856</h2>
-            <span style={{ fontSize: "0.7rem", color: "#10b981", fontWeight: "700", backgroundColor: "rgba(16,185,129,0.08)", padding: "0.15rem 0.4rem", borderRadius: "0.25rem", display: "inline-block", marginTop: "0.5rem" }}>+5% vs mes anterior</span>
+            <h2 style={{ fontSize: "1.75rem", fontWeight: "800", color: "#0f172a", margin: "0.25rem 0 0 0" }}>{metrics.totalVehiculos || 0}</h2>
+            <span style={{ fontSize: "0.7rem", color: "#10b981", fontWeight: "700", backgroundColor: "rgba(16,185,129,0.08)", padding: "0.15rem 0.4rem", borderRadius: "0.25rem", display: "inline-block", marginTop: "0.5rem" }}>Registrados</span>
           </div>
           <div style={{ color: "#10b981", backgroundColor: "rgba(16,185,129,0.08)", padding: "0.75rem", borderRadius: "0.75rem" }}>
             <FiTruck size={24} />
@@ -78,8 +95,8 @@ export default function DashboardAdmin() {
         <div style={{ flex: 1, minWidth: "220px", backgroundColor: "#ffffff", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center", textAlign: "left" }}>
           <div>
             <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Visitas Hoy</span>
-            <h2 style={{ fontSize: "1.75rem", fontWeight: "800", color: "#0f172a", margin: "0.25rem 0 0 0" }}>47</h2>
-            <span style={{ fontSize: "0.7rem", color: "#3497C3", fontWeight: "700", backgroundColor: "rgba(52,151,195,0.08)", padding: "0.15rem 0.4rem", borderRadius: "0.25rem", display: "inline-block", marginTop: "0.5rem" }}>Promedio: 52</span>
+            <h2 style={{ fontSize: "1.75rem", fontWeight: "800", color: "#0f172a", margin: "0.25rem 0 0 0" }}>{metrics.visitasHoy || 0}</h2>
+            <span style={{ fontSize: "0.7rem", color: "#3497C3", fontWeight: "700", backgroundColor: "rgba(52,151,195,0.08)", padding: "0.15rem 0.4rem", borderRadius: "0.25rem", display: "inline-block", marginTop: "0.5rem" }}>Bitácora portón</span>
           </div>
           <div style={{ color: colorAdmin, backgroundColor: "rgba(52,151,195,0.08)", padding: "0.75rem", borderRadius: "0.75rem" }}>
             <FiActivity size={24} />
@@ -99,19 +116,22 @@ export default function DashboardAdmin() {
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-            {espaciosPorBloque.map((bloque, index) => (
-              <div key={index}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", marginBottom: "0.3rem" }}>
-                  <span style={{ fontWeight: "700", color: "#475569" }}>{bloque.bloque}</span>
-                  <span style={{ color: "#94a3b8", fontWeight: "500" }}>{bloque.ocupados} ocupados / {bloque.disponibles} disponibles</span>
+            {espaciosPorBloque.map((bloque, index) => {
+              const mantencionActual = bloque.mantención || bloque.mantener || 0;
+              return (
+                <div key={index}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.75rem", marginBottom: "0.3rem" }}>
+                    <span style={{ fontWeight: "700", color: "#475569" }}>{bloque.bloque}</span>
+                    <span style={{ color: "#94a3b8", fontWeight: "500" }}>{bloque.ocupados} ocupados / {bloque.disponibles} disponibles</span>
+                  </div>
+                  <div style={{ width: "100%", height: "10px", backgroundColor: "#f1f5f9", borderRadius: "9999px", overflow: "hidden", display: "flex" }}>
+                    <div style={{ width: `${bloque.total > 0 ? (bloque.ocupados / bloque.total) * 100 : 0}%`, backgroundColor: "#f87171" }} />
+                    <div style={{ width: `${bloque.total > 0 ? (bloque.disponibles / bloque.total) * 100 : 0}%`, backgroundColor: "#34d399" }} />
+                    <div style={{ width: `${bloque.total > 0 ? (mantencionActual / bloque.total) * 100 : 0}%`, backgroundColor: "#fbbf24" }} />
+                  </div>
                 </div>
-                <div style={{ width: "100%", height: "10px", backgroundColor: "#f1f5f9", borderRadius: "9999px", overflow: "hidden", display: "flex" }}>
-                  <div style={{ width: `${(bloque.ocupados / bloque.total) * 100}%`, backgroundColor: "#f87171" }} />
-                  <div style={{ width: `${(bloque.disponibles / bloque.total) * 100}%`, backgroundColor: "#34d399" }} />
-                  <div style={{ width: `${(bloque.mantención / bloque.total) * 100}%`, backgroundColor: "#fbbf24" }} />
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
