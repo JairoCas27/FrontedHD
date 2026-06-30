@@ -31,4 +31,4 @@ export default function SidebarAdmin({ isOpen, setIsOpen }) {
       userInfo={userInfo}
     />
   );
-}
+} 
