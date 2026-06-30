@@ -229,7 +229,7 @@ export async function getAdminApartments() {
 
 
 export async function assignApartmentOwner(id, ownerName) {
-  return safeFetch(`/api/admin/apartments/${id}/owner`, {
+  return safeFetch(`/api/admin/apartments/${id}/assign-owner`, {
     method: 'PUT',
     body: JSON.stringify({ ownerName }),
   });
@@ -288,7 +288,7 @@ export async function patchAdminUserStatus(id, activo) {
 
 
 export async function getAdminStructure() {
-  return safeFetch('/api/admin/structure/nodes');
+  return safeFetch('/api/admin/structure');
 }
 
 export async function createAdminStructureNode(data) {
