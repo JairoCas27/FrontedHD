@@ -1,6 +1,6 @@
-# Urban Park Frontend
+# Urbania
 
-Este proyecto es el **frontend** de **Urban Park**, una plataforma web desarrollada con **React** enfocada en la **gestión inteligente de estacionamientos (Smart Parking)**.  
+Este proyecto es el **frontend** de **Urbania**, una plataforma web desarrollada con **React** enfocada en la **gestión inteligente de estacionamientos (Smart Parking)**.  
 Permite digitalizar, automatizar y optimizar el control de parqueos en entornos residenciales, corporativos y urbanos.
 
 Incluye un diseño **moderno y responsivo**, navegación fluida tipo **SPA**, y una arquitectura escalable basada en componentes reutilizables.
@@ -103,10 +103,7 @@ Disponibles directamente en los formularios de login como panel de acceso rápid
 
 | Rol | Correo | Contraseña |
 |---|---|---|
-| Super Administrador | superadmin@parking.com | super123 |
-| Administrador | admin@parking.com | admin123 |
-| Seguridad | seguridad@parking.com | seg123 |
-| Propietario | propietario@parking.com | prop123 |
+
 
 ***
 

@@ -24,7 +24,6 @@ export function useAdminApartments() {
     }
   };
 
-  // 🟢 Corregido: Ahora recibe el idUsuarioPropietario (número) que exige el Swagger
   const asignarPropietario = async (idDepartamento, idUsuarioPropietario) => {
     try {
       await assignApartmentOwner(idDepartamento, idUsuarioPropietario);

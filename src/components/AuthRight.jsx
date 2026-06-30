@@ -1,43 +1,52 @@
-import "bootstrap-icons/font/bootstrap-icons.css";
-import { useState } from "react";
-import { toast } from "react-toastify";
-import ForgotPasswordModal from "./ForgotPassword";
-import LogoSolo from "../images/LogoSolo.png";
-import { validateLoginForm } from "../utils/validators";
+import "bootstrap-icons/font/bootstrap-icons.css"
+import { useState, useEffect } from "react"
+import { toast } from "react-toastify"
+import ForgotPasswordModal from "./ForgotPassword"
+import LogoSolo from "../images/LogoSolo.png"
+import { validateLoginForm } from "../utils/validators"
 
-function AuthRight({ accentColor, accentColorDark, onSubmit, phase, ease }) {
-  const [correo, setCorreo] = useState("");
-  const [password, setPassword] = useState("");
-  const [recuerdame, setRecuerdame] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [openForgot, setOpenForgot] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [touched, setTouched] = useState({ correo: false, password: false });
-  const [errors, setErrors] = useState({ correo: false, password: false });
+function AuthRight({ accentColor, accentColorDark, onSubmit, phase, ease, resetToken, onResetTokenConsumed }) {
+  const [correo, setCorreo] = useState("")
+  const [password, setPassword] = useState("")
+  const [recuerdame, setRecuerdame] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [openForgot, setOpenForgot] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [touched, setTouched] = useState({ correo: false, password: false })
+  const [errors, setErrors] = useState({ correo: false, password: false })
 
-  const dark = accentColorDark || accentColor;
+  const dark = accentColorDark || accentColor
+
+  useEffect(() => {
+    if (resetToken) setOpenForgot(true)
+  }, [resetToken])
+
+  const handleCloseModal = () => {
+    setOpenForgot(false)
+    if (onResetTokenConsumed) onResetTokenConsumed()
+  }
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setTouched({ correo: true, password: true });
-    const { valid, message, field } = validateLoginForm({ correo, password });
+    e.preventDefault()
+    setTouched({ correo: true, password: true })
+    const { valid, message, field } = validateLoginForm({ correo, password })
     if (!valid) {
-      toast.warning(message);
-      if (field === "both") setErrors({ correo: true, password: true });
-      else if (field) setErrors((p) => ({ ...p, [field]: true }));
-      return;
+      toast.warning(message)
+      if (field === "both") setErrors({ correo: true, password: true })
+      else if (field) setErrors((p) => ({ ...p, [field]: true }))
+      return
     }
-    setErrors({ correo: false, password: false });
-    setLoading(true);
-    await onSubmit({ correo: correo.trim(), password: password.trim(), recuerdame });
-    setLoading(false);
-  };
+    setErrors({ correo: false, password: false })
+    setLoading(true)
+    await onSubmit({ correo: correo.trim(), password: password.trim(), recuerdame })
+    setLoading(false)
+  }
 
   const fadeUp = (show, delay = "0s") => ({
     opacity: show ? 1 : 0,
     transform: show ? "translateY(0px)" : "translateY(24px)",
     transition: `opacity 0.5s ${ease} ${delay}, transform 0.5s ${ease} ${delay}`,
-  });
+  })
 
   const inputStyle = (field) => ({
     width: "100%",
@@ -50,7 +59,7 @@ function AuthRight({ accentColor, accentColorDark, onSubmit, phase, ease }) {
     color: "#1e293b",
     fontSize: "0.92rem",
     colorScheme: "light",
-  });
+  })
 
   return (
     <div
@@ -177,9 +186,13 @@ function AuthRight({ accentColor, accentColorDark, onSubmit, phase, ease }) {
         </div>
       </div>
 
-      <ForgotPasswordModal open={openForgot} onClose={() => setOpenForgot(false)} />
+      <ForgotPasswordModal
+        open={openForgot}
+        onClose={handleCloseModal}
+        resetToken={resetToken}
+      />
     </div>
-  );
+  )
 }
 
-export default AuthRight;
+export default AuthRight

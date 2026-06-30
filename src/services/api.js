@@ -41,6 +41,20 @@ export async function changePassword(data) {
   });
 }
 
+export async function forgotPasswordApi(correo) {
+  return safeFetch('/api/auth/forgot-password', {
+    method: 'POST',
+    body: JSON.stringify({ correo }),
+  });
+}
+
+export async function resetPasswordApi({ token, nuevaContrasena }) {
+  return safeFetch('/api/auth/reset-password', {
+    method: 'POST',
+    body: JSON.stringify({ token, nuevaContrasena }),
+  });
+}
+
 export async function getProfile() {
   return safeFetch('/api/profile');
 }
@@ -103,9 +117,7 @@ export async function updateCondominium(id, data) {
 }
 
 export async function deleteCondominium(id) {
-  return safeFetch(`/api/super-admin/condominiums/${id}`, {
-    method: 'DELETE',
-  });
+  return safeFetch(`/api/super-admin/condominiums/${id}`, { method: 'DELETE' });
 }
 
 export async function patchCondominiumStatus(id, activo) {
@@ -138,9 +150,7 @@ export async function updateAdministrator(id, data) {
 }
 
 export async function deleteAdministrator(id) {
-  return safeFetch(`/api/super-admin/administrators/${id}`, {
-    method: 'DELETE',
-  });
+  return safeFetch(`/api/super-admin/administrators/${id}`, { method: 'DELETE' });
 }
 
 export async function patchAdministratorStatus(id, activo) {
@@ -180,45 +190,19 @@ export async function forceUserPassword(userId, nuevaContrasena) {
 }
 
 export async function invalidateUserSession(userId) {
-  return safeFetch(`/api/super-admin/users/${userId}/invalidate-session`, {
-    method: 'POST',
-  });
+  return safeFetch(`/api/super-admin/users/${userId}/invalidate-session`, { method: 'POST' });
 }
 
-export const getHomeownerDashboard = () =>
-  safeFetch('/api/homeowner/dashboard/summary');
+export const getHomeownerDashboard = () => safeFetch('/api/homeowner/dashboard/summary');
+export const getHomeownerApartment = () => safeFetch('/api/homeowner/apartment/details');
+export const getHomeownerVehicles = () => safeFetch('/api/homeowner/vehicles');
+export const createHomeownerVehicle = (data) => safeFetch('/api/homeowner/vehicles', { method: 'POST', body: JSON.stringify(data) });
+export const deleteHomeownerVehicle = (id) => safeFetch(`/api/homeowner/vehicles/${id}`, { method: 'DELETE' });
+export const getHomeownerTenants = () => safeFetch('/api/homeowner/tenants');
+export const createHomeownerTenant = (data) => safeFetch('/api/homeowner/tenants', { method: 'POST', body: JSON.stringify(data) });
+export const deleteHomeownerTenant = (id) => safeFetch(`/api/homeowner/tenants/${id}`, { method: 'DELETE' });
+export const getHomeownerLogs = () => safeFetch('/api/homeowner/logs');
 
-export const getHomeownerApartment = () =>
-  safeFetch('/api/homeowner/apartment/details');
-
-export const getHomeownerVehicles = () =>
-  safeFetch('/api/homeowner/vehicles');
-
-export const createHomeownerVehicle = (data) =>
-  safeFetch('/api/homeowner/vehicles', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-
-export const deleteHomeownerVehicle = (id) =>
-  safeFetch(`/api/homeowner/vehicles/${id}`, { method: 'DELETE' });
-
-export const getHomeownerTenants = () =>
-  safeFetch('/api/homeowner/tenants');
-
-export const createHomeownerTenant = (data) =>
-  safeFetch('/api/homeowner/tenants', {
-    method: 'POST',
-    body: JSON.stringify(data),
-  });
-
-export const deleteHomeownerTenant = (id) =>
-  safeFetch(`/api/homeowner/tenants/${id}`, { method: 'DELETE' });
-
-export const getHomeownerLogs = () =>
-  safeFetch('/api/homeowner/logs');
-
-// 🟢 Agregamos soporte para recibir 'params' en los métodos GET paginados
 export async function getAdminDashboardMetrics() {
   return safeFetch('/api/admin/dashboard/metrics');
 }
@@ -243,7 +227,6 @@ export async function updateApartmentOccupants(id, occupantsData) {
   });
 }
 
-// 🟢 Corregido: Recibe 'params' para inyectar la query string (?pagina=0&tamano=100)
 export async function getAdminAssets(params = "") {
   return safeFetch(`/api/admin/assets${params}`);
 }
@@ -255,7 +238,6 @@ export async function createAdminAsset(data) {
   });
 }
 
-// 🟢 Corregido: El Swagger espera un JSON plano con el estado y los campos del activo correspondientes al PUT
 export async function updateAdminAssetStatus(id, estado) {
   return safeFetch(`/api/admin/assets/${id}/status`, {
     method: 'PUT',
@@ -300,12 +282,9 @@ export async function createAdminStructureNode(data) {
 }
 
 export async function deleteAdminStructureNode(id) {
-  return safeFetch(`/api/admin/structure/nodes/${id}`, {
-    method: 'DELETE',
-  });
+  return safeFetch(`/api/admin/structure/nodes/${id}`, { method: 'DELETE' });
 }
 
-// 🟢 Corregido: Recibe 'params' para evitar el error 400 por falta de paginación obligatoria
 export async function getAdminLogs(params = "") {
   return safeFetch(`/api/admin/logs${params}`);
 }

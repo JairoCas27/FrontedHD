@@ -2,9 +2,18 @@ import bgImageLeft from "../../images/FondoCondominio.png"
 import bgImageRight from "../../images/FondoParking.png"
 import AuthLayout from "../../components/AuthLayout"
 import { useLogin } from "../../hooks/useLogin"
+import { useEffect, useState } from "react"
+import { useSearchParams } from "react-router-dom"
 
 function Login() {
   const { handleLogin } = useLogin()
+  const [searchParams] = useSearchParams()
+  const [resetToken, setResetToken] = useState(null)
+
+  useEffect(() => {
+    const token = searchParams.get("token")
+    if (token) setResetToken(token)
+  }, [searchParams])
 
   return (
     <AuthLayout
@@ -18,6 +27,8 @@ function Login() {
       heroTitleAccent="todo bajo control."
       heroDescription="La plataforma integral que simplifica la gestión de condominios, residentes, accesos, estacionamientos y más. Todo en tiempo real, todo en un solo lugar."
       onSubmit={handleLogin}
+      resetToken={resetToken}
+      onResetTokenConsumed={() => setResetToken(null)}
     />
   )
 }

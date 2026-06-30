@@ -25,7 +25,6 @@ import Terminos from "./pages/public/Terminos"
 
 import DashboardAdmin from "./pages/admin/DashboardAdmin"
 import Usuarios from "./pages/admin/Usuarios"
-import Estacionamientos from "./pages/admin/Estacionamientos"
 import Departamentos from "./pages/admin/Departamentos"
 import Bienes from "./pages/admin/Bienes"
 import Estructura from "./pages/admin/Estructura"

@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { FiSearch, FiEdit2, FiTrash2, FiX, FiUser } from "react-icons/fi"
+import { FiEdit2, FiTrash2, FiX } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import { useAdminUsers } from '../../hooks/Admin/useAdminUsers'
 
@@ -7,7 +7,7 @@ export default function Usuarios() {
   const colorAdmin = "rgb(52,151,195)"
   
   const { usuarios, loading, registrarUsuario, modificarUsuario, cambiarEstadoUsuario } = useAdminUsers()
-  
+
   const [busqueda, setBusqueda] = useState('')
   const [filtroRol, setFiltroRol] = useState('todos')
   const [showModal, setShowModal] = useState(false)
@@ -24,7 +24,6 @@ export default function Usuarios() {
 
   const usuariosFiltrados = (usuarios || []).filter(u => {
     if (filtroRol !== 'todos' && u.rol !== filtroRol) return false
-    
     const termino = busqueda.toLowerCase().trim()
     if (termino) {
       return (
@@ -64,7 +63,6 @@ export default function Usuarios() {
           apellidos: formUsuario.apellidos.trim(),
           telefono: formUsuario.telefono.trim()
         }
-        await modificarUsuario(editandoId, putPayload)
       } else {
         const postPayload = {
           nombres: formUsuario.nombres.trim(),
@@ -74,12 +72,10 @@ export default function Usuarios() {
           contrasena: formUsuario.contrasena,
           rol: formUsuario.rol
         }
-        await registrarUsuario(postPayload)
       }
       setShowModal(false)
     } catch (error) {
-      console.error("Error guardando usuario:", error)
-      alert("Hubo un problema al intentar guardar los datos en el servidor de Spring Boot.")
+      alert('Hubo un problema al intentar guardar los datos en el servidor.')
     }
   }
 
@@ -105,9 +101,9 @@ export default function Usuarios() {
 
   return (
     <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
-      
-      <EncabezadoTabla 
-        titulo="Control de Usuarios" 
+
+      <EncabezadoTabla
+        titulo="Control de Usuarios"
         subtitulo="Gestión de cuentas residenciales, asignación de credenciales y privilegios del sistema"
         botonTexto="Registrar Usuario"
         accentColor={colorAdmin}
@@ -116,12 +112,11 @@ export default function Usuarios() {
 
       <div style={{ backgroundColor: "#ffffff", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", marginBottom: "2rem", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
         <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
-          
           <div style={{ flex: 1, maxWidth: "320px" }}>
-            <input 
-              type="text" 
-              style={estiloInput} 
-              placeholder="Buscar por nombre, correo o teléfono..." 
+            <input
+              type="text"
+              style={estiloInput}
+              placeholder="Buscar por nombre, correo o teléfono..."
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
             />
@@ -137,7 +132,6 @@ export default function Usuarios() {
               <option value="RESIDENTE">Residentes / Inquilinos</option>
             </select>
           </div>
-
           <small style={{ color: "#64748b", fontWeight: "600", marginLeft: "auto" }}>
             Total filtrados: {usuariosFiltrados.length}
           </small>
@@ -181,8 +175,18 @@ export default function Usuarios() {
                     </span>
                   </td>
                   <td style={{ padding: "1rem 1.5rem", textAlign: "right" }}>
-                    <button onClick={() => handleOpenModal(u)} style={{ background: "none", border: "none", color: colorAdmin, marginRight: "0.75rem", cursor: "pointer" }}><FiEdit2 size={16} /></button>
-                    <button onClick={() => { if(window.confirm("¿Seguro que deseas deshabilitar el acceso de este usuario?")) cambiarEstadoUsuario(u.id, !u.activo) }} style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer" }}><FiTrash2 size={16} /></button>
+                    <button
+                      onClick={() => handleOpenModal(u)}
+                      style={{ background: "none", border: "none", color: colorAdmin, marginRight: "0.75rem", cursor: "pointer" }}
+                    >
+                      <FiEdit2 size={16} />
+                    </button>
+                    <button
+                      onClick={() => { if (window.confirm("¿Seguro que deseas cambiar el estado de este usuario?")) cambiarEstadoUsuario(u.id, !u.activo) }}
+                      style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer" }}
+                    >
+                      <FiTrash2 size={16} />
+                    </button>
                   </td>
                 </tr>
               ))}
@@ -198,41 +202,45 @@ export default function Usuarios() {
               <h3 style={{ margin: 0, fontWeight: "800", color: "#1e293b" }}>{editandoId ? "Modificar Perfil" : "Nuevo Usuario"}</h3>
               <button onClick={() => setShowModal(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={18} /></button>
             </div>
-            
+
             <form onSubmit={handleSubmit} style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
               <div style={{ display: "flex", gap: "1rem" }}>
                 <div style={{ flex: 1 }}>
                   <label style={estiloLabel}>Nombres</label>
-                  <input type="text" style={estiloInput} value={formUsuario.nombres} onChange={e => setFormUsuario({...formUsuario, nombres: e.target.value})} required />
+                  <input type="text" style={estiloInput} value={formUsuario.nombres} onChange={e => setFormUsuario({ ...formUsuario, nombres: e.target.value })} required />
                 </div>
                 <div style={{ flex: 1 }}>
                   <label style={estiloLabel}>Apellidos</label>
-                  <input type="text" style={estiloInput} value={formUsuario.apellidos} onChange={e => setFormUsuario({...formUsuario, apellidos: e.target.value})} required />
+                  <input type="text" style={estiloInput} value={formUsuario.apellidos} onChange={e => setFormUsuario({ ...formUsuario, apellidos: e.target.value })} required />
                 </div>
               </div>
-              
+
               <div>
                 <label style={estiloLabel}>Teléfono</label>
-                <input type="text" style={estiloInput} value={formUsuario.telefono} onChange={e => setFormUsuario({...formUsuario, telefono: e.target.value})} required />
+                <input type="text" style={estiloInput} value={formUsuario.telefono} onChange={e => setFormUsuario({ ...formUsuario, telefono: e.target.value })} required />
               </div>
 
               <div>
                 <label style={estiloLabel}>Correo Electrónico</label>
-                <input 
-                  type="email" 
-                  style={estiloInput} 
-                  value={formUsuario.correo} 
-                  onChange={e => setFormUsuario({...formUsuario, correo: e.target.value})} 
-                  required 
-                  disabled={!!editandoId} 
-                  style={{ ...estiloInput, backgroundColor: editandoId ? "#f8fafc" : "#ffffff", color: editandoId ? "#94a3b8" : "#334155", cursor: editandoId ? "not-allowed" : "text" }}
+                <input
+                  type="email"
+                  value={formUsuario.correo}
+                  onChange={e => setFormUsuario({ ...formUsuario, correo: e.target.value })}
+                  required
+                  disabled={!!editandoId}
+                  style={{
+                    ...estiloInput,
+                    backgroundColor: editandoId ? "#f8fafc" : "#ffffff",
+                    color: editandoId ? "#94a3b8" : "#334155",
+                    cursor: editandoId ? "not-allowed" : "text"
+                  }}
                 />
               </div>
 
               {!editandoId && (
                 <div>
                   <label style={estiloLabel}>Contraseña Inicial</label>
-                  <input type="password" style={estiloInput} placeholder="Mínimo 6 caracteres" value={formUsuario.contrasena} onChange={e => setFormUsuario({...formUsuario, contrasena: e.target.value})} required />
+                  <input type="password" style={estiloInput} placeholder="Mínimo 6 caracteres" value={formUsuario.contrasena} onChange={e => setFormUsuario({ ...formUsuario, contrasena: e.target.value })} required />
                 </div>
               )}
 
@@ -244,7 +252,12 @@ export default function Usuarios() {
                   value={formUsuario.rol} 
                   onChange={e => setFormUsuario({...formUsuario, rol: e.target.value})}
                   disabled={!!editandoId}
-                  style={{ ...estiloInput, backgroundColor: editandoId ? "#f8fafc" : "#ffffff", color: editandoId ? "#94a3b8" : "#334155", cursor: editandoId ? "not-allowed" : "pointer" }}
+                  style={{
+                    ...estiloInput,
+                    backgroundColor: editandoId ? "#f8fafc" : "#ffffff",
+                    color: editandoId ? "#94a3b8" : "#334155",
+                    cursor: editandoId ? "not-allowed" : "pointer"
+                  }}
                 >
                   <option value="RESIDENTE">Residente / Inquilino</option>
                   <option value="ADMINISTRADOR_CONDOMINIO">Administrador del Condominio</option>
@@ -253,7 +266,7 @@ export default function Usuarios() {
                 </select>
               </div>
 
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "1rem" }}>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "0.5rem" }}>
                 <button type="button" onClick={() => setShowModal(false)} style={{ padding: "0.5rem 1rem", border: "1px solid #cbd5e1", background: "#fff", borderRadius: "0.5rem", cursor: "pointer", color: "#475569", fontWeight: "600" }}>Cancelar</button>
                 <button type="submit" style={{ padding: "0.5rem 1.25rem", background: colorAdmin, color: "#fff", border: "none", borderRadius: "0.5rem", fontWeight: "600", cursor: "pointer" }}>Guardar Cambios</button>
               </div>
