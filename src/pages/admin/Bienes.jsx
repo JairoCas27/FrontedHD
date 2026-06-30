@@ -1,46 +1,76 @@
-import React, { useState } from 'react'
-import { FiPackage, FiPlus, FiSearch, FiRefreshCw, FiX } from "react-icons/fi"
+import React, { useState, useEffect } from 'react'
+import { FiPackage, FiRefreshCw, FiX } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import BadgeEstado from '../../components/BadgeEstado'
-
-const bienesIniciales = [
-  { id: 1, nombre: 'Bomba de Agua Principal', categoria: 'Infraestructura', ubicacion: 'Sótano Bloque A', estado: 'Disponible' },
-  { id: 2, nombre: 'Cámara Domo Seguridad 4K', categoria: 'Seguridad', ubicacion: 'Portón de Entrada', estado: 'Disponible' },
-  { id: 3, nombre: 'Extintor PQS 6kg', categoria: 'Seguridad', ubicacion: 'Pasillo Piso 3 Torre B', estado: 'Mantención' },
-  { id: 4, nombre: 'Luminaria LED Poste 12', categoria: 'Iluminación', ubicacion: 'Estacionamiento Visitas', estado: 'Ocupado' }, // 'Ocupado' emula fuera de servicio
-]
+import { getAdminAssets, createAdminAsset, updateAdminAssetStatus } from '../../services/api' // Ajustando la api
 
 export default function Bienes() {
   const colorAdmin = "rgb(52,151,195)"
   
-  const [bienes, setBienes] = useState(bienesIniciales)
+  const [bienes, setBienes] = useState([])
+  const [loading, setLoading] = useState(true)
   const [busqueda, setBusqueda] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [formData, setFormData] = useState({ nombre: '', categoria: 'Seguridad', ubicacion: '', estado: 'Disponible' })
 
-  // Filtrado dinámico
+  //  Cargar los activos reales desde Spring Boot
+  useEffect(() => {
+    cargarBienes()
+  }, [])
+
+  const cargarBienes = async () => {
+    try {
+      setLoading(true)
+      const data = await getAdminAssets()
+      setBienes(data || [])
+    } catch (error) {
+      console.error("Error al traer los activos del servidor:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Filtrado dinámico local sobre los datos de la API
   const bienesFiltrados = bienes.filter(b => 
-    b.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-    b.ubicacion.toLowerCase().includes(busqueda.toLowerCase())
+    b.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
+    b.ubicacion?.toLowerCase().includes(busqueda.toLowerCase())
   )
 
-  // Simulación del POST /api/admin/assets
-  const handleSaveAsset = (e) => {
+  // 💾 Persistencia real del POST /api/admin/assets
+  const handleSaveAsset = async (e) => {
     e.preventDefault()
     if (!formData.nombre.trim() || !formData.ubicacion.trim()) {
       alert('Por favor, completa todos los campos requeridos')
       return
     }
-    const newId = bienes.length > 0 ? Math.max(...bienes.map(b => b.id)) + 1 : 1
-    setBienes([...bienes, { ...formData, id: newId }])
-    setShowModal(false)
-    setFormData({ nombre: '', categoria: 'Seguridad', ubicacion: '', estado: 'Disponible' })
+
+    try {
+      await createAdminAsset({
+        nombre: formData.nombre.trim(),
+        categoria: formData.categoria,
+        ubicacion: formData.ubicacion.trim(),
+        estado: formData.estado
+      })
+      
+      await cargarBienes() // Recargar tabla limpia
+      setShowModal(false)
+      setFormData({ nombre: '', categoria: 'Seguridad', ubicacion: '', estado: 'Disponible' })
+    } catch (error) {
+      console.error("Error al crear el activo en el servidor:", error)
+      alert("Hubo un error al inventariar el nuevo activo.")
+    }
   }
 
-  // Simulación del PUT /api/admin/assets/{id}/status
-  const toggleStatus = (id, estadoActual) => {
+  // 🔄 Actualización de estado en tiempo real PUT /api/admin/assets/{id}/status
+  const toggleStatus = async (id, estadoActual) => {
     const nuevoEstado = estadoActual === 'Disponible' ? 'Mantención' : 'Disponible'
-    setBienes(bienes.map(b => b.id === id ? { ...b, estado: nuevoEstado } : b))
+    try {
+      await updateAdminAssetStatus(id, nuevoEstado)
+      await cargarBienes() // Refrescar vista
+    } catch (error) {
+      console.error("Error al cambiar el estado del activo:", error)
+      alert("No se pudo actualizar el estado técnico en el servidor.")
+    }
   }
 
   // Estilos estándar unificados
@@ -91,57 +121,63 @@ export default function Bienes() {
             />
           </div>
           <small style={{ color: "#64748b", fontWeight: "600" }}>
-            {bienesFiltrados.length} activos listados
+            {loading ? "Calculando..." : `${bienesFiltrados.length} activos listados`}
           </small>
         </div>
       </div>
 
-      {/* 3. Tabla Premium */}
-      <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden", width: "100%", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)" }}>
-        <div style={{ overflowX: "auto", width: "100%" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
-            <thead>
-              <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: "700", fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
-                <th style={{ padding: "1rem 1.5rem", width: "10%" }}>ID</th>
-                <th style={{ padding: "1rem", width: "30%" }}>Descripción del Bien</th>
-                <th style={{ padding: "1rem", width: "20%" }}>Categoría</th>
-                <th style={{ padding: "1rem", width: "25%" }}>Ubicación Física</th>
-                <th style={{ padding: "1rem", width: "10%" }}>Estado</th>
-                <th style={{ padding: "1rem 1.5rem", width: "5%", textAlign: "center" }}>Acción</th>
-              </tr>
-            </thead>
-            <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
-              {bienesFiltrados.map((bien) => (
-                <tr key={bien.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                  <td style={{ padding: "1rem 1.5rem", fontFamily: "monospace", fontWeight: "700", color: "#94a3b8" }}>#{bien.id}</td>
-                  <td style={{ padding: "1rem" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                      <div style={{ width: "30px", height: "30px", borderRadius: "0.5rem", backgroundColor: "rgba(52,151,195,0.08)", color: colorAdmin, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                        <FiPackage size={16} />
-                      </div>
-                      <span style={{ fontWeight: "700", color: "#0f172a" }}>{bien.nombre}</span>
-                    </div>
-                  </td>
-                  <td style={{ padding: "1rem", color: "#64748b", fontWeight: "600" }}>{bien.categoria}</td>
-                  <td style={{ padding: "1rem", color: "#334155", fontWeight: "500" }}>{bien.ubicacion}</td>
-                  <td style={{ padding: "1rem" }}>
-                    <BadgeEstado estado={bien.estado} />
-                  </td>
-                  <td style={{ padding: "1rem 1.5rem", textAlign: "center" }}>
-                    <button 
-                      title="Cambiar estado técnico"
-                      onClick={() => toggleStatus(bien.id, bien.estado)}
-                      style={{ background: "none", border: "1px solid #e2e8f0", padding: "0.4rem", borderRadius: "0.5rem", cursor: "pointer", color: colorAdmin, display: "flex", alignItems: "center", justifyContent: "center" }}
-                    >
-                      <FiRefreshCw size={14} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+      {/* 3. Tabla Premium o Estado de Carga */}
+      {loading ? (
+        <div style={{ textAlign: "center", padding: "4rem", color: "#64748b", fontWeight: "600" }}>
+          🔄 Sincronizando inventario con el servidor central...
         </div>
-      </div>
+      ) : (
+        <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden", width: "100%", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)" }}>
+          <div style={{ overflowX: "auto", width: "100%" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+              <thead>
+                <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: "700", fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
+                  <th style={{ padding: "1rem 1.5rem", width: "10%" }}>ID</th>
+                  <th style={{ padding: "1rem", width: "30%" }}>Descripción del Bien</th>
+                  <th style={{ padding: "1rem", width: "20%" }}>Categoría</th>
+                  <th style={{ padding: "1rem", width: "25%" }}>Ubicación Física</th>
+                  <th style={{ padding: "1rem", width: "10%" }}>Estado</th>
+                  <th style={{ padding: "1rem 1.5rem", width: "5%", textAlign: "center" }}>Acción</th>
+                </tr>
+              </thead>
+              <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
+                {bienesFiltrados.map((bien) => (
+                  <tr key={bien.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                    <td style={{ padding: "1rem 1.5rem", fontFamily: "monospace", fontWeight: "700", color: "#94a3b8" }}>#{bien.id}</td>
+                    <td style={{ padding: "1rem" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                        <div style={{ width: "30px", height: "30px", borderRadius: "0.5rem", backgroundColor: "rgba(52,151,195,0.08)", color: colorAdmin, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <FiPackage size={16} />
+                        </div>
+                        <span style={{ fontWeight: "700", color: "#0f172a" }}>{bien.nombre}</span>
+                      </div>
+                    </td>
+                    <td style={{ padding: "1rem", color: "#64748b", fontWeight: "600" }}>{bien.categoria}</td>
+                    <td style={{ padding: "1rem", color: "#334155", fontWeight: "500" }}>{bien.ubicacion}</td>
+                    <td style={{ padding: "1rem" }}>
+                      <BadgeEstado estado={bien.estado} />
+                    </td>
+                    <td style={{ padding: "1rem 1.5rem", textAlign: "center" }}>
+                      <button 
+                        title="Cambiar estado técnico"
+                        onClick={() => toggleStatus(bien.id, bien.estado)}
+                        style={{ background: "none", border: "1px solid #e2e8f0", padding: "0.4rem", borderRadius: "0.5rem", cursor: "pointer", color: colorAdmin, display: "flex", alignItems: "center", justifyContent: "center" }}
+                      >
+                        <FiRefreshCw size={14} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* 4. Modal de Registro (POST) */}
       {showModal && (
