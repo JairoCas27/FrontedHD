@@ -1,39 +1,22 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { FiUsers, FiTruck, FiMapPin, FiActivity, FiBell } from "react-icons/fi";
-import { getAdminDashboardMetrics } from '../../services/api'; 
+import { useAdminDashboard } from '../../hooks/Admin/useAdminDashboard'; 
 
 export default function DashboardAdmin() {
   const colorAdmin = "rgb(52,151,195)";
 
-  const [metrics, setMetrics] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  // 🔄 Carga de métricas reales desde Spring Boot
-  useEffect(() => {
-    async function cargarMetrics() {
-      try {
-        setLoading(true);
-        const data = await getAdminDashboardMetrics();
-        setMetrics(data);
-      } catch (error) {
-        console.error("Error al cargar métricas del dashboard:", error);
-      } finally {
-        setLoading(false);
-      }
-    }
-    cargarMetrics();
-  }, []);
+  
+  const { metrics, loading } = useAdminDashboard();
 
   if (loading || !metrics) {
     return (
       <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", color: "#64748b", fontWeight: "600", textAlign: "center" }}>
-        🔄 Sincronizando panel operativo con el servidor central...
+        Sincronizando panel operativo con el servidor central...
       </div>
     );
   }
 
   // Desestructuración y cálculos dinámicos basados en la respuesta real de la API
-  // El backend debe retornar una estructura limpia equivalente a tus kpis y arreglos
   const espaciosPorBloque = metrics.espaciosPorBloque || [];
   const accesosRecientes = metrics.accesosRecientes || [];
 
