@@ -212,8 +212,9 @@ export async function getAdminApartments(params = "") {
 }
 
 export async function assignApartmentOwner(id, idPropietario) {
-  return safeFetch(`/api/admin/apartments/${id}/assign-owner?idPropietario=${idPropietario}`, {
+  return safeFetch(`/api/admin/apartments/${id}/assign-owner`, {
     method: 'PUT',
+    body: JSON.stringify(Number(idPropietario)), // 🟢 Enviado en el body de la petición
     headers: {
       'Content-Type': 'application/json'
     }

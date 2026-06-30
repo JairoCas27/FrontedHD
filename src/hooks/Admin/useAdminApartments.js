@@ -9,8 +9,9 @@ export function useAdminApartments() {
   const cargarDepartamentos = async () => {
     try {
       setLoading(true);
+       
       
-      const data = await getAdminApartments(); 
+      const data = await getAdminApartments("?pagina=0&tamano=100"); 
       setDepartamentos(data?.items || []);
       setMeta({
         total: data?.total || 0,

@@ -7,16 +7,13 @@ import { useAdminAssets } from '../../hooks/Admin/useAdminAssets'
 export default function Bienes() {
   const colorAdmin = "rgb(52,151,195)"
   
-  
   const { bienes, loading, registrarBien, actualizarEstadoBien } = useAdminAssets()
   
   const [busqueda, setBusqueda] = useState('')
   const [showModal, setShowModal] = useState(false)
   
-  
   const [formData, setFormData] = useState({ tipo: 'Estacionamiento', codigo: '', numero: '' })
 
- 
   const bienesFiltrados = (bienes || []).filter(b => {
     const termino = (busqueda || '').toLowerCase().trim();
     if (!termino) return true; 
@@ -27,7 +24,6 @@ export default function Bienes() {
     return codigo.includes(termino) || tipo.includes(termino);
   });
 
- 
   const handleSaveAsset = async (e) => {
     e.preventDefault()
     if (!formData.codigo.trim() || !formData.numero) {
@@ -50,10 +46,9 @@ export default function Bienes() {
     }
   }
 
-  // n Alternar estado técnico delegando el string al PUT del Swagger
   const toggleStatus = async (bien) => {
-    // Alternamos de forma simple entre estados comunes para el PUT /status
-    const nuevoEstado = bien.estado === 'Disponible' ? 'Mantenimiento' : 'Disponible'
+    const estadoActual = (bien.estado || '').toUpperCase();
+    const nuevoEstado = estadoActual === 'DISPONIBLE' ? 'MANTENIMIENTO' : 'DISPONIBLE'
     
     try {
       await actualizarEstadoBien(bien.id, nuevoEstado)
@@ -63,7 +58,6 @@ export default function Bienes() {
     }
   }
 
-  // Estilos estándar unificados
   const estiloInput = {
     width: "100%",
     padding: "0.65rem 0.75rem",
@@ -89,7 +83,6 @@ export default function Bienes() {
   return (
     <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
       
-      {/* 1. Encabezado Reutilizable */}
       <EncabezadoTabla 
         titulo="Bienes y Activos" 
         subtitulo="Inventariado, códigos de barra y control de estado técnico de los bienes del condominio"
@@ -98,7 +91,6 @@ export default function Bienes() {
         onBotonClick={() => setShowModal(true)}
       />
 
-      {/* 2. Filtro / Buscador */}
       <div style={{ backgroundColor: "#ffffff", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", marginBottom: "2rem", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
         <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
           <div style={{ flex: 1, maxWidth: "360px", position: "relative" }}>
@@ -116,7 +108,6 @@ export default function Bienes() {
         </div>
       </div>
 
-      {/* 3. Tabla Premium Mapeada al Backend */}
       {loading ? (
         <div style={{ textAlign: "center", padding: "4rem", color: "#64748b", fontWeight: "600" }}>
           🔄 Sincronizando inventario con el servidor central...
@@ -144,16 +135,13 @@ export default function Bienes() {
                         <div style={{ width: "30px", height: "30px", borderRadius: "0.5rem", backgroundColor: "rgba(52,151,195,0.08)", color: colorAdmin, display: "flex", alignItems: "center", justifyContent: "center" }}>
                           <FiPackage size={16} />
                         </div>
-                        {/* 🟢 Renderiza el código real */}
                         <span style={{ fontWeight: "700", color: "#0f172a" }}>{bien.codigo || 'S/C'}</span>
                       </div>
                     </td>
-                    {/* 🟢 Renderiza el tipo real */}
                     <td style={{ padding: "1rem", color: "#64748b", fontWeight: "600" }}>{bien.tipo}</td>
-                    {/* 🟢 Renderiza el número real */}
                     <td style={{ padding: "1rem", color: "#334155", fontWeight: "700", fontFamily: "monospace" }}>N° {bien.numero ?? 0}</td>
                     <td style={{ padding: "1rem" }}>
-                      <BadgeEstado estado={bien.estado || (bien.disponible ? 'Disponible' : 'Mantenimiento')} />
+                      <BadgeEstado estado={(bien.estado || '').toUpperCase() === 'DISPONIBLE' ? 'Disponible' : 'Mantenimiento'} />
                     </td>
                     <td style={{ padding: "1rem 1.5rem", textAlign: "center" }}>
                       <button 
@@ -172,7 +160,6 @@ export default function Bienes() {
         </div>
       )}
 
-      {/* 4. Modal de Registro Adaptado */}
       {showModal && (
         <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" }}>
           <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "440px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.08)", border: "1px solid #e2e8f0", overflow: "hidden" }}>
