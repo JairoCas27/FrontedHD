@@ -1,10 +1,7 @@
-import { useState, useEffect } from "react"
-import { NavLink } from "react-router-dom"
-import { FiChevronLeft, FiChevronRight, FiLogOut, FiCreditCard, FiUser, FiMail } from "react-icons/fi"
-import logo2 from "../images/logo.png"
-import { useLogout } from "../hooks/useLogout"
-
-const perfilFallback = { nombre: 'Usuario Demo', email: 'usuario@demo.com' }
+import { NavLink } from "react-router-dom";
+import { FiChevronLeft, FiChevronRight, FiLogOut, FiUser, FiMail } from "react-icons/fi";
+import logo2 from "../images/logo.png";
+import { useLogout } from "../hooks/useLogout";
 
 export default function SidebarLayout({
   isOpen,
@@ -14,36 +11,9 @@ export default function SidebarLayout({
   accentLight,
   accentDark,
   menuItems,
-  storageKey,
+  userInfo,
 }) {
-  const { handleLogout } = useLogout()
-
-  const [perfilGuardado, setPerfilGuardado] = useState(() => {
-    try {
-      const stored = storageKey ? localStorage.getItem(storageKey) : null
-      return stored ? JSON.parse(stored) : perfilFallback
-    } catch {
-      return perfilFallback
-    }
-  })
-
-  useEffect(() => {
-    if (!storageKey) return
-    const sync = () => {
-      try {
-        const stored = localStorage.getItem(storageKey)
-        if (stored) setPerfilGuardado(JSON.parse(stored))
-      } catch {}
-    }
-    window.addEventListener('storage', sync)
-    return () => window.removeEventListener('storage', sync)
-  }, [storageKey])
-
-  const userInfo = [
-    { icon: <FiCreditCard size={18} />, value: "12345678" },
-    { icon: <FiUser size={18} />, value: perfilGuardado.nombre },
-    { icon: <FiMail size={18} />, value: perfilGuardado.email },
-  ]
+  const { handleLogout } = useLogout();
 
   return (
     <div
@@ -165,28 +135,21 @@ export default function SidebarLayout({
                 marginRight: isOpen ? "0.5rem" : "0",
               })}
               onMouseEnter={(e) => {
-                const active = e.currentTarget.getAttribute("aria-current")
+                const active = e.currentTarget.getAttribute("aria-current");
                 if (!active) {
-                  e.currentTarget.style.backgroundColor = accentLight
-                  e.currentTarget.style.color = accentColor
+                  e.currentTarget.style.backgroundColor = accentLight;
+                  e.currentTarget.style.color = accentColor;
                 }
               }}
               onMouseLeave={(e) => {
-                const active = e.currentTarget.getAttribute("aria-current")
+                const active = e.currentTarget.getAttribute("aria-current");
                 if (!active) {
-                  e.currentTarget.style.backgroundColor = "transparent"
-                  e.currentTarget.style.color = "#475569"
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "#475569";
                 }
               }}
             >
-              <span
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  minWidth: "20px",
-                  transition: "transform 0.2s ease",
-                }}
-              >
+              <span style={{ display: "flex", alignItems: "center", minWidth: "20px", transition: "transform 0.2s ease" }}>
                 {item.icon}
               </span>
               <span
@@ -228,7 +191,7 @@ export default function SidebarLayout({
                 alignItems: "center",
                 gap: "0.65rem",
                 width: "100%",
-                opacity: isOpen ? 1 : 0,
+                opacity: 1,
                 transition: "opacity 0.25s ease",
               }}
             >
@@ -283,12 +246,12 @@ export default function SidebarLayout({
               transition: "background 0.2s ease, transform 0.15s ease",
             }}
             onMouseEnter={(e) => {
-              e.currentTarget.style.backgroundColor = accentDark
-              e.currentTarget.style.transform = "translateY(-1px)"
+              e.currentTarget.style.backgroundColor = accentDark;
+              e.currentTarget.style.transform = "translateY(-1px)";
             }}
             onMouseLeave={(e) => {
-              e.currentTarget.style.backgroundColor = accentColor
-              e.currentTarget.style.transform = "translateY(0px)"
+              e.currentTarget.style.backgroundColor = accentColor;
+              e.currentTarget.style.transform = "translateY(0px)";
             }}
           >
             <FiLogOut size={16} />
@@ -312,11 +275,15 @@ export default function SidebarLayout({
           transition: "background 0.2s ease",
           fontWeight: 600,
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = accentColor.replace(")", ", 0.15)").replace("rgb", "rgba"))}
+        onMouseEnter={(e) =>
+          (e.currentTarget.style.backgroundColor = accentColor
+            .replace(")", ", 0.15)")
+            .replace("rgb", "rgba"))
+        }
         onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = accentLight)}
       >
         {isOpen ? <FiChevronLeft size={20} /> : <FiChevronRight size={20} />}
       </button>
     </div>
-  )
+  );
 }

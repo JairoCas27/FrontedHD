@@ -1,11 +1,3 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* ... deja abajo el resto de código que ya tenía tu compañero ... */
-
-
-
 #root {
   margin: 0;
   text-align: center;

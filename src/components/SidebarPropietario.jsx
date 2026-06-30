@@ -1,22 +1,21 @@
-import SidebarLayout from "./SidebarLayout"
-import {
-  FiHome, FiTruck, FiMapPin,
-  FiUserCheck, FiBell, FiUser,
-} from "react-icons/fi"
+import SidebarLayout from "./SidebarLayout";
+import { FiHome, FiTruck, FiUsers, FiClock, FiUser, FiGrid } from "react-icons/fi";
+import { useSidebarUser } from "../hooks/useSidebarUser";
 
 const menuItems = [
   { section: "Principal" },
   { title: "Dashboard", icon: <FiHome size={20} />, path: "/propietario/dashboard" },
-  { section: "Mis Recursos" },
+  { section: "Mi Apartamento" },
+  { title: "Mi Apartamento", icon: <FiGrid size={20} />, path: "/propietario/apartamento" },
   { title: "Mis Vehículos", icon: <FiTruck size={20} />, path: "/propietario/vehiculos" },
-  { title: "Mis Estacionamientos", icon: <FiMapPin size={20} />, path: "/propietario/estacionamientos" },
-  { title: "Mis Visitas", icon: <FiUserCheck size={20} />, path: "/propietario/visitas" },
+  { title: "Mis Inquilinos", icon: <FiUsers size={20} />, path: "/propietario/inquilinos" },
   { section: "Sistema" },
-  { title: "Notificaciones", icon: <FiBell size={20} />, path: "/propietario/notificaciones" },
+  { title: "Historial", icon: <FiClock size={20} />, path: "/propietario/historial" },
   { title: "Perfil", icon: <FiUser size={20} />, path: "/propietario/perfil" },
-]
+];
 
 export default function SidebarPropietario({ isOpen, setIsOpen }) {
+  const userInfo = useSidebarUser();
   return (
     <SidebarLayout
       isOpen={isOpen}
@@ -26,8 +25,7 @@ export default function SidebarPropietario({ isOpen, setIsOpen }) {
       accentLight="rgba(249,115,22,0.1)"
       accentDark="rgb(234,88,12)"
       menuItems={menuItems}
-      loginRoute="/login-propietario"
-      storageKey="usuario"
+      userInfo={userInfo}
     />
-  )
+  );
 }

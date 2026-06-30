@@ -48,10 +48,10 @@ import Alertas from "./pages/seguridad/Alertas"
 import PerfilSeguridad from "./pages/seguridad/PerfilSeguridad"
 
 import DashboardPropietario from "./pages/propietario/DashboardPropietario"
+import MiApartamento from "./pages/propietario/MiApartamento"
 import MisVehiculos from "./pages/propietario/MisVehiculos"
-import MisEstacionamientos from "./pages/propietario/MisEstacionamientos"
-import MisVisitas from "./pages/propietario/MisVisitas"
-import MisNotificaciones from "./pages/propietario/MisNotificaciones"
+import MisInquilinos from "./pages/propietario/MisInquilinos"
+import Historial from "./pages/propietario/Historial"
 import PerfilPropietario from "./pages/propietario/PerfilPropietario"
 
 function App() {
@@ -61,7 +61,6 @@ function App() {
 
       <Routes>
 
-        {/* 🌐 Rutas Públicas */}
         <Route element={<PublicLayout />}>
           <Route path="/" element={<Inicio />} />
           <Route path="/inicio" element={<Inicio />} />
@@ -74,12 +73,10 @@ function App() {
           <Route path="/terminos" element={<Terminos />} />
         </Route>
 
-        {/* 🔑 Autenticación */}
         <Route element={<LoginLayout />}>
           <Route path="/login" element={<Login />} />
         </Route>
 
-        {/* 👔 Rutas Oficiales Protegidas del Administrador */}
         <Route element={<AppLayout Sidebar={SidebarAdmin} allowedRole="admin" />}>
           <Route path="/admin/dashboard" element={<DashboardAdmin />} />
           <Route path="/admin/usuarios" element={<Usuarios />} />
@@ -93,7 +90,6 @@ function App() {
           <Route path="/admin/perfil" element={<Perfil />} />
         </Route>
 
-        {/* 👑 Rutas del SuperAdministrador */}
         <Route element={<AppLayout Sidebar={SidebarSuperAdmin} allowedRole="superadmin" />}>
           <Route path="/superadmin/dashboard" element={<DashboardSuperAdmin />} />
           <Route path="/superadmin/condominios" element={<Condominios />} />
@@ -102,7 +98,6 @@ function App() {
           <Route path="/superadmin/perfil" element={<PerfilSuperAdmin />} />
         </Route>
 
-        {/* 🛡️ Rutas de Seguridad (Vigilantes) */}
         <Route element={<AppLayout Sidebar={SidebarSeguridad} allowedRole="seguridad" />}>
           <Route path="/seguridad/accesos" element={<AccesosSeguridad />} />
           <Route path="/seguridad/visitas" element={<VisitasSeguridad />} />
@@ -112,16 +107,15 @@ function App() {
           <Route path="/seguridad/perfil" element={<PerfilSeguridad />} />
         </Route>
 
-        {/* 🏠 Rutas del Propietario / Residente */}
         <Route element={<AppLayout Sidebar={SidebarPropietario} allowedRole="propietario" />}>
           <Route path="/propietario/dashboard" element={<DashboardPropietario />} />
+          <Route path="/propietario/apartamento" element={<MiApartamento />} />
           <Route path="/propietario/vehiculos" element={<MisVehiculos />} />
-          <Route path="/propietario/estacionamientos" element={<MisEstacionamientos />} />
-          <Route path="/propietario/visitas" element={<MisVisitas />} />
-          <Route path="/propietario/notificaciones" element={<MisNotificaciones />} />
+          <Route path="/propietario/inquilinos" element={<MisInquilinos />} />
+          <Route path="/propietario/historial" element={<Historial />} />
           <Route path="/propietario/perfil" element={<PerfilPropietario />} />
         </Route>
-
+        
       </Routes>
 
       <ToastContainer
