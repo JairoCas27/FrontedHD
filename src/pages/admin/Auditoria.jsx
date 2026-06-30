@@ -1,26 +1,32 @@
 import React, { useState } from 'react'
-import { FiShield, FiSearch, FiX, FiClock } from "react-icons/fi"
+import { FiShield, FiSearch, FiX } from "react-icons/fi"
 import { useAdminLogs } from '../../hooks/Admin/useAdminLogs' 
 
 export default function Auditoria() {
   const colorAdmin = "rgb(52,151,195)"
   
- 
   const { logs, loading } = useAdminLogs()
-  
   const [busqueda, setBusqueda] = useState('')
 
- 
-  const logsFiltrados = logs.filter(log => {
-    const término = busqueda.toLowerCase()
-    return (
-      log.placa?.toLowerCase().includes(término) ||
-      log.ocupante?.toLowerCase().includes(término) ||
-      log.nombreSolicitante?.toLowerCase().includes(término)
-    )
+  // 🟢 CORREGIDO: Filtrado ultra seguro a prueba de objetos o propiedades nulas
+  const logsFiltrados = (logs || []).filter(log => {
+    const termino = (busqueda || '').toLowerCase().trim()
+    if (!termino) return true
+
+    const placa = (log.placa || '').toLowerCase()
+    const ocupante = (log.ocupante || '').toLowerCase()
+    const solicitante = (log.nombreSolicitante || '').toLowerCase()
+
+    return placa.includes(termino) || ocupante.includes(termino) || solicitante.includes(termino)
   })
 
-  
+  // 🟢 Función auxiliar para formatear fechas de manera segura sin romper la UI
+  const formatearFecha = (fechaString) => {
+    if (!fechaString || fechaString === '---') return '---'
+    const fecha = new Date(fechaString)
+    return isNaN(fecha.getTime()) ? fechaString : fecha.toLocaleString('es-PE')
+  }
+
   const estiloInput = {
     width: "100%",
     padding: "0.65rem 0.75rem",
@@ -46,13 +52,11 @@ export default function Auditoria() {
   return (
     <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
       
-      {/* 1. Cabecera */}
       <div style={{ marginBottom: "2rem" }}>
         <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>Auditoría de Accesos</h1>
         <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>Historial y bitácora de control de movimientos vehiculares y préstamos comunes</p>
       </div>
 
-      {/* 2. Filtros de Búsqueda Sincronizados */}
       <div style={{ backgroundColor: "#ffffff", padding: "1.5rem", borderRadius: "1rem", border: "1px solid #e2e8f0", marginBottom: "2rem", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "end" }}>
           
@@ -69,6 +73,7 @@ export default function Auditoria() {
 
           <div>
             <button 
+              type="button"
               onClick={() => setBusqueda('')}
               style={{ padding: "0.65rem 1rem", border: "1px solid #cbd5e1", backgroundColor: "#ffffff", color: "#64748b", borderRadius: "0.5rem", fontSize: "0.9rem", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center" }}
             >
@@ -79,7 +84,6 @@ export default function Auditoria() {
         </div>
       </div>
 
-      {/* 3. Tabla de Logs Real de Negocio */}
       {loading ? (
         <div style={{ textAlign: "center", padding: "4rem", color: "#64748b", fontWeight: "600" }}>
           🔄 Recuperando bitácora de eventos del servidor de seguridad...
@@ -119,10 +123,12 @@ export default function Auditoria() {
                         {responsable}
                       </td>
                       <td style={{ padding: "1rem", color: "#64748b", fontSize: "0.8rem" }}>
-                        {entradaPintar !== '---' ? new Date(entradaPintar).toLocaleString('es-PE') : '---'}
+                        {/* 🟢 CORREGIDO: Formateador a prueba de errores de casteo */}
+                        {formatearFecha(entradaPintar)}
                       </td>
                       <td style={{ padding: "1rem", color: "#64748b", fontSize: "0.8rem" }}>
-                        {salidaPintar !== '---' ? new Date(salidaPintar).toLocaleString('es-PE') : 'En curso / Pendiente'}
+                        {/* 🟢 CORREGIDO: Formateador a prueba de errores de casteo */}
+                        {salidaPintar !== '---' ? formatearFecha(salidaPintar) : 'En curso / Pendiente'}
                       </td>
                       <td style={{ padding: "1rem 1.5rem", fontWeight: "700", color: log.penalizacion > 0 ? "#ef4444" : "#10b981" }}>
                         {log.penalizacion > 0 ? `S/ ${log.penalizacion}` : 'Ninguna'}
@@ -134,7 +140,6 @@ export default function Auditoria() {
             </table>
           </div>
 
-          {/* 4. Estado vacío */}
           {logsFiltrados.length === 0 && (
             <div style={{ padding: "4rem 2rem", textAlign: "center", color: "#94a3b8" }}>
               <FiShield size={44} style={{ color: "#cbd5e1", marginBottom: "1rem" }} />

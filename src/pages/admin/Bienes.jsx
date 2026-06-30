@@ -17,10 +17,15 @@ export default function Bienes() {
   const [formData, setFormData] = useState({ tipo: 'Estacionamiento', codigo: '', numero: '' })
 
  
-  const bienesFiltrados = bienes.filter(b => 
-    b.codigo?.toLowerCase().includes(busqueda.toLowerCase()) ||
-    b.tipo?.toLowerCase().includes(busqueda.toLowerCase())
-  )
+  const bienesFiltrados = (bienes || []).filter(b => {
+    const termino = (busqueda || '').toLowerCase().trim();
+    if (!termino) return true; 
+
+    const codigo = (b.codigo || '').toLowerCase();
+    const tipo = (b.tipo || '').toLowerCase();
+
+    return codigo.includes(termino) || tipo.includes(termino);
+  });
 
  
   const handleSaveAsset = async (e) => {

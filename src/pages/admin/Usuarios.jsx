@@ -5,12 +5,13 @@ import { useAdminUsers } from '../../hooks/Admin/useAdminUsers'
 
 export default function Usuarios() {
   const colorAdmin = "rgb(52,151,195)"
-
+  
   const { usuarios, loading, registrarUsuario, modificarUsuario, cambiarEstadoUsuario } = useAdminUsers()
 
   const [busqueda, setBusqueda] = useState('')
   const [filtroRol, setFiltroRol] = useState('todos')
   const [showModal, setShowModal] = useState(false)
+  
   const [editandoId, setEditandoId] = useState(null)
   const [formUsuario, setFormUsuario] = useState({
     nombres: '',
@@ -18,7 +19,7 @@ export default function Usuarios() {
     correo: '',
     telefono: '',
     contrasena: '',
-    rol: 'Residente'
+    rol: 'RESIDENTE' 
   })
 
   const usuariosFiltrados = (usuarios || []).filter(u => {
@@ -43,12 +44,12 @@ export default function Usuarios() {
         apellidos: usuario.apellidos || '',
         correo: usuario.correo || '',
         telefono: usuario.telefono || '',
-        contrasena: '',
-        rol: usuario.rol || 'Residente'
+        contrasena: '', 
+        rol: usuario.rol || 'RESIDENTE'
       })
     } else {
       setEditandoId(null)
-      setFormUsuario({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', rol: 'Residente' })
+      setFormUsuario({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', rol: 'RESIDENTE' })
     }
     setShowModal(true)
   }
@@ -57,20 +58,20 @@ export default function Usuarios() {
     e.preventDefault()
     try {
       if (editandoId) {
-        await modificarUsuario(editandoId, {
+        const putPayload = {
           nombres: formUsuario.nombres.trim(),
           apellidos: formUsuario.apellidos.trim(),
           telefono: formUsuario.telefono.trim()
-        })
+        }
       } else {
-        await registrarUsuario({
+        const postPayload = {
           nombres: formUsuario.nombres.trim(),
           apellidos: formUsuario.apellidos.trim(),
           correo: formUsuario.correo.trim(),
           telefono: formUsuario.telefono.trim(),
           contrasena: formUsuario.contrasena,
           rol: formUsuario.rol
-        })
+        }
       }
       setShowModal(false)
     } catch (error) {
@@ -120,13 +121,15 @@ export default function Usuarios() {
               onChange={(e) => setBusqueda(e.target.value)}
             />
           </div>
-          <div style={{ width: "200px" }}>
+
+          <div style={{ width: "240px" }}>
+            {/* 🟢 Selector de filtrado mapeado con los Enums reales de la DB */}
             <select style={estiloInput} value={filtroRol} onChange={(e) => setFiltroRol(e.target.value)}>
               <option value="todos">Todos los Roles</option>
-              <option value="Administrador">Administradores</option>
-              <option value="Residente">Residentes</option>
-              <option value="Seguridad">Seguridad</option>
-              <option value="Proveedor">Proveedores</option>
+              <option value="ADMINISTRADOR_CONDOMINIO">Administradores del Condominio</option>
+              <option value="PROPIETARIO">Propietarios</option>
+              <option value="AGENTE_SEGURIDAD">Agentes de Seguridad</option>
+              <option value="RESIDENTE">Residentes / Inquilinos</option>
             </select>
           </div>
           <small style={{ color: "#64748b", fontWeight: "600", marginLeft: "auto" }}>
@@ -160,12 +163,15 @@ export default function Usuarios() {
                   <td style={{ padding: "1rem", fontFamily: "monospace" }}>{u.telefono || '---'}</td>
                   <td style={{ padding: "1rem" }}>{u.correo}</td>
                   <td style={{ padding: "1rem" }}>
-                    <span style={{
+                    {/* 🟢 Mapeo de badges actualizado con la nomenclatura exacta */}
+                    <span style={{ 
                       fontSize: "0.75rem", fontWeight: "700", padding: "0.25rem 0.5rem", borderRadius: "0.375rem",
-                      backgroundColor: u.rol === 'Administrador' ? "rgba(52,151,195,0.1)" : "rgba(71,85,105,0.1)",
-                      color: u.rol === 'Administrador' ? colorAdmin : "#475569"
+                      backgroundColor: u.rol === 'ADMINISTRADOR_CONDOMINIO' ? "rgba(52,151,195,0.1)" : "rgba(71, 85, 105, 0.1)",
+                      color: u.rol === 'ADMINISTRADOR_CONDOMINIO' ? colorAdmin : "#475569"
                     }}>
-                      {u.rol?.toUpperCase()}
+                      {u.rol === 'ADMINISTRADOR_CONDOMINIO' ? 'ADMINISTRADOR' : 
+                       u.rol === 'AGENTE_SEGURIDAD' ? 'SEGURIDAD' : 
+                       u.rol === 'PROPIETARIO' ? 'PROPIETARIO' : 'RESIDENTE'}
                     </span>
                   </td>
                   <td style={{ padding: "1rem 1.5rem", textAlign: "right" }}>
@@ -239,10 +245,12 @@ export default function Usuarios() {
               )}
 
               <div>
-                <label style={estiloLabel}>Rol asignado</label>
-                <select
-                  value={formUsuario.rol}
-                  onChange={e => setFormUsuario({ ...formUsuario, rol: e.target.value })}
+                <label style={estiloLabel}>Rol asignado (Database Enum)</label>
+                {/* 🟢 Opciones corregidas vinculando los strings exactos aceptados por el backend en Java */}
+                <select 
+                  style={estiloInput} 
+                  value={formUsuario.rol} 
+                  onChange={e => setFormUsuario({...formUsuario, rol: e.target.value})}
                   disabled={!!editandoId}
                   style={{
                     ...estiloInput,
@@ -251,10 +259,10 @@ export default function Usuarios() {
                     cursor: editandoId ? "not-allowed" : "pointer"
                   }}
                 >
-                  <option value="Residente">Residente</option>
-                  <option value="Administrador">Administrador</option>
-                  <option value="Seguridad">Seguridad</option>
-                  <option value="Proveedor">Proveedor</option>
+                  <option value="RESIDENTE">Residente / Inquilino</option>
+                  <option value="ADMINISTRADOR_CONDOMINIO">Administrador del Condominio</option>
+                  <option value="AGENTE_SEGURIDAD">Agente de Seguridad</option>
+                  <option value="PROPIETARIO">Propietario</option>
                 </select>
               </div>
 

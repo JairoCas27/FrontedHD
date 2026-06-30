@@ -6,14 +6,11 @@ import { useAdminStructure } from '../../hooks/Admin/useAdminStructure'
 export default function Estructura() {
   const colorAdmin = "rgb(52,151,195)"
   
-  // Cargamos la data desde el Hook independiente
   const { estructura, loading, insertarNodo, eliminarNodo } = useAdminStructure()
   
   const [showModal, setShowModal] = useState(false)
   const [nuevoNodo, setNuevoNodo] = useState({ nombre: '', padreId: '' })
 
-  //  Adaptación de groundedness: Extraemos la lista real de torres del payload del backend
-  // Si el backend devuelve un array directo, usamos 'estructura'. Si devuelve un objeto raíz, extraemos 'estructura.torres'.
   const listaTorres = Array.isArray(estructura) 
     ? estructura 
     : (estructura?.torres || [])
@@ -25,7 +22,8 @@ export default function Estructura() {
     try {
       await insertarNodo({
         nombre: nuevoNodo.nombre.trim(),
-        padreId: nuevoNodo.padreId ? parseInt(nuevoNodo.padreId) : null
+        padreId: nuevoNodo.padreId ? parseInt(nuevoNodo.padreId) : null,
+        tipo: nuevoNodo.padreId ? "PISO" : "TORRE"
       })
       
       setShowModal(false)
@@ -54,7 +52,7 @@ export default function Estructura() {
     border: "1px solid #cbd5e1",
     fontSize: "0.9rem",
     color: "#334155",
-    boxSizing: "border-box",
+    boxSizing: "box-sizing",
     outline: "none"
   }
 
@@ -70,7 +68,6 @@ export default function Estructura() {
   return (
     <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
       
-      {/* 1. Encabezado Reutilizable */}
       <EncabezadoTabla 
         titulo="Estructura del Condominio" 
         subtitulo="Organigrama de nodos físicos para la segmentación de bloques, sectores y niveles residenciales"
@@ -79,18 +76,15 @@ export default function Estructura() {
         onBotonClick={() => setShowModal(true)}
       />
 
-      {/* 2. Árbol de Estructura Jerárquica Protegido */}
       {loading ? (
         <div style={{ textAlign: "center", padding: "4rem", color: "#64748b", fontWeight: "600" }}>
-          🔄 Dibujando organigrama arquitectónico desde el servidor...
+           Dibujando organigrama arquitectónico desde el servidor...
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", width: "100%" }}>
-          {/* 🟢 Cambiado a listaTorres para asegurar iteración limpia sin romper la UI */}
           {listaTorres.map((torre) => (
             <div key={torre.id} style={{ backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "1rem", padding: "1.5rem", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.01)" }}>
               
-              {/* Nivel 1: Torre */}
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: "1rem", marginBottom: "1rem" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                   <FiFolder size={20} style={{ color: colorAdmin }} />
@@ -108,14 +102,12 @@ export default function Estructura() {
                 </button>
               </div>
 
-              {/* Nivel 2: Pisos / Subnodos */}
               <div style={{ display: "flex", flexDirection: "column", gap: "1rem", paddingLeft: "1.25rem", borderLeft: "2px dashed #cbd5e1" }}>
                 {torre.pisos?.map((piso) => (
                   <div key={piso.id} style={{ backgroundColor: "#f8fafc", padding: "1rem", borderRadius: "0.75rem", border: "1px solid #e2e8f0" }}>
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontWeight: "700", color: "#334155", fontSize: "0.9rem" }}>
                         <FiGitCommit style={{ color: "#94a3b8" }} />
-                        {/* 🟢 El Swagger muestra que los pisos devuelven 'numero' identificador o nombre */}
                         <span>{piso.nombre || `Piso ${piso.numero}`}</span>
                       </div>
                       <button 
@@ -127,12 +119,10 @@ export default function Estructura() {
                       </button>
                     </div>
 
-                    {/* Nivel 3: Unidades / Hojas del árbol */}
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", paddingLeft: "1rem" }}>
                       {piso.apartamentos && piso.apartamentos.length > 0 ? (
                         piso.apartamentos.map((dpto, idx) => (
                           <span key={dpto.id || idx} style={{ fontSize: "0.75rem", backgroundColor: "#ffffff", border: "1px solid #e2e8f0", padding: "0.2rem 0.5rem", borderRadius: "0.375rem", color: "#475569", fontWeight: "600" }}>
-                            {/* 🟢 Renderiza 'dpto.numero' según el objeto de respuesta del Swagger */}
                             Dpto. {dpto.numero || dpto}
                           </span>
                         ))
@@ -149,13 +139,12 @@ export default function Estructura() {
           
           {listaTorres.length === 0 && (
             <div style={{ padding: "3rem", textAlign: "center", backgroundColor: "#ffffff", borderRadius: "1rem", border: "1px solid #e2e8f0", color: "#94a3b8" }}>
-              🛕 No hay torres ni nodos estructurales registrados en este condominio.
+               No hay torres ni nodos estructurales registrados en este condominio.
             </div>
           )}
         </div>
       )}
 
-      {/* 3. Modal de Creación */}
       {showModal && (
         <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" }}>
           <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "420px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.08)", border: "1px solid #e2e8f0", overflow: "hidden" }}>

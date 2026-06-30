@@ -8,7 +8,9 @@ export function useAdminAssets() {
   const cargarBienes = async () => {
     try {
       setLoading(true);
-      const queryParams = "?pagina=0&tamano=100";
+      
+      // 🟢 CORREGIDO: Agregamos el parámetro obligatorios '&type=Estacionamiento' (o Carrito) que exige Spring Boot
+      const queryParams = "?pagina=0&tamano=100&type=Estacionamiento";
       const data = await getAdminAssets(queryParams);
       
       setBienes(data?.items || []);
