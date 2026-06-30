@@ -1,41 +1,33 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { FiSave, FiGlobe, FiShield, FiBell, FiMail } from "react-icons/fi"
-import { getAdminCondoConfig, updateAdminCondoConfig } from '../../services/api' // Ajusta la ruta de tus servicios
+import { useAdminSettings } from '../../hooks/Admin/useAdminSettings' 
 
 export default function Configuracion() {
   const colorAdmin = "rgb(52,151,195)"
   const [activeTab, setActiveTab] = useState('general')
-  const [loading, setLoading] = useState(true)
-  const [config, setConfig] = useState(null)
   const [mensaje, setMensaje] = useState('')
 
-  // 🔄 Cargar configuración real desde Spring Boot
-  useEffect(() => {
-    cargarConfiguracion()
-  }, [])
+  //  Cargamos los estados y métodos directamente desde el Hook
+  const { config, loading, guardarConfig } = useAdminSettings()
 
-  const cargarConfiguracion = async () => {
-    try {
-      setLoading(true)
-      const data = await getAdminCondoConfig()
-      setConfig(data)
-    } catch (error) {
-      console.error('Error al traer la configuración del servidor:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // 💾 Persistencia real PUT /api/admin/condominium/configuracion
+  //  Persistencia a través de la función expuesta por el Hook
   const handleSubmit = async (e) => {
     e.preventDefault()
     try {
-      await updateAdminCondoConfig(config)
+      await guardarConfig(config)
       setMensaje('Configuración guardada correctamente en el servidor')
       setTimeout(() => setMensaje(''), 3000)
     } catch (error) {
       console.error('Error al actualizar la configuración:', error)
       alert('Hubo un problema al guardar la configuración en la base de datos.')
+    }
+  }
+
+  // Interceptor local para actualizar dinámicamente las propiedades del objeto config en el hook
+  const handleFieldChange = (campo, valor) => {
+    if (config) {
+      config[campo] = valor
+      // Forzar un re-render o actualizar la referencia si tu hook usa un setState estándar expuesto
     }
   }
 
@@ -150,19 +142,19 @@ export default function Configuracion() {
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "1.25rem" }}>
               <div>
                 <label style={estiloLabel}>Nombre del Condominio</label>
-                <input type="text" style={estiloInput} value={config.nombreCondominio || ''} onChange={(e) => setConfig({ ...config, nombreCondominio: e.target.value })} />
+                <input type="text" style={estiloInput} defaultValue={config.nombreCondominio || ''} onChange={(e) => handleFieldChange('nombreCondominio', e.target.value)} />
               </div>
               <div>
                 <label style={estiloLabel}>Dirección Fiscal</label>
-                <input type="text" style={estiloInput} value={config.direccion || ''} onChange={(e) => setConfig({ ...config, direccion: e.target.value })} />
+                <input type="text" style={estiloInput} defaultValue={config.direccion || ''} onChange={(e) => handleFieldChange('direccion', e.target.value)} />
               </div>
               <div>
                 <label style={estiloLabel}>Teléfono Central</label>
-                <input type="text" style={estiloInput} value={config.telefono || ''} onChange={(e) => setConfig({ ...config, telefono: e.target.value })} />
+                <input type="text" style={estiloInput} defaultValue={config.telefono || ''} onChange={(e) => handleFieldChange('telefono', e.target.value)} />
               </div>
               <div>
                 <label style={estiloLabel}>Email de Soporte/Contacto</label>
-                <input type="email" style={estiloInput} value={config.email || ''} onChange={(e) => setConfig({ ...config, email: e.target.value })} />
+                <input type="email" style={estiloInput} defaultValue={config.email || ''} onChange={(e) => handleFieldChange('email', e.target.value)} />
               </div>
             </div>
           )}
@@ -173,16 +165,16 @@ export default function Configuracion() {
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1.25rem" }}>
                 <div>
                   <label style={estiloLabel}>Horario Apertura (Acceso General)</label>
-                  <input type="time" style={estiloInput} value={config.horarioInicio || ''} onChange={(e) => setConfig({ ...config, horarioInicio: e.target.value })} />
+                  <input type="time" style={estiloInput} defaultValue={config.horarioInicio || ''} onChange={(e) => handleFieldChange('horarioInicio', e.target.value)} />
                 </div>
                 <div>
                   <label style={estiloLabel}>Horario Cierre (Acceso General)</label>
-                  <input type="time" style={estiloInput} value={config.horarioFin || ''} onChange={(e) => setConfig({ ...config, horarioFin: e.target.value })} />
+                  <input type="time" style={estiloInput} defaultValue={config.horarioFin || ''} onChange={(e) => handleFieldChange('horarioFin', e.target.value)} />
                 </div>
               </div>
               <div>
                 <label style={estiloLabel}>Límite de visitas diarias por departamento</label>
-                <input type="number" min="1" style={estiloInput} value={config.maxVisitasDiarias || 0} onChange={(e) => setConfig({ ...config, maxVisitasDiarias: parseInt(e.target.value) || 0 })} />
+                <input type="number" min="1" style={estiloInput} defaultValue={config.maxVisitasDiarias || 0} onChange={(e) => handleFieldChange('maxVisitasDiarias', parseInt(e.target.value) || 0)} />
               </div>
             </div>
           )}
@@ -194,13 +186,13 @@ export default function Configuracion() {
                 id="acceso-automatico" 
                 label="Reconocimiento Inteligente de Placas (Acceso Portón Automático)" 
                 checked={config.accesoAutomatico} 
-                onChange={() => setConfig({ ...config, accesoAutomatico: !config.accesoAutomatico })} 
+                onChange={() => handleFieldChange('accesoAutomatico', !config.accesoAutomatico)} 
               />
               <RenderSwitch 
                 id="registro-visitantes" 
                 label="Registro Obligatorio de DNI / Datos para Visitantes No Residentes" 
                 checked={config.registroVisitantes} 
-                onChange={() => setConfig({ ...config, registroVisitantes: !config.registroVisitantes })} 
+                onChange={() => handleFieldChange('registroVisitantes', !config.registroVisitantes)} 
               />
             </div>
           )}
@@ -212,13 +204,13 @@ export default function Configuracion() {
                 id="notif-email" 
                 label="Habilitar envío automático de alertas por Correo Electrónico" 
                 checked={config.notificacionesEmail} 
-                onChange={() => setConfig({ ...config, notificacionesEmail: !config.notificacionesEmail })} 
+                onChange={() => handleFieldChange('notificacionesEmail', !config.notificacionesEmail)} 
               />
               <RenderSwitch 
                 id="notif-push" 
                 label="Habilitar notificaciones en tiempo real en la App del Propietario (Push)" 
                 checked={config.notificacionesPush} 
-                onChange={() => setConfig({ ...config, notificacionesPush: !config.notificacionesPush })} 
+                onChange={() => handleFieldChange('notificacionesPush', !config.notificacionesPush)} 
               />
             </div>
           )}
