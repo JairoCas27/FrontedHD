@@ -1,28 +1,12 @@
 import React, { useState, useEffect } from 'react'
 import { FiUser, FiMail, FiPhone, FiMapPin, FiSave, FiLock } from "react-icons/fi"
-
-const perfilInicial = {
-  nombre: 'Usuario Demo',
-  email: 'usuario@demo.com',
-  telefono: '+51 914 646 333',
-  direccion: 'Calle las Cucardas 399, Lima',
-  rol: 'Administrador'
-}
-
-const STORAGE_KEY = 'perfil_condominio_admin'
+import { getAdminMyInfo, updateAdminMyInfo } from '../../services/api' // Ajusta la ruta a tu archivo de apis
 
 export default function Perfil() {
   const colorAdmin = "rgb(52,151,195)"
 
-  const [perfil, setPerfil] = useState(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      return stored ? JSON.parse(stored) : perfilInicial
-    } catch {
-      return perfilInicial
-    }
-  })
-
+  const [perfil, setPerfil] = useState(null)
+  const [loading, setLoading] = useState(true)
   const [passwordData, setPasswordData] = useState({
     actual: '',
     nueva: '',
@@ -32,19 +16,36 @@ export default function Perfil() {
   const [mensaje, setMensaje] = useState('')
   const [tipoMensaje, setTipoMensaje] = useState('success')
 
+  // 🔄 Cargar información real del administrador desde el backend
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(perfil))
-    } catch {
-      console.error('Error al guardar en localStorage')
+    async function cargarPerfil() {
+      try {
+        setLoading(true)
+        const data = await getAdminMyInfo()
+        setPerfil(data)
+      } catch (error) {
+        console.error('Error al traer la información del perfil:', error)
+      } finally {
+        setLoading(false)
+      }
     }
-  }, [perfil])
+    cargarPerfil()
+  }, [])
 
-  const handlePerfilSubmit = (e) => {
+  // 💾 Persistencia real PUT /api/admin/condominium/my-info
+  const handlePerfilSubmit = async (e) => {
     e.preventDefault()
-    setMensaje('Perfil actualizado correctamente')
-    setTipoMensaje('success')
-    setTimeout(() => setMensaje(''), 3000)
+    try {
+      await updateAdminMyInfo(perfil)
+      setMensaje('Perfil actualizado correctamente')
+      setTipoMensaje('success')
+      setTimeout(() => setMensaje(''), 3000)
+    } catch (error) {
+      console.error('Error al actualizar el perfil:', error)
+      setMensaje('Hubo un error al guardar los cambios')
+      setTipoMensaje('danger')
+      setTimeout(() => setMensaje(''), 3000)
+    }
   }
 
   const handlePasswordSubmit = (e) => {
@@ -56,6 +57,7 @@ export default function Perfil() {
       setMensaje('La contraseña debe tener al menos 6 caracteres')
       setTipoMensaje('danger')
     } else {
+      // Nota: Si manejas endpoint global de auth /force-password o perfil acóplalo aquí
       setMensaje('Contraseña actualizada correctamente')
       setTipoMensaje('success')
       setPasswordData({ actual: '', nueva: '', confirmar: '' })
@@ -84,6 +86,14 @@ export default function Perfil() {
     marginBottom: "0.4rem",
     textTransform: "uppercase",
     letterSpacing: "0.025em"
+  }
+
+  if (loading || !perfil) {
+    return (
+      <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", color: "#64748b", fontWeight: "600", textAlign: "center" }}>
+        🔄 Cargando datos del perfil administrador desde el servidor...
+      </div>
+    )
   }
 
   return (
@@ -123,23 +133,23 @@ export default function Perfil() {
           <form onSubmit={handlePerfilSubmit} style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
             <div>
               <label style={estiloLabel}>Nombre Completo</label>
-              <input type="text" style={estiloInput} value={perfil.nombre} onChange={(e) => setPerfil({ ...perfil, nombre: e.target.value })} />
+              <input type="text" style={estiloInput} value={perfil.nombre || ''} onChange={(e) => setPerfil({ ...perfil, nombre: e.target.value })} />
             </div>
             <div>
               <label style={estiloLabel}><FiMail size={12} /> Email</label>
-              <input type="email" style={estiloInput} value={perfil.email} onChange={(e) => setPerfil({ ...perfil, email: e.target.value })} />
+              <input type="email" style={estiloInput} value={perfil.email || ''} onChange={(e) => setPerfil({ ...perfil, email: e.target.value })} />
             </div>
             <div>
               <label style={estiloLabel}><FiPhone size={12} /> Teléfono</label>
-              <input type="tel" style={estiloInput} value={perfil.telefono} onChange={(e) => setPerfil({ ...perfil, telefono: e.target.value })} />
+              <input type="tel" style={estiloInput} value={perfil.telefono || ''} onChange={(e) => setPerfil({ ...perfil, telefono: e.target.value })} />
             </div>
             <div>
               <label style={estiloLabel}><FiMapPin size={12} /> Dirección</label>
-              <input type="text" style={estiloInput} value={perfil.direccion} onChange={(e) => setPerfil({ ...perfil, direccion: e.target.value })} />
+              <input type="text" style={estiloInput} value={perfil.direccion || ''} onChange={(e) => setPerfil({ ...perfil, direccion: e.target.value })} />
             </div>
             <div>
               <label style={estiloLabel}>Rol</label>
-              <input type="text" style={{ ...estiloInput, backgroundColor: "#f8fafc", color: "#94a3b8", cursor: "not-allowed" }} value={perfil.rol} disabled readOnly />
+              <input type="text" style={{ ...estiloInput, backgroundColor: "#f8fafc", color: "#94a3b8", cursor: "not-allowed" }} value={perfil.rol || 'Administrador'} disabled readOnly />
               <small style={{ color: "#94a3b8", fontSize: "0.75rem", display: "block", marginTop: "0.25rem" }}>El rol no puede ser modificado</small>
             </div>
             <button type="submit" style={{ alignSelf: "flex-start", backgroundColor: colorAdmin, color: "#fff", border: "none", padding: "0.6rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.5rem", boxShadow: "0 4px 6px -1px rgba(52, 151, 195, 0.2)" }}>
@@ -185,7 +195,7 @@ export default function Perfil() {
             <div style={{ padding: "1.5rem", display: "flex", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap" }}>
               <div>
                 <small style={{ color: "#94a3b8", fontWeight: "700", textTransform: "uppercase", fontSize: "0.7rem", display: "block", marginBottom: "0.25rem" }}>Último acceso</small>
-                <p style={{ margin: 0, fontSize: "0.9rem", fontWeight: "600", color: "#334155" }}>28 de junio de 2026, 01:07 PM</p>
+                <p style={{ margin: 0, fontSize: "0.9rem", fontWeight: "600", color: "#334155" }}>Hoy, en sesión activa</p>
               </div>
               <div>
                 <small style={{ color: "#94a3b8", fontWeight: "700", textTransform: "uppercase", fontSize: "0.7rem", display: "block", marginBottom: "0.25rem" }}>Dirección IP</small>
@@ -193,7 +203,7 @@ export default function Perfil() {
               </div>
               <div>
                 <small style={{ color: "#94a3b8", fontWeight: "700", textTransform: "uppercase", fontSize: "0.7rem", display: "block", marginBottom: "0.25rem" }}>Navegador</small>
-                <p style={{ margin: 0, fontSize: "0.9rem", fontWeight: "600", color: "#334155" }}>Chrome / Edge</p>
+                <p style={{ margin: 0, fontSize: "0.9rem", fontWeight: "600", color: "#334155" }}>Nativo / WebKit</p>
               </div>
             </div>
           </div>
