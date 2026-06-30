@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getAdminDashboardMetrics } from '../services/api';
+import { getAdminDashboardMetrics } from '../../services/api';
 
 export function useAdminDashboard() {
   const [metrics, setMetrics] = useState(null);
