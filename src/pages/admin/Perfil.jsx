@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { FiUser, FiMail, FiPhone, FiMapPin, FiSave, FiLock } from "react-icons/fi"
-import { getAdminMyInfo, updateAdminMyInfo } from '../../services/api' // Ajusta la ruta a tu archivo de apis
+import { useAdminSettings } from '../../hooks/Admin/useAdminSettings' 
 
 export default function Perfil() {
   const colorAdmin = "rgb(52,151,195)"
 
-  const [perfil, setPerfil] = useState(null)
-  const [loading, setLoading] = useState(true)
+  
+  const { perfil, loading, guardarPerfil } = useAdminSettings()
+
   const [passwordData, setPasswordData] = useState({
     actual: '',
     nueva: '',
@@ -16,27 +17,11 @@ export default function Perfil() {
   const [mensaje, setMensaje] = useState('')
   const [tipoMensaje, setTipoMensaje] = useState('success')
 
-  // 🔄 Cargar información real del administrador desde el backend
-  useEffect(() => {
-    async function cargarPerfil() {
-      try {
-        setLoading(true)
-        const data = await getAdminMyInfo()
-        setPerfil(data)
-      } catch (error) {
-        console.error('Error al traer la información del perfil:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-    cargarPerfil()
-  }, [])
 
-  // 💾 Persistencia real PUT /api/admin/condominium/my-info
   const handlePerfilSubmit = async (e) => {
     e.preventDefault()
     try {
-      await updateAdminMyInfo(perfil)
+      await guardarPerfil(perfil)
       setMensaje('Perfil actualizado correctamente')
       setTipoMensaje('success')
       setTimeout(() => setMensaje(''), 3000)
@@ -57,12 +42,19 @@ export default function Perfil() {
       setMensaje('La contraseña debe tener al menos 6 caracteres')
       setTipoMensaje('danger')
     } else {
-      // Nota: Si manejas endpoint global de auth /force-password o perfil acóplalo aquí
+      // Nota: Si manejas endpoint global de auth /change-password, puedes inyectarlo aquí
       setMensaje('Contraseña actualizada correctamente')
       setTipoMensaje('success')
       setPasswordData({ actual: '', nueva: '', confirmar: '' })
     }
     setTimeout(() => setMensaje(''), 3000)
+  }
+
+  // Interceptor local para actualizar dinámicamente las propiedades del objeto perfil en el hook
+  const handleFieldChange = (campo, valor) => {
+    if (perfil) {
+      perfil[campo] = valor
+    }
   }
 
   // Estilos base para los inputs y labels
@@ -133,19 +125,19 @@ export default function Perfil() {
           <form onSubmit={handlePerfilSubmit} style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
             <div>
               <label style={estiloLabel}>Nombre Completo</label>
-              <input type="text" style={estiloInput} value={perfil.nombre || ''} onChange={(e) => setPerfil({ ...perfil, nombre: e.target.value })} />
+              <input type="text" style={estiloInput} defaultValue={perfil.nombre || ''} onChange={(e) => handleFieldChange('nombre', e.target.value)} />
             </div>
             <div>
               <label style={estiloLabel}><FiMail size={12} /> Email</label>
-              <input type="email" style={estiloInput} value={perfil.email || ''} onChange={(e) => setPerfil({ ...perfil, email: e.target.value })} />
+              <input type="email" style={estiloInput} defaultValue={perfil.email || ''} onChange={(e) => handleFieldChange('email', e.target.value)} />
             </div>
             <div>
               <label style={estiloLabel}><FiPhone size={12} /> Teléfono</label>
-              <input type="tel" style={estiloInput} value={perfil.telefono || ''} onChange={(e) => setPerfil({ ...perfil, telefono: e.target.value })} />
+              <input type="tel" style={estiloInput} defaultValue={perfil.telefono || ''} onChange={(e) => handleFieldChange('telefono', e.target.value)} />
             </div>
             <div>
               <label style={estiloLabel}><FiMapPin size={12} /> Dirección</label>
-              <input type="text" style={estiloInput} value={perfil.direccion || ''} onChange={(e) => setPerfil({ ...perfil, direccion: e.target.value })} />
+              <input type="text" style={estiloInput} defaultValue={perfil.direccion || ''} onChange={(e) => handleFieldChange('direccion', e.target.value)} />
             </div>
             <div>
               <label style={estiloLabel}>Rol</label>
