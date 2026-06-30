@@ -45,7 +45,7 @@ export default function Bienes() {
     }
   }
 
-  //  Alternar estado técnico delegando el string al PUT del Swagger
+  // n Alternar estado técnico delegando el string al PUT del Swagger
   const toggleStatus = async (bien) => {
     // Alternamos de forma simple entre estados comunes para el PUT /status
     const nuevoEstado = bien.estado === 'Disponible' ? 'Mantenimiento' : 'Disponible'

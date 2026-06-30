@@ -222,19 +222,19 @@ export async function getAdminDashboardMetrics() {
   return safeFetch('/api/admin/dashboard/metrics');
 }
 
-
-export async function getAdminApartments() {
-  return safeFetch('/api/admin/apartments');
+export async function getAdminApartments(params = "") {
+  return safeFetch(`/api/admin/apartments${params}`);
 }
 
-
-export async function assignApartmentOwner(id, ownerName) {
+export async function assignApartmentOwner(id, idPropietario) {
   return safeFetch(`/api/admin/apartments/${id}/assign-owner`, {
     method: 'PUT',
-    body: JSON.stringify({ ownerName }),
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(Number(idPropietario)), 
   });
 }
-
 
 export async function updateApartmentOccupants(id, occupantsData) {
   return safeFetch(`/api/admin/apartments/${id}/occupants`, {
@@ -243,8 +243,8 @@ export async function updateApartmentOccupants(id, occupantsData) {
   });
 }
 
-export async function getAdminAssets() {
-  return safeFetch('/api/admin/assets');
+export async function getAdminAssets(params = "") {
+  return safeFetch(`/api/admin/assets${params}`);
 }
 
 export async function createAdminAsset(data) {
@@ -286,7 +286,6 @@ export async function patchAdminUserStatus(id, activo) {
   });
 }
 
-
 export async function getAdminStructure() {
   return safeFetch('/api/admin/structure');
 }
@@ -304,10 +303,9 @@ export async function deleteAdminStructureNode(id) {
   });
 }
 
-export async function getAdminLogs() {
-  return safeFetch('/api/admin/logs');
+export async function getAdminLogs(params = "") {
+  return safeFetch(`/api/admin/logs${params}`);
 }
-
 
 export async function getAdminCondoConfig() {
   return safeFetch('/api/admin/condominium/configuracion');

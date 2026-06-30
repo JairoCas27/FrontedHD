@@ -8,8 +8,9 @@ export function useAdminLogs() {
   const cargarLogs = async () => {
     try {
       setLoading(true);
-      const data = await getAdminLogs();
-      //  Mapeo seguro con la propiedad 'items' de logs
+      const queryParams = "?pagina=0&tamano=100";
+      const data = await getAdminLogs(queryParams);
+      
       setLogs(data?.items || []);
     } catch (error) {
       console.error("Error cargando auditoría:", error);

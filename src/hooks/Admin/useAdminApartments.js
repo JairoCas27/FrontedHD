@@ -4,18 +4,18 @@ import { getAdminApartments, assignApartmentOwner, updateApartmentOccupants } fr
 export function useAdminApartments() {
   const [departamentos, setDepartamentos] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [meta, setMeta] = useState({});
+  const [meta, setMeta] = useState({ total: 0, pagina: 0, totalPaginas: 0 });
 
   const cargarDepartamentos = async () => {
     try {
       setLoading(true);
-      const data = await getAdminApartments();
-      //  Mapeo de la propiedad 'items' según el Swagger
+      
+      const data = await getAdminApartments(); 
       setDepartamentos(data?.items || []);
       setMeta({
-        total: data?.total,
-        pagina: data?.pagina,
-        totalPaginas: data?.totalPaginas
+        total: data?.total || 0,
+        pagina: data?.pagina || 0,
+        totalPaginas: data?.totalPaginas || 0
       });
     } catch (error) {
       console.error("Error cargando departamentos:", error);
@@ -24,9 +24,9 @@ export function useAdminApartments() {
     }
   };
 
-  const asignarPropietario = async (id, ownerName) => {
+  const asignarPropietario = async (idDepartamento, idUsuarioPropietario) => {
     try {
-      await assignApartmentOwner(id, ownerName);
+      await assignApartmentOwner(idDepartamento, idUsuarioPropietario);
       await cargarDepartamentos();
     } catch (error) {
       console.error("Error al asignar propietario:", error);
@@ -36,7 +36,6 @@ export function useAdminApartments() {
 
   const actualizarOcupantes = async (id, listaInquilinos) => {
     try {
-      // El Swagger espera un objeto con la propiedad { inquilinos: [...] }
       await updateApartmentOccupants(id, { inquilinos: listaInquilinos });
       await cargarDepartamentos();
     } catch (error) {

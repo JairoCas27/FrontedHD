@@ -1,40 +1,51 @@
 import React, { useState } from 'react'
-import { FiHome, FiUserCheck, FiX } from "react-icons/fi"
+import { FiHome, FiUserCheck, FiX, FiSearch } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import { useAdminApartments } from '../../hooks/Admin/useAdminApartments' 
+import { useAdminUsers } from '../../hooks/Admin/useAdminUsers' 
 
 export default function Departamentos() {
   const colorAdmin = "rgb(52,151,195)"
   
-  // Cargamos los estados y la persistencia desde el Hook (que ya lee la propiedad .items)
-  const { departamentos, loading, asignarPropietario } = useAdminApartments()
+  const { departamentos, loading, meta, asignarPropietario } = useAdminApartments()
+  const { usuarios } = useAdminUsers() 
   
   const [filtroTorre, setFiltroTorre] = useState('todos')
+  const [busqueda, setBusqueda] = useState('') 
   const [showModal, setShowModal] = useState(false)
   const [deptoSeleccionado, setDeptoSeleccionado] = useState(null)
-  const [nuevoPropietario, setNuevoPropietario] = useState('')
+  const [idPropietarioSeleccionado, setIdPropietarioSeleccionado] = useState('')
 
-  //  Filtrado local basado en 'torreNombre' según la respuesta de la API
+  
   const deptosFiltrados = departamentos.filter(d => {
     if (filtroTorre !== 'todos' && d.torreNombre !== filtroTorre) return false
+    
+    const termino = busqueda.toLowerCase().trim()
+    if (termino) {
+      const cumpleNombre = d.nombrePropietario?.toLowerCase().includes(termino)
+      const cumpleNumero = d.numero?.toString().includes(termino)
+      return cumpleNombre || cumpleNumero
+    }
+    
     return true
   })
 
   const handleOpenAssignModal = (depto) => {
     setDeptoSeleccionado(depto)
-    setNuevoPropietario(depto.nombrePropietario || '')
+    setIdPropietarioSeleccionado(depto.idPropietario || '')
     setShowModal(true)
   }
 
-  //  Guardado real delegando la acción al Hook
   const handleSaveOwner = async () => {
     if (!deptoSeleccionado) return
+    if (!idPropietarioSeleccionado) {
+      alert("Por favor selecciona un usuario válido");
+      return;
+    }
 
     try {
-      const nombreLimpio = nuevoPropietario.trim()
-      
-      // Llamada al método expuesto por el Hook
-      await asignarPropietario(deptoSeleccionado.id, nombreLimpio)
+     
+      await asignarPropietario(deptoSeleccionado.id, Number(idPropietarioSeleccionado))
       setShowModal(false)
     } catch (error) {
       console.error("Error al asignar el dueño en el servidor:", error)
@@ -72,17 +83,34 @@ export default function Departamentos() {
         subtitulo="Control de unidades inmobiliarias, ocupantes y asignación legal de propietarios"
       />
 
+      {/* Barra de herramientas: Filtros + Buscador */}
       <div style={{ backgroundColor: "#ffffff", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", marginBottom: "2rem", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
-        <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
+          
+          {/* Selector de Torre */}
           <div style={{ width: "240px" }}>
             <select style={estiloInput} value={filtroTorre} onChange={(e) => setFiltroTorre(e.target.value)}>
-              <option value="todos">🛕 Todas las Torres / Bloques</option>
+              <option value="todos"> Todas las Torres / Bloques</option>
               <option value="Torre A">Torre A</option>
               <option value="Torre B">Torre B</option>
+              <option value="Torre C">Torre C</option> {/* 🟢 Agregada Torre C */}
             </select>
           </div>
-          <small style={{ color: "#64748b", fontWeight: "500" }}>
-            {loading ? "Cargando..." : `Mostrando ${deptosFiltrados.length} departamentos registrados`}
+
+          {/* 🟢 Input Buscador */}
+          <div style={{ flex: 1, maxWidth: "340px", position: "relative" }}>
+            <input 
+              type="text" 
+              style={estiloInput} 
+              placeholder="🔍 Buscar por propietario o N° de dpto..." 
+              value={busqueda}
+              onChange={(e) => setBusqueda(e.target.value)}
+            />
+          </div>
+
+          {/* 🟢 Contador basado en el total meta del Swagger */}
+          <small style={{ color: "#64748b", fontWeight: "600", marginLeft: "auto" }}>
+            {loading ? "Cargando..." : `Viendo ${deptosFiltrados.length} de ${meta.total || departamentos.length} totales`}
           </small>
         </div>
       </div>
@@ -94,7 +122,6 @@ export default function Departamentos() {
       ) : (
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1.5rem" }}>
           {deptosFiltrados.map((depto) => {
-            // 🟢 Calculamos el estado de manera dinámica según la presencia del propietario o inquilinos
             const tienePropietario = !!depto.nombrePropietario;
             const tieneInquilinos = depto.inquilinos && depto.inquilinos.length > 0;
             const estadoCalculado = tienePropietario || tieneInquilinos ? "Habitado" : "Desocupado";
@@ -106,7 +133,6 @@ export default function Departamentos() {
               >
                 <div>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                    {/* 🟢 Corregido a torreNombre y pisoNumero */}
                     <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "#64748b", backgroundColor: "#f1f5f9", padding: "0.25rem 0.5rem", borderRadius: "0.375rem" }}>
                       {depto.torreNombre || 'Sin Bloque'} • Piso {depto.pisoNumero || 0}
                     </span>
@@ -128,7 +154,6 @@ export default function Departamentos() {
 
                   <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "1rem", marginBottom: "1rem" }}>
                     <span style={{ fontSize: "0.65rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", display: "block", marginBottom: "0.25rem" }}>Propietario / Titular</span>
-                    {/* 🟢 Corregido a nombrePropietario */}
                     {depto.nombrePropietario ? (
                       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                         <div style={{ width: "24px", height: "24px", borderRadius: "50%", backgroundColor: colorAdmin, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: "700" }}>
@@ -164,16 +189,20 @@ export default function Departamentos() {
             </div>
 
             <div style={{ padding: "1.5rem" }}>
-              <label style={estiloLabel}>Nombre Completo del Propietario</label>
-              <input 
-                type="text" 
+              <label style={estiloLabel}>Seleccionar Cuenta del Propietario</label>
+              {/* 🟢 Cambiado a un <select> de usuarios registrados para mandar el ID real */}
+              <select 
                 style={estiloInput} 
-                placeholder="Ej: Carlos López" 
-                value={nuevoPropietario} 
-                onChange={(e) => setNuevoPropietario(e.target.value)} 
-              />
+                value={idPropietarioSeleccionado} 
+                onChange={(e) => setIdPropietarioSeleccionado(e.target.value)}
+              >
+                <option value="">-- Elige un Residente --</option>
+                {usuarios.map(u => (
+                  <option key={u.id} value={u.id}>{u.nombres} {u.apellidos} (ID: {u.id})</option>
+                ))}
+              </select>
               <small style={{ color: "#94a3b8", fontSize: "0.75rem", display: "block", marginTop: "0.5rem" }}>
-                Dejar vacío desvinculará al dueño actual y marcará la unidad como Desocupada.
+                Spring Boot requiere vincular el ID único interno del propietario elegido.
               </small>
             </div>
 
