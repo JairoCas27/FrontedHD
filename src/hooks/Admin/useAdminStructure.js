@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getAdminStructure, createAdminStructureNode, deleteAdminStructureNode } from '../services/api';
+import { getAdminStructure, createAdminStructureNode, deleteAdminStructureNode } from '../../services/api';
 
 export function useAdminStructure() {
   const [estructura, setEstructura] = useState([]);
