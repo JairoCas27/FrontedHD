@@ -1,23 +1,34 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { FiHome, FiUserCheck, FiX } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
-
-const departamentosIniciales = [
-  { id: 101, torre: 'Torre A', piso: 1, numero: '101', propietario: 'Carlos López', ocupantes: 3, estado: 'Habitado' },
-  { id: 102, torre: 'Torre A', piso: 1, numero: '102', propietario: 'Ana Martínez', ocupantes: 2, estado: 'Habitado' },
-  { id: 103, torre: 'Torre A', piso: 1, numero: '103', propietario: null, ocupantes: 0, estado: 'Desocupado' },
-  { id: 201, torre: 'Torre B', piso: 2, numero: '201', propietario: 'María García', ocupantes: 4, estado: 'Habitado' },
-  { id: 202, torre: 'Torre B', piso: 2, numero: '202', propietario: null, ocupantes: 0, estado: 'En Alquiler' },
-]
+import { getAdminApartments, assignApartmentOwner } from '../../services/api' // Ajusta la ruta según tu estructura
 
 export default function Departamentos() {
   const colorAdmin = "rgb(52,151,195)"
   
-  const [departamentos, setDepartamentos] = useState(departamentosIniciales)
+  const [departamentos, setDepartamentos] = useState([])
+  const [loading, setLoading] = useState(true)
   const [filtroTorre, setFiltroTorre] = useState('todos')
   const [showModal, setShowModal] = useState(false)
   const [deptoSeleccionado, setDeptoSeleccionado] = useState(null)
   const [nuevoPropietario, setNuevoPropietario] = useState('')
+
+  //  Carga de datos reales desde el backend
+  useEffect(() => {
+    cargarDepartamentos()
+  }, [])
+
+  const cargarDepartamentos = async () => {
+    try {
+      setLoading(true)
+      const data = await getAdminApartments()
+      setDepartamentos(data || [])
+    } catch (error) {
+      console.error("Error al traer los departamentos del servidor:", error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const deptosFiltrados = departamentos.filter(d => {
     if (filtroTorre !== 'todos' && d.torre !== filtroTorre) return false
@@ -30,14 +41,21 @@ export default function Departamentos() {
     setShowModal(true)
   }
 
-  const handleSaveOwner = () => {
-    if (deptoSeleccionado) {
-      setDepartamentos(departamentos.map(d => 
-        d.id === deptoSeleccionado.id 
-          ? { ...d, propietario: nuevoPropietario.trim() || null, estado: nuevoPropietario.trim() ? 'Habitado' : 'Desocupado' } 
-          : d
-      ))
+  // 💾 Persistencia real mediante PUT /api/admin/apartments/{id}/assign-owner
+  const handleSaveOwner = async () => {
+    if (!deptoSeleccionado) return
+
+    try {
+      const nombreLimpio = nuevoPropietario.trim()
+      // Llamada real al backend
+      await assignApartmentOwner(deptoSeleccionado.id, nombreLimpio)
+      
+      // Si la API responde con éxito, refrescamos la lista localmente
+      await cargarDepartamentos()
       setShowModal(false)
+    } catch (error) {
+      console.error("Error al asignar el dueño en el servidor:", error)
+      alert("Hubo un error al guardar los cambios en la base de datos.")
     }
   }
 
@@ -81,62 +99,68 @@ export default function Departamentos() {
             </select>
           </div>
           <small style={{ color: "#64748b", fontWeight: "500" }}>
-            Mostrando {deptosFiltrados.length} departamentos registrados
+            {loading ? "Cargando..." : `Mostrando ${deptosFiltrados.length} departamentos registrados`}
           </small>
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1.5rem" }}>
-        {deptosFiltrados.map((depto) => (
-          <div 
-            key={depto.id}
-            style={{ backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "1rem", padding: "1.5rem", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.01)" }}
-          >
-            <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "#64748b", backgroundColor: "#f1f5f9", padding: "0.25rem 0.5rem", borderRadius: "0.375rem" }}>
-                  {depto.torre} • Piso {depto.piso}
-                </span>
-                <span style={{
-                  fontSize: "0.7rem", fontWeight: "700", padding: "0.25rem 0.5rem", borderRadius: "0.375rem",
-                  backgroundColor: depto.propietario ? "rgba(16, 185, 129, 0.1)" : "rgba(148, 163, 184, 0.1)",
-                  color: depto.propietario ? "#10b981" : "#64748b"
-                }}>
-                  {depto.estado}
-                </span>
-              </div>
-
-              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
-                <div style={{ backgroundColor: "rgba(52,151,195,0.08)", color: colorAdmin, padding: "0.5rem", borderRadius: "0.5rem", display: "flex", alignItems: "center" }}>
-                  <FiHome size={20} />
-                </div>
-                <h3 style={{ margin: 0, fontSize: "1.25rem", fontWeight: "800", color: "#0f172a" }}>Dpto. {depto.numero}</h3>
-              </div>
-
-              <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "1rem", marginBottom: "1rem" }}>
-                <span style={{ fontSize: "0.65rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", display: "block", marginBottom: "0.25rem" }}>Propietario / Titular</span>
-                {depto.propietario ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <div style={{ width: "24px", height: "24px", borderRadius: "50%", backgroundColor: colorAdmin, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: "700" }}>
-                      {depto.propietario.charAt(0)}
-                    </div>
-                    <span style={{ fontSize: "0.9rem", fontWeight: "700", color: "#334155" }}>{depto.propietario}</span>
-                  </div>
-                ) : (
-                  <span style={{ fontSize: "0.85rem", color: "#94a3b8", fontStyle: "italic", fontWeight: "500" }}>Sin propietario asignado</span>
-                )}
-              </div>
-            </div>
-
-            <button
-              onClick={() => handleOpenAssignModal(depto)}
-              style={{ width: "100%", padding: "0.6rem", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "0.5rem", color: colorAdmin, fontWeight: "700", fontSize: "0.8rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", transition: "all 0.2s" }}
+      {loading ? (
+        <div style={{ textAlign: "center", padding: "3rem", color: "#64748b", fontWeight: "600" }}>
+          🔄 Conectando con el servidor de Spring Boot...
+        </div>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1.5rem" }}>
+          {deptosFiltrados.map((depto) => (
+            <div 
+              key={depto.id}
+              style={{ backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "1rem", padding: "1.5rem", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.01)" }}
             >
-              <FiUserCheck size={14} /> Asignar Dueño
-            </button>
-          </div>
-        ))}
-      </div>
+              <div>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+                  <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "#64748b", backgroundColor: "#f1f5f9", padding: "0.25rem 0.5rem", borderRadius: "0.375rem" }}>
+                    {depto.torre} • Piso {depto.piso}
+                  </span>
+                  <span style={{
+                    fontSize: "0.7rem", fontWeight: "700", padding: "0.25rem 0.5rem", borderRadius: "0.375rem",
+                    backgroundColor: depto.propietario ? "rgba(16, 185, 129, 0.1)" : "rgba(148, 163, 184, 0.1)",
+                    color: depto.propietario ? "#10b981" : "#64748b"
+                  }}>
+                    {depto.estado}
+                  </span>
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
+                  <div style={{ backgroundColor: "rgba(52,151,195,0.08)", color: colorAdmin, padding: "0.5rem", borderRadius: "0.5rem", display: "flex", alignItems: "center" }}>
+                    <FiHome size={20} />
+                  </div>
+                  <h3 style={{ margin: 0, fontSize: "1.25rem", fontWeight: "800", color: "#0f172a" }}>Dpto. {depto.numero}</h3>
+                </div>
+
+                <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "1rem", marginBottom: "1rem" }}>
+                  <span style={{ fontSize: "0.65rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", display: "block", marginBottom: "0.25rem" }}>Propietario / Titular</span>
+                  {depto.propietario ? (
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                      <div style={{ width: "24px", height: "24px", borderRadius: "50%", backgroundColor: colorAdmin, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: "700" }}>
+                        {depto.propietario.charAt(0)}
+                      </div>
+                      <span style={{ fontSize: "0.9rem", fontWeight: "700", color: "#334155" }}>{depto.propietario}</span>
+                    </div>
+                  ) : (
+                    <span style={{ fontSize: "0.85rem", color: "#94a3b8", fontStyle: "italic", fontWeight: "500" }}>Sin propietario asignado</span>
+                  )}
+                </div>
+              </div>
+
+              <button
+                onClick={() => handleOpenAssignModal(depto)}
+                style={{ width: "100%", padding: "0.6rem", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "0.5rem", color: colorAdmin, fontWeight: "700", fontSize: "0.8rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", transition: "all 0.2s" }}
+              >
+                <FiUserCheck size={14} /> Asignar Dueño
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
 
       {showModal && (
         <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" }}>
