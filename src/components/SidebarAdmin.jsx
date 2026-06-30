@@ -2,14 +2,15 @@ import SidebarLayout from "./SidebarLayout";
 import { FiHome, FiUsers, FiLayers, FiMapPin, FiPackage, FiBarChart2, FiSettings, FiShield, FiUser } from "react-icons/fi";
 import { useSidebarUser } from "../hooks/useSidebarUser";
 
+
 const menuItems = [
   { section: "Principal" },
-  { title: "Dashboard", icon: <FiHome size={20} />, path: "/dashboard" },
+  { title: "Dashboard", icon: <FiHome size={20} />, path: "/admin/dashboard" },
   { section: "Gestión Inmobiliaria" },
-  { title: "Usuarios", icon: <FiUsers size={20} />, path: "/usuarios-tanteo" },
-  { title: "Departamentos", icon: <FiLayers size={20} />, path: "/departamentos-tanteo" },
-  { title: "Estacionamientos", icon: <FiMapPin size={20} />, path: "/estacionamientos-tanteo" },
-  { title: "Bienes Comunes", icon: <FiPackage size={20} />, path: "/bienes-tanteo" },
+  { title: "Usuarios", icon: <FiUsers size={20} />, path: "/admin/usuarios" },
+  { title: "Departamentos", icon: <FiLayers size={20} />, path: "/admin/departamentos" },
+  { title: "Estacionamientos", icon: <FiMapPin size={20} />, path: "/admin/estacionamientos" },
+  { title: "Bienes Comunes", icon: <FiPackage size={20} />, path: "/admin/bienes" },
   { section: "Análisis y Sistema" },
   { title: "Reportes", icon: <FiBarChart2 size={20} />, path: "/admin/reportes" },
   { title: "Configuración", icon: <FiSettings size={20} />, path: "/admin/configuracion" },
@@ -19,6 +20,7 @@ const menuItems = [
 
 export default function SidebarAdmin({ isOpen, setIsOpen }) {
   const userInfo = useSidebarUser();
+  
   return (
     <SidebarLayout
       isOpen={isOpen}
@@ -31,4 +33,4 @@ export default function SidebarAdmin({ isOpen, setIsOpen }) {
       userInfo={userInfo}
     />
   );
-} 
+}
