@@ -1,42 +1,26 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { FiPackage, FiRefreshCw, FiX } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import BadgeEstado from '../../components/BadgeEstado'
-import { getAdminAssets, createAdminAsset, updateAdminAssetStatus } from '../../services/api' // Ajustando la api
+import { useAdminAssets } from '../../hooks/Admin/useAdminAssets' 
 
 export default function Bienes() {
   const colorAdmin = "rgb(52,151,195)"
   
-  const [bienes, setBienes] = useState([])
-  const [loading, setLoading] = useState(true)
+  
+  const { bienes, loading, guardarActivo, actualizarEstadoActivo } = useAdminAssets()
+  
   const [busqueda, setBusqueda] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [formData, setFormData] = useState({ nombre: '', categoria: 'Seguridad', ubicacion: '', estado: 'Disponible' })
 
-  //  Cargar los activos reales desde Spring Boot
-  useEffect(() => {
-    cargarBienes()
-  }, [])
-
-  const cargarBienes = async () => {
-    try {
-      setLoading(true)
-      const data = await getAdminAssets()
-      setBienes(data || [])
-    } catch (error) {
-      console.error("Error al traer los activos del servidor:", error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  // Filtrado dinámico local sobre los datos de la API
+  
   const bienesFiltrados = bienes.filter(b => 
     b.nombre?.toLowerCase().includes(busqueda.toLowerCase()) ||
     b.ubicacion?.toLowerCase().includes(busqueda.toLowerCase())
   )
 
-  // 💾 Persistencia real del POST /api/admin/assets
+  
   const handleSaveAsset = async (e) => {
     e.preventDefault()
     if (!formData.nombre.trim() || !formData.ubicacion.trim()) {
@@ -45,28 +29,25 @@ export default function Bienes() {
     }
 
     try {
-      await createAdminAsset({
+      await guardarActivo({
         nombre: formData.nombre.trim(),
         categoria: formData.categoria,
         ubicacion: formData.ubicacion.trim(),
         estado: formData.estado
       })
       
-      await cargarBienes() // Recargar tabla limpia
       setShowModal(false)
       setFormData({ nombre: '', categoria: 'Seguridad', ubicacion: '', estado: 'Disponible' })
     } catch (error) {
-      console.error("Error al crear el activo en el servidor:", error)
+      console.error("Error al crear el activo:", error)
       alert("Hubo un error al inventariar el nuevo activo.")
     }
   }
 
-  // 🔄 Actualización de estado en tiempo real PUT /api/admin/assets/{id}/status
+  // 🔄 Alternar estado técnico por medio del Hook
   const toggleStatus = async (id, estadoActual) => {
-    const nuevoEstado = estadoActual === 'Disponible' ? 'Mantención' : 'Disponible'
     try {
-      await updateAdminAssetStatus(id, nuevoEstado)
-      await cargarBienes() // Refrescar vista
+      await actualizarEstadoActivo(id, estadoActual)
     } catch (error) {
       console.error("Error al cambiar el estado del activo:", error)
       alert("No se pudo actualizar el estado técnico en el servidor.")
@@ -179,7 +160,7 @@ export default function Bienes() {
         </div>
       )}
 
-      {/* 4. Modal de Registro (POST) */}
+      {/* 4. Modal de Registro */}
       {showModal && (
         <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" }}>
           <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "440px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.08)", border: "1px solid #e2e8f0", overflow: "hidden" }}>
