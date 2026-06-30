@@ -8,8 +8,10 @@ export function useAdminAssets() {
   const cargarBienes = async () => {
     try {
       setLoading(true);
-      const data = await getAdminAssets();
-      // 🟢 Se corrige el mapeo leyendo 'items'
+      // 🟢 Pasamos la paginación con los nombres exactos del Swagger: 'pagina' y 'tamano'
+      const queryParams = "?pagina=0&tamano=100";
+      const data = await getAdminAssets(queryParams);
+      
       setBienes(data?.items || []);
     } catch (error) {
       console.error("Error cargando bienes comunes:", error);

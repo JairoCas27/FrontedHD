@@ -218,23 +218,24 @@ export const deleteHomeownerTenant = (id) =>
 export const getHomeownerLogs = () =>
   safeFetch('/api/homeowner/logs');
 
+// 🟢 Agregamos soporte para recibir 'params' en los métodos GET paginados
 export async function getAdminDashboardMetrics() {
   return safeFetch('/api/admin/dashboard/metrics');
 }
 
-
-export async function getAdminApartments() {
-  return safeFetch('/api/admin/apartments');
+export async function getAdminApartments(params = "") {
+  return safeFetch(`/api/admin/apartments${params}`);
 }
 
-
-export async function assignApartmentOwner(id, ownerName) {
+export async function assignApartmentOwner(id, idPropietario) {
   return safeFetch(`/api/admin/apartments/${id}/assign-owner`, {
     method: 'PUT',
-    body: JSON.stringify({ ownerName }),
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(Number(idPropietario)), 
   });
 }
-
 
 export async function updateApartmentOccupants(id, occupantsData) {
   return safeFetch(`/api/admin/apartments/${id}/occupants`, {
@@ -243,8 +244,9 @@ export async function updateApartmentOccupants(id, occupantsData) {
   });
 }
 
-export async function getAdminAssets() {
-  return safeFetch('/api/admin/assets');
+// 🟢 Corregido: Recibe 'params' para inyectar la query string (?pagina=0&tamano=100)
+export async function getAdminAssets(params = "") {
+  return safeFetch(`/api/admin/assets${params}`);
 }
 
 export async function createAdminAsset(data) {
@@ -254,6 +256,7 @@ export async function createAdminAsset(data) {
   });
 }
 
+// 🟢 Corregido: El Swagger espera un JSON plano con el estado y los campos del activo correspondientes al PUT
 export async function updateAdminAssetStatus(id, estado) {
   return safeFetch(`/api/admin/assets/${id}/status`, {
     method: 'PUT',
@@ -286,7 +289,6 @@ export async function patchAdminUserStatus(id, activo) {
   });
 }
 
-
 export async function getAdminStructure() {
   return safeFetch('/api/admin/structure');
 }
@@ -304,10 +306,10 @@ export async function deleteAdminStructureNode(id) {
   });
 }
 
-export async function getAdminLogs() {
-  return safeFetch('/api/admin/logs');
+// 🟢 Corregido: Recibe 'params' para evitar el error 400 por falta de paginación obligatoria
+export async function getAdminLogs(params = "") {
+  return safeFetch(`/api/admin/logs${params}`);
 }
-
 
 export async function getAdminCondoConfig() {
   return safeFetch('/api/admin/condominium/configuracion');

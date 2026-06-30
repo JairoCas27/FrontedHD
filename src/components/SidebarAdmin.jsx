@@ -9,7 +9,6 @@ const menuItems = [
   { section: "Gestión Inmobiliaria" },
   { title: "Usuarios", icon: <FiUsers size={20} />, path: "/admin/usuarios" },
   { title: "Departamentos", icon: <FiLayers size={20} />, path: "/admin/departamentos" },
-  { title: "Estacionamientos", icon: <FiMapPin size={20} />, path: "/admin/estacionamientos" },
   { title: "Bienes Comunes", icon: <FiPackage size={20} />, path: "/admin/bienes" },
   { section: "Análisis y Sistema" },
   { title: "Reportes", icon: <FiBarChart2 size={20} />, path: "/admin/reportes" },

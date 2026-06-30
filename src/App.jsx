@@ -81,7 +81,6 @@ function App() {
           <Route path="/admin/dashboard" element={<DashboardAdmin />} />
           <Route path="/admin/usuarios" element={<Usuarios />} />
           <Route path="/admin/departamentos" element={<Departamentos />} />
-          <Route path="/admin/estacionamientos" element={<Estacionamientos />} />
           <Route path="/admin/bienes" element={<Bienes />} />
           <Route path="/admin/estructura" element={<Estructura />} />
           <Route path="/admin/reportes" element={<Reportes />} />
