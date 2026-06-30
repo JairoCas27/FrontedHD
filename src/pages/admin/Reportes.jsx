@@ -1,43 +1,34 @@
-import React, { useState } from 'react'
-import { FiBarChart2, FiDownload, FiCalendar, FiPieChart } from "react-icons/fi"
+import React, { useState, useEffect } from 'react'
+import { FiBarChart2, FiDownload, FiPieChart } from "react-icons/fi"
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts'
-import EncabezadoTabla from '../../components/EncabezadoTabla'
-
-// Datos financieros en Soles Peruanos
-const datosIngresos = [
-  { mes: 'Ene', ingresos: 12500, egresos: 8900 },
-  { mes: 'Feb', ingresos: 13200, egresos: 9100 },
-  { mes: 'Mar', ingresos: 14100, egresos: 9500 },
-  { mes: 'Abr', ingresos: 13800, egresos: 9300 },
-  { mes: 'May', ingresos: 14500, egresos: 9800 },
-  { mes: 'Jun', ingresos: 15200, egresos: 10100 },
-]
-
-// Datos para el gráfico de pastel
-const datosAccesos = [
-  { tipo: 'Residentes', cantidad: 1250, descripcion: 'Propietarios e inquilinos' },
-  { tipo: 'Visitas', cantidad: 450, descripcion: 'Invitados de residentes' },
-  { tipo: 'Proveedores', cantidad: 180, descripcion: 'Delivery, servicios, repartos' },
-]
-
-// Datos para el gráfico de barras de ocupación de estacionamientos
-const datosEstacionamientos = [
-  { estado: 'Ocupados', cantidad: 267, explicacion: 'Plazas con vehículo estacionado', color: '#ef4444' }, // Rose/Red
-  { estado: 'Disponibles', cantidad: 45, explicacion: 'Plazas libres para usar', color: '#10b981' }, // Emerald
-  { estado: 'Mantención', cantidad: 30, explicacion: 'Plazas en reparación o limpieza', color: '#f59e0b' }, // Amber
-]
+import { getAdminDashboardMetrics } from '../../services/api' // Ajusta la ruta a tus apis
 
 const COLORS = ['#3497C3', '#10b981', '#f59e0b']
-
-const totalPlazas = datosEstacionamientos.reduce((sum, item) => sum + item.cantidad, 0)
-const porcentajeOcupacion = Math.round((datosEstacionamientos[0].cantidad / totalPlazas) * 100)
 
 export default function Reportes() {
   const colorAdmin = "rgb(52,151,195)"
   const [reporteSeleccionado, setReporteSeleccionado] = useState('accesos')
+  const [metrics, setMetrics] = useState(null)
+  const [loading, setLoading] = useState(true)
+
+  // 🔄 Carga de métricas y analíticas reales desde Spring Boot
+  useEffect(() => {
+    async function cargarReportes() {
+      try {
+        setLoading(true)
+        const data = await getAdminDashboardMetrics()
+        setMetrics(data)
+      } catch (error) {
+        console.error("Error al cargar analíticas en Reportes:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    cargarReportes()
+  }, [])
 
   const handleExportar = () => {
-    alert('Función de exportación en desarrollo')
+    alert('Función de exportación de reportes en desarrollo')
   }
 
   const formatCurrency = (value) => {
@@ -59,6 +50,34 @@ export default function Reportes() {
     backgroundColor: "#ffffff",
     outline: "none"
   }
+
+  if (loading || !metrics) {
+    return (
+      <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", color: "#64748b", fontWeight: "600", textAlign: "center" }}>
+        🔄 Sincronizando reportes y balances con el servidor de base de datos...
+      </div>
+    )
+  }
+
+  // Mapear estructuras del backend reales o usar fallbacks limpios
+  const datosAccesos = metrics.datosAccesos || [
+    { tipo: 'Residentes', cantidad: metrics.totalUsuarios || 120, name: 'Residentes' },
+    { tipo: 'Visitas', cantidad: metrics.visitasHoy || 15, name: 'Visitas' }
+  ]
+  const datosIngresos = metrics.datosIngresos || []
+  const espaciosPorBloque = metrics.espaciosPorBloque || []
+
+  // Estructurar distribución de estacionamientos sumando los bloques del servidor
+  const totalOcupados = espaciosPorBloque.reduce((sum, b) => sum + (b.ocupados || 0), 0)
+  const totalDisponibles = espaciosPorBloque.reduce((sum, b) => sum + (b.disponibles || 0), 0)
+  const totalMantencion = espaciosPorBloque.reduce((sum, b) => sum + (b.mantención || b.mantener || 0), 0)
+  const totalPlazas = totalOcupados + totalDisponibles + totalMantencion
+
+  const datosEstacionamientos = [
+    { estado: 'Ocupados', cantidad: totalOcupados, explicacion: 'Plazas con vehículo estacionado', color: '#ef4444' },
+    { estado: 'Disponibles', cantidad: totalDisponibles, explicacion: 'Plazas libres para usar', color: '#10b981' },
+    { estado: 'Mantención', cantidad: totalMantencion, explicacion: 'Plazas en reparación o limpieza', color: '#f59e0b' },
+  ]
 
   return (
     <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
@@ -124,15 +143,7 @@ export default function Reportes() {
             <div style={{ display: "flex", flexWrap: "wrap", gap: "2rem" }}>
               <div style={{ flex: "2", minWidth: "300px" }}>
                 <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={[
-                    { dia: 'Lun', residentes: 145, visitas: 32, proveedores: 12 },
-                    { dia: 'Mar', residentes: 178, visitas: 45, proveedores: 15 },
-                    { dia: 'Mié', residentes: 210, visitas: 38, proveedores: 18 },
-                    { dia: 'Jue', residentes: 192, visitas: 41, proveedores: 14 },
-                    { dia: 'Vie', residentes: 225, visitas: 58, proveedores: 22 },
-                    { dia: 'Sáb', residentes: 180, visitas: 72, proveedores: 10 },
-                    { dia: 'Dom', residentes: 95, visitas: 48, proveedores: 5 },
-                  ]}>
+                  <BarChart data={metrics.traficoSemanal || []}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                     <XAxis dataKey="dia" stroke="#64748b" style={{ fontSize: '12px' }} />
                     <YAxis stroke="#64748b" style={{ fontSize: '12px' }} />
@@ -153,7 +164,7 @@ export default function Reportes() {
                       cx="50%"
                       cy="50%"
                       labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                      label={({ tipo, percent }) => `${tipo || ''} ${(percent * 100).toFixed(0)}%`}
                       outerRadius={70}
                       dataKey="cantidad"
                     >
@@ -184,12 +195,11 @@ export default function Reportes() {
                 <YAxis tickFormatter={(value) => `S/ ${value}`} stroke="#64748b" style={{ fontSize: '12px' }} />
                 <Tooltip formatter={(value) => [`S/ ${value.toLocaleString()}`, '']} />
                 <Legend />
-                <Line type="monotone" dataKey="ingresos" stroke="#3497C3" strokeWidth={3} name="Ingresos (Cuotas, alquileres, multas)" activeDot={{ r: 6 }} />
-                <Line type="monotone" dataKey="egresos" stroke="#ef4444" strokeWidth={3} name="Egresos (Gastos operativos)" />
+                <Line type="monotone" dataKey="ingresos" stroke="#3497C3" strokeWidth={3} name="Ingresos" activeDot={{ r: 6 }} />
+                <Line type="monotone" dataKey="egresos" stroke="#ef4444" strokeWidth={3} name="Egresos" />
               </LineChart>
             </ResponsiveContainer>
 
-            {/* Tabla Financiera de Alta Fidelidad */}
             <div style={{ marginTop: "2rem", borderRadius: "0.75rem", border: "1px solid #e2e8f0", overflow: "hidden" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left", fontSize: "0.875rem" }}>
                 <thead>
@@ -249,12 +259,12 @@ export default function Reportes() {
                 <h4 style={{ margin: 0, fontSize: "0.9rem", fontWeight: "700", color: "#334155" }}>Desglose Operativo</h4>
                 {datosEstacionamientos.map((item, index) => (
                   <div key={index}>
-                    <div style={{ display: "flex", justifyContext: "space-between", justifyContent: "space-between", fontSize: "0.8rem", marginBottom: "0.25rem" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.8rem", marginBottom: "0.25rem" }}>
                       <span style={{ fontWeight: "600" }}><span style={{ color: item.color, marginRight: "4px" }}>●</span> {item.estado}</span>
                       <strong style={{ color: "#0f172a" }}>{item.cantidad} cocheras</strong>
                     </div>
                     <div style={{ width: "100%", height: "6px", backgroundColor: "#f1f5f9", borderRadius: "9999px", overflow: "hidden" }}>
-                      <div style={{ width: `${(item.cantidad / totalPlazas) * 100}%`, backgroundColor: item.color, height: "100%" }} />
+                      <div style={{ width: `${totalPlazas > 0 ? (item.cantidad / totalPlazas) * 100 : 0}%`, backgroundColor: item.color, height: "100%" }} />
                     </div>
                     <small style={{ color: "#94a3b8", fontSize: "0.7rem", display: "block", marginTop: "0.2rem" }}>{item.explicacion}</small>
                   </div>
