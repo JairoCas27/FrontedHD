@@ -309,3 +309,46 @@ export async function updateAdminMyInfo(data) {
     body: JSON.stringify(data),
   });
 }
+
+export async function getSecurityDashboardStatus() {
+  return safeFetch('/api/security/dashboard/status');
+}
+
+export async function getSecurityActiveLoans() {
+  return safeFetch('/api/security/asset-loans/active-carts');
+}
+
+export async function getSecurityParkingSlots() {
+  return safeFetch('/api/security/parking-slots');
+}
+
+export async function verifyVehiclePlate(plate) {
+  return safeFetch(`/api/security/vehicles/verify/${plate}`);
+}
+
+export async function registerAccessEntry(data) {
+  return safeFetch('/api/security/access-logs/entry', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function registerAccessExit(idLogAcceso) {
+  return safeFetch('/api/security/access-logs/exit', {
+    method: 'PUT',
+    body: JSON.stringify({ idLogAcceso }),
+  });
+}
+
+export async function createAssetLoan(data) {
+  return safeFetch('/api/security/asset-loans', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function returnAssetLoan(id) {
+  return safeFetch(`/api/security/asset-loans/${id}/return`, {
+    method: 'PUT',
+  });
+}

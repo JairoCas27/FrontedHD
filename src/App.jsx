@@ -43,7 +43,6 @@ import AccesosSeguridad from "./pages/seguridad/AccesosSeguridad"
 import VisitasSeguridad from "./pages/seguridad/VisitasSeguridad"
 import VehiculosSeguridad from "./pages/seguridad/VehiculosSeguridad"
 import Movimientos from "./pages/seguridad/Movimientos"
-import Alertas from "./pages/seguridad/Alertas"
 import PerfilSeguridad from "./pages/seguridad/PerfilSeguridad"
 
 import DashboardPropietario from "./pages/propietario/DashboardPropietario"
@@ -101,7 +100,6 @@ function App() {
           <Route path="/seguridad/visitas" element={<VisitasSeguridad />} />
           <Route path="/seguridad/vehiculos" element={<VehiculosSeguridad />} />
           <Route path="/seguridad/movimientos" element={<Movimientos />} />
-          <Route path="/seguridad/alertas" element={<Alertas />} />
           <Route path="/seguridad/perfil" element={<PerfilSeguridad />} />
         </Route>
 
