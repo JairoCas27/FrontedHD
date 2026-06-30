@@ -1,13 +1,8 @@
 const BASE_URL = import.meta.env.VITE_API_URL;
 
-// --- Helper con autenticación ---
-const getHeaders = () => {
-  const token = localStorage.getItem('token');
-  return {
-    'Content-Type': 'application/json',
-    ...(token && { Authorization: `Bearer ${token}` }),
-  };
-};
+const getHeaders = () => ({
+  'Content-Type': 'application/json',
+});
 
 async function safeFetch(path, options = {}) {
   const response = await fetch(`${BASE_URL}${path}`, {

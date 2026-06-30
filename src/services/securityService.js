@@ -2,7 +2,6 @@ const API_URL = 'https://sgc-backend-vfvl.onrender.com/api/security';
 
 const getHeaders = () => ({
   'Content-Type': 'application/json',
-  'Authorization': `Bearer ${localStorage.getItem('token') || ''}`
 });
 
 // ========== ACCESOS (Entradas/Salidas) ==========
