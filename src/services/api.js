@@ -222,14 +222,24 @@ export async function getAdminDashboardMetrics() {
   return safeFetch('/api/admin/dashboard/metrics');
 }
 
+
 export async function getAdminApartments() {
-  return safeFetch('/api/admin/apartamentos');
+  return safeFetch('/api/admin/apartments');
 }
 
-export async function assignApartmentOwner(id, nombrePropietario) {
-  return safeFetch(`/api/admin/apartamentos/${id}/propietario`, {
+
+export async function assignApartmentOwner(id, ownerName) {
+  return safeFetch(`/api/admin/apartments/${id}/owner`, {
     method: 'PUT',
-    body: JSON.stringify({ nombrePropietario }),
+    body: JSON.stringify({ ownerName }),
+  });
+}
+
+
+export async function updateApartmentOccupants(id, occupantsData) {
+  return safeFetch(`/api/admin/apartments/${id}/occupants`, {
+    method: 'PUT',
+    body: JSON.stringify(occupantsData),
   });
 }
 
@@ -276,6 +286,7 @@ export async function patchAdminUserStatus(id, activo) {
   });
 }
 
+
 export async function getAdminStructure() {
   return safeFetch('/api/admin/structure/nodes');
 }
@@ -296,6 +307,7 @@ export async function deleteAdminStructureNode(id) {
 export async function getAdminLogs() {
   return safeFetch('/api/admin/logs');
 }
+
 
 export async function getAdminCondoConfig() {
   return safeFetch('/api/admin/condominium/configuracion');
