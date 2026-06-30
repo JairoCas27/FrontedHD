@@ -60,6 +60,8 @@ export async function getCities(countryId) {
   return safeFetch(`/api/catalogs/countries/${countryId}/cities`);
 }
 
+// APIS SUPERADMIN
+
 export async function getSuperAdminDashboardMetrics() {
   return safeFetch('/api/super-admin/dashboard/metrics');
 }
@@ -217,6 +219,8 @@ export const deleteHomeownerTenant = (id) =>
 
 export const getHomeownerLogs = () =>
   safeFetch('/api/homeowner/logs');
+
+// APIS ADMIN
 
 export async function getAdminDashboardMetrics() {
   return safeFetch('/api/admin/dashboard/metrics');
