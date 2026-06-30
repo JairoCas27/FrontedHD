@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getAdminAssets, createAdminAsset, updateAdminAssetStatus } from '../services/api';
+import { getAdminAssets, createAdminAsset, updateAdminAssetStatus } from '../../services/api';
 
 export function useAdminAssets() {
   const [bienes, setBienes] = useState([]);
