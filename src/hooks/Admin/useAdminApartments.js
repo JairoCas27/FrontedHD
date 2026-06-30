@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getAdminApartments, assignApartmentOwner } from '../services/api';
+import { getAdminApartments, assignApartmentOwner, updateApartmentOccupants } from '../../services/api';
 
 export function useAdminApartments() {
   const [departamentos, setDepartamentos] = useState([]);
@@ -19,6 +19,7 @@ export function useAdminApartments() {
 
   const asignarPropietario = async (id, nombre) => {
     try {
+      
       await assignApartmentOwner(id, nombre);
       await cargarDepartamentos();
     } catch (error) {
@@ -27,9 +28,26 @@ export function useAdminApartments() {
     }
   };
 
+  
+  const actualizarOcupantes = async (id, datosOcupantes) => {
+    try {
+      await updateApartmentOccupants(id, datosOcupantes);
+      await cargarDepartamentos();
+    } catch (error) {
+      console.error("Error al actualizar ocupantes:", error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     cargarDepartamentos();
   }, []);
 
-  return { departamentos, loading, asignarPropietario, refrescar: cargarDepartamentos };
+  return { 
+    departamentos, 
+    loading, 
+    asignarPropietario, 
+    actualizarOcupantes, // 🟢 Expuesto para cuando implementen la gestión de inquilinos en las tarjetas
+    refrescar: cargarDepartamentos 
+  };
 }
