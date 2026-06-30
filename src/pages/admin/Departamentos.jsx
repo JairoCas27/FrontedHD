@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { FiHome, FiUserCheck, FiX, FiSearch } from "react-icons/fi"
+import { FiHome, FiUserCheck, FiX, FiSearch, FiChevronLeft, FiChevronRight } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import { useAdminApartments } from '../../hooks/Admin/useAdminApartments' 
 import { useAdminUsers } from '../../hooks/Admin/useAdminUsers' 
@@ -16,9 +16,17 @@ export default function Departamentos() {
   const [deptoSeleccionado, setDeptoSeleccionado] = useState(null)
   const [idPropietarioSeleccionado, setIdPropietarioSeleccionado] = useState('')
 
-  
-  const deptosFiltrados = departamentos.filter(d => {
-    if (filtroTorre !== 'todos' && d.torreNombre !== filtroTorre) return false
+  // 🟢 Estado para controlar la paginación local
+  const [paginaActual, setPaginaActual] = useState(1)
+  const elementosPorPagina = 12 // Cantidad de departamentos por vista
+
+  // 🟢 Filtrado dinámico adaptado a los nombres reales del backend
+  const deptosFiltrados = (departamentos || []).filter(d => {
+    // Si el backend guarda "A" o "Torre A", buscamos concordancia parcial de la letra
+    if (filtroTorre !== 'todos') {
+      const deptoTorre = (d.torreNombre || '').toLowerCase();
+      if (!deptoTorre.includes(filtroTorre.toLowerCase())) return false;
+    }
     
     const termino = busqueda.toLowerCase().trim()
     if (termino) {
@@ -29,6 +37,16 @@ export default function Departamentos() {
     
     return true
   })
+
+  // 🟢 Lógica de segmentación para la paginación local
+  const totalElementos = deptosFiltrados.length
+  const totalPaginas = Math.ceil(totalElementos / elementosPorPagina) || 1
+  
+  // Ajustar la página actual si los filtros reducen drásticamente los resultados
+  const paginaValida = Math.min(paginaActual, totalPaginas)
+  const indiceInicio = (paginaValida - 1) * elementosPorPagina
+  const indiceFin = indiceInicio + elementosPorPagina
+  const deptosPaginados = deptosFiltrados.slice(indiceInicio, indiceFin)
 
   const handleOpenAssignModal = (depto) => {
     setDeptoSeleccionado(depto)
@@ -44,7 +62,6 @@ export default function Departamentos() {
     }
 
     try {
-     
       await asignarPropietario(deptoSeleccionado.id, Number(idPropietarioSeleccionado))
       setShowModal(false)
     } catch (error) {
@@ -75,6 +92,20 @@ export default function Departamentos() {
     letterSpacing: "0.025em"
   }
 
+  const estiloBotonPagina = {
+    padding: "0.5rem 0.75rem",
+    border: "1px solid #cbd5e1",
+    backgroundColor: "#ffffff",
+    color: "#475569",
+    borderRadius: "0.375rem",
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    gap: "0.25rem",
+    fontWeight: "600",
+    fontSize: "0.85rem"
+  }
+
   return (
     <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
       
@@ -87,30 +118,34 @@ export default function Departamentos() {
       <div style={{ backgroundColor: "#ffffff", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", marginBottom: "2rem", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
         <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
           
-          {/* Selector de Torre */}
+          {/* Selector de Torre (Values corregidos a las letras base de la DB) */}
           <div style={{ width: "240px" }}>
-            <select style={estiloInput} value={filtroTorre} onChange={(e) => setFiltroTorre(e.target.value)}>
-              <option value="todos"> Todas las Torres / Bloques</option>
-              <option value="Torre A">Torre A</option>
-              <option value="Torre B">Torre B</option>
-              <option value="Torre C">Torre C</option> {/* 🟢 Agregada Torre C */}
+            <select 
+              style={estiloInput} 
+              value={filtroTorre} 
+              onChange={(e) => { setFiltroTorre(e.target.value); setPaginaActual(1); }}
+            >
+              <option value="todos">Todas las Torres / Bloques</option>
+              <option value="A">Torre A</option>
+              <option value="B">Torre B</option>
+              <option value="C">Torre C</option>
             </select>
           </div>
 
-          {/* 🟢 Input Buscador */}
+          {/* Input Buscador */}
           <div style={{ flex: 1, maxWidth: "340px", position: "relative" }}>
             <input 
               type="text" 
               style={estiloInput} 
-              placeholder="🔍 Buscar por propietario o N° de dpto..." 
+              placeholder="Buscar por propietario o N° de dpto..." 
               value={busqueda}
-              onChange={(e) => setBusqueda(e.target.value)}
+              onChange={(e) => { setBusqueda(e.target.value); setPaginaActual(1); }}
             />
           </div>
 
-          {/* 🟢 Contador basado en el total meta del Swagger */}
+          {/* Contador exacto */}
           <small style={{ color: "#64748b", fontWeight: "600", marginLeft: "auto" }}>
-            {loading ? "Cargando..." : `Viendo ${deptosFiltrados.length} de ${meta.total || departamentos.length} totales`}
+            {loading ? "Cargando..." : `Viendo ${deptosPaginados.length} (Filtro: ${totalElementos} de ${meta.total || departamentos.length} totales)`}
           </small>
         </div>
       </div>
@@ -120,63 +155,86 @@ export default function Departamentos() {
           🔄 Conectando con el servidor de Spring Boot...
         </div>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1.5rem" }}>
-          {deptosFiltrados.map((depto) => {
-            const tienePropietario = !!depto.nombrePropietario;
-            const tieneInquilinos = depto.inquilinos && depto.inquilinos.length > 0;
-            const estadoCalculado = tienePropietario || tieneInquilinos ? "Habitado" : "Desocupado";
+        <>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1.5rem" }}>
+            {deptosPaginados.map((depto) => {
+              const tienePropietario = !!depto.nombrePropietario;
+              const tieneInquilinos = depto.inquilinos && depto.inquilinos.length > 0;
+              const estadoCalculado = tienePropietario || tieneInquilinos ? "Habitado" : "Desocupado";
 
-            return (
-              <div 
-                key={depto.id}
-                style={{ backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "1rem", padding: "1.5rem", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.01)" }}
-              >
-                <div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-                    <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "#64748b", backgroundColor: "#f1f5f9", padding: "0.25rem 0.5rem", borderRadius: "0.375rem" }}>
-                      {depto.torreNombre || 'Sin Bloque'} • Piso {depto.pisoNumero || 0}
-                    </span>
-                    <span style={{
-                      fontSize: "0.7rem", fontWeight: "700", padding: "0.25rem 0.5rem", borderRadius: "0.375rem",
-                      backgroundColor: estadoCalculado === "Habitado" ? "rgba(16, 185, 129, 0.1)" : "rgba(148, 163, 184, 0.1)",
-                      color: estadoCalculado === "Habitado" ? "#10b981" : "#64748b"
-                    }}>
-                      {estadoCalculado}
-                    </span>
-                  </div>
-
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
-                    <div style={{ backgroundColor: "rgba(52,151,195,0.08)", color: colorAdmin, padding: "0.5rem", borderRadius: "0.5rem", display: "flex", alignItems: "center" }}>
-                      <FiHome size={20} />
-                    </div>
-                    <h3 style={{ margin: 0, fontSize: "1.25rem", fontWeight: "800", color: "#0f172a" }}>Dpto. {depto.numero}</h3>
-                  </div>
-
-                  <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "1rem", marginBottom: "1rem" }}>
-                    <span style={{ fontSize: "0.65rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", display: "block", marginBottom: "0.25rem" }}>Propietario / Titular</span>
-                    {depto.nombrePropietario ? (
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                        <div style={{ width: "24px", height: "24px", borderRadius: "50%", backgroundColor: colorAdmin, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: "700" }}>
-                          {depto.nombrePropietario.charAt(0).toUpperCase()}
-                        </div>
-                        <span style={{ fontSize: "0.9rem", fontWeight: "700", color: "#334155" }}>{depto.nombrePropietario}</span>
-                      </div>
-                    ) : (
-                      <span style={{ fontSize: "0.85rem", color: "#94a3b8", fontStyle: "italic", fontWeight: "500" }}>Sin propietario asignado</span>
-                    )}
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => handleOpenAssignModal(depto)}
-                  style={{ width: "100%", padding: "0.6rem", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "0.5rem", color: colorAdmin, fontWeight: "700", fontSize: "0.8rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", transition: "all 0.2s" }}
+              return (
+                <div 
+                  key={depto.id}
+                  style={{ backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "1rem", padding: "1.5rem", display: "flex", flexDirection: "column", justifyContent: "space-between", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.01)" }}
                 >
-                  <FiUserCheck size={14} /> Asignar Dueño
-                </button>
-              </div>
-            )
-          })}
-        </div>
+                  <div>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
+                      <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "#64748b", backgroundColor: "#f1f5f9", padding: "0.25rem 0.5rem", borderRadius: "0.375rem" }}>
+                        {depto.torreNombre || 'Sin Bloque'} • Piso {depto.pisoNumero || 0}
+                      </span>
+                      <span style={{
+                        fontSize: "0.7rem", fontWeight: "700", padding: "0.25rem 0.5rem", borderRadius: "0.375rem",
+                        backgroundColor: estadoCalculado === "Habitado" ? "rgba(16, 185, 129, 0.1)" : "rgba(148, 163, 184, 0.1)",
+                        color: estadoCalculado === "Habitado" ? "#10b981" : "#64748b"
+                      }}>
+                        {estadoCalculado}
+                      </span>
+                    </div>
+
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "1rem" }}>
+                      <div style={{ backgroundColor: "rgba(52,151,195,0.08)", color: colorAdmin, padding: "0.5rem", borderRadius: "0.5rem", display: "flex", alignItems: "center" }}>
+                        <FiHome size={20} />
+                      </div>
+                      <h3 style={{ margin: 0, fontSize: "1.25rem", fontWeight: "800", color: "#0f172a" }}>Dpto. {depto.numero}</h3>
+                    </div>
+
+                    <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "1rem", marginBottom: "1rem" }}>
+                      <span style={{ fontSize: "0.65rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", display: "block", marginBottom: "0.25rem" }}>Propietario / Titular</span>
+                      {depto.nombrePropietario ? (
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                          <div style={{ width: "24px", height: "24px", borderRadius: "50%", backgroundColor: colorAdmin, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: "700" }}>
+                            {depto.nombrePropietario.charAt(0).toUpperCase()}
+                          </div>
+                          <span style={{ fontSize: "0.9rem", fontWeight: "700", color: "#334155" }}>{depto.nombrePropietario}</span>
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: "0.85rem", color: "#94a3b8", fontStyle: "italic", fontWeight: "500" }}>Sin propietario asignado</span>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => handleOpenAssignModal(depto)}
+                    style={{ width: "100%", padding: "0.6rem", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "0.5rem", color: colorAdmin, fontWeight: "700", fontSize: "0.8rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", transition: "all 0.2s" }}
+                  >
+                    <FiUserCheck size={14} /> Asignar Dueño
+                  </button>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* 🟢 Barra de Navegación de Paginación */}
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "1rem", marginTop: "2.5rem", borderTop: "1px solid #e2e8f0", paddingTop: "1.5rem" }}>
+            <button 
+              disabled={paginaValida === 1}
+              onClick={() => setPaginaActual(prev => Math.max(prev - 1, 1))}
+              style={{ ...estiloBotonPagina, opacity: paginaValida === 1 ? 0.5 : 1, cursor: paginaValida === 1 ? "not-allowed" : "pointer" }}
+            >
+              <FiChevronLeft size={16} /> Anterior
+            </button>
+            <span style={{ fontSize: "0.875rem", color: "#64748b", fontWeight: "700" }}>
+              Página {paginaValida} de {totalPaginas}
+            </span>
+            <button 
+              disabled={paginaValida === totalPaginas}
+              onClick={() => setPaginaActual(prev => Math.min(prev + 1, totalPaginas))}
+              style={{ ...estiloBotonPagina, opacity: paginaValida === totalPaginas ? 0.5 : 1, cursor: paginaValida === totalPaginas ? "not-allowed" : "pointer" }}
+            >
+              Siguiente <FiChevronRight size={16} />
+            </button>
+          </div>
+        </>
       )}
 
       {showModal && (
@@ -190,7 +248,6 @@ export default function Departamentos() {
 
             <div style={{ padding: "1.5rem" }}>
               <label style={estiloLabel}>Seleccionar Cuenta del Propietario</label>
-              {/* 🟢 Cambiado a un <select> de usuarios registrados para mandar el ID real */}
               <select 
                 style={estiloInput} 
                 value={idPropietarioSeleccionado} 

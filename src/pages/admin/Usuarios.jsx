@@ -6,14 +6,12 @@ import { useAdminUsers } from '../../hooks/Admin/useAdminUsers'
 export default function Usuarios() {
   const colorAdmin = "rgb(52,151,195)"
   
-  // Cargamos los usuarios desde tu hook unificado
   const { usuarios, loading, registrarUsuario, modificarUsuario, cambiarEstadoUsuario } = useAdminUsers()
   
   const [busqueda, setBusqueda] = useState('')
   const [filtroRol, setFiltroRol] = useState('todos')
   const [showModal, setShowModal] = useState(false)
   
-  // Estado para el formulario (Crear / Editar adaptado al Request Body de tu Swagger)
   const [editandoId, setEditandoId] = useState(null)
   const [formUsuario, setFormUsuario] = useState({
     nombres: '',
@@ -21,10 +19,9 @@ export default function Usuarios() {
     correo: '',
     telefono: '',
     contrasena: '',
-    rol: 'Residente' // 🟢 Coincide con las opciones de rol que espera tu backend
+    rol: 'RESIDENTE' 
   })
 
-  // Filtrado dinámico por rol y búsqueda segura libre de excepciones
   const usuariosFiltrados = (usuarios || []).filter(u => {
     if (filtroRol !== 'todos' && u.rol !== filtroRol) return false
     
@@ -48,12 +45,12 @@ export default function Usuarios() {
         apellidos: usuario.apellidos || '',
         correo: usuario.correo || '',
         telefono: usuario.telefono || '',
-        contrasena: '', // Vacío por seguridad en edición
-        rol: usuario.rol || 'Residente'
+        contrasena: '', 
+        rol: usuario.rol || 'RESIDENTE'
       })
     } else {
       setEditandoId(null)
-      setFormUsuario({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', rol: 'Residente' })
+      setFormUsuario({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', rol: 'RESIDENTE' })
     }
     setShowModal(true)
   }
@@ -62,7 +59,6 @@ export default function Usuarios() {
     e.preventDefault()
     try {
       if (editandoId) {
-        // 🟢 El PUT del Swagger para /users/{id} requiere estrictamente solo: nombres, apellidos, telefono
         const putPayload = {
           nombres: formUsuario.nombres.trim(),
           apellidos: formUsuario.apellidos.trim(),
@@ -70,7 +66,6 @@ export default function Usuarios() {
         }
         await modificarUsuario(editandoId, putPayload)
       } else {
-        // 🟢 El POST requiere nombres, apellidos, correo, telefono, contrasena, rol
         const postPayload = {
           nombres: formUsuario.nombres.trim(),
           apellidos: formUsuario.apellidos.trim(),
@@ -119,7 +114,6 @@ export default function Usuarios() {
         onBotonClick={() => handleOpenModal()}
       />
 
-      {/* Herramientas de Filtro unificadas */}
       <div style={{ backgroundColor: "#ffffff", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", marginBottom: "2rem", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
         <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
           
@@ -133,13 +127,14 @@ export default function Usuarios() {
             />
           </div>
 
-          <div style={{ width: "200px" }}>
+          <div style={{ width: "240px" }}>
+            {/* 🟢 Selector de filtrado mapeado con los Enums reales de la DB */}
             <select style={estiloInput} value={filtroRol} onChange={(e) => setFiltroRol(e.target.value)}>
               <option value="todos">Todos los Roles</option>
-              <option value="Administrador">Administradores</option>
-              <option value="Residente">Residentes</option>
-              <option value="Seguridad">Seguridad</option>
-              <option value="Proveedor">Proveedores</option>
+              <option value="ADMINISTRADOR_CONDOMINIO">Administradores del Condominio</option>
+              <option value="PROPIETARIO">Propietarios</option>
+              <option value="AGENTE_SEGURIDAD">Agentes de Seguridad</option>
+              <option value="RESIDENTE">Residentes / Inquilinos</option>
             </select>
           </div>
 
@@ -149,7 +144,6 @@ export default function Usuarios() {
         </div>
       </div>
 
-      {/* Tabla de Resultados */}
       {loading ? (
         <div style={{ textAlign: "center", padding: "3rem", color: "#64748b", fontWeight: "600" }}>
           🔄 Sincronizando cuentas con el servidor central...
@@ -175,12 +169,15 @@ export default function Usuarios() {
                   <td style={{ padding: "1rem", fontFamily: "monospace" }}>{u.telefono || '---'}</td>
                   <td style={{ padding: "1rem" }}>{u.correo}</td>
                   <td style={{ padding: "1rem" }}>
+                    {/* 🟢 Mapeo de badges actualizado con la nomenclatura exacta */}
                     <span style={{ 
                       fontSize: "0.75rem", fontWeight: "700", padding: "0.25rem 0.5rem", borderRadius: "0.375rem",
-                      backgroundColor: u.rol === 'Administrador' ? "rgba(52,151,195,0.1)" : "rgba(71, 85, 105, 0.1)",
-                      color: u.rol === 'Administrador' ? colorAdmin : "#475569"
+                      backgroundColor: u.rol === 'ADMINISTRADOR_CONDOMINIO' ? "rgba(52,151,195,0.1)" : "rgba(71, 85, 105, 0.1)",
+                      color: u.rol === 'ADMINISTRADOR_CONDOMINIO' ? colorAdmin : "#475569"
                     }}>
-                      {u.rol?.toUpperCase()}
+                      {u.rol === 'ADMINISTRADOR_CONDOMINIO' ? 'ADMINISTRADOR' : 
+                       u.rol === 'AGENTE_SEGURIDAD' ? 'SEGURIDAD' : 
+                       u.rol === 'PROPIETARIO' ? 'PROPIETARIO' : 'RESIDENTE'}
                     </span>
                   </td>
                   <td style={{ padding: "1rem 1.5rem", textAlign: "right" }}>
@@ -194,7 +191,6 @@ export default function Usuarios() {
         </div>
       )}
 
-      {/* Modal para Crear/Editar */}
       {showModal && (
         <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" }}>
           <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "450px", border: "1px solid #e2e8f0", overflow: "hidden" }}>
@@ -233,7 +229,6 @@ export default function Usuarios() {
                 />
               </div>
 
-              {/* 🟢 Contraseña obligatoria únicamente al crear */}
               {!editandoId && (
                 <div>
                   <label style={estiloLabel}>Contraseña Inicial</label>
@@ -242,8 +237,8 @@ export default function Usuarios() {
               )}
 
               <div>
-                <label style={estiloLabel}>Rol asignado (Swagger Core)</label>
-                {/* 🟢 Select corregido mapeando los values exactos aceptados por Diego */}
+                <label style={estiloLabel}>Rol asignado (Database Enum)</label>
+                {/* 🟢 Opciones corregidas vinculando los strings exactos aceptados por el backend en Java */}
                 <select 
                   style={estiloInput} 
                   value={formUsuario.rol} 
@@ -251,10 +246,10 @@ export default function Usuarios() {
                   disabled={!!editandoId}
                   style={{ ...estiloInput, backgroundColor: editandoId ? "#f8fafc" : "#ffffff", color: editandoId ? "#94a3b8" : "#334155", cursor: editandoId ? "not-allowed" : "pointer" }}
                 >
-                  <option value="Residente">Residente</option>
-                  <option value="Administrador">Administrador</option>
-                  <option value="Seguridad">Seguridad</option>
-                  <option value="Proveedor">Proveedor</option>
+                  <option value="RESIDENTE">Residente / Inquilino</option>
+                  <option value="ADMINISTRADOR_CONDOMINIO">Administrador del Condominio</option>
+                  <option value="AGENTE_SEGURIDAD">Agente de Seguridad</option>
+                  <option value="PROPIETARIO">Propietario</option>
                 </select>
               </div>
 
