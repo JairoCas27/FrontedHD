@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getAdminCondoConfig, updateAdminCondoConfig, getAdminMyInfo, updateAdminMyInfo } from '../services/api';
+import { getAdminCondoConfig, updateAdminCondoConfig, getAdminMyInfo, updateAdminMyInfo } from '../../services/api';
 
 export function useAdminSettings() {
   const [config, setConfig] = useState(null);
