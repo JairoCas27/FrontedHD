@@ -170,3 +170,139 @@ export async function invalidateUserSession(userId) {
     method: 'POST',
   });
 }
+// ===== CONTROLADOR: admin-condominio-controller =====
+
+// --- Departamentos (Departamentos.jsx) ---
+// GET /api/admin/apartments
+export async function getAdminApartments() {
+  return safeFetch('/api/admin/apartments');
+}
+
+// PUT /api/admin/apartments/{id}/assign-owner
+export async function assignApartmentOwner(id, nombrePropietario) {
+  return safeFetch(`/api/admin/apartments/${id}/assign-owner`, {
+    method: 'PUT',
+    body: JSON.stringify({ propietario: nombrePropietario }),
+  });
+}
+
+// PUT /api/admin/apartments/{id}/occupants
+export async function updateApartmentOccupants(id, ocupantes) {
+  return safeFetch(`/api/admin/apartments/${id}/occupants`, {
+    method: 'PUT',
+    body: JSON.stringify({ ocupantes }),
+  });
+}
+
+// --- Bienes Comunes (Bienes.jsx) ---
+// GET /api/admin/assets
+export async function getAdminAssets() {
+  return safeFetch('/api/admin/assets');
+}
+
+// POST /api/admin/assets
+export async function createAdminAsset(assetData) {
+  return safeFetch('/api/admin/assets', {
+    method: 'POST',
+    body: JSON.stringify(assetData),
+  });
+}
+
+// PUT /api/admin/assets/{id}/status
+export async function updateAdminAssetStatus(id, estado) {
+  return safeFetch(`/api/admin/assets/${id}/status`, {
+    method: 'PUT',
+    body: JSON.stringify({ estado }),
+  });
+}
+
+// --- Configuración (Configuracion.jsx) ---
+// GET /api/admin/condominium/configuracion
+export async function getAdminCondoConfig() {
+  return safeFetch('/api/admin/condominium/configuracion');
+}
+
+// PUT /api/admin/condominium/configuracion
+export async function updateAdminCondoConfig(configData) {
+  return safeFetch('/api/admin/condominium/configuracion', {
+    method: 'PUT',
+    body: JSON.stringify(configData),
+  });
+}
+
+// --- Perfil e Info (Perfil.jsx) ---
+// GET /api/admin/condominium/my-info
+export async function getAdminMyInfo() {
+  return safeFetch('/api/admin/condominium/my-info');
+}
+
+// PUT /api/admin/condominium/my-info
+export async function updateAdminMyInfo(infoData) {
+  return safeFetch('/api/admin/condominium/my-info', {
+    method: 'PUT',
+    body: JSON.stringify(infoData),
+  });
+}
+
+// --- Dashboard / Analítica (DashboardAdmin.jsx y Reportes.jsx) ---
+// GET /api/admin/dashboard/metrics
+export async function getAdminDashboardMetrics() {
+  return safeFetch('/api/admin/dashboard/metrics');
+}
+
+// --- Auditoría y Logs (Auditoria.jsx) ---
+// GET /api/admin/logs
+export async function getAdminLogs() {
+  return safeFetch('/api/admin/logs');
+}
+
+// --- Estructura Arquitectónica (Estructura.jsx) ---
+// GET /api/admin/structure
+export async function getAdminStructure() {
+  return safeFetch('/api/admin/structure');
+}
+
+// POST /api/admin/structure/nodes
+export async function createAdminStructureNode(nodeData) {
+  return safeFetch('/api/admin/structure/nodes', {
+    method: 'POST',
+    body: JSON.stringify(nodeData),
+  });
+}
+
+// DELETE /api/admin/structure/nodes/{id}
+export async function deleteAdminStructureNode(id) {
+  return safeFetch(`/api/admin/structure/nodes/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+// --- Usuarios y Residentes (Usuarios.jsx) ---
+// GET /api/admin/users
+export async function getAdminUsers() {
+  return safeFetch('/api/admin/users');
+}
+
+// POST /api/admin/users
+export async function createAdminUser(userData) {
+  return safeFetch('/api/admin/users', {
+    method: 'POST',
+    body: JSON.stringify(userData),
+  });
+}
+
+// PUT /api/admin/users/{id}
+export async function updateAdminUser(id, userData) {
+  return safeFetch(`/api/admin/users/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(userData),
+  });
+}
+
+// PATCH /api/admin/users/{id}/status
+export async function patchAdminUserStatus(id, activo) {
+  return safeFetch(`/api/admin/users/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ activo }),
+  });
+}
