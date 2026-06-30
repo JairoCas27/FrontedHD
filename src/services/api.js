@@ -217,3 +217,104 @@ export const deleteHomeownerTenant = (id) =>
 
 export const getHomeownerLogs = () =>
   safeFetch('/api/homeowner/logs');
+
+export async function getAdminDashboardMetrics() {
+  return safeFetch('/api/admin/dashboard/metrics');
+}
+
+export async function getAdminApartments() {
+  return safeFetch('/api/admin/apartamentos');
+}
+
+export async function assignApartmentOwner(id, nombrePropietario) {
+  return safeFetch(`/api/admin/apartamentos/${id}/propietario`, {
+    method: 'PUT',
+    body: JSON.stringify({ nombrePropietario }),
+  });
+}
+
+export async function getAdminAssets() {
+  return safeFetch('/api/admin/assets');
+}
+
+export async function createAdminAsset(data) {
+  return safeFetch('/api/admin/assets', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateAdminAssetStatus(id, estado) {
+  return safeFetch(`/api/admin/assets/${id}/status`, {
+    method: 'PUT',
+    body: JSON.stringify({ estado }),
+  });
+}
+
+export async function getAdminUsers() {
+  return safeFetch('/api/admin/users');
+}
+
+export async function createAdminUser(data) {
+  return safeFetch('/api/admin/users', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function updateAdminUser(id, data) {
+  return safeFetch(`/api/admin/users/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function patchAdminUserStatus(id, activo) {
+  return safeFetch(`/api/admin/users/${id}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ activo }),
+  });
+}
+
+export async function getAdminStructure() {
+  return safeFetch('/api/admin/structure/nodes');
+}
+
+export async function createAdminStructureNode(data) {
+  return safeFetch('/api/admin/structure/nodes', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteAdminStructureNode(id) {
+  return safeFetch(`/api/admin/structure/nodes/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function getAdminLogs() {
+  return safeFetch('/api/admin/logs');
+}
+
+export async function getAdminCondoConfig() {
+  return safeFetch('/api/admin/condominium/configuracion');
+}
+
+export async function updateAdminCondoConfig(data) {
+  return safeFetch('/api/admin/condominium/configuracion', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getAdminMyInfo() {
+  return safeFetch('/api/admin/condominium/my-info');
+}
+
+export async function updateAdminMyInfo(data) {
+  return safeFetch('/api/admin/condominium/my-info', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
