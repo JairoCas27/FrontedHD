@@ -8,10 +8,15 @@ export function useLogout() {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
+    console.log("handleLogout ejecutado");
     try {
+      console.log("llamando logoutApi...");
       await logoutApi();
-    } catch {
+      console.log("logoutApi ok");
+    } catch (err) {
+      console.error("logoutApi error:", err);
     } finally {
+      console.log("finally ejecutado");
       logout();
       toast.info("Sesión cerrada correctamente");
       navigate("/login", { replace: true });
