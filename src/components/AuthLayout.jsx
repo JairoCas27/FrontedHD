@@ -2,7 +2,11 @@ import { useEffect, useState } from "react"
 import AuthLeft from "./AuthLeft"
 import AuthRight from "./AuthRight"
 
-function AuthLayout({ bgImageLeft, bgImageRight, bgLeftOpacity, bgRightOpacity, accentColor, accentColorDark, heroTitle, heroTitleAccent, heroDescription, onSubmit }) {
+function AuthLayout({
+  bgImageLeft, bgImageRight, bgLeftOpacity, bgRightOpacity,
+  accentColor, accentColorDark, heroTitle, heroTitleAccent,
+  heroDescription, onSubmit, resetToken, onResetTokenConsumed
+}) {
   const [phase, setPhase] = useState(0)
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768)
   const ease = "cubic-bezier(0.22, 1, 0.36, 1)"
@@ -29,21 +33,15 @@ function AuthLayout({ bgImageLeft, bgImageRight, bgLeftOpacity, bgRightOpacity, 
           alt=""
           style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", objectPosition: "center", zIndex: 0 }}
         />
-        <div style={{
-          position: "relative",
-          zIndex: 2,
-          width: "100%",
-          height: "100dvh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center"
-        }}>
+        <div style={{ position: "relative", zIndex: 2, width: "100%", height: "100dvh", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <AuthRight
             accentColor={accentColor}
             accentColorDark={accentColorDark}
             onSubmit={onSubmit}
             phase={phase}
             ease={ease}
+            resetToken={resetToken}
+            onResetTokenConsumed={onResetTokenConsumed}
           />
         </div>
       </div>
@@ -101,6 +99,8 @@ function AuthLayout({ bgImageLeft, bgImageRight, bgLeftOpacity, bgRightOpacity, 
           onSubmit={onSubmit}
           phase={phase}
           ease={ease}
+          resetToken={resetToken}
+          onResetTokenConsumed={onResetTokenConsumed}
         />
       </div>
     </div>
