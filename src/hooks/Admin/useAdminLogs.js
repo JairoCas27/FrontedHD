@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getAdminLogs } from '../services/api';
+import { getAdminLogs } from '../../services/api';
 
 export function useAdminLogs() {
   const [logs, setLogs] = useState([]);
