@@ -74,7 +74,7 @@ function Contacto() {
 
             <div className="mb-4 text-start">
               <label className="form-label fw-semibold text-dark">
-                Correo
+                Correo electrónico
               </label>
               <input
                 type="email"
