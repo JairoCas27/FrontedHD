@@ -1,4 +1,4 @@
-// src/pages/superadmin/DashboardSuperAdmin.jsx
+// pages/superadmin/DashboardSuperAdmin.jsx
 import { useEffect, useState } from 'react';
 import {
   FiHome,
@@ -30,8 +30,8 @@ import {
   Cell,
 } from 'recharts';
 import { Card, Badge, Row, Col, Spinner, Button } from 'react-bootstrap';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 
-// Colores corporativos
 const COLORS = {
   primary: '#4f46e5',
   success: '#10b981',
@@ -52,8 +52,8 @@ export default function DashboardSuperAdmin() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const isMobile = useMediaQuery('(max-width: 576px)');
 
-  // Función para extraer array de las respuestas de la API
   const extractItems = (data) => {
     if (Array.isArray(data)) return data;
     if (data?.items && Array.isArray(data.items)) return data.items;
@@ -84,12 +84,10 @@ export default function DashboardSuperAdmin() {
     }
   };
 
-  // Carga inicial
   useEffect(() => {
     loadData(true);
   }, []);
 
-  // Función de actualización manual
   const handleRefresh = async () => {
     setRefreshing(true);
     await loadData(false);
@@ -115,7 +113,6 @@ export default function DashboardSuperAdmin() {
     );
   }
 
-  // ---- Cálculo de condominios activos/inactivos ----
   const totalCondos = allCondos.length;
   const activeCondos = allCondos.filter(c => c.activo === true).length;
   const inactiveCondos = totalCondos - activeCondos;
@@ -125,7 +122,6 @@ export default function DashboardSuperAdmin() {
     { name: 'Inactivos', value: inactiveCondos },
   ].filter(item => item.value > 0);
 
-  // Distribución de roles
   const roleDistribution = [
     { name: 'Administradores', value: metrics?.totalAdministradores || 0 },
     { name: 'Propietarios', value: metrics?.totalPropietarios || 0 },
@@ -140,12 +136,10 @@ export default function DashboardSuperAdmin() {
     },
   ].filter(item => item.value > 0);
 
-  // Últimos condominios (ordenados por fecha, los 5 más recientes)
   const lastCondos = [...allCondos]
     .sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
     .slice(0, 5);
 
-  // Estadísticas para tarjetas
   const stats = [
     {
       title: 'Condominios',
@@ -177,7 +171,6 @@ export default function DashboardSuperAdmin() {
     },
   ];
 
-  // Formatear fecha
   const formatDate = (dateStr) => {
     if (!dateStr) return '—';
     const date = new Date(dateStr);
@@ -190,16 +183,17 @@ export default function DashboardSuperAdmin() {
     });
   };
 
+  const chartHeight = isMobile ? 220 : 300;
+
   return (
     <div style={{ padding: '1.5rem', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
-      {/* Encabezado con botón de actualizar */}
       <div className="d-flex justify-content-between align-items-start mb-4">
         <div>
           <h1 style={{ fontWeight: 800, color: '#0f172a', marginBottom: '4px' }}>
             Dashboard Global del Sistema
           </h1>
         </div>
-        <div className="d-flex align-items-center gap-2">
+        <div className="d-flex align-items-center gap-2 flex-wrap">
           <Badge bg="primary" className="text-nowrap" style={{ fontSize: '0.85rem', padding: '8px 16px' }}>
             <FiCalendar className="me-1" /> {new Date().toLocaleDateString()}
           </Badge>
@@ -225,10 +219,9 @@ export default function DashboardSuperAdmin() {
         </div>
       </div>
 
-      {/* Tarjetas de estadísticas */}
       <Row className="g-4 mb-4">
         {stats.map((stat, idx) => (
-          <Col lg={3} md={6} key={idx}>
+          <Col xs={12} sm={6} lg={3} key={idx}>
             <Card className="border-0 shadow-sm h-100" style={{ transition: 'transform 0.2s' }}>
               <Card.Body>
                 <div className="d-flex justify-content-between align-items-start">
@@ -258,9 +251,8 @@ export default function DashboardSuperAdmin() {
         ))}
       </Row>
 
-      {/* Gráficos */}
       <Row className="g-4 mb-4">
-        <Col lg={8}>
+        <Col xs={12} lg={8}>
           <Card className="border-0 shadow-sm h-100">
             <Card.Header className="bg-white fw-bold">
               Distribución de usuarios por rol
@@ -269,7 +261,7 @@ export default function DashboardSuperAdmin() {
               {roleDistribution.length === 0 ? (
                 <p className="text-muted text-center">Sin datos para mostrar</p>
               ) : (
-                <ResponsiveContainer width="100%" height={300}>
+                <ResponsiveContainer width="100%" height={chartHeight}>
                   <BarChart data={roleDistribution}>
                     <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
                     <XAxis dataKey="name" stroke="#94a3b8" />
@@ -279,7 +271,7 @@ export default function DashboardSuperAdmin() {
                       labelStyle={{ fontWeight: 600 }}
                     />
                     <Legend />
-                    <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={40}>
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={isMobile ? 20 : 40}>
                       {roleDistribution.map((entry, index) => (
                         <Cell
                           key={`cell-${index}`}
@@ -294,7 +286,7 @@ export default function DashboardSuperAdmin() {
           </Card>
         </Col>
 
-        <Col lg={4}>
+        <Col xs={12} lg={4}>
           <Card className="border-0 shadow-sm h-100">
             <Card.Header className="bg-white fw-bold">
               Estado de condominios
@@ -304,14 +296,14 @@ export default function DashboardSuperAdmin() {
                 <p className="text-muted text-center">Sin datos</p>
               ) : (
                 <>
-                  <ResponsiveContainer width="100%" height={240}>
+                  <ResponsiveContainer width="100%" height={isMobile ? 200 : 240}>
                     <PieChart>
                       <Pie
                         data={condoStatusData}
                         cx="50%"
                         cy="50%"
-                        innerRadius={60}
-                        outerRadius={90}
+                        innerRadius={isMobile ? 40 : 60}
+                        outerRadius={isMobile ? 70 : 90}
                         paddingAngle={2}
                         dataKey="value"
                         label={({ name, percent }) =>
@@ -329,7 +321,7 @@ export default function DashboardSuperAdmin() {
                       <Tooltip />
                     </PieChart>
                   </ResponsiveContainer>
-                  <div className="d-flex gap-3 mt-2">
+                  <div className="d-flex gap-3 mt-2 flex-wrap justify-content-center">
                     <div>
                       <span className="badge bg-success me-1">●</span> Activos:{' '}
                       <strong>{activeCondos}</strong>
@@ -346,9 +338,8 @@ export default function DashboardSuperAdmin() {
         </Col>
       </Row>
 
-      {/* Tabla de actividad reciente */}
       <Row className="g-4">
-        <Col lg={6}>
+        <Col xs={12} lg={6}>
           <Card className="border-0 shadow-sm">
             <Card.Header className="bg-white fw-bold d-flex justify-content-between align-items-center">
               <span>📋 Últimos administradores</span>
@@ -391,7 +382,7 @@ export default function DashboardSuperAdmin() {
           </Card>
         </Col>
 
-        <Col lg={6}>
+        <Col xs={12} lg={6}>
           <Card className="border-0 shadow-sm">
             <Card.Header className="bg-white fw-bold d-flex justify-content-between align-items-center">
               <span>🏢 Últimos condominios</span>
@@ -433,7 +424,6 @@ export default function DashboardSuperAdmin() {
         </Col>
       </Row>
 
-      {/* Pie de página */}
       <div className="mt-4 text-center text-muted small">
         <span>
           Dashboard actualizado automáticamente · Datos en tiempo real

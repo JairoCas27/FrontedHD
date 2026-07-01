@@ -11,6 +11,7 @@ export default function Usuarios() {
   const [busqueda, setBusqueda] = useState('')
   const [filtroRol, setFiltroRol] = useState('todos')
   const [showModal, setShowModal] = useState(false)
+  const [errorServidor, setErrorServidor] = useState('')
   
   const [editandoId, setEditandoId] = useState(null)
   const [formUsuario, setFormUsuario] = useState({
@@ -19,7 +20,7 @@ export default function Usuarios() {
     correo: '',
     telefono: '',
     contrasena: '',
-    rol: 'RESIDENTE' 
+    rol: 'PROPIETARIO' 
   })
 
   const usuariosFiltrados = (usuarios || []).filter(u => {
@@ -37,6 +38,7 @@ export default function Usuarios() {
   })
 
   const handleOpenModal = (usuario = null) => {
+    setErrorServidor('')
     if (usuario) {
       setEditandoId(usuario.id)
       setFormUsuario({
@@ -45,17 +47,18 @@ export default function Usuarios() {
         correo: usuario.correo || '',
         telefono: usuario.telefono || '',
         contrasena: '', 
-        rol: usuario.rol || 'RESIDENTE'
+        rol: usuario.rol || 'PROPIETARIO'
       })
     } else {
       setEditandoId(null)
-      setFormUsuario({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', rol: 'RESIDENTE' })
+      setFormUsuario({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', rol: 'PROPIETARIO' })
     }
     setShowModal(true)
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
+    setErrorServidor('')
     try {
       if (editandoId) {
         const putPayload = {
@@ -77,7 +80,7 @@ export default function Usuarios() {
       }
       setShowModal(false)
     } catch (error) {
-      alert('Hubo un problema al intentar guardar los datos en el servidor.')
+      setErrorServidor(error.message || 'Hubo un problema al procesar la solicitud en el servidor.')
     }
   }
 
@@ -127,10 +130,8 @@ export default function Usuarios() {
           <div style={{ width: "240px" }}>
             <select style={estiloInput} value={filtroRol} onChange={(e) => setFiltroRol(e.target.value)}>
               <option value="todos">Todos los Roles</option>
-              <option value="ADMINISTRADOR_CONDOMINIO">Administradores del Condominio</option>
               <option value="PROPIETARIO">Propietarios</option>
               <option value="AGENTE_SEGURIDAD">Agentes de Seguridad</option>
-              <option value="RESIDENTE">Residentes / Inquilinos</option>
             </select>
           </div>
           <small style={{ color: "#64748b", fontWeight: "600", marginLeft: "auto" }}>
@@ -140,7 +141,7 @@ export default function Usuarios() {
       </div>
 
       {loading ? (
-        <div style={{ textalign: "center", padding: "3rem", color: "#64748b", fontWeight: "600" }}>
+        <div style={{ textAlign: "center", padding: "3rem", color: "#64748b", fontWeight: "600" }}>
           🔄 Sincronizando cuentas con el servidor central...
         </div>
       ) : (
@@ -166,12 +167,11 @@ export default function Usuarios() {
                   <td style={{ padding: "1rem" }}>
                     <span style={{ 
                       fontSize: "0.75rem", fontWeight: "700", padding: "0.25rem 0.5rem", borderRadius: "0.375rem",
-                      backgroundColor: u.role === 'ADMINISTRADOR_CONDOMINIO' || u.rol === 'ADMINISTRADOR_CONDOMINIO' ? "rgba(52,151,195,0.1)" : "rgba(71, 85, 105, 0.1)",
-                      color: u.role === 'ADMINISTRADOR_CONDOMINIO' || u.rol === 'ADMINISTRADOR_CONDOMINIO' ? colorAdmin : "#475569"
+                      backgroundColor: u.rol === 'ADMINISTRADOR_CONDOMINIO' ? "rgba(52,151,195,0.1)" : "rgba(71, 85, 105, 0.1)",
+                      color: u.rol === 'ADMINISTRADOR_CONDOMINIO' ? colorAdmin : "#475569"
                     }}>
                       {u.rol === 'ADMINISTRADOR_CONDOMINIO' ? 'ADMINISTRADOR' : 
-                       u.rol === 'AGENTE_SEGURIDAD' ? 'SEGURIDAD' : 
-                       u.rol === 'PROPIETARIO' ? 'PROPIETARIO' : 'RESIDENTE'}
+                       u.rol === 'AGENTE_SEGURIDAD' ? 'SEGURIDAD' : 'PROPIETARIO'}
                     </span>
                   </td>
                   <td style={{ padding: "1rem 1.5rem", textAlign: "right" }}>
@@ -204,6 +204,13 @@ export default function Usuarios() {
             </div>
 
             <form onSubmit={handleSubmit} style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
+              
+              {errorServidor && (
+                <div style={{ backgroundColor: "#fef2f2", border: "1px solid #fca5a5", color: "#b91c1c", padding: "0.75rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600" }}>
+                  ⚠️ {errorServidor}
+                </div>
+              )}
+
               <div style={{ display: "flex", gap: "1rem" }}>
                 <div style={{ flex: 1 }}>
                   <label style={estiloLabel}>Nombres</label>
@@ -257,10 +264,8 @@ export default function Usuarios() {
                     cursor: editandoId ? "not-allowed" : "pointer"
                   }}
                 >
-                  <option value="RESIDENTE">Residente / Inquilino</option>
-                  <option value="ADMINISTRADOR_CONDOMINIO">Administrador del Condominio</option>
-                  <option value="AGENTE_SEGURIDAD">Agente de Seguridad</option>
                   <option value="PROPIETARIO">Propietario</option>
+                  <option value="AGENTE_SEGURIDAD">Agente de Seguridad</option>
                 </select>
               </div>
 

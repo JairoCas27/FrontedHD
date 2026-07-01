@@ -20,10 +20,14 @@ export default function Estructura() {
     if (!nuevoNodo.nombre.trim()) return
 
     try {
+      // 🟢 CORREGIDO: Mapeamos el ID al formato numérico e inyectamos los campos correctos para el DTO de Spring Boot
+      const nodoIdNum = nuevoNodo.padreId ? parseInt(nuevoNodo.padreId) : null;
+
       await insertarNodo({
         nombre: nuevoNodo.nombre.trim(),
-        padreId: nuevoNodo.padreId ? parseInt(nuevoNodo.padreId) : null,
-        tipo: nuevoNodo.padreId ? "PISO" : "TORRE"
+        idPadre: nodoIdNum,    // Clave estándar para deserialización en Java
+        idTorre: nodoIdNum,    // Fallback de seguridad en caso de mapeos alternativos de Diego
+        tipo: nodoIdNum ? "PISO" : "TORRE"
       })
       
       setShowModal(false)
@@ -52,7 +56,7 @@ export default function Estructura() {
     border: "1px solid #cbd5e1",
     fontSize: "0.9rem",
     color: "#334155",
-    boxSizing: "box-sizing",
+    boxSizing: "border-box",
     outline: "none"
   }
 

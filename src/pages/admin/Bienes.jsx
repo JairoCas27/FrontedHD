@@ -51,7 +51,7 @@ export default function Bienes() {
     const nuevoEstado = estadoActual === 'DISPONIBLE' ? 'MANTENIMIENTO' : 'DISPONIBLE'
     
     try {
-      await actualizarEstadoBien(bien.id, nuevoEstado)
+      await actualizarEstadoBien(bien.id, nuevoEstado, bien.tipo || 'ESTACIONAMIENTO')
     } catch (error) {
       console.error("Error al cambiar el estado del activo:", error)
       alert("No se pudo actualizar el estado técnico en el servidor.")

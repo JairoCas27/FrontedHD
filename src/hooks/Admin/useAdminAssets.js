@@ -8,11 +8,8 @@ export function useAdminAssets() {
   const cargarBienes = async () => {
     try {
       setLoading(true);
-      
-      // 🟢 CORREGIDO: Agregamos el parámetro obligatorios '&type=Estacionamiento' (o Carrito) que exige Spring Boot
       const queryParams = "?pagina=0&tamano=100&type=Estacionamiento";
       const data = await getAdminAssets(queryParams);
-      
       setBienes(data?.items || []);
     } catch (error) {
       console.error("Error cargando bienes comunes:", error);
@@ -31,9 +28,9 @@ export function useAdminAssets() {
     }
   };
 
-  const actualizarEstadoBien = async (id, estado) => {
+  const actualizarEstadoBien = async (id, estado, tipo) => {
     try {
-      await updateAdminAssetStatus(id, estado);
+      await updateAdminAssetStatus(id, estado, tipo);
       await cargarBienes();
     } catch (error) {
       console.error("Error al cambiar estado de activo:", error);
