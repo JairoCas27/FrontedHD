@@ -248,8 +248,8 @@ export async function updateAdminAssetStatus(id, nuevoEstado, tipoActivo = "ESTA
     method: 'PUT',
     body: JSON.stringify({
       estado: nuevoEstado,
-      tipo: tipoActivo.toUpperCase(), // 🟢 Enviamos el tipo exigido por la validación del backend
-      type: tipoActivo.toUpperCase()  // Fallback por si Diego mapeó la propiedad en inglés
+      tipo: tipoActivo.toUpperCase(), 
+      type: tipoActivo.toUpperCase()  
     }),
     headers: {
       'Content-Type': 'application/json'
