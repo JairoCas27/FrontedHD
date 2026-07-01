@@ -16,13 +16,10 @@ export default function Departamentos() {
   const [deptoSeleccionado, setDeptoSeleccionado] = useState(null)
   const [idPropietarioSeleccionado, setIdPropietarioSeleccionado] = useState('')
 
-  // 🟢 Estado para controlar la paginación local
   const [paginaActual, setPaginaActual] = useState(1)
-  const elementosPorPagina = 12 // Cantidad de departamentos por vista
+  const elementosPorPagina = 12 
 
-  // 🟢 Filtrado dinámico adaptado a los nombres reales del backend
   const deptosFiltrados = (departamentos || []).filter(d => {
-    // Si el backend guarda "A" o "Torre A", buscamos concordancia parcial de la letra
     if (filtroTorre !== 'todos') {
       const deptoTorre = (d.torreNombre || '').toLowerCase();
       if (!deptoTorre.includes(filtroTorre.toLowerCase())) return false;
@@ -38,11 +35,9 @@ export default function Departamentos() {
     return true
   })
 
-  // 🟢 Lógica de segmentación para la paginación local
   const totalElementos = deptosFiltrados.length
   const totalPaginas = Math.ceil(totalElementos / elementosPorPagina) || 1
   
-  // Ajustar la página actual si los filtros reducen drásticamente los resultados
   const paginaValida = Math.min(paginaActual, totalPaginas)
   const indiceInicio = (paginaValida - 1) * elementosPorPagina
   const indiceFin = indiceInicio + elementosPorPagina
@@ -114,11 +109,9 @@ export default function Departamentos() {
         subtitulo="Control de unidades inmobiliarias, ocupantes y asignación legal de propietarios"
       />
 
-      {/* Barra de herramientas: Filtros + Buscador */}
       <div style={{ backgroundColor: "#ffffff", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", marginBottom: "2rem", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
         <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
           
-          {/* Selector de Torre (Values corregidos a las letras base de la DB) */}
           <div style={{ width: "240px" }}>
             <select 
               style={estiloInput} 
@@ -132,7 +125,6 @@ export default function Departamentos() {
             </select>
           </div>
 
-          {/* Input Buscador */}
           <div style={{ flex: 1, maxWidth: "340px", position: "relative" }}>
             <input 
               type="text" 
@@ -143,7 +135,6 @@ export default function Departamentos() {
             />
           </div>
 
-          {/* Contador exacto */}
           <small style={{ color: "#64748b", fontWeight: "600", marginLeft: "auto" }}>
             {loading ? "Cargando..." : `Viendo ${deptosPaginados.length} (Filtro: ${totalElementos} de ${meta.total || departamentos.length} totales)`}
           </small>
@@ -214,7 +205,6 @@ export default function Departamentos() {
             })}
           </div>
 
-          {/* 🟢 Barra de Navegación de Paginación */}
           <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: "1rem", marginTop: "2.5rem", borderTop: "1px solid #e2e8f0", paddingTop: "1.5rem" }}>
             <button 
               disabled={paginaValida === 1}
@@ -254,7 +244,7 @@ export default function Departamentos() {
                 onChange={(e) => setIdPropietarioSeleccionado(e.target.value)}
               >
                 <option value="">-- Elige un Residente --</option>
-                {usuarios.map(u => (
+                {(usuarios || []).map(u => (
                   <option key={u.id} value={u.id}>{u.nombres} {u.apellidos} (ID: {u.id})</option>
                 ))}
               </select>

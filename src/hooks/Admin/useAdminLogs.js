@@ -8,11 +8,12 @@ export function useAdminLogs() {
   const cargarLogs = async () => {
     try {
       setLoading(true);
-      // 🟢 Agregamos los parámetros para que Spring Boot no rechace la solicitud con un 400
-      const queryParams = "?pagina=0&tamano=100";
+      
+      // 🟢 CORREGIDO: Concatenamos el type requerido por Diego en Spring Boot
+      const queryParams = "?pagina=0&tamano=100&type=Vehicular";
       const data = await getAdminLogs(queryParams);
       
-      setLogs(data?.items || []);
+      setLogs(data?.items || data || []);
     } catch (error) {
       console.error("Error cargando auditoría:", error);
     } finally {

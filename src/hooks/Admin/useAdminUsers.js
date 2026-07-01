@@ -9,8 +9,10 @@ export function useAdminUsers() {
     try {
       setLoading(true);
       const data = await getAdminUsers();
-    
-      setUsuarios(data?.items || []);
+      
+      // 🟢 CORREGIDO: Mapeo seguro si el backend devuelve .items o un array directo
+      const listaExtraida = Array.isArray(data) ? data : (data?.items || []);
+      setUsuarios(listaExtraida);
     } catch (error) {
       console.error("Error cargando usuarios:", error);
     } finally {
@@ -41,8 +43,8 @@ export function useAdminUsers() {
   const cambiarEstadoUsuario = async (id, activo) => {
     try {
       await patchAdminUserStatus(id, activo);
-      // Actualización optimista local para evitar recargas molestas de pantalla
-      setUsuarios(prev => prev.map(u => u.id === id ? { ...u, activo } : u));
+      // 🟢 CORREGIDO: Forzar recarga completa para sincronizar deshabilitaciones con la DB
+      await cargarUsuarios();
     } catch (error) {
       console.error("Error al cambiar estado del usuario:", error);
       throw error;

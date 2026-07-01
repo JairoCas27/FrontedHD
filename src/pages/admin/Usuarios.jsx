@@ -63,6 +63,7 @@ export default function Usuarios() {
           apellidos: formUsuario.apellidos.trim(),
           telefono: formUsuario.telefono.trim()
         }
+        await modificarUsuario(editandoId, putPayload)
       } else {
         const postPayload = {
           nombres: formUsuario.nombres.trim(),
@@ -72,6 +73,7 @@ export default function Usuarios() {
           contrasena: formUsuario.contrasena,
           rol: formUsuario.rol
         }
+        await registrarUsuario(postPayload)
       }
       setShowModal(false)
     } catch (error) {
@@ -123,7 +125,6 @@ export default function Usuarios() {
           </div>
 
           <div style={{ width: "240px" }}>
-            {/* 🟢 Selector de filtrado mapeado con los Enums reales de la DB */}
             <select style={estiloInput} value={filtroRol} onChange={(e) => setFiltroRol(e.target.value)}>
               <option value="todos">Todos los Roles</option>
               <option value="ADMINISTRADOR_CONDOMINIO">Administradores del Condominio</option>
@@ -139,7 +140,7 @@ export default function Usuarios() {
       </div>
 
       {loading ? (
-        <div style={{ textAlign: "center", padding: "3rem", color: "#64748b", fontWeight: "600" }}>
+        <div style={{ textalign: "center", padding: "3rem", color: "#64748b", fontWeight: "600" }}>
           🔄 Sincronizando cuentas con el servidor central...
         </div>
       ) : (
@@ -163,11 +164,10 @@ export default function Usuarios() {
                   <td style={{ padding: "1rem", fontFamily: "monospace" }}>{u.telefono || '---'}</td>
                   <td style={{ padding: "1rem" }}>{u.correo}</td>
                   <td style={{ padding: "1rem" }}>
-                    {/* 🟢 Mapeo de badges actualizado con la nomenclatura exacta */}
                     <span style={{ 
                       fontSize: "0.75rem", fontWeight: "700", padding: "0.25rem 0.5rem", borderRadius: "0.375rem",
-                      backgroundColor: u.rol === 'ADMINISTRADOR_CONDOMINIO' ? "rgba(52,151,195,0.1)" : "rgba(71, 85, 105, 0.1)",
-                      color: u.rol === 'ADMINISTRADOR_CONDOMINIO' ? colorAdmin : "#475569"
+                      backgroundColor: u.role === 'ADMINISTRADOR_CONDOMINIO' || u.rol === 'ADMINISTRADOR_CONDOMINIO' ? "rgba(52,151,195,0.1)" : "rgba(71, 85, 105, 0.1)",
+                      color: u.role === 'ADMINISTRADOR_CONDOMINIO' || u.rol === 'ADMINISTRADOR_CONDOMINIO' ? colorAdmin : "#475569"
                     }}>
                       {u.rol === 'ADMINISTRADOR_CONDOMINIO' ? 'ADMINISTRADOR' : 
                        u.rol === 'AGENTE_SEGURIDAD' ? 'SEGURIDAD' : 
@@ -246,9 +246,7 @@ export default function Usuarios() {
 
               <div>
                 <label style={estiloLabel}>Rol asignado (Database Enum)</label>
-                {/* 🟢 Opciones corregidas vinculando los strings exactos aceptados por el backend en Java */}
                 <select 
-                  style={estiloInput} 
                   value={formUsuario.rol} 
                   onChange={e => setFormUsuario({...formUsuario, rol: e.target.value})}
                   disabled={!!editandoId}
