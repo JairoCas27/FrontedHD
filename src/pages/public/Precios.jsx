@@ -13,7 +13,7 @@ function Precios() {
         "Gestión de hasta 50 unidades residenciales",
         "Control básico de accesos y residentes",
         "Registro de vehículos y visitantes",
-        "Soporte estándar por correo"
+        "Soporte estándar por correo electrónico"
       ]
     },
     {
@@ -22,7 +22,7 @@ function Precios() {
       descripcion: "Para edificios y condominios en crecimiento",
       features: [
         "Hasta 200 unidades residenciales",
-        "Control de accesos con QR",
+        "Control de accesos mediante códigos QR",
         "Monitoreo en tiempo real de ocupación",
         "Gestión de estacionamientos y reservas"
       ]
@@ -32,7 +32,7 @@ function Precios() {
       precio: "S/ 299 / mes",
       descripcion: "Para administradoras con múltiples condominios",
       features: [
-        "Arquitectura multi-condominio",
+        "Arquitectura multi-condominio escalable",
         "Gestión avanzada de roles y permisos",
         "API para integraciones externas",
         "Auditoría completa",
