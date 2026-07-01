@@ -214,7 +214,10 @@ export async function getAdminApartments(params = "") {
 export async function assignApartmentOwner(id, idPropietario) {
   return safeFetch(`/api/admin/apartments/${id}/assign-owner`, {
     method: 'PUT',
-    body: JSON.stringify(Number(idPropietario)), // 🟢 Enviado en el body de la petición
+    body: JSON.stringify({ 
+      idPropietario: Number(idPropietario),
+      idUsuario: Number(idPropietario) // Enviamos ambos nombres de propiedad comunes por seguridad
+    }),
     headers: {
       'Content-Type': 'application/json'
     }
@@ -239,10 +242,18 @@ export async function createAdminAsset(data) {
   });
 }
 
-export async function updateAdminAssetStatus(id, estado) {
+// Cambia la función para recibir el 'tipo' (o el objeto completo 'bien') además del nuevo estado
+export async function updateAdminAssetStatus(id, nuevoEstado, tipoActivo = "ESTACIONAMIENTO") {
   return safeFetch(`/api/admin/assets/${id}/status`, {
     method: 'PUT',
-    body: JSON.stringify({ estado }),
+    body: JSON.stringify({
+      estado: nuevoEstado,
+      tipo: tipoActivo.toUpperCase(), // 🟢 Enviamos el tipo exigido por la validación del backend
+      type: tipoActivo.toUpperCase()  // Fallback por si Diego mapeó la propiedad en inglés
+    }),
+    headers: {
+      'Content-Type': 'application/json'
+    }
   });
 }
 
