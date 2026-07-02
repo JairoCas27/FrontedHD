@@ -30,7 +30,6 @@ import {
   Cell,
 } from 'recharts';
 import { Card, Badge, Row, Col, Spinner, Button } from 'react-bootstrap';
-import { useMediaQuery } from '../../hooks/useMediaQuery';
 
 const COLORS = {
   primary: '#4f46e5',
@@ -52,7 +51,6 @@ export default function DashboardSuperAdmin() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
-  const isMobile = useMediaQuery('(max-width: 576px)');
 
   const extractItems = (data) => {
     if (Array.isArray(data)) return data;
