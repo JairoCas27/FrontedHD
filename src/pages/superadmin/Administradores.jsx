@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiArrowUp, FiArrowDown } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiArrowUp, FiArrowDown, FiAlertTriangle } from 'react-icons/fi';
 import {
     getAdministrators,
     createAdministrator,
@@ -11,6 +11,7 @@ import {
 } from '../../services/api';
 import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
 import { toast } from 'react-toastify';
+
 
 // Componente Toggle Switch (igual que en Condominios)
 const ToggleSwitch = ({ checked, onChange }) => {
@@ -57,6 +58,7 @@ const ToggleSwitch = ({ checked, onChange }) => {
     );
 };
 
+
 export default function Administradores() {
     const [admins, setAdmins] = useState([]);
     const [condominios, setCondominios] = useState([]);
@@ -74,6 +76,7 @@ export default function Administradores() {
     const [error, setError] = useState(null);
     const [submitting, setSubmitting] = useState(false);
 
+
     // Filtros
     const [searchTerm, setSearchTerm] = useState('');
     const [condominioFilter, setCondominioFilter] = useState('');
@@ -81,8 +84,10 @@ export default function Administradores() {
     const [sortOrder, setSortOrder] = useState('asc');
     const [sortField, setSortField] = useState('nombre');
 
+
     // Mapa de condominios ocupados
     const [occupiedCondos, setOccupiedCondos] = useState(new Set());
+
 
     const loadAll = async () => {
         setLoading(true);
@@ -92,6 +97,7 @@ export default function Administradores() {
                 getAdministrators(),
                 getCondominiums(),
             ]);
+
 
             let adminsList = [];
             if (Array.isArray(adminsData)) {
@@ -104,6 +110,7 @@ export default function Administradores() {
                 adminsList = adminsData.data;
             }
 
+
             let condosList = [];
             if (Array.isArray(condosData)) {
                 condosList = condosData;
@@ -114,6 +121,7 @@ export default function Administradores() {
             } else if (condosData?.data && Array.isArray(condosData.data)) {
                 condosList = condosData.data;
             }
+
 
             // Construir set de condominios ocupados
             const occupied = new Set();
@@ -135,9 +143,11 @@ export default function Administradores() {
         }
     };
 
+
     useEffect(() => {
         loadAll();
     }, []);
+
 
     // Filtrar y ordenar
     const filteredAndSorted = useMemo(() => {
@@ -150,6 +160,7 @@ export default function Administradores() {
             const matchEstado = estadoFilter !== '' ? (estadoFilter === 'activo' ? a.activo : !a.activo) : true;
             return matchSearch && matchCondo && matchEstado;
         });
+
 
         result.sort((a, b) => {
             let valA, valB;
@@ -174,6 +185,7 @@ export default function Administradores() {
         return result;
     }, [admins, searchTerm, condominioFilter, estadoFilter, sortField, sortOrder]);
 
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         setSubmitting(true);
@@ -187,8 +199,10 @@ export default function Administradores() {
                 };
                 await updateAdministrator(editing.id, updatePayload);
 
+
                 const newCondoId = form.idCondominio ? parseInt(form.idCondominio, 10) : null;
                 const oldCondoId = editing.idCondominio ? parseInt(editing.idCondominio, 10) : null;
+
 
                 if (newCondoId !== oldCondoId) {
                     if (newCondoId !== null) {
@@ -244,6 +258,7 @@ export default function Administradores() {
         }
     };
 
+
     const handleDelete = async (id) => {
         if (!window.confirm('¿Eliminar administrador?')) return;
         try {
@@ -255,6 +270,7 @@ export default function Administradores() {
         }
     };
 
+
     const handleToggleStatus = async (id, activo) => {
         try {
             await patchAdministratorStatus(id, !activo);
@@ -264,6 +280,7 @@ export default function Administradores() {
             toast.error(`Error al cambiar estado: ${err.message}`);
         }
     };
+
 
     if (loading)
         return (
@@ -279,6 +296,7 @@ export default function Administradores() {
                 <Button variant="outline-primary" onClick={loadAll}>Reintentar</Button>
             </div>
         );
+
 
     const getCondoOptions = () => {
         const options = [];
@@ -298,12 +316,15 @@ export default function Administradores() {
         return options;
     };
 
+
     const condominioOptions = getCondoOptions();
+
 
     const getSortIcon = (field) => {
         if (sortField !== field) return null;
         return sortOrder === 'asc' ? <FiArrowUp size={14} /> : <FiArrowDown size={14} />;
     };
+
 
     const toggleSort = (field) => {
         if (sortField === field) {
@@ -313,6 +334,7 @@ export default function Administradores() {
             setSortOrder('asc');
         }
     };
+
 
     return (
         <div style={{ padding: '1.5rem' }}>
@@ -326,6 +348,7 @@ export default function Administradores() {
                     <FiPlus className="me-2" /> Nuevo
                 </Button>
             </div>
+
 
             {/* Filtros y orden */}
             <Row className="mb-4 g-2 align-items-end">
@@ -343,7 +366,7 @@ export default function Administradores() {
                     </InputGroup>
                 </Col>
                 <Col md={2}>
-                    <Form.Label htmlFor="filterCondo" srOnly>Filtrar por condominio</Form.Label>
+                    <Form.Label htmlFor="filterCondo" className="visually-hidden">Filtrar por condominio</Form.Label>
                     <Form.Select
                         id="filterCondo"
                         name="filterCondo"
@@ -360,7 +383,7 @@ export default function Administradores() {
                     </Form.Select>
                 </Col>
                 <Col md={2}>
-                    <Form.Label htmlFor="filterEstado" srOnly>Filtrar por estado</Form.Label>
+                    <Form.Label htmlFor="filterEstado" className="visually-hidden">Filtrar por estado</Form.Label>
                     <Form.Select
                         id="filterEstado"
                         name="filterEstado"
@@ -374,7 +397,7 @@ export default function Administradores() {
                     </Form.Select>
                 </Col>
                 <Col md={2}>
-                    <Form.Label htmlFor="sortOrder" srOnly>Ordenar por</Form.Label>
+                    <Form.Label htmlFor="sortOrder" className="visually-hidden">Ordenar por</Form.Label>
                     <Form.Select
                         id="sortOrder"
                         name="sortOrder"
@@ -404,6 +427,7 @@ export default function Administradores() {
                     </Button>
                 </Col>
             </Row>
+
 
             {filteredAndSorted.length === 0 ? (
                 <div className="text-center py-4">
@@ -476,6 +500,7 @@ export default function Administradores() {
                     </Table>
                 </div>
             )}
+
 
             {/* Modal igual que antes */}
             <Modal show={showModal} onHide={() => setShowModal(false)} centered>
@@ -552,10 +577,14 @@ export default function Administradores() {
                                     </option>
                                 ))}
                             </Form.Select>
-                            <small className="text-muted">
+                            <small className="text-muted d-flex align-items-center gap-1">
                                 {editing && form.idCondominio &&
-                                    condominios.find(c => c.id === parseInt(form.idCondominio))?.activo === false &&
-                                    ' ⚠️ Este condominio está inactivo'
+                                    condominios.find(c => c.id === parseInt(form.idCondominio))?.activo === false && (
+                                        <>
+                                            <FiAlertTriangle className="text-warning" />
+                                            Este condominio está inactivo
+                                        </>
+                                    )
                                 }
                             </small>
                         </Form.Group>
