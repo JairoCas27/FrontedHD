@@ -26,8 +26,12 @@ const INITIAL_ERRORS = {
   telefono: "",
 };
 
-const NOMBRE_PATTERN  = /^[A-Za-zÁáÉéÍíÓóÚúÑñÜü\s]{2,}$/;
-const TELEFONO_PATTERN = /^\+?[\d\s\-]{7,15}$/;
+const NOMBRE_PATTERN   = /^[A-Za-zÁáÉéÍíÓóÚúÑñÜü\s]{2,}$/;
+const NOMBRE_MAX_LENGTH = 50;
+
+const TELEFONO_PATTERN     = /^\+?[\d\s\-]{7,15}$/;
+const TELEFONO_MIN_DIGITOS = 7;
+const TELEFONO_MAX_DIGITOS = 15;
 
 // ─── Validación ──────────────────────────────────────────────────────────────
 
@@ -35,19 +39,40 @@ function validateForm({ nombres, apellidos, telefono }) {
   const errors = { ...INITIAL_ERRORS };
   let valid = true;
 
-  if (!NOMBRE_PATTERN.test(nombres?.trim() ?? "")) {
+  const nombresTrim = nombres?.trim() ?? "";
+  if (!nombresTrim) {
+    errors.nombres = "Este campo es obligatorio.";
+    valid = false;
+  } else if (nombresTrim.length > NOMBRE_MAX_LENGTH) {
+    errors.nombres = `Máximo ${NOMBRE_MAX_LENGTH} caracteres.`;
+    valid = false;
+  } else if (!NOMBRE_PATTERN.test(nombresTrim)) {
     errors.nombres = "Solo letras, mínimo 2 caracteres.";
     valid = false;
   }
 
-  if (!NOMBRE_PATTERN.test(apellidos?.trim() ?? "")) {
+  const apellidosTrim = apellidos?.trim() ?? "";
+  if (!apellidosTrim) {
+    errors.apellidos = "Este campo es obligatorio.";
+    valid = false;
+  } else if (apellidosTrim.length > NOMBRE_MAX_LENGTH) {
+    errors.apellidos = `Máximo ${NOMBRE_MAX_LENGTH} caracteres.`;
+    valid = false;
+  } else if (!NOMBRE_PATTERN.test(apellidosTrim)) {
     errors.apellidos = "Solo letras, mínimo 2 caracteres.";
     valid = false;
   }
 
-  if (telefono?.trim() && !TELEFONO_PATTERN.test(telefono.trim())) {
-    errors.telefono = "Formato inválido. Ej: +51999000000";
-    valid = false;
+  const telefonoTrim = telefono?.trim() ?? "";
+  if (telefonoTrim) {
+    const soloDigitos = telefonoTrim.replace(/\D/g, "");
+    if (!TELEFONO_PATTERN.test(telefonoTrim)) {
+      errors.telefono = "Formato inválido. Ej: +51999000000";
+      valid = false;
+    } else if (soloDigitos.length < TELEFONO_MIN_DIGITOS || soloDigitos.length > TELEFONO_MAX_DIGITOS) {
+      errors.telefono = `Debe tener entre ${TELEFONO_MIN_DIGITOS} y ${TELEFONO_MAX_DIGITOS} dígitos.`;
+      valid = false;
+    }
   }
 
   return { errors, valid };
