@@ -28,21 +28,18 @@ export function useAdminAssets() {
     }
   };
 
-  // 🟢 RE-CORREGIDO: Recibe los datos necesarios para empaquetar el Request Body exacto de Diego
-  const actualizarEstadoBien = async (id, nuevoEstado, tipoActivo, esParaDisponible) => {
+  // 🟢 CORREGIDO: Empaquetamos los datos en un objeto DTO limpio para que viaje en el body del POST como pide el Swagger
+  const actualizarEstadoBien = async (id, estado, tipo) => {
     try {
-      // 🎯 Estructura de payload requerida en el esquema del Swagger
       const payload = {
-        tipo: tipoActivo ? tipoActivo.toUpperCase() : "ESTACIONAMIENTO",
-        estado: nuevoEstado,          // "AVAILABLE" o "MAINTENANCE"
-        disponible: esParaDisponible,  // true o false booleano
-        tipoVehiculo: "string",
-        capacidadMaxima: 1
+        id: id,
+        estado: estado,
+        tipo: tipo || 'ESTACIONAMIENTO'
       };
 
-      // Invocamos pasándole el ID en la URL y el payload en el Body
-      await updateAdminAssetStatus(id, payload);
-      await cargarBienes(); // Refresca visualmente la tabla en tiempo real
+      // Enviamos el objeto completo a la función de la API
+      await updateAdminAssetStatus(payload);
+      await cargarBienes();
     } catch (error) {
       console.error("Error al cambiar estado de activo:", error);
       throw error;
@@ -53,11 +50,5 @@ export function useAdminAssets() {
     cargarBienes();
   }, []);
 
-  return { 
-    bienes, 
-    loading, 
-    registrarBien, 
-    actualizarEstadoBien, 
-    refrescar: cargarBienes 
-  };
+  return { bienes, loading, registrarBien, actualizarEstadoBien, refrescar: cargarBienes };
 }
