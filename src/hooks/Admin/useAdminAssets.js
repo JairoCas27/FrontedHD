@@ -1,54 +1,117 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getAdminAssets, createAdminAsset, updateAdminAssetStatus } from '../../services/api';
 
 export function useAdminAssets() {
-  const [bienes, setBienes] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [estacionamientos, setEstacionamientos] = useState([]);
+  const [carritos, setCarritos] = useState([]);
 
-  const cargarBienes = async () => {
+  const [loadingEstacionamientos, setLoadingEstacionamientos] = useState(true);
+  const [loadingCarritos, setLoadingCarritos] = useState(true);
+
+  const [paginaEstacionamientos, setPaginaEstacionamientos] = useState(0);
+  const [paginaCarritos, setPaginaCarritos] = useState(0);
+
+  const [totalPaginasEstacionamientos, setTotalPaginasEstacionamientos] = useState(0);
+  const [totalPaginasCarritos, setTotalPaginasCarritos] = useState(0);
+
+  const [totalEstacionamientos, setTotalEstacionamientos] = useState(0);
+  const [totalCarritos, setTotalCarritos] = useState(0);
+
+  const cargarEstacionamientos = useCallback(async (pagina = 0) => {
     try {
-      setLoading(true);
-      const queryParams = "?pagina=0&tamano=100&type=Estacionamiento";
-      const data = await getAdminAssets(queryParams);
-      setBienes(data?.items || []);
+      setLoadingEstacionamientos(true);
+      const data = await getAdminAssets(`?type=ESTACIONAMIENTO&page=${pagina}&size=10`);
+      setEstacionamientos(data?.items || []);
+      setTotalPaginasEstacionamientos(data?.totalPaginas || 0);
+      setTotalEstacionamientos(data?.total || 0);
+      setPaginaEstacionamientos(data?.pagina || 0);
     } catch (error) {
-      console.error("Error cargando bienes comunes:", error);
+      console.error("Error cargando estacionamientos:", error);
     } finally {
-      setLoading(false);
+      setLoadingEstacionamientos(false);
     }
-  };
+  }, []);
 
-  const registrarBien = async (assetData) => {
+  const cargarCarritos = useCallback(async (pagina = 0) => {
     try {
-      await createAdminAsset(assetData);
-      await cargarBienes();
+      setLoadingCarritos(true);
+      const data = await getAdminAssets(`?type=CARRITO&page=${pagina}&size=10`);
+      setCarritos(data?.items || []);
+      setTotalPaginasCarritos(data?.totalPaginas || 0);
+      setTotalCarritos(data?.total || 0);
+      setPaginaCarritos(data?.pagina || 0);
     } catch (error) {
-      console.error("Error al crear bien común:", error);
+      console.error("Error cargando carritos:", error);
+    } finally {
+      setLoadingCarritos(false);
+    }
+  }, []);
+
+  const registrarEstacionamiento = async (numero) => {
+    try {
+      await createAdminAsset({ tipo: "ESTACIONAMIENTO", numero: Number(numero) });
+      await cargarEstacionamientos(paginaEstacionamientos);
+    } catch (error) {
+      console.error("Error al crear estacionamiento:", error);
       throw error;
     }
   };
 
-  // 🟢 CORREGIDO: Empaquetamos los datos en un objeto DTO limpio para que viaje en el body del POST como pide el Swagger
-  const actualizarEstadoBien = async (id, estado, tipo) => {
+  const registrarCarrito = async (codigo) => {
     try {
-      const payload = {
-        id: id,
-        estado: estado,
-        tipo: tipo || 'ESTACIONAMIENTO'
-      };
-
-      // Enviamos el objeto completo a la función de la API
-      await updateAdminAssetStatus(payload);
-      await cargarBienes();
+      await createAdminAsset({ tipo: "CARRITO", codigo: codigo.trim() });
+      await cargarCarritos(paginaCarritos);
     } catch (error) {
-      console.error("Error al cambiar estado de activo:", error);
+      console.error("Error al crear carrito:", error);
+      throw error;
+    }
+  };
+
+  const actualizarEstadoCarrito = async (id, estado) => {
+    try {
+      await updateAdminAssetStatus(id, { tipo: "CARRITO", estado });
+      await cargarCarritos(paginaCarritos);
+    } catch (error) {
+      console.error("Error al actualizar carrito:", error);
+      throw error;
+    }
+  };
+
+  const configurarEstacionamiento = async (id, tipoVehiculo, capacidadMaxima) => {
+    try {
+      await updateAdminAssetStatus(id, {
+        tipo: "ESTACIONAMIENTO",
+        tipoVehiculo: tipoVehiculo || null,
+        capacidadMaxima: capacidadMaxima ? Number(capacidadMaxima) : null
+      });
+      await cargarEstacionamientos(paginaEstacionamientos);
+    } catch (error) {
+      console.error("Error al configurar estacionamiento:", error);
       throw error;
     }
   };
 
   useEffect(() => {
-    cargarBienes();
-  }, []);
+    cargarEstacionamientos(0);
+    cargarCarritos(0);
+  }, [cargarEstacionamientos, cargarCarritos]);
 
-  return { bienes, loading, registrarBien, actualizarEstadoBien, refrescar: cargarBienes };
+  return {
+    estacionamientos,
+    carritos,
+    loadingEstacionamientos,
+    loadingCarritos,
+    paginaEstacionamientos,
+    paginaCarritos,
+    totalPaginasEstacionamientos,
+    totalPaginasCarritos,
+    totalEstacionamientos,
+    totalCarritos,
+    cargarEstacionamientos,
+    cargarCarritos,
+    registrarEstacionamiento,
+    registrarCarrito,
+    actualizarEstadoCarrito,
+    configurarEstacionamiento
+  };
 }

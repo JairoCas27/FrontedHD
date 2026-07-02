@@ -247,18 +247,10 @@ export async function createAdminAsset(data) {
   });
 }
 
-// Cambia la función para recibir el 'tipo' (o el objeto completo 'bien') además del nuevo estado
-export async function updateAdminAssetStatus(id, nuevoEstado, tipoActivo = "ESTACIONAMIENTO") {
+export async function updateAdminAssetStatus(id, payload) {
   return safeFetch(`/api/admin/assets/${id}/status`, {
     method: 'PUT',
-    body: JSON.stringify({
-      estado: nuevoEstado,
-      tipo: tipoActivo.toUpperCase(), 
-      type: tipoActivo.toUpperCase()  
-    }),
-    headers: {
-      'Content-Type': 'application/json'
-    }
+    body: JSON.stringify(payload),
   });
 }
 
