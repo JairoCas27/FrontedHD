@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { FiEdit2, FiTrash2, FiX, FiCheckCircle, FiUserX, FiEye } from "react-icons/fi"
+import { FiEdit2, FiTrash2, FiX, FiCheckCircle, FiUserX, FiRefreshCw, FiAlertTriangle, FiInfo } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import { useAdminUsers } from '../../hooks/Admin/useAdminUsers'
 
@@ -10,10 +10,14 @@ export default function Usuarios() {
 
   const [busqueda, setBusqueda] = useState('')
   const [filtroRol, setFiltroRol] = useState('todos')
-  const [verInactivos, setVerInactivos] = useState(false) // 🟢 NUEVO: Estado para alternar entre Activos e Inactivos
+  const [verInactivos, setVerInactivos] = useState(false) 
   const [showModal, setShowModal] = useState(false)
   const [errorServidor, setErrorServidor] = useState('')
   
+  // 🟢 ESTADOS NUEVOS: Notificaciones Toast y Modal de Confirmación Custom
+  const [toast, setToast] = useState({ visible: false, mensaje: '', tipo: 'success' })
+  const [confirmModal, setConfirmModal] = useState({ visible: false, usuarioId: null, proximoEstado: null, nombreUsuario: '', esReactivacion: false })
+
   const [editandoId, setEditandoId] = useState(null)
   const [formUsuario, setFormUsuario] = useState({
     nombres: '',
@@ -24,9 +28,7 @@ export default function Usuarios() {
     rol: 'PROPIETARIO' 
   })
 
-  // 🟢 CORREGIDO: Filtrado inteligente según la pestaña de estado seleccionada
   const usuariosFiltrados = (usuarios || []).filter(u => {
-    // Si la fila coincide con el estado (activo/inactivo) que queremos ver
     const coincideEstado = verInactivos ? u.activo === false : (u.activo !== false)
     if (!coincideEstado) return false
 
@@ -43,6 +45,14 @@ export default function Usuarios() {
     }
     return true
   })
+
+  // 🟢 FUNCIÓN AUXILIAR: Disparar notificaciones Toast temporales
+  const mostrarToast = (mensaje, tipo = 'success') => {
+    setToast({ visible: true, mensaje, tipo })
+    setTimeout(() => {
+      setToast({ visible: false, mensaje: '', tipo: 'success' })
+    }, 3000)
+  }
 
   const handleOpenModal = (usuario = null) => {
     setErrorServidor('')
@@ -74,6 +84,7 @@ export default function Usuarios() {
           telefono: formUsuario.telefono.trim()
         }
         await modificarUsuario(editandoId, putPayload)
+        mostrarToast("¡Perfil residencial actualizado con éxito!")
       } else {
         const postPayload = {
           nombres: formUsuario.nombres.trim(),
@@ -84,10 +95,23 @@ export default function Usuarios() {
           rol: formUsuario.rol
         }
         await registrarUsuario(postPayload)
+        mostrarToast("¡Nuevo residente registrado correctamente!")
       }
       setShowModal(false)
     } catch (error) {
       setErrorServidor(error.message || 'Hubo un problema al procesar la solicitud en el servidor.')
+    }
+  }
+
+  // 🟢 PROCESAR CAMBIO DE ESTADO DESDE EL MODAL CUSTOM
+  const ejecutarCambioEstado = async () => {
+    try {
+      const { usuarioId, proximoEstado, esReactivacion } = confirmModal
+      await cambiarEstadoUsuario(usuarioId, proximoEstado)
+      setConfirmModal({ visible: false, usuarioId: null, proximoEstado: null, nombreUsuario: '', esReactivacion: false })
+      mostrarToast(esReactivacion ? "Cuenta reactivada y restaurada con éxito" : "Cuenta suspendida del sistema correctamente", "info")
+    } catch (error) {
+      mostrarToast("No se pudo procesar el cambio de estado técnico", "error")
     }
   }
 
@@ -128,7 +152,20 @@ export default function Usuarios() {
   })
 
   return (
-    <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
+    <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left", position: "relative" }}>
+
+      {/* 🟢 TOAST NOTIFICATION COMPONENT */}
+      {toast.visible && (
+        <div style={{
+          position: "fixed", top: "2rem", right: "2rem", zIndex: 200,
+          backgroundColor: toast.tipo === 'success' ? "#10b981" : toast.tipo === 'info' ? "#3b82f6" : "#ef4444",
+          color: "#ffffff", padding: "1rem 1.5rem", borderRadius: "0.75rem", fontWeight: "700", fontSize: "0.9rem",
+          display: "flex", alignItems: "center", gap: "0.5rem", boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)",
+          animation: "slideIn 0.3s ease"
+        }}>
+          <FiInfo size={18} /> {toast.mensaje}
+        </div>
+      )}
 
       <EncabezadoTabla
         titulo="Control de Usuarios"
@@ -138,7 +175,6 @@ export default function Usuarios() {
         onBotonClick={() => handleOpenModal()}
       />
 
-      {/* 🟢 NUEVO: Selector de pestañas para alternar entre Activos / Suspendidos */}
       <div style={{ display: "flex", backgroundColor: "#e2e8f0", padding: "0.25rem", borderRadius: "0.5rem", width: "fit-content", marginBottom: "1rem" }}>
         <button style={estiloPestana(!verInactivos)} onClick={() => setVerInactivos(false)}>
           <FiCheckCircle size={14} /> Cuentas Activas
@@ -198,14 +234,13 @@ export default function Usuarios() {
                   </td>
                   <td style={{ padding: "1rem", fontFamily: "monospace" }}>{u.telefono || '---'}</td>
                   <td style={{ padding: "1rem" }}>{u.correo}</td>
-                  {/* 🟢 NUEVO: Columna con Badge de Estado de Cuenta */}
                   <td style={{ padding: "1rem" }}>
                     <span style={{
-                      fontSize: "11px", fontWeight: "700", padding: "0.2rem 0.5rem", borderRadius: "0.25rem",
-                      backgroundColor: u.activo !== false ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
-                      color: u.activo !== false ? "#10b981" : "#ef4444"
+                      fontSize: "11px", fontWeight: "700", padding: "0.3rem 0.6rem", borderRadius: "0.375rem",
+                      backgroundColor: u.activo !== false ? "#dcfce7" : "#fee2e2",
+                      color: u.activo !== false ? "#15803d" : "#b91c1c"
                     }}>
-                      {u.activo !== false ? 'Activo' : 'Suspendido'}
+                      {u.activo !== false ? '● Activo' : '● Suspendido'}
                     </span>
                   </td>
                   <td style={{ padding: "1rem" }}>
@@ -218,25 +253,49 @@ export default function Usuarios() {
                        u.rol === 'AGENTE_SEGURIDAD' ? 'SEGURIDAD' : 'PROPIETARIO'}
                     </span>
                   </td>
-                  <td style={{ padding: "1rem 1.5rem", textAlign: "right" }}>
+                  <td style={{ padding: "1rem 1.5rem", display: "flex", justifyContent: "flex-end", gap: "0.5rem", alignItems: "center" }}>
                     <button
                       onClick={() => handleOpenModal(u)}
                       disabled={u.activo === false}
-                      style={{ background: "none", border: "none", color: u.activo === false ? "#cbd5e1" : colorAdmin, marginRight: "0.75rem", cursor: u.activo === false ? "not-allowed" : "pointer" }}
+                      style={{ background: "none", border: "none", color: u.activo === false ? "#cbd5e1" : colorAdmin, cursor: u.activo === false ? "not-allowed" : "pointer", display: "flex", alignItems: "center" }}
                       title="Editar cuenta"
                     >
                       <FiEdit2 size={16} />
                     </button>
-                    {/* 🟢 CORREGIDO: Si está inactivo, el botón se vuelve verde para permitir Reactivarlo */}
+                    
+                    {/* 🟢 MODIFICADO: Ahora abre el Modal custom de confirmación */}
                     <button
-                      onClick={() => { 
-                        const msg = u.activo === false ? "¿Deseas reactivar esta cuenta?" : "¿Seguro que deseas suspender este usuario?"
-                        if (window.confirm(msg)) cambiarEstadoUsuario(u.id, u.activo === false ? true : false) 
+                      onClick={() => setConfirmModal({
+                        visible: true,
+                        usuarioId: u.id,
+                        proximoEstado: u.activo === false,
+                        nombreUsuario: `${u.nombres} ${u.apellidos}`,
+                        esReactivacion: u.activo === false
+                      })}
+                      style={{ 
+                        padding: "0.35rem 0.65rem", 
+                        border: "1px solid",
+                        borderColor: u.activo === false ? "#10b981" : "#ef4444",
+                        backgroundColor: u.activo === false ? "rgba(16, 185, 129, 0.05)" : "rgba(239, 68, 68, 0.05)",
+                        color: u.activo === false ? "#10b981" : "#ef4444", 
+                        borderRadius: "0.375rem",
+                        fontSize: "0.75rem",
+                        fontWeight: "600",
+                        cursor: "pointer", 
+                        display: "flex", 
+                        alignItems: "center", 
+                        gap: "0.25rem" 
                       }}
-                      style={{ background: "none", border: "none", color: u.activo === false ? "#10b981" : "#ef4444", cursor: "pointer" }}
-                      title={u.activo === false ? "Reactivar cuenta" : "Suspender cuenta"}
                     >
-                      {u.activo === false ? <FiCheckCircle size={16} /> : <FiTrash2 size={16} />}
+                      {u.activo === false ? (
+                        <>
+                          <FiRefreshCw size={12} /> Volver a Activar
+                        </>
+                      ) : (
+                        <>
+                          <FiTrash2 size={12} /> Suspender
+                        </>
+                      )}
                     </button>
                   </td>
                 </tr>
@@ -249,6 +308,51 @@ export default function Usuarios() {
               No hay cuentas residenciales en esta lista de selección.
             </div>
           )}
+        </div>
+      )}
+
+      {/* 🟢 CUSTOM DIALOG MODAL: Reemplazo elegante de window.confirm */}
+      {confirmModal.visible && (
+        <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 110, backdropFilter: "blur(4px)" }}>
+          <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "400px", border: "1px solid #e2e8f0", overflow: "hidden", padding: "1.5rem", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)" }}>
+            <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start" }}>
+              <div style={{
+                backgroundColor: confirmModal.esReactivacion ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
+                color: confirmModal.esReactivacion ? "#10b981" : "#ef4444",
+                padding: "0.5rem", borderRadius: "0.5rem", display: "flex"
+              }}>
+                <FiAlertTriangle size={22} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <h4 style={{ margin: "0 0 0.5rem 0", fontWeight: "800", color: "#1e293b", fontSize: "1rem" }}>
+                  {confirmModal.esReactivacion ? "Confirmar Reactivación" : "Confirmar Suspensión"}
+                </h4>
+                <p style={{ margin: 0, fontSize: "0.85rem", color: "#64748b", lineHeight: "1.4" }}>
+                  {confirmModal.esReactivacion 
+                    ? `¿Estás seguro de que deseas volver a activar la cuenta de ${confirmModal.nombreUsuario}? Volverá a tener privilegios de acceso.`
+                    : `¿Estás seguro de que deseas desactivar la cuenta de ${confirmModal.nombreUsuario}? Se le denegará el ingreso temporalmente.`}
+                </p>
+              </div>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "1.5rem" }}>
+              <button 
+                onClick={() => setConfirmModal({ visible: false, usuarioId: null, proximoEstado: null, nombreUsuario: '', esReactivacion: false })}
+                style={{ padding: "0.45rem 1rem", border: "1px solid #cbd5e1", background: "#fff", borderRadius: "0.5rem", cursor: "pointer", color: "#475569", fontWeight: "700", fontSize: "0.8rem" }}
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={ejecutarCambioEstado}
+                style={{ 
+                  padding: "0.45rem 1.25rem", 
+                  background: confirmModal.esReactivacion ? "#10b981" : "#ef4444", 
+                  color: "#fff", border: "none", borderRadius: "0.5rem", fontWeight: "700", fontSize: "0.8rem", cursor: "pointer" 
+                }}
+              >
+                {confirmModal.esReactivacion ? "Sí, Activar" : "Sí, Suspender"}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
