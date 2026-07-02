@@ -10,7 +10,7 @@ import {
   createAdministrator,
   assignAdministratorCondo,
 } from '../../services/api';
-import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
+import { Modal, Form, Button, Table, Badge, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 
 // Componente Toggle Switch (igual que en Condominios)
