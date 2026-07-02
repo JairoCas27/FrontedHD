@@ -1,4 +1,3 @@
-// pages/superadmin/DashboardSuperAdmin.jsx
 import { useEffect, useState } from 'react';
 import {
   FiHome,
@@ -9,6 +8,7 @@ import {
   FiCalendar,
   FiClock,
   FiRefreshCw,
+  FiClipboard,
 } from 'react-icons/fi';
 import {
   getSuperAdminDashboardMetrics,
@@ -23,13 +23,14 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
+  LabelList,
 } from 'recharts';
 import { Card, Badge, Row, Col, Spinner, Button } from 'react-bootstrap';
+
 
 const COLORS = {
   primary: '#4f46e5',
@@ -42,7 +43,9 @@ const COLORS = {
   gray: '#6b7280',
 };
 
+
 const CHART_COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+
 
 export default function DashboardSuperAdmin() {
   const [metrics, setMetrics] = useState(null);
@@ -52,14 +55,14 @@ export default function DashboardSuperAdmin() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
 
-  // 👇 NUEVO: estado y efecto para detectar pantalla móvil
+
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-  // 👆 fin de las adiciones
+
 
   const extractItems = (data) => {
     if (Array.isArray(data)) return data;
@@ -68,6 +71,7 @@ export default function DashboardSuperAdmin() {
     if (data?.data && Array.isArray(data.data)) return data.data;
     return [];
   };
+
 
   const loadData = async (showLoading = true) => {
     if (showLoading) setLoading(true);
@@ -78,6 +82,7 @@ export default function DashboardSuperAdmin() {
         getSuperAdminRecentAdmins(),
         getCondominiums(),
       ]);
+
 
       setMetrics(m);
       setRecentAdmins(extractItems(admins));
@@ -91,14 +96,17 @@ export default function DashboardSuperAdmin() {
     }
   };
 
+
   useEffect(() => {
     loadData(true);
   }, []);
+
 
   const handleRefresh = async () => {
     setRefreshing(true);
     await loadData(false);
   };
+
 
   if (loading) {
     return (
@@ -108,6 +116,7 @@ export default function DashboardSuperAdmin() {
       </div>
     );
   }
+
 
   if (error) {
     return (
@@ -120,14 +129,17 @@ export default function DashboardSuperAdmin() {
     );
   }
 
+
   const totalCondos = allCondos.length;
   const activeCondos = allCondos.filter(c => c.activo === true).length;
   const inactiveCondos = totalCondos - activeCondos;
+
 
   const condoStatusData = [
     { name: 'Activos', value: activeCondos },
     { name: 'Inactivos', value: inactiveCondos },
   ].filter(item => item.value > 0);
+
 
   const roleDistribution = [
     { name: 'Administradores', value: metrics?.totalAdministradores || 0 },
@@ -143,9 +155,11 @@ export default function DashboardSuperAdmin() {
     },
   ].filter(item => item.value > 0);
 
+
   const lastCondos = [...allCondos]
     .sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
     .slice(0, 5);
+
 
   const stats = [
     {
@@ -178,6 +192,7 @@ export default function DashboardSuperAdmin() {
     },
   ];
 
+
   const formatDate = (dateStr) => {
     if (!dateStr) return '—';
     const date = new Date(dateStr);
@@ -190,7 +205,9 @@ export default function DashboardSuperAdmin() {
     });
   };
 
+
   const chartHeight = isMobile ? 220 : 300;
+
 
   return (
     <div style={{ padding: '1.5rem', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
@@ -226,6 +243,7 @@ export default function DashboardSuperAdmin() {
         </div>
       </div>
 
+
       <Row className="g-4 mb-4">
         {stats.map((stat, idx) => (
           <Col xs={12} sm={6} lg={3} key={idx}>
@@ -258,6 +276,7 @@ export default function DashboardSuperAdmin() {
         ))}
       </Row>
 
+
       <Row className="g-4 mb-4">
         <Col xs={12} lg={8}>
           <Card className="border-0 shadow-sm h-100">
@@ -269,22 +288,23 @@ export default function DashboardSuperAdmin() {
                 <p className="text-muted text-center">Sin datos para mostrar</p>
               ) : (
                 <ResponsiveContainer width="100%" height={chartHeight}>
-                  <BarChart data={roleDistribution}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="name" stroke="#94a3b8" />
-                    <YAxis stroke="#94a3b8" />
+                  <BarChart data={roleDistribution} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                    <XAxis dataKey="name" stroke="#94a3b8" tickLine={false} axisLine={false} />
+                    <YAxis stroke="#94a3b8" tickLine={false} axisLine={false} allowDecimals={false} />
                     <Tooltip
+                      cursor={{ fill: 'rgba(79, 70, 229, 0.06)' }}
                       formatter={(value) => [`${value} usuarios`, 'Cantidad']}
                       labelStyle={{ fontWeight: 600 }}
                     />
-                    <Legend />
-                    <Bar dataKey="value" radius={[4, 4, 0, 0]} barSize={isMobile ? 20 : 40}>
+                    <Bar dataKey="value" name="Cantidad" radius={[8, 8, 0, 0]} barSize={isMobile ? 32 : 56}>
                       {roleDistribution.map((entry, index) => (
                         <Cell
                           key={`cell-${index}`}
                           fill={CHART_COLORS[index % CHART_COLORS.length]}
                         />
                       ))}
+                      <LabelList dataKey="value" position="top" style={{ fontWeight: 700, fill: '#334155' }} />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
@@ -292,6 +312,7 @@ export default function DashboardSuperAdmin() {
             </Card.Body>
           </Card>
         </Col>
+
 
         <Col xs={12} lg={4}>
           <Card className="border-0 shadow-sm h-100">
@@ -313,10 +334,6 @@ export default function DashboardSuperAdmin() {
                         outerRadius={isMobile ? 70 : 90}
                         paddingAngle={2}
                         dataKey="value"
-                        label={({ name, percent }) =>
-                          `${name}: ${(percent * 100).toFixed(0)}%`
-                        }
-                        labelLine={false}
                       >
                         {condoStatusData.map((entry, index) => (
                           <Cell
@@ -345,11 +362,15 @@ export default function DashboardSuperAdmin() {
         </Col>
       </Row>
 
+
       <Row className="g-4">
         <Col xs={12} lg={6}>
           <Card className="border-0 shadow-sm">
             <Card.Header className="bg-white fw-bold d-flex justify-content-between align-items-center">
-              <span>📋 Últimos administradores</span>
+              <span className="d-flex align-items-center gap-2">
+                <FiClipboard size={16} />
+                Últimos administradores
+              </span>
               <Badge bg="primary" pill>
                 {recentAdmins.length}
               </Badge>
@@ -362,21 +383,19 @@ export default function DashboardSuperAdmin() {
                   {recentAdmins.map((admin) => (
                     <li
                       key={admin.id}
-                      className="d-flex justify-content-between align-items-center border-bottom py-3"
+                      className="d-flex flex-column align-items-start border-bottom py-3"
                     >
-                      <div>
-                        <div className="fw-bold">
-                          {admin.nombres} {admin.apellidos}
-                        </div>
-                        <div className="small text-muted">
-                          {admin.correo} · {admin.nombreCondominio || 'Sin condominio'}
-                        </div>
+                      <div className="fw-bold">
+                        {admin.nombres} {admin.apellidos}
                       </div>
-                      <div className="text-end">
+                      <div className="small text-muted">
+                        {admin.correo} · {admin.nombreCondominio || 'Sin condominio'}
+                      </div>
+                      <div className="d-flex align-items-center gap-2 mt-2">
                         <Badge bg={admin.activo ? 'success' : 'secondary'}>
                           {admin.activo ? 'Activo' : 'Inactivo'}
                         </Badge>
-                        <div className="small text-muted mt-1">
+                        <div className="small text-muted d-flex align-items-center">
                           <FiClock size={12} className="me-1" />
                           {formatDate(admin.fechaCreacion)}
                         </div>
@@ -389,10 +408,14 @@ export default function DashboardSuperAdmin() {
           </Card>
         </Col>
 
+
         <Col xs={12} lg={6}>
           <Card className="border-0 shadow-sm">
             <Card.Header className="bg-white fw-bold d-flex justify-content-between align-items-center">
-              <span>🏢 Últimos condominios</span>
+              <span className="d-flex align-items-center gap-2">
+                <FiHome size={16} />
+                Últimos condominios
+              </span>
               <Badge bg="primary" pill>
                 {lastCondos.length}
               </Badge>
@@ -405,19 +428,17 @@ export default function DashboardSuperAdmin() {
                   {lastCondos.map((c) => (
                     <li
                       key={c.id}
-                      className="d-flex justify-content-between align-items-center border-bottom py-3"
+                      className="d-flex flex-column align-items-start border-bottom py-3"
                     >
-                      <div>
-                        <div className="fw-bold">{c.nombre}</div>
-                        <div className="small text-muted">
-                          {c.direccion} · {c.nombreCiudad || 'Sin ciudad'}
-                        </div>
+                      <div className="fw-bold">{c.nombre}</div>
+                      <div className="small text-muted">
+                        {c.direccion} · {c.nombreCiudad || 'Sin ciudad'}
                       </div>
-                      <div className="text-end">
+                      <div className="d-flex align-items-center gap-2 mt-2">
                         <Badge bg={c.activo ? 'success' : 'secondary'}>
                           {c.activo ? 'Activo' : 'Inactivo'}
                         </Badge>
-                        <div className="small text-muted mt-1">
+                        <div className="small text-muted d-flex align-items-center">
                           <FiClock size={12} className="me-1" />
                           {formatDate(c.fechaCreacion)}
                         </div>
@@ -430,6 +451,7 @@ export default function DashboardSuperAdmin() {
           </Card>
         </Col>
       </Row>
+
 
       <div className="mt-4 text-center text-muted small">
         <span>
