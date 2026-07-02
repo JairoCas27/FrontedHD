@@ -298,8 +298,9 @@ export async function createAdminStructureNode(data) {
   });
 }
 
-export async function deleteAdminStructureNode(id) {
-  return safeFetch(`/api/admin/structure/nodes/${id}`, { method: 'DELETE' });
+export async function deleteAdminStructureNode(id, type = 'TORRE') {
+  const query = type === 'PISO' ? `?type=PISO` : '';
+  return safeFetch(`/api/admin/structure/nodes/${id}${query}`, { method: 'DELETE' });
 }
 
 export async function getAdminLogs(params = "") {

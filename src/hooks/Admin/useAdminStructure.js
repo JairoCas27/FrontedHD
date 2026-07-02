@@ -8,7 +8,6 @@ export function useAdminStructure() {
   const cargarEstructura = async () => {
     try {
       setLoading(true);
-      
       const data = await getAdminStructure();
       setEstructura(data || []);
     } catch (error) {
@@ -28,9 +27,9 @@ export function useAdminStructure() {
     }
   };
 
-  const eliminarNodo = async (id) => {
+  const eliminarNodo = async (id, type = 'TORRE') => {
     try {
-      await deleteAdminStructureNode(id);
+      await deleteAdminStructureNode(id, type);
       await cargarEstructura();
     } catch (error) {
       console.error("Error al eliminar nodo:", error);
@@ -42,11 +41,11 @@ export function useAdminStructure() {
     cargarEstructura();
   }, []);
 
-  return { 
-    estructura, 
-    loading, 
-    insertarNodo, 
-    eliminarNodo, 
-    refrescar: cargarEstructura 
+  return {
+    estructura,
+    loading,
+    insertarNodo,
+    eliminarNodo,
+    refrescar: cargarEstructura
   };
 }
