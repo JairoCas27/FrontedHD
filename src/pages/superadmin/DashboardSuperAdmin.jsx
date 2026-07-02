@@ -30,6 +30,7 @@ import {
   Cell,
 } from 'recharts';
 import { Card, Badge, Row, Col, Spinner, Button } from 'react-bootstrap';
+import { useMediaQuery } from '../../hooks/useMediaQuery';
 
 const COLORS = {
   primary: '#4f46e5',
