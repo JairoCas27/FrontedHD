@@ -20,13 +20,14 @@ export default function Estructura() {
     if (!nuevoNodo.nombre.trim()) return
 
     try {
-      // 🟢 CORREGIDO: Mapeamos el ID al formato numérico e inyectamos los campos correctos para el DTO de Spring Boot
       const nodoIdNum = nuevoNodo.padreId ? parseInt(nuevoNodo.padreId) : null;
 
+      // 🟢 CORREGIDO: Mapeamos 'torreId' con el ID numérico para asegurar que Spring Boot enlace correctamente el piso con su torre raíz
       await insertarNodo({
         nombre: nuevoNodo.nombre.trim(),
-        idPadre: nodoIdNum,    // Clave estándar para deserialización en Java
-        idTorre: nodoIdNum,    // Fallback de seguridad en caso de mapeos alternativos de Diego
+        torreId: nodoIdNum,    // Propiedad CamelCase esperada por el backend tras el merge
+        idTorre: nodoIdNum,    // Fallback de seguridad
+        idPadre: nodoIdNum,    // Fallback de seguridad alternativo
         tipo: nodoIdNum ? "PISO" : "TORRE"
       })
       
