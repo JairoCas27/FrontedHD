@@ -100,7 +100,7 @@ function Contacto() {
               <textarea
                 name="message"
                 rows="4"
-                placeholder="Describe tu consulta o requerimiento..."
+                placeholder="Describe tu consulta o requerimiento."
                 className="form-control"
                 value={formData.message}
                 onChange={handleChange}
