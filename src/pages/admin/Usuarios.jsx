@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { FiEdit2, FiTrash2, FiX } from "react-icons/fi"
+import { FiEdit2, FiTrash2, FiX, FiCheckCircle, FiUserX, FiEye } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import { useAdminUsers } from '../../hooks/Admin/useAdminUsers'
 
@@ -10,6 +10,7 @@ export default function Usuarios() {
 
   const [busqueda, setBusqueda] = useState('')
   const [filtroRol, setFiltroRol] = useState('todos')
+  const [verInactivos, setVerInactivos] = useState(false) // 🟢 NUEVO: Estado para alternar entre Activos e Inactivos
   const [showModal, setShowModal] = useState(false)
   const [errorServidor, setErrorServidor] = useState('')
   
@@ -23,8 +24,14 @@ export default function Usuarios() {
     rol: 'PROPIETARIO' 
   })
 
+  // 🟢 CORREGIDO: Filtrado inteligente según la pestaña de estado seleccionada
   const usuariosFiltrados = (usuarios || []).filter(u => {
+    // Si la fila coincide con el estado (activo/inactivo) que queremos ver
+    const coincideEstado = verInactivos ? u.activo === false : (u.activo !== false)
+    if (!coincideEstado) return false
+
     if (filtroRol !== 'todos' && u.rol !== filtroRol) return false
+    
     const termino = busqueda.toLowerCase().trim()
     if (termino) {
       return (
@@ -104,6 +111,22 @@ export default function Usuarios() {
     textTransform: "uppercase"
   }
 
+  const estiloPestana = (activo) => ({
+    padding: "0.5rem 1rem",
+    border: "none",
+    backgroundColor: activo ? "#ffffff" : "transparent",
+    color: activo ? colorAdmin : "#64748b",
+    fontWeight: "700",
+    fontSize: "0.85rem",
+    borderRadius: "0.375rem",
+    cursor: "pointer",
+    boxShadow: activo ? "0 1px 3px rgba(0,0,0,0.05)" : "none",
+    display: "flex",
+    alignItems: "center",
+    gap: "0.4rem",
+    transition: "all 0.2s"
+  })
+
   return (
     <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
 
@@ -114,6 +137,16 @@ export default function Usuarios() {
         accentColor={colorAdmin}
         onBotonClick={() => handleOpenModal()}
       />
+
+      {/* 🟢 NUEVO: Selector de pestañas para alternar entre Activos / Suspendidos */}
+      <div style={{ display: "flex", backgroundColor: "#e2e8f0", padding: "0.25rem", borderRadius: "0.5rem", width: "fit-content", marginBottom: "1rem" }}>
+        <button style={estiloPestana(!verInactivos)} onClick={() => setVerInactivos(false)}>
+          <FiCheckCircle size={14} /> Cuentas Activas
+        </button>
+        <button style={estiloPestana(verInactivos)} onClick={() => setVerInactivos(true)}>
+          <FiUserX size={14} /> Cuentas Suspendidas
+        </button>
+      </div>
 
       <div style={{ backgroundColor: "#ffffff", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", marginBottom: "2rem", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
         <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
@@ -152,6 +185,7 @@ export default function Usuarios() {
                 <th style={{ padding: "1rem 1.5rem" }}>Usuario / Residente</th>
                 <th style={{ padding: "1rem" }}>Teléfono</th>
                 <th style={{ padding: "1rem" }}>Correo Electrónico</th>
+                <th style={{ padding: "1rem" }}>Estado</th>
                 <th style={{ padding: "1rem" }}>Rol del Sistema</th>
                 <th style={{ padding: "1rem 1.5rem", textAlign: "right" }}>Acciones</th>
               </tr>
@@ -164,6 +198,16 @@ export default function Usuarios() {
                   </td>
                   <td style={{ padding: "1rem", fontFamily: "monospace" }}>{u.telefono || '---'}</td>
                   <td style={{ padding: "1rem" }}>{u.correo}</td>
+                  {/* 🟢 NUEVO: Columna con Badge de Estado de Cuenta */}
+                  <td style={{ padding: "1rem" }}>
+                    <span style={{
+                      fontSize: "11px", fontWeight: "700", padding: "0.2rem 0.5rem", borderRadius: "0.25rem",
+                      backgroundColor: u.activo !== false ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
+                      color: u.activo !== false ? "#10b981" : "#ef4444"
+                    }}>
+                      {u.activo !== false ? 'Activo' : 'Suspendido'}
+                    </span>
+                  </td>
                   <td style={{ padding: "1rem" }}>
                     <span style={{ 
                       fontSize: "0.75rem", fontWeight: "700", padding: "0.25rem 0.5rem", borderRadius: "0.375rem",
@@ -177,21 +221,34 @@ export default function Usuarios() {
                   <td style={{ padding: "1rem 1.5rem", textAlign: "right" }}>
                     <button
                       onClick={() => handleOpenModal(u)}
-                      style={{ background: "none", border: "none", color: colorAdmin, marginRight: "0.75rem", cursor: "pointer" }}
+                      disabled={u.activo === false}
+                      style={{ background: "none", border: "none", color: u.activo === false ? "#cbd5e1" : colorAdmin, marginRight: "0.75rem", cursor: u.activo === false ? "not-allowed" : "pointer" }}
+                      title="Editar cuenta"
                     >
                       <FiEdit2 size={16} />
                     </button>
+                    {/* 🟢 CORREGIDO: Si está inactivo, el botón se vuelve verde para permitir Reactivarlo */}
                     <button
-                      onClick={() => { if (window.confirm("¿Seguro que deseas cambiar el estado de este usuario?")) cambiarEstadoUsuario(u.id, !u.activo) }}
-                      style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer" }}
+                      onClick={() => { 
+                        const msg = u.activo === false ? "¿Deseas reactivar esta cuenta?" : "¿Seguro que deseas suspender este usuario?"
+                        if (window.confirm(msg)) cambiarEstadoUsuario(u.id, u.activo === false ? true : false) 
+                      }}
+                      style={{ background: "none", border: "none", color: u.activo === false ? "#10b981" : "#ef4444", cursor: "pointer" }}
+                      title={u.activo === false ? "Reactivar cuenta" : "Suspender cuenta"}
                     >
-                      <FiTrash2 size={16} />
+                      {u.activo === false ? <FiCheckCircle size={16} /> : <FiTrash2 size={16} />}
                     </button>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+          
+          {usuariosFiltrados.length === 0 && (
+            <div style={{ padding: "3rem", textAlign: "center", color: "#94a3b8", fontSize: "0.9rem" }}>
+              No hay cuentas residenciales en esta lista de selección.
+            </div>
+          )}
         </div>
       )}
 

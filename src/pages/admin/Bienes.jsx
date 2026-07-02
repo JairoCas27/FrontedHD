@@ -47,8 +47,9 @@ export default function Bienes() {
   }
 
   const toggleStatus = async (bien) => {
+    // 🟢 CORREGIDO: Mapeo y comparación basado en Enums oficiales del backend (AVAILABLE / MAINTENANCE)
     const estadoActual = (bien.estado || '').toUpperCase();
-    const nuevoEstado = estadoActual === 'DISPONIBLE' ? 'MANTENIMIENTO' : 'DISPONIBLE'
+    const nuevoEstado = estadoActual === 'AVAILABLE' ? 'MAINTENANCE' : 'AVAILABLE'
     
     try {
       await actualizarEstadoBien(bien.id, nuevoEstado, bien.tipo || 'ESTACIONAMIENTO')
@@ -141,7 +142,8 @@ export default function Bienes() {
                     <td style={{ padding: "1rem", color: "#64748b", fontWeight: "600" }}>{bien.tipo}</td>
                     <td style={{ padding: "1rem", color: "#334155", fontWeight: "700", fontFamily: "monospace" }}>N° {bien.numero ?? 0}</td>
                     <td style={{ padding: "1rem" }}>
-                      <BadgeEstado estado={(bien.estado || '').toUpperCase() === 'DISPONIBLE' ? 'Disponible' : 'Mantenimiento'} />
+                      {/* 🟢 CORREGIDO: El evaluador lee la respuesta real para renderizar el badge verde/amarillo */}
+                      <BadgeEstado estado={(bien.estado || '').toUpperCase() === 'AVAILABLE' ? 'Disponible' : 'Mantenimiento'} />
                     </td>
                     <td style={{ padding: "1rem 1.5rem", textAlign: "center" }}>
                       <button 
