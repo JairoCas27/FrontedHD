@@ -99,6 +99,9 @@ export default function Condominios() {
       } else if (sortField === 'estado') {
         valA = a.activo ? 1 : 0;
         valB = b.activo ? 1 : 0;
+      } else if (sortField === 'administrador') {
+        valA = (a.nombreAdministrador || '').toLowerCase();
+        valB = (b.nombreAdministrador || '').toLowerCase();
       } else {
         return 0;
       }
@@ -262,6 +265,8 @@ export default function Condominios() {
             <option value="ciudad-desc">Ciudad Z-A</option>
             <option value="estado-asc">Estado (Activo primero)</option>
             <option value="estado-desc">Estado (Inactivo primero)</option>
+            <option value="administrador-asc">Administrador A-Z</option>
+            <option value="administrador-desc">Administrador Z-A</option>
           </Form.Select>
         </Col>
         <Col md={3} className="text-end">
@@ -290,6 +295,9 @@ export default function Condominios() {
                 <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('ciudad')}>
                   Ciudad {getSortIcon('ciudad')}
                 </th>
+                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('administrador')}>
+                  Administrador {getSortIcon('administrador')}
+                </th>
                 <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('estado')}>
                   Estado {getSortIcon('estado')}
                 </th>
@@ -303,6 +311,7 @@ export default function Condominios() {
                   <td><strong>{c.nombre}</strong></td>
                   <td>{c.direccion}</td>
                   <td>{c.nombreCiudad || '-'}</td>
+                  <td>{c.nombreAdministrador || <span className="text-muted">Sin asignar</span>}</td>
                   <td>
                     <Badge bg={c.activo ? 'success' : 'secondary'} pill>
                       {c.activo ? 'Activo' : 'Inactivo'}
