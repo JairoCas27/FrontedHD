@@ -27,7 +27,7 @@ const estiloInput = {
 
 const estiloTh = {
   padding: "0.85rem 1rem",
-  textAlign: "left",
+  textAlign: "center",
   fontSize: "0.72rem",
   fontWeight: 700,
   color: "#94a3b8",
@@ -35,7 +35,20 @@ const estiloTh = {
   letterSpacing: "0.06em",
 };
 
-const estiloTd = { padding: "0.85rem 1rem", color: "#64748b", fontSize: "0.9rem" };
+const estiloTd = { padding: "0.85rem 1rem", color: "#64748b", fontSize: "0.9rem", textAlign: "center", verticalAlign: "middle" };
+
+function formatFecha(fechaStr) {
+  if (!fechaStr) return "—";
+  try {
+    return new Date(fechaStr).toLocaleDateString("es-PE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  } catch {
+    return fechaStr;
+  }
+}
 
 export default function PrestamosSeguridad() {
   const [prestamos, setPrestamos] = useState([]);
@@ -107,15 +120,6 @@ export default function PrestamosSeguridad() {
     }
   };
 
-  const formatFecha = (fechaStr) => {
-    if (!fechaStr) return "—";
-    try {
-      return new Date(fechaStr).toLocaleString();
-    } catch {
-      return fechaStr;
-    }
-  };
-
   return (
     <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", boxSizing: "border-box" }}>
       <div style={{ marginBottom: "2rem" }}>
@@ -140,7 +144,7 @@ export default function PrestamosSeguridad() {
                 name="codigoCarrito"
                 value={formData.codigoCarrito}
                 onChange={handleChange}
-                placeholder="Ej: CART-01"
+                placeholder="Ej: C01"
                 style={estiloInput}
               />
             </div>
@@ -233,19 +237,21 @@ export default function PrestamosSeguridad() {
               <tbody>
                 {prestamos.map((p) => (
                   <tr key={p.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <td style={{ ...estiloTd, fontWeight: 700, color: "#1e293b", display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                      <FiHash size={13} color="#94a3b8" />
-                      {p.codigoCarrito}
+                    <td style={{ ...estiloTd, fontWeight: 700, color: "#1e293b" }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
+                        <FiHash size={13} color="#94a3b8" />
+                        {p.codigoCarrito}
+                      </span>
                     </td>
                     <td style={estiloTd}>
-                      <span style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
                         <FiUser size={13} color="#94a3b8" />
                         {p.nombreSolicitante}
                       </span>
                     </td>
                     <td style={{ ...estiloTd, fontFamily: "monospace" }}>{p.dniSolicitante}</td>
                     <td style={estiloTd}>
-                      <span style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
                         <FiClock size={13} color="#94a3b8" />
                         {formatFecha(p.fechaPrestamo)}
                       </span>
@@ -267,7 +273,7 @@ export default function PrestamosSeguridad() {
                           color: "#fff", border: "none", borderRadius: "8px",
                           fontWeight: 600, fontSize: "0.82rem",
                           cursor: loadingReturn === p.id ? "not-allowed" : "pointer",
-                          display: "flex", alignItems: "center", gap: "0.4rem",
+                          display: "inline-flex", alignItems: "center", gap: "0.4rem",
                           transition: "all 0.2s ease",
                         }}
                       >

@@ -37,18 +37,11 @@ export function useSecurityAccess() {
       const result = await registerAccessEntry({
         placa: placa.trim().toUpperCase(),
         metodo,
-        ocupante: ocupante.trim() || vehiculoEncontrado?.nombrePropietario || "VISITANTE",
-        datosInquilino: datosInquilino.trim(),
+        ocupante,
+        datosInquilino: datosInquilino?.trim() || "",
       });
       setUltimoLogId(result?.id ?? null);
-      setAccesos((prev) => [{
-        id: result?.id ?? Date.now(),
-        placa: placa.toUpperCase(),
-        tipo: "ENTRADA",
-        hora: new Date().toLocaleTimeString(),
-        ocupante: ocupante || vehiculoEncontrado?.nombrePropietario || "VISITANTE",
-        esResidente: !!vehiculoEncontrado,
-      }, ...prev]);
+      setAccesos((prev) => [result, ...prev]);
       toast.success("Entrada registrada correctamente");
       return true;
     } catch (err) {
@@ -59,22 +52,15 @@ export function useSecurityAccess() {
     }
   };
 
-  const registrarSalida = async (placa) => {
+  const registrarSalida = async () => {
     if (!ultimoLogId) {
       toast.warning("No hay un log de entrada activo para registrar salida");
       return;
     }
     setLoadingAcceso(true);
     try {
-      await registerAccessExit(ultimoLogId);
-      setAccesos((prev) => [{
-        id: Date.now(),
-        placa: placa.toUpperCase(),
-        tipo: "SALIDA",
-        hora: new Date().toLocaleTimeString(),
-        ocupante: vehiculoEncontrado?.nombrePropietario || "VISITANTE",
-        esResidente: !!vehiculoEncontrado,
-      }, ...prev]);
+      const result = await registerAccessExit(ultimoLogId);
+      setAccesos((prev) => prev.map((a) => (a.id === result?.id ? result : a)));
       setUltimoLogId(null);
       toast.success("Salida registrada correctamente");
       return true;

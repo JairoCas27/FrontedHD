@@ -5,7 +5,7 @@ import { verifyVehiclePlate, getSecurityParkingSlots } from "../../services/api"
 
 const estiloTh = {
   padding: "0.85rem 1rem",
-  textAlign: "left",
+  textAlign: "center",
   fontSize: "0.72rem",
   fontWeight: 700,
   color: "#94a3b8",
@@ -13,7 +13,7 @@ const estiloTh = {
   letterSpacing: "0.06em",
 };
 
-const estiloTd = { padding: "0.85rem 1rem", color: "#64748b", fontSize: "0.9rem" };
+const estiloTd = { padding: "0.85rem 1rem", color: "#64748b", fontSize: "0.9rem", textAlign: "center", verticalAlign: "middle" };
 
 const estiloLabel = {
   display: "block",
@@ -173,8 +173,8 @@ export default function VehiculosSeguridad() {
                   <tr key={slot.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
                     <td style={{ ...estiloTd, fontWeight: 700, color: "#1e293b", fontFamily: "monospace" }}>{slot.numero}</td>
                     <td style={estiloTd}>{slot.tipoVehiculo}</td>
-                    <td style={{ ...estiloTd, textAlign: "center" }}>{slot.capacidadMaxima}</td>
-                    <td style={{ ...estiloTd, textAlign: "center" }}>{slot.cantidadActual}</td>
+                    <td style={estiloTd}>{slot.capacidadMaxima}</td>
+                    <td style={estiloTd}>{slot.cantidadActual}</td>
                     <td style={estiloTd}>
                       <span style={{
                         padding: "0.3rem 0.7rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 700,
