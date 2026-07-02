@@ -52,6 +52,15 @@ export default function DashboardSuperAdmin() {
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
 
+  // 👇 NUEVO: estado y efecto para detectar pantalla móvil
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+  // 👆 fin de las adiciones
+
   const extractItems = (data) => {
     if (Array.isArray(data)) return data;
     if (data?.items && Array.isArray(data.items)) return data.items;
