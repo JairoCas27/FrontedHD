@@ -65,7 +65,7 @@ export default function Auditoria() {
             <input 
               type="text" 
               style={estiloInput} 
-              placeholder="Buscar por placa, conductor o solicitante..." 
+              placeholder="Buscar por placa, conductor o solicitante."
               value={busqueda} 
               onChange={(e) => setBusqueda(e.target.value)} 
             />
@@ -86,7 +86,7 @@ export default function Auditoria() {
 
       {loading ? (
         <div style={{ textAlign: "center", padding: "4rem", color: "#64748b", fontWeight: "600" }}>
-          🔄 Recuperando bitácora de eventos del servidor de seguridad...
+          🔄 Recuperando bitácora de eventos del servidor de seguridad.
         </div>
       ) : (
         <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden", width: "100%", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)" }}>

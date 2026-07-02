@@ -73,7 +73,7 @@ export default function Configuracion() {
   if (loading || !config) {
     return (
       <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", color: "#64748b", fontWeight: "600", textAlign: "center" }}>
-        🔄 Sincronizando parámetros globales con el servidor core...
+        🔄 Sincronizando parámetros globales con el servidor core.
       </div>
     )
   }

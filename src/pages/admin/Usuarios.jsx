@@ -190,7 +190,7 @@ export default function Usuarios() {
             <input
               type="text"
               style={estiloInput}
-              placeholder="Buscar por nombre, correo o teléfono..."
+              placeholder="Buscar por nombre, correo o teléfono."
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
             />

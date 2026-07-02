@@ -81,7 +81,7 @@ export default function Perfil() {
   if (loading || !condoInfo) {
     return (
       <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", color: "#64748b", fontWeight: "600", textAlign: "center" }}>
-        🔄 Cargando datos de perfil operativo desde el servidor...
+        🔄 Cargando datos de perfil operativo desde el servidor.
       </div>
     )
   }

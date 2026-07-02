@@ -11,7 +11,7 @@ export default function DashboardAdmin() {
   if (loading || !metricas) {
     return (
       <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", color: "#64748b", fontWeight: "600", textAlign: "center" }}>
-        Sincronizando panel operativo con el servidor central...
+        Sincronizando panel operativo con el servidor central.
       </div>
     );
   }

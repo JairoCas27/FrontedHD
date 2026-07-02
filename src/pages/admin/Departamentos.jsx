@@ -129,7 +129,7 @@ export default function Departamentos() {
             <input 
               type="text" 
               style={estiloInput} 
-              placeholder="Buscar por propietario o N° de dpto..." 
+              placeholder="Buscar por propietario o N° de dpto."
               value={busqueda}
               onChange={(e) => { setBusqueda(e.target.value); setPaginaActual(1); }}
             />
@@ -143,7 +143,7 @@ export default function Departamentos() {
 
       {loading ? (
         <div style={{ textAlign: "center", padding: "3rem", color: "#64748b", fontWeight: "600" }}>
-          🔄 Conectando con el servidor de Spring Boot...
+          🔄 Conectando con el servidor de Spring Boot.
         </div>
       ) : (
         <>
