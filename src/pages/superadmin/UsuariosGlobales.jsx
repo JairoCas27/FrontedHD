@@ -33,7 +33,6 @@ export default function UsuariosGlobales() {
     correo: '',
     telefono: '',
     contrasena: '',
-    rol: 'ADMINISTRADOR_CONDOMINIO',
     idCondominio: '',
   });
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -42,14 +41,6 @@ export default function UsuariosGlobales() {
   const [passwordError, setPasswordError] = useState('');
   const [error, setError] = useState(null);
   const [submitting, setSubmitting] = useState(false);
-
-  const ROLES = [
-    { value: 'ADMINISTRADOR_CONDOMINIO', label: 'Administrador de Condominio' },
-    { value: 'AGENTE_SEGURIDAD', label: 'Agente de Seguridad' },
-    { value: 'PROPIETARIO', label: 'Propietario' },
-  ];
-
-  const EDITABLE_ROLES = ['ADMINISTRADOR_CONDOMINIO'];
 
   const loadData = async () => {
     setLoading(true);
@@ -139,22 +130,19 @@ export default function UsuariosGlobales() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!EDITABLE_ROLES.includes(form.rol)) {
-      toast.warning('Solo se pueden crear/editar usuarios con rol "Administrador de Condominio" desde este panel.');
-      return;
-    }
-
     setSubmitting(true);
     try {
       if (editingUser) {
-        await updateAdministrator(editingUser.id, {
+        // Actualizar administrador
+        const updatePayload = {
           nombres: form.nombres.trim(),
           apellidos: form.apellidos.trim(),
           correo: form.correo.trim(),
           telefono: form.telefono.trim(),
-        });
+        };
+        await updateAdministrator(editingUser.id, updatePayload);
 
+        // Gestionar asignación de condominio
         const newCondoId = form.idCondominio ? parseInt(form.idCondominio, 10) : null;
         const oldCondoId = editingUser.idCondominio ? parseInt(editingUser.idCondominio, 10) : null;
         if (newCondoId !== oldCondoId) {
@@ -170,13 +158,15 @@ export default function UsuariosGlobales() {
         }
         toast.success('Administrador actualizado correctamente.');
       } else {
-        const created = await createAdministrator({
+        // Crear administrador
+        const createPayload = {
           nombres: form.nombres.trim(),
           apellidos: form.apellidos.trim(),
           correo: form.correo.trim(),
           telefono: form.telefono.trim(),
           contrasena: form.contrasena.trim(),
-        });
+        };
+        const created = await createAdministrator(createPayload);
 
         if (form.idCondominio && created.id) {
           await assignAdministratorCondo(created.id, parseInt(form.idCondominio, 10));
@@ -271,12 +261,10 @@ export default function UsuariosGlobales() {
     nombre: c.nombre,
   }));
 
-  const isEditableRole = EDITABLE_ROLES.includes(form.rol);
-
   return (
     <div style={{ padding: '1.5rem' }}>
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 style={{ fontWeight: 700, color: '#1e293b' }}>Usuarios del Sistema</h1>
+        <h1 style={{ fontWeight: 700, color: '#1e293b' }}>Administradores del Sistema</h1>
         <Button variant="primary" onClick={() => {
           setEditingUser(null);
           setForm({
@@ -285,12 +273,11 @@ export default function UsuariosGlobales() {
             correo: '',
             telefono: '',
             contrasena: '',
-            rol: 'ADMINISTRADOR_CONDOMINIO',
             idCondominio: '',
           });
           setShowModal(true);
         }}>
-          <FiPlus className="me-2" /> Nuevo Usuario
+          <FiPlus className="me-2" /> Nuevo Administrador
         </Button>
       </div>
 
@@ -318,9 +305,9 @@ export default function UsuariosGlobales() {
             aria-label="Filtrar por rol"
           >
             <option value="">Todos los roles</option>
-            {ROLES.map(r => (
-              <option key={r.value} value={r.value}>{r.label}</option>
-            ))}
+            <option value="ADMINISTRADOR_CONDOMINIO">Administrador</option>
+            <option value="AGENTE_SEGURIDAD">Seguridad</option>
+            <option value="PROPIETARIO">Propietario</option>
           </Form.Select>
         </Col>
         <Col md={2}>
@@ -423,6 +410,7 @@ export default function UsuariosGlobales() {
                       </Badge>
                     </td>
                     <td>
+                      {/* Botón Editar solo para administradores */}
                       {isAdmin && (
                         <Button
                           variant="outline-primary"
@@ -436,7 +424,6 @@ export default function UsuariosGlobales() {
                               correo: u.correo,
                               telefono: u.telefono || '',
                               contrasena: '',
-                              rol: u.rol,
                               idCondominio: u.idCondominio?.toString() || '',
                             });
                             setShowModal(true);
@@ -480,10 +467,10 @@ export default function UsuariosGlobales() {
         </div>
       )}
 
-      {/* Modales (igual que antes) */}
+      {/* Modal de creación/edición (solo administradores) */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton className="bg-light">
-          <Modal.Title>{editingUser ? 'Editar' : 'Nuevo'} usuario</Modal.Title>
+          <Modal.Title>{editingUser ? 'Editar' : 'Nuevo'} Administrador</Modal.Title>
         </Modal.Header>
         <Form onSubmit={handleSubmit}>
           <Modal.Body>
@@ -537,38 +524,29 @@ export default function UsuariosGlobales() {
                   value={form.contrasena}
                   onChange={(e) => setForm({ ...form, contrasena: e.target.value })}
                   required={!editingUser}
+                  minLength="6"
                 />
+                <Form.Text className="text-muted">Mínimo 6 caracteres.</Form.Text>
               </Form.Group>
             )}
             <Form.Group className="mb-3">
               <Form.Label htmlFor="userRol">Rol</Form.Label>
-              <Form.Select
+              <Form.Control
                 id="userRol"
                 name="userRol"
-                value={form.rol}
-                onChange={(e) => {
-                  const newRol = e.target.value;
-                  setForm({ ...form, rol: newRol });
-                }}
-              >
-                {ROLES.map(r => (
-                  <option key={r.value} value={r.value}>{r.label}</option>
-                ))}
-              </Form.Select>
-              {!isEditableRole && (
-                <div className="text-warning mt-1 small">
-                  ⚠️ Solo se pueden crear/editar Administradores de Condominio desde este panel.
-                </div>
-              )}
+                value="ADMINISTRADOR_CONDOMINIO"
+                disabled
+                className="bg-light"
+              />
+              <Form.Text className="text-muted">Solo se pueden gestionar administradores de condominio.</Form.Text>
             </Form.Group>
             <Form.Group className="mb-3">
-              <Form.Label htmlFor="userCondo">Condominio</Form.Label>
+              <Form.Label htmlFor="userCondo">Asignar condominio</Form.Label>
               <Form.Select
                 id="userCondo"
                 name="userCondo"
                 value={form.idCondominio}
                 onChange={(e) => setForm({ ...form, idCondominio: e.target.value })}
-                disabled={!isEditableRole}
               >
                 <option value="">Sin asignar</option>
                 {condominioOptions.map(c => (
@@ -579,17 +557,14 @@ export default function UsuariosGlobales() {
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
-            <Button
-              type="submit"
-              disabled={submitting || !isEditableRole}
-              title={!isEditableRole ? 'Solo se permite crear/editar Administradores de Condominio' : ''}
-            >
+            <Button type="submit" disabled={submitting}>
               {submitting ? 'Guardando...' : 'Guardar'}
             </Button>
           </Modal.Footer>
         </Form>
       </Modal>
 
+      {/* Modal para forzar contraseña (igual que antes) */}
       <Modal show={showPasswordModal} onHide={() => setShowPasswordModal(false)} centered>
         <Modal.Header closeButton className="bg-light">
           <Modal.Title>Forzar cambio de contraseña</Modal.Title>
@@ -614,6 +589,7 @@ export default function UsuariosGlobales() {
               }}
               placeholder="Ingresa nueva contraseña"
               isInvalid={!!passwordError}
+              minLength="6"
             />
             <Form.Control.Feedback type="invalid">
               {passwordError}
