@@ -51,7 +51,7 @@ export default function PerfilSuperAdmin() {
     setError('');
 
     // Validaciones: mínimo 8 caracteres (requerido por el backend)
-    if (!passwordData.currentPassword || passwordData.currentPassword.length < 8) {
+    if (!passwordData.currentPassword || passwordData.currentPassword.length < 6) {
       setError('La contraseña actual debe tener al menos 8 caracteres.');
       return;
     }
