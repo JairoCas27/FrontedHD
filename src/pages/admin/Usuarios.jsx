@@ -211,7 +211,7 @@ export default function Usuarios() {
 
       {loading ? (
         <div style={{ textAlign: "center", padding: "3rem", color: "#64748b", fontWeight: "600" }}>
-          🔄 Sincronizando cuentas con el servidor central...
+          Sincronizando.
         </div>
       ) : (
         <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)" }}>

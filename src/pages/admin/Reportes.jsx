@@ -30,7 +30,7 @@ export default function Reportes() {
   if (loading || !metricas) {
     return (
       <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", color: "#64748b", fontWeight: "600", textAlign: "center" }}>
-         Sincronizando reportes y balances con el servidor de base de datos.
+         Sincronizando.
       </div>
     )
   }

@@ -103,7 +103,7 @@ export default function Estructura() {
 
       {loading ? (
         <div style={{ textAlign: "center", padding: "4rem", color: "#64748b", fontWeight: "600" }}>
-           Dibujando organigrama arquitectónico desde el servidor.
+           Sincronizando.
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", width: "100%" }}>

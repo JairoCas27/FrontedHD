@@ -143,7 +143,7 @@ export default function Departamentos() {
 
       {loading ? (
         <div style={{ textAlign: "center", padding: "3rem", color: "#64748b", fontWeight: "600" }}>
-          🔄 Conectando con el servidor de Spring Boot.
+          Sincronizando.
         </div>
       ) : (
         <>
