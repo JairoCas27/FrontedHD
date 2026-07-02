@@ -2,6 +2,23 @@ import { useState, useEffect } from "react";
 import { FiActivity, FiFilter, FiLogIn, FiLogOut, FiCalendar, FiSearch, FiUser } from "react-icons/fi";
 import { getSecurityDashboardStatus } from "../../services/api";
 
+function formatFecha(str) {
+  if (!str) return "—";
+  try {
+    return new Date(str).toLocaleString("es-PE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+  } catch {
+    return str;
+  }
+}
+
 export default function Movimientos() {
   const [movimientos, setMovimientos] = useState([]);
   const [stats, setStats] = useState({ totalEstacionamientos: 0, estacionamientosOcupados: 0, prestamosActivos: 0 });
@@ -38,7 +55,7 @@ export default function Movimientos() {
 
   const estiloTh = {
     padding: "0.85rem 1rem",
-    textAlign: "left",
+    textAlign: "center",
     fontSize: "0.72rem",
     fontWeight: 700,
     color: "#94a3b8",
@@ -46,7 +63,13 @@ export default function Movimientos() {
     letterSpacing: "0.06em",
   };
 
-  const estiloTd = { padding: "0.85rem 1rem", color: "#64748b", fontSize: "0.9rem" };
+  const estiloTd = {
+    padding: "0.85rem 1rem",
+    color: "#64748b",
+    fontSize: "0.9rem",
+    textAlign: "center",
+    verticalAlign: "middle",
+  };
 
   const estiloLabel = {
     display: "block",
@@ -181,11 +204,13 @@ export default function Movimientos() {
                         {m.tipo}
                       </span>
                     </td>
-                    <td style={{ ...estiloTd, display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                      <FiUser size={14} color="#94a3b8" />
-                      {m.descripcion}
+                    <td style={estiloTd}>
+                      <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
+                        <FiUser size={14} color="#94a3b8" />
+                        {m.descripcion}
+                      </div>
                     </td>
-                    <td style={estiloTd}>{m.fecha}</td>
+                    <td style={estiloTd}>{formatFecha(m.fecha)}</td>
                   </tr>
                 ))}
               </tbody>

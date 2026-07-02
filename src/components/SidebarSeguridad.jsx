@@ -6,7 +6,7 @@ const menuItems = [
   { section: "Operaciones" },
   { title: "Accesos", icon: <FiActivity size={20} />, path: "/seguridad/accesos" },
   { title: "Estacionamientos", icon: <FiTruck size={20} />, path: "/seguridad/vehiculos" },
-  { title: "Préstamos", icon: <FiUserCheck size={20} />, path: "/seguridad/visitas" },
+  { title: "Carritos", icon: <FiUserCheck size={20} />, path: "/seguridad/visitas" },
   { section: "Historial" },
   { title: "Movimientos", icon: <FiList size={20} />, path: "/seguridad/movimientos" },
   { section: "Sistema" },
