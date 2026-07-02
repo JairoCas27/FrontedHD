@@ -10,8 +10,53 @@ import {
   createAdministrator,
   assignAdministratorCondo,
 } from '../../services/api';
-import { Modal, Form, Button, Table, Badge, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
+import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
 import { toast } from 'react-toastify';
+
+// Componente Toggle Switch (igual que en Condominios)
+const ToggleSwitch = ({ checked, onChange }) => {
+  return (
+    <div
+      onClick={() => onChange(!checked)}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '8px',
+        cursor: 'pointer',
+        userSelect: 'none',
+      }}
+    >
+      <div
+        style={{
+          position: 'relative',
+          width: '48px',
+          height: '26px',
+          backgroundColor: checked ? '#22c55e' : '#ff0000',
+          borderRadius: '13px',
+          transition: 'background-color 0.3s ease',
+          boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            top: '2px',
+            left: checked ? '24px' : '2px',
+            width: '22px',
+            height: '22px',
+            backgroundColor: 'white',
+            borderRadius: '50%',
+            transition: 'left 0.3s ease',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+          }}
+        />
+      </div>
+      <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#334155' }}>
+        {checked ? 'Activo' : 'Inactivo'}
+      </span>
+    </div>
+  );
+};
 
 export default function UsuariosGlobales() {
   const [users, setUsers] = useState([]);
@@ -270,7 +315,6 @@ export default function UsuariosGlobales() {
       </div>
     );
 
-  // Opciones de condominios para el dropdown
   const getCondoOptions = () => {
     return condominios.map(c => {
       const isOccupied = occupiedCondos.has(c.id);
@@ -427,19 +471,12 @@ export default function UsuariosGlobales() {
                   <td><Badge bg="info">{u.rol}</Badge></td>
                   <td>{u.nombreCondominio || <span className="text-muted">Sin asignar</span>}</td>
                   <td>
-                    <Badge bg={u.activo ? 'success' : 'secondary'} pill>
-                      {u.activo ? 'Activo' : 'Inactivo'}
-                    </Badge>
+                    <ToggleSwitch
+                      checked={u.activo}
+                      onChange={() => handleToggleStatus(u.id, u.activo)}
+                    />
                   </td>
                   <td>
-                    <Button
-                      variant="outline-warning"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => handleToggleStatus(u.id, u.activo)}
-                    >
-                      {u.activo ? <FiX /> : <FiCheck />}
-                    </Button>
                     <Button
                       variant="outline-primary"
                       size="sm"
@@ -527,7 +564,6 @@ export default function UsuariosGlobales() {
               <Form.Text className="text-muted">Mínimo 6 caracteres.</Form.Text>
             </Form.Group>
 
-            {/* Campo de rol oculto (fijo a administrador) */}
             <input type="hidden" name="rol" value="ADMINISTRADOR_CONDOMINIO" />
 
             <Form.Group className="mb-3">
