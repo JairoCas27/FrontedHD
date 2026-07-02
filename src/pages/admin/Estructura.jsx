@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { FiGitCommit, FiTrash2, FiFolder, FiX } from "react-icons/fi"
+import { FiGitCommit, FiTrash2, FiFolder, FiX, FiInfo } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import { useAdminStructure } from '../../hooks/Admin/useAdminStructure' 
 
@@ -21,21 +21,32 @@ export default function Estructura() {
 
     try {
       let nombreTorreSeleccionada = null;
+      let numeroPisoDetectado = null;
 
-      // 🟢 SWAGGER FIX: Si tiene un padreId significa que es un PISO. 
-      // Buscamos el nombre real de la torre en la lista para mapearlo a 'nombreTorre'.
+      // 🟢 SWAGGER FIX: Si tiene un padreId significa que es un PISO.
       if (nuevoNodo.padreId) {
         const torreEncontrada = listaTorres.find(t => String(t.id) === String(nuevoNodo.padreId));
         if (torreEncontrada) {
           nombreTorreSeleccionada = torreEncontrada.nombre;
         }
+
+        // 🎯 EXTRACCIÓN AUTOMÁTICA DEL NÚMERO: Busca los dígitos numéricos en el string (Ej: "Piso 3" -> 3)
+        const digitos = nuevoNodo.nombre.match(/\d+/);
+        if (digitos) {
+          numeroPisoDetectado = parseInt(digitos[0], 10);
+        } else {
+          // Si el usuario no escribe un número, ponemos un fallback temporal positivo para evitar el crash 400
+          numeroPisoDetectado = 1; 
+        }
       }
 
-      // 🟢 PAYLOAD EXACTO DE ACUERDO AL CONTRATO DEL SWAGGER DE DIEGO
+      // 🟢 PAYLOAD ROBUSTO SEGÚN EL CONTRATO DEL SWAGGER DE DIEGO
       const payload = {
         tipo: nuevoNodo.padreId ? "PISO" : "TORRE",
         nombre: nuevoNodo.nombre.trim(),
-        nombreTorre: nombreTorreSeleccionada 
+        nombreTorre: nombreTorreSeleccionada,
+        numeroPiso: numeroPisoDetectado, // 🎯 Añadimos el entero positivo requerido por la validación de Spring Boot
+        numero: numeroPisoDetectado      // Fallback secundario de seguridad
       };
 
       await insertarNodo(payload)
@@ -183,6 +194,16 @@ export default function Estructura() {
                 <div>
                   <label style={estiloLabel}>Nombre del Nodo</label>
                   <input type="text" style={estiloInput} placeholder="Ej: Torre C o Piso 3" value={nuevoNodo.nombre} onChange={(e) => setNuevoNodo({ ...nuevoNodo, nombre: e.target.value })} required />
+                  
+                  {/* 🟢 NUEVO: Label Informativo dinámico para guiar al usuario según la selección */}
+                  <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", padding: "0.6rem 0.75rem", borderRadius: "0.375rem", marginTop: "0.6rem" }}>
+                    <FiInfo size={14} style={{ color: "#16a34a", flexShrink: 0 }} />
+                    <span style={{ fontSize: "0.75rem", color: "#166534", fontWeight: "600", lineHeight: "1.3" }}>
+                      {nuevoNodo.padreId 
+                        ? "Importante: Incluye el número positivo del nivel en el nombre (Ej: 'Piso 1' o 'Nivel 2') para indexarlo correctamente."
+                        : "Formato: Escribe el nombre de la estructura principal (Ej: 'Torre A', 'Bloque B')."}
+                    </span>
+                  </div>
                 </div>
               </div>
 

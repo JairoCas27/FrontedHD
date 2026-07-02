@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { FiPackage, FiRefreshCw, FiX, FiCheckCircle, FiTool, FiAlertTriangle, FiInfo } from "react-icons/fi"
+import { FiPackage, FiRefreshCw, FiX, FiTool, FiAlertTriangle, FiInfo } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import BadgeEstado from '../../components/BadgeEstado'
 import { useAdminAssets } from '../../hooks/Admin/useAdminAssets' 
@@ -13,7 +13,6 @@ export default function Bienes() {
   const [showModal, setShowModal] = useState(false)
   const [formData, setFormData] = useState({ tipo: 'Estacionamiento', codigo: '', numero: '' })
 
-  // 🟢 ESTADOS NUEVOS: Modales Custom de Confirmación y Toast de Notificación
   const [toast, setToast] = useState({ visible: false, mensaje: '', tipo: 'success' })
   const [confirmModal, setConfirmModal] = useState({ visible: false, bienId: null, nuevoEstado: '', codigoBien: '', tipoBien: '', esParaDisponible: false })
 
@@ -57,7 +56,6 @@ export default function Bienes() {
     }
   }
 
-  // 🟢 SE EJECUTA DESDE EL MODAL CUSTOM DE CONFIRMACIÓN
   const ejecutarCambioEstado = async () => {
     try {
       const { bienId, nuevoEstado, tipoBien } = confirmModal
@@ -95,7 +93,6 @@ export default function Bienes() {
   return (
     <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left", position: "relative" }}>
       
-      {/* 🟢 COMPONENTE TOAST DE ÉXITO */}
       {toast.visible && (
         <div style={{
           position: "fixed", top: "2rem", right: "2rem", zIndex: 200,
@@ -152,7 +149,10 @@ export default function Bienes() {
               </thead>
               <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
                 {bienesFiltrados.map((bien) => {
-                  const esDisponible = (bien.estado || '').toUpperCase() === 'AVAILABLE';
+                  // 🟢 CORREGIDO: Validación doble e inteligente (insensible a mayúsculas y usando el booleano 'disponible' del Swagger)
+                  const estadoStr = String(bien.estado || '').toUpperCase();
+                  const esDisponible = estadoStr.includes('AVAILABLE') || estadoStr.includes('DISPONIBLE') || bien.disponible === true;
+
                   return (
                     <tr key={bien.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
                       <td style={{ padding: "1rem 1.5rem", fontFamily: "monospace", fontWeight: "700", color: "#94a3b8" }}>#{bien.id}</td>
@@ -167,10 +167,10 @@ export default function Bienes() {
                       <td style={{ padding: "1rem", color: "#64748b", fontWeight: "600" }}>{bien.tipo}</td>
                       <td style={{ padding: "1rem", color: "#334155", fontWeight: "700", fontFamily: "monospace" }}>N° {bien.numero ?? 0}</td>
                       <td style={{ padding: "1rem" }}>
+                        {/* 🟢 CORREGIDO: Pasa el estado real traducido correctamente al Badge visual */}
                         <BadgeEstado estado={esDisponible ? 'Disponible' : 'Mantenimiento'} />
                       </td>
                       <td style={{ padding: "1rem 1.5rem", display: "flex", justifyContent: "flex-end" }}>
-                        {/* 🟢 MEJORADO: Botón interactivo explícito con bordes estilizados */}
                         <button 
                           onClick={() => setConfirmModal({
                             visible: true,
@@ -183,7 +183,7 @@ export default function Bienes() {
                           style={{ 
                             padding: "0.35rem 0.65rem", 
                             border: "1px solid",
-                            borderColor: esDisponible ? "#e2e8f0" : "#10b981",
+                            borderColor: esDisponible ? "#cbd5e1" : "#10b981",
                             backgroundColor: esDisponible ? "transparent" : "rgba(16, 185, 129, 0.05)",
                             color: esDisponible ? "#64748b" : "#10b981", 
                             borderRadius: "0.5rem",
@@ -192,7 +192,8 @@ export default function Bienes() {
                             cursor: "pointer", 
                             display: "flex", 
                             alignItems: "center", 
-                            gap: "0.3rem" 
+                            gap: "0.3rem",
+                            transition: "all 0.2s"
                           }}
                         >
                           {esDisponible ? (
@@ -215,7 +216,6 @@ export default function Bienes() {
         </div>
       )}
 
-      {/* 🟢 DIALOG MODAL DE CONFIRMACIÓN INTEGRADO */}
       {confirmModal.visible && (
         <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 110, backdropFilter: "blur(4px)" }}>
           <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "400px", border: "1px solid #e2e8f0", overflow: "hidden", padding: "1.5rem", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)" }}>
