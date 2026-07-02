@@ -8,6 +8,7 @@ export function useAdminAssets() {
   const cargarBienes = async () => {
     try {
       setLoading(true);
+      // Mantenemos la paginación y filtros que ya tenías configurados
       const queryParams = "?pagina=0&tamano=100&type=Estacionamiento";
       const data = await getAdminAssets(queryParams);
       setBienes(data?.items || []);
@@ -21,17 +22,19 @@ export function useAdminAssets() {
   const registrarBien = async (assetData) => {
     try {
       await createAdminAsset(assetData);
-      await cargarBienes();
+      await cargarBienes(); // Refresca la lista inmediatamente tras registrar
     } catch (error) {
       console.error("Error al crear bien común:", error);
       throw error;
     }
   };
 
-  const actualizarEstadoBien = async (id, estado, tipo) => {
+  // 🟢 CORREGIDO: Ahora recibe y pasa solo el 'id' y el 'estado' ('AVAILABLE' o 'MAINTENANCE')
+  // para que calce con el Query Parameter (?status=) de api.js
+  const actualizarEstadoBien = async (id, estado) => {
     try {
-      await updateAdminAssetStatus(id, estado, tipo);
-      await cargarBienes();
+      await updateAdminAssetStatus(id, estado);
+      await cargarBienes(); // 🔄 Hace el re-fetch automático para pintar la tabla en tiempo real
     } catch (error) {
       console.error("Error al cambiar estado de activo:", error);
       throw error;
@@ -42,5 +45,11 @@ export function useAdminAssets() {
     cargarBienes();
   }, []);
 
-  return { bienes, loading, registrarBien, actualizarEstadoBien, refrescar: cargarBienes };
+  return { 
+    bienes, 
+    loading, 
+    registrarBien, 
+    actualizarEstadoBien, 
+    refrescar: cargarBienes 
+  };
 }

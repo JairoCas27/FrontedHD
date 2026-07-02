@@ -242,18 +242,10 @@ export async function createAdminAsset(data) {
   });
 }
 
-// Cambia la función para recibir el 'tipo' (o el objeto completo 'bien') además del nuevo estado
-export async function updateAdminAssetStatus(id, nuevoEstado, tipoActivo = "ESTACIONAMIENTO") {
-  return safeFetch(`/api/admin/assets/${id}/status`, {
-    method: 'PUT',
-    body: JSON.stringify({
-      estado: nuevoEstado,
-      tipo: tipoActivo.toUpperCase(), 
-      type: tipoActivo.toUpperCase()  
-    }),
-    headers: {
-      'Content-Type': 'application/json'
-    }
+// 🟢 CORREGIDO: Cumple con el Swagger de Diego usando Query Parameter (?status=) y sin Body
+export async function updateAdminAssetStatus(id, nuevoEstado) {
+  return safeFetch(`/api/admin/assets/${id}/status?status=${nuevoEstado}`, {
+    method: 'PUT'
   });
 }
 
