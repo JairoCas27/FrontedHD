@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { FiPackage, FiRefreshCw, FiX } from "react-icons/fi"
+import { FiPackage, FiRefreshCw, FiX, FiCheckCircle, FiTool, FiAlertTriangle, FiInfo } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import BadgeEstado from '../../components/BadgeEstado'
 import { useAdminAssets } from '../../hooks/Admin/useAdminAssets' 
@@ -11,8 +11,11 @@ export default function Bienes() {
   
   const [busqueda, setBusqueda] = useState('')
   const [showModal, setShowModal] = useState(false)
-  
   const [formData, setFormData] = useState({ tipo: 'Estacionamiento', codigo: '', numero: '' })
+
+  // 🟢 ESTADOS NUEVOS: Modales Custom de Confirmación y Toast de Notificación
+  const [toast, setToast] = useState({ visible: false, mensaje: '', tipo: 'success' })
+  const [confirmModal, setConfirmModal] = useState({ visible: false, bienId: null, nuevoEstado: '', codigoBien: '', tipoBien: '', esParaDisponible: false })
 
   const bienesFiltrados = (bienes || []).filter(b => {
     const termino = (busqueda || '').toLowerCase().trim();
@@ -23,6 +26,13 @@ export default function Bienes() {
 
     return codigo.includes(termino) || tipo.includes(termino);
   });
+
+  const mostrarToast = (mensaje, tipo = 'success') => {
+    setToast({ visible: true, mensaje, tipo })
+    setTimeout(() => {
+      setToast({ visible: false, mensaje: '', tipo: 'success' })
+    }, 3000)
+  }
 
   const handleSaveAsset = async (e) => {
     e.preventDefault()
@@ -40,22 +50,23 @@ export default function Bienes() {
       
       setShowModal(false)
       setFormData({ tipo: 'Estacionamiento', codigo: '', numero: '' })
+      mostrarToast("¡Activo registrado e inventariado con éxito!")
     } catch (error) {
       console.error("Error al crear el activo:", error)
       alert("Hubo un error al inventariar el nuevo activo.")
     }
   }
 
-  const toggleStatus = async (bien) => {
-    // 🟢 CORREGIDO: Mapeo y comparación basado en Enums oficiales del backend (AVAILABLE / MAINTENANCE)
-    const estadoActual = (bien.estado || '').toUpperCase();
-    const nuevoEstado = estadoActual === 'AVAILABLE' ? 'MAINTENANCE' : 'AVAILABLE'
-    
+  // 🟢 SE EJECUTA DESDE EL MODAL CUSTOM DE CONFIRMACIÓN
+  const ejecutarCambioEstado = async () => {
     try {
-      await actualizarEstadoBien(bien.id, nuevoEstado, bien.tipo || 'ESTACIONAMIENTO')
+      const { bienId, nuevoEstado, tipoBien } = confirmModal
+      await actualizarEstadoBien(bienId, nuevoEstado, tipoBien || 'ESTACIONAMIENTO')
+      setConfirmModal({ visible: false, bienId: null, nuevoEstado: '', codigoBien: '', tipoBien: '', esParaDisponible: false })
+      mostrarToast("Estado del activo actualizado correctamente", "info")
     } catch (error) {
-      console.error("Error al cambiar el estado del activo:", error)
-      alert("No se pudo actualizar el estado técnico en el servidor.")
+      console.error("Error al mutar estado:", error)
+      mostrarToast("No se pudo actualizar el estado en el servidor", "error")
     }
   }
 
@@ -82,8 +93,20 @@ export default function Bienes() {
   }
 
   return (
-    <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
+    <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left", position: "relative" }}>
       
+      {/* 🟢 COMPONENTE TOAST DE ÉXITO */}
+      {toast.visible && (
+        <div style={{
+          position: "fixed", top: "2rem", right: "2rem", zIndex: 200,
+          backgroundColor: toast.tipo === 'success' ? "#10b981" : toast.tipo === 'info' ? "#3b82f6" : "#ef4444",
+          color: "#ffffff", padding: "1rem 1.5rem", borderRadius: "0.75rem", fontWeight: "700", fontSize: "0.9rem",
+          display: "flex", alignItems: "center", gap: "0.5rem", boxShadow: "0 10px 15px -3px rgba(0, 0, 0, 0.1)"
+        }}>
+          <FiInfo size={18} /> {toast.mensaje}
+        </div>
+      )}
+
       <EncabezadoTabla 
         titulo="Bienes y Activos" 
         subtitulo="Inventariado, códigos de barra y control de estado técnico de los bienes del condominio"
@@ -124,40 +147,115 @@ export default function Bienes() {
                   <th style={{ padding: "1rem", width: "25%" }}>Tipo de Activo</th>
                   <th style={{ padding: "1rem", width: "15%" }}>Número Asignado</th>
                   <th style={{ padding: "1rem", width: "15%" }}>Estado</th>
-                  <th style={{ padding: "1rem 1.5rem", width: "5%", textAlign: "center" }}>Acción</th>
+                  <th style={{ padding: "1rem 1.5rem", width: "15%", textAlign: "right" }}>Acción</th>
                 </tr>
               </thead>
               <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
-                {bienesFiltrados.map((bien) => (
-                  <tr key={bien.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <td style={{ padding: "1rem 1.5rem", fontFamily: "monospace", fontWeight: "700", color: "#94a3b8" }}>#{bien.id}</td>
-                    <td style={{ padding: "1rem" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                        <div style={{ width: "30px", height: "30px", borderRadius: "0.5rem", backgroundColor: "rgba(52,151,195,0.08)", color: colorAdmin, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                          <FiPackage size={16} />
+                {bienesFiltrados.map((bien) => {
+                  const esDisponible = (bien.estado || '').toUpperCase() === 'AVAILABLE';
+                  return (
+                    <tr key={bien.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                      <td style={{ padding: "1rem 1.5rem", fontFamily: "monospace", fontWeight: "700", color: "#94a3b8" }}>#{bien.id}</td>
+                      <td style={{ padding: "1rem" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                          <div style={{ width: "30px", height: "30px", borderRadius: "0.5rem", backgroundColor: "rgba(52,151,195,0.08)", color: colorAdmin, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                            <FiPackage size={16} />
+                          </div>
+                          <span style={{ fontWeight: "700", color: "#0f172a" }}>{bien.codigo || 'S/C'}</span>
                         </div>
-                        <span style={{ fontWeight: "700", color: "#0f172a" }}>{bien.codigo || 'S/C'}</span>
-                      </div>
-                    </td>
-                    <td style={{ padding: "1rem", color: "#64748b", fontWeight: "600" }}>{bien.tipo}</td>
-                    <td style={{ padding: "1rem", color: "#334155", fontWeight: "700", fontFamily: "monospace" }}>N° {bien.numero ?? 0}</td>
-                    <td style={{ padding: "1rem" }}>
-                      {/* 🟢 CORREGIDO: El evaluador lee la respuesta real para renderizar el badge verde/amarillo */}
-                      <BadgeEstado estado={(bien.estado || '').toUpperCase() === 'AVAILABLE' ? 'Disponible' : 'Mantenimiento'} />
-                    </td>
-                    <td style={{ padding: "1rem 1.5rem", textAlign: "center" }}>
-                      <button 
-                        title="Cambiar estado técnico"
-                        onClick={() => toggleStatus(bien)}
-                        style={{ background: "none", border: "1px solid #e2e8f0", padding: "0.4rem", borderRadius: "0.5rem", cursor: "pointer", color: colorAdmin, display: "flex", alignItems: "center", justifyContent: "center" }}
-                      >
-                        <FiRefreshCw size={14} />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td style={{ padding: "1rem", color: "#64748b", fontWeight: "600" }}>{bien.tipo}</td>
+                      <td style={{ padding: "1rem", color: "#334155", fontWeight: "700", fontFamily: "monospace" }}>N° {bien.numero ?? 0}</td>
+                      <td style={{ padding: "1rem" }}>
+                        <BadgeEstado estado={esDisponible ? 'Disponible' : 'Mantenimiento'} />
+                      </td>
+                      <td style={{ padding: "1rem 1.5rem", display: "flex", justifyContent: "flex-end" }}>
+                        {/* 🟢 MEJORADO: Botón interactivo explícito con bordes estilizados */}
+                        <button 
+                          onClick={() => setConfirmModal({
+                            visible: true,
+                            bienId: bien.id,
+                            nuevoEstado: esDisponible ? 'MAINTENANCE' : 'AVAILABLE',
+                            codigoBien: bien.codigo || `N° ${bien.numero}`,
+                            tipoBien: bien.tipo,
+                            esParaDisponible: !esDisponible
+                          })}
+                          style={{ 
+                            padding: "0.35rem 0.65rem", 
+                            border: "1px solid",
+                            borderColor: esDisponible ? "#e2e8f0" : "#10b981",
+                            backgroundColor: esDisponible ? "transparent" : "rgba(16, 185, 129, 0.05)",
+                            color: esDisponible ? "#64748b" : "#10b981", 
+                            borderRadius: "0.5rem",
+                            fontSize: "0.75rem",
+                            fontWeight: "700",
+                            cursor: "pointer", 
+                            display: "flex", 
+                            alignItems: "center", 
+                            gap: "0.3rem" 
+                          }}
+                        >
+                          {esDisponible ? (
+                            <>
+                              <FiTool size={12} /> Reparación
+                            </>
+                          ) : (
+                            <>
+                              <FiRefreshCw size={12} /> Habilitar
+                            </>
+                          )}
+                        </button>
+                      </td>
+                    </tr>
+                  )
+                })}
               </tbody>
             </table>
+          </div>
+        </div>
+      )}
+
+      {/* 🟢 DIALOG MODAL DE CONFIRMACIÓN INTEGRADO */}
+      {confirmModal.visible && (
+        <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 110, backdropFilter: "blur(4px)" }}>
+          <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "400px", border: "1px solid #e2e8f0", overflow: "hidden", padding: "1.5rem", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)" }}>
+            <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start" }}>
+              <div style={{
+                backgroundColor: confirmModal.esParaDisponible ? "rgba(16, 185, 129, 0.1)" : "rgba(245, 158, 11, 0.1)",
+                color: confirmModal.esParaDisponible ? "#10b981" : "#f59e0b",
+                padding: "0.5rem", borderRadius: "0.5rem", display: "flex"
+              }}>
+                <FiAlertTriangle size={22} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <h4 style={{ margin: "0 0 0.5rem 0", fontWeight: "800", color: "#1e293b", fontSize: "1rem" }}>
+                  {confirmModal.esParaDisponible ? "Habilitar Activo" : "Enviar a Mantenimiento"}
+                </h4>
+                <p style={{ margin: 0, fontSize: "0.85rem", color: "#64748b", lineHeight: "1.4" }}>
+                  {confirmModal.esParaDisponible 
+                    ? `¿Estás seguro de que deseas habilitar el activo [${confirmModal.codigoBien}]? Volverá a figurar disponible para los residentes.`
+                    : `¿Estás seguro de que deseas enviar el activo [${confirmModal.codigoBien}] a mantenimiento técnico? Ocultará su uso temporalmente.`}
+                </p>
+              </div>
+            </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "1.5rem" }}>
+              <button 
+                onClick={() => setConfirmModal({ visible: false, bienId: null, nuevoEstado: '', codigoBien: '', tipoBien: '', esParaDisponible: false })}
+                style={{ padding: "0.45rem 1rem", border: "1px solid #cbd5e1", background: "#fff", borderRadius: "0.5rem", cursor: "pointer", color: "#475569", fontWeight: "700", fontSize: "0.8rem" }}
+              >
+                Cancelar
+              </button>
+              <button 
+                onClick={ejecutarCambioEstado}
+                style={{ 
+                  padding: "0.45rem 1.25rem", 
+                  background: confirmModal.esParaDisponible ? "#10b981" : "#f59e0b", 
+                  color: "#fff", border: "none", borderRadius: "0.5rem", fontWeight: "700", fontSize: "0.8rem", cursor: "pointer" 
+                }}
+              >
+                {confirmModal.esParaDisponible ? "Sí, Habilitar" : "Sí, Reparar"}
+              </button>
+            </div>
           </div>
         </div>
       )}

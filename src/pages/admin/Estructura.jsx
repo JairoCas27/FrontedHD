@@ -20,16 +20,25 @@ export default function Estructura() {
     if (!nuevoNodo.nombre.trim()) return
 
     try {
-      const nodoIdNum = nuevoNodo.padreId ? parseInt(nuevoNodo.padreId) : null;
+      let nombreTorreSeleccionada = null;
 
-      // 🟢 CORREGIDO: Mapeamos 'torreId' con el ID numérico para asegurar que Spring Boot enlace correctamente el piso con su torre raíz
-      await insertarNodo({
+      // 🟢 SWAGGER FIX: Si tiene un padreId significa que es un PISO. 
+      // Buscamos el nombre real de la torre en la lista para mapearlo a 'nombreTorre'.
+      if (nuevoNodo.padreId) {
+        const torreEncontrada = listaTorres.find(t => String(t.id) === String(nuevoNodo.padreId));
+        if (torreEncontrada) {
+          nombreTorreSeleccionada = torreEncontrada.nombre;
+        }
+      }
+
+      // 🟢 PAYLOAD EXACTO DE ACUERDO AL CONTRATO DEL SWAGGER DE DIEGO
+      const payload = {
+        tipo: nuevoNodo.padreId ? "PISO" : "TORRE",
         nombre: nuevoNodo.nombre.trim(),
-        torreId: nodoIdNum,    // Propiedad CamelCase esperada por el backend tras el merge
-        idTorre: nodoIdNum,    // Fallback de seguridad
-        idPadre: nodoIdNum,    // Fallback de seguridad alternativo
-        tipo: nodoIdNum ? "PISO" : "TORRE"
-      })
+        nombreTorre: nombreTorreSeleccionada 
+      };
+
+      await insertarNodo(payload)
       
       setShowModal(false)
       setNuevoNodo({ nombre: '', padreId: '' })
