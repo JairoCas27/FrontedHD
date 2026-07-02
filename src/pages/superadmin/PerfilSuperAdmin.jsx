@@ -175,7 +175,7 @@ export default function PerfilSuperAdmin() {
                   type={showPasswords.current ? 'text' : 'password'}
                   value={passwordData.currentPassword}
                   onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
-                  minLength="8"
+                  minLength="6"
                   required
                   isInvalid={!!error && error.includes('actual')}
                 />
