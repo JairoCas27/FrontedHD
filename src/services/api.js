@@ -201,7 +201,12 @@ export const deleteHomeownerVehicle = (id) => safeFetch(`/api/homeowner/vehicles
 export const getHomeownerTenants = () => safeFetch('/api/homeowner/tenants');
 export const createHomeownerTenant = (data) => safeFetch('/api/homeowner/tenants', { method: 'POST', body: JSON.stringify(data) });
 export const deleteHomeownerTenant = (id) => safeFetch(`/api/homeowner/tenants/${id}`, { method: 'DELETE' });
-export const getHomeownerLogs = () => safeFetch('/api/homeowner/logs');
+export const getHomeownerLogs = ({ type, fechaInicio, fechaFin, page = 0, size = 10 } = {}) => {
+  const params = new URLSearchParams({ type, page, size });
+  if (fechaInicio) params.append("fechaInicio", fechaInicio);
+  if (fechaFin)    params.append("fechaFin",    fechaFin);
+  return safeFetch(`/api/homeowner/logs?${params.toString()}`);
+};
 
 export async function getAdminDashboardMetrics() {
   return safeFetch('/api/admin/dashboard/metrics');
