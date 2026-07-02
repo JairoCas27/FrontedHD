@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react'
-import { FiHome, FiUserCheck, FiX, FiSearch, FiChevronLeft, FiChevronRight, FiShield } from "react-icons/fi"
+import { FiHome, FiUserCheck, FiX, FiSearch, FiChevronLeft, FiChevronRight, FiShield, FiLock } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import { useAdminApartments } from '../../hooks/Admin/useAdminApartments'
 import { useAdminUsers } from '../../hooks/Admin/useAdminUsers'
@@ -49,6 +49,7 @@ export default function Departamentos() {
   }, [usuarios, idPropietarioSeleccionado])
 
   const handleOpenAssignModal = (depto) => {
+    if (depto.nombrePropietario) return
     setDeptoSeleccionado(depto)
     setIdPropietarioSeleccionado(depto.idPropietario || '')
     setBusquedaPropietario(depto.nombrePropietario || '')
@@ -218,9 +219,21 @@ export default function Departamentos() {
 
                   <button
                     onClick={() => handleOpenAssignModal(depto)}
-                    style={{ width: "100%", padding: "0.6rem", backgroundColor: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "0.5rem", color: colorAdmin, fontWeight: "700", fontSize: "0.8rem", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem", transition: "all 0.2s" }}
+                    disabled={tienePropietario}
+                    style={{
+                      width: "100%", padding: "0.6rem",
+                      backgroundColor: tienePropietario ? "#f1f5f9" : "#f8fafc",
+                      border: `1px solid ${tienePropietario ? "#e2e8f0" : "#e2e8f0"}`,
+                      borderRadius: "0.5rem",
+                      color: tienePropietario ? "#94a3b8" : colorAdmin,
+                      fontWeight: "700", fontSize: "0.8rem",
+                      cursor: tienePropietario ? "not-allowed" : "pointer",
+                      display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem",
+                      transition: "all 0.2s"
+                    }}
                   >
-                    <FiUserCheck size={14} /> Asignar Dueño
+                    {tienePropietario ? <FiLock size={14} /> : <FiUserCheck size={14} />}
+                    {tienePropietario ? "Propietario Asignado" : "Asignar Dueño"}
                   </button>
                 </div>
               )
