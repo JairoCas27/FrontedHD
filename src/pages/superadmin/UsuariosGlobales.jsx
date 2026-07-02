@@ -10,10 +10,9 @@ import {
   createAdministrator,
   assignAdministratorCondo,
 } from '../../services/api';
-import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
+import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner, Badge } from 'react-bootstrap';
 import { toast } from 'react-toastify';
 
-// Componente Toggle Switch (igual que en Condominios)
 const ToggleSwitch = ({ checked, onChange }) => {
   return (
     <div
@@ -135,7 +134,6 @@ export default function UsuariosGlobales() {
       setCondominios(condosList);
       setAdmins(adminsList);
 
-      // Calcular condominios ocupados por administradores activos
       const occupied = new Set();
       adminsList.forEach(admin => {
         if (admin.activo && admin.idCondominio !== null && admin.idCondominio !== undefined) {
@@ -201,14 +199,12 @@ export default function UsuariosGlobales() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      // Validar contraseña
       if (!form.contrasena || form.contrasena.trim().length < 6) {
         toast.warning('La contraseña debe tener al menos 6 caracteres.');
         setSubmitting(false);
         return;
       }
 
-      // Validar que el condominio no esté ocupado
       const selectedCondoId = form.idCondominio ? parseInt(form.idCondominio, 10) : null;
       if (selectedCondoId && occupiedCondos.has(selectedCondoId)) {
         toast.error('Este condominio ya tiene un administrador asignado.');
@@ -216,7 +212,6 @@ export default function UsuariosGlobales() {
         return;
       }
 
-      // Crear administrador
       const created = await createAdministrator({
         nombres: form.nombres.trim(),
         apellidos: form.apellidos.trim(),
@@ -225,7 +220,6 @@ export default function UsuariosGlobales() {
         contrasena: form.contrasena.trim(),
       });
 
-      // Asignar condominio si se seleccionó
       if (selectedCondoId && created.id) {
         await assignAdministratorCondo(created.id, selectedCondoId);
       }
@@ -362,7 +356,7 @@ export default function UsuariosGlobales() {
           </InputGroup>
         </Col>
         <Col md={2}>
-          <Form.Label htmlFor="filterRol" srOnly>Filtrar por rol</Form.Label>
+          <Form.Label htmlFor="filterRol" className="visually-hidden">Filtrar por rol</Form.Label>
           <Form.Select
             id="filterRol"
             name="filterRol"
@@ -377,7 +371,7 @@ export default function UsuariosGlobales() {
           </Form.Select>
         </Col>
         <Col md={2}>
-          <Form.Label htmlFor="filterEstado" srOnly>Filtrar por estado</Form.Label>
+          <Form.Label htmlFor="filterEstado" className="visually-hidden">Filtrar por estado</Form.Label>
           <Form.Select
             id="filterEstado"
             name="filterEstado"
@@ -391,7 +385,7 @@ export default function UsuariosGlobales() {
           </Form.Select>
         </Col>
         <Col md={2}>
-          <Form.Label htmlFor="filterCondo" srOnly>Filtrar por condominio</Form.Label>
+          <Form.Label htmlFor="filterCondo" className="visually-hidden">Filtrar por condominio</Form.Label>
           <Form.Select
             id="filterCondo"
             name="filterCondo"
@@ -503,7 +497,6 @@ export default function UsuariosGlobales() {
         </div>
       )}
 
-      {/* Modal de creación de administrador */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton className="bg-light">
           <Modal.Title>Nuevo Administrador de Condominio</Modal.Title>
@@ -592,7 +585,6 @@ export default function UsuariosGlobales() {
         </Form>
       </Modal>
 
-      {/* Modal para forzar contraseña */}
       <Modal show={showPasswordModal} onHide={() => setShowPasswordModal(false)} centered>
         <Modal.Header closeButton className="bg-light">
           <Modal.Title>Forzar cambio de contraseña</Modal.Title>
