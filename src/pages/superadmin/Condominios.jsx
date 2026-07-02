@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiCheckCircle, FiXCircle, FiSearch, FiArrowUp, FiArrowDown } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiArrowUp, FiArrowDown } from 'react-icons/fi';
 import {
   getCondominiums,
   createCondominium,
@@ -10,6 +10,52 @@ import {
   getCities,
 } from '../../services/api';
 import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
+import { toast } from 'react-toastify';
+
+// Componente Toggle Switch personalizado
+const ToggleSwitch = ({ checked, onChange }) => {
+  return (
+    <div
+      onClick={() => onChange(!checked)}
+      style={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        gap: '8px',
+        cursor: 'pointer',
+        userSelect: 'none',
+      }}
+    >
+      <div
+        style={{
+          position: 'relative',
+          width: '48px',
+          height: '26px',
+          backgroundColor: checked ? '#22c55e' : '#e2e8f0',
+          borderRadius: '13px',
+          transition: 'background-color 0.3s ease',
+          boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
+        }}
+      >
+        <div
+          style={{
+            position: 'absolute',
+            top: '2px',
+            left: checked ? '24px' : '2px',
+            width: '22px',
+            height: '22px',
+            backgroundColor: 'white',
+            borderRadius: '50%',
+            transition: 'left 0.3s ease',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+          }}
+        />
+      </div>
+      <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#334155' }}>
+        {checked ? 'Activo' : 'Inactivo'}
+      </span>
+    </div>
+  );
+};
 
 export default function Condominios() {
   const [condominios, setCondominios] = useState([]);
@@ -143,7 +189,7 @@ export default function Condominios() {
       setShowModal(false);
       load();
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message);
       console.error(err);
     }
   };
@@ -152,18 +198,20 @@ export default function Condominios() {
     if (!window.confirm('¿Eliminar condominio?')) return;
     try {
       await deleteCondominium(id);
+      toast.success('Condominio eliminado');
       load();
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message);
     }
   };
 
-  const handleToggleStatus = async (id, activo) => {
+  const handleToggleStatus = async (id, currentStatus) => {
     try {
-      await patchCondominiumStatus(id, !activo);
+      await patchCondominiumStatus(id, !currentStatus);
+      toast.success(`Estado actualizado a ${!currentStatus ? 'Activo' : 'Inactivo'}`);
       load();
     } catch (err) {
-      alert(err.message);
+      toast.error(err.message);
     }
   };
 
@@ -179,43 +227,6 @@ export default function Condominios() {
   const getSortIcon = (field) => {
     if (sortField !== field) return null;
     return sortOrder === 'asc' ? <FiArrowUp size={14} /> : <FiArrowDown size={14} />;
-  };
-
-  // Componente inline para el estado con punto
-  const BadgeEstadoPunto = ({ activo }) => {
-    const isActive = activo === true;
-    const config = isActive
-      ? { bg: '#dcfce7', color: '#166534', dotColor: '#22c55e', label: 'Activo' }
-      : { bg: '#fee2e2', color: '#991b1b', dotColor: '#ef4444', label: 'Inactivo' };
-
-    return (
-      <span
-        style={{
-          backgroundColor: config.bg,
-          color: config.color,
-          padding: '4px 12px 4px 8px',
-          borderRadius: '20px',
-          fontSize: '0.75rem',
-          fontWeight: '600',
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '6px',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        <span
-          style={{
-            width: '8px',
-            height: '8px',
-            borderRadius: '50%',
-            backgroundColor: config.dotColor,
-            display: 'inline-block',
-            flexShrink: 0,
-          }}
-        />
-        {config.label}
-      </span>
-    );
   };
 
   if (loading)
@@ -350,7 +361,10 @@ export default function Condominios() {
                   <td>{c.nombreCiudad || '-'}</td>
                   <td>{c.nombreAdministrador || <span className="text-muted">Sin asignar</span>}</td>
                   <td>
-                    <BadgeEstadoPunto activo={c.activo} />
+                    <ToggleSwitch
+                      checked={c.activo}
+                      onChange={() => handleToggleStatus(c.id, c.activo)}
+                    />
                   </td>
                   <td>
                     <Button
@@ -374,14 +388,6 @@ export default function Condominios() {
                       <FiEdit2 />
                     </Button>
                     <Button
-                      variant="outline-warning"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => handleToggleStatus(c.id, c.activo)}
-                    >
-                      {c.activo ? <FiXCircle /> : <FiCheckCircle />}
-                    </Button>
-                    <Button
                       variant="outline-danger"
                       size="sm"
                       onClick={() => handleDelete(c.id)}
@@ -396,7 +402,7 @@ export default function Condominios() {
         </div>
       )}
 
-      {/* Modal igual que antes */}
+      {/* Modal */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton className="bg-light">
           <Modal.Title>{editing ? 'Editar' : 'Nuevo'} condominio</Modal.Title>
