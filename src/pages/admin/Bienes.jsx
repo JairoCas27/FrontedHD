@@ -56,10 +56,14 @@ export default function Bienes() {
     }
   }
 
+  // 🟢 SWAGGER SYNC: Pasa los 4 datos clave para estructurar el body completo en el hook
   const ejecutarCambioEstado = async () => {
     try {
-      const { bienId, nuevoEstado, tipoBien } = confirmModal
-      await actualizarEstadoBien(bienId, nuevoEstado, tipoBien || 'ESTACIONAMIENTO')
+      const { bienId, nuevoEstado, tipoBien, esParaDisponible } = confirmModal
+      
+      // Enviamos de forma ordenada para que calce con el hook
+      await actualizarEstadoBien(bienId, nuevoEstado, tipoBien, esParaDisponible)
+      
       setConfirmModal({ visible: false, bienId: null, nuevoEstado: '', codigoBien: '', tipoBien: '', esParaDisponible: false })
       mostrarToast("Estado del activo actualizado correctamente", "info")
     } catch (error) {
@@ -149,7 +153,6 @@ export default function Bienes() {
               </thead>
               <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
                 {bienesFiltrados.map((bien) => {
-                  // 🟢 CORREGIDO: Validación doble e inteligente (insensible a mayúsculas y usando el booleano 'disponible' del Swagger)
                   const estadoStr = String(bien.estado || '').toUpperCase();
                   const esDisponible = estadoStr.includes('AVAILABLE') || estadoStr.includes('DISPONIBLE') || bien.disponible === true;
 
@@ -167,7 +170,6 @@ export default function Bienes() {
                       <td style={{ padding: "1rem", color: "#64748b", fontWeight: "600" }}>{bien.tipo}</td>
                       <td style={{ padding: "1rem", color: "#334155", fontWeight: "700", fontFamily: "monospace" }}>N° {bien.numero ?? 0}</td>
                       <td style={{ padding: "1rem" }}>
-                        {/* 🟢 CORREGIDO: Pasa el estado real traducido correctamente al Badge visual */}
                         <BadgeEstado estado={esDisponible ? 'Disponible' : 'Mantenimiento'} />
                       </td>
                       <td style={{ padding: "1rem 1.5rem", display: "flex", justifyContent: "flex-end" }}>

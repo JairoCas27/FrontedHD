@@ -242,21 +242,16 @@ export async function createAdminAsset(data) {
   });
 }
 
-// Cambia la función para recibir el 'tipo' (o el objeto completo 'bien') además del nuevo estado
-export async function updateAdminAssetStatus(id, nuevoEstado, tipoActivo = "ESTACIONAMIENTO") {
+// 🟢 RE-CORREGIDO SEGÚN EL SWAGGER CON BODY: Envía un PUT con el JSON esperado por Java
+export async function updateAdminAssetStatus(id, payload) {
   return safeFetch(`/api/admin/assets/${id}/status`, {
     method: 'PUT',
-    body: JSON.stringify({
-      estado: nuevoEstado,
-      tipo: tipoActivo.toUpperCase(), 
-      type: tipoActivo.toUpperCase()  
-    }),
+    body: JSON.stringify(payload),
     headers: {
       'Content-Type': 'application/json'
     }
   });
 }
-
 export async function getAdminUsers() {
   return safeFetch('/api/admin/users');
 }
