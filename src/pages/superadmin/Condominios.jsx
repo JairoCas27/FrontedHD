@@ -9,7 +9,7 @@ import {
   getCountries,
   getCities,
 } from '../../services/api';
-import { Modal, Form, Button, Table, Badge, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
+import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
 
 export default function Condominios() {
   const [condominios, setCondominios] = useState([]);
@@ -99,6 +99,9 @@ export default function Condominios() {
       } else if (sortField === 'estado') {
         valA = a.activo ? 1 : 0;
         valB = b.activo ? 1 : 0;
+      } else if (sortField === 'administrador') {
+        valA = (a.nombreAdministrador || '').toLowerCase();
+        valB = (b.nombreAdministrador || '').toLowerCase();
       } else {
         return 0;
       }
@@ -176,6 +179,43 @@ export default function Condominios() {
   const getSortIcon = (field) => {
     if (sortField !== field) return null;
     return sortOrder === 'asc' ? <FiArrowUp size={14} /> : <FiArrowDown size={14} />;
+  };
+
+  // Componente inline para el estado con punto
+  const BadgeEstadoPunto = ({ activo }) => {
+    const isActive = activo === true;
+    const config = isActive
+      ? { bg: '#dcfce7', color: '#166534', dotColor: '#22c55e', label: 'Activo' }
+      : { bg: '#fee2e2', color: '#991b1b', dotColor: '#ef4444', label: 'Inactivo' };
+
+    return (
+      <span
+        style={{
+          backgroundColor: config.bg,
+          color: config.color,
+          padding: '4px 12px 4px 8px',
+          borderRadius: '20px',
+          fontSize: '0.75rem',
+          fontWeight: '600',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '6px',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        <span
+          style={{
+            width: '8px',
+            height: '8px',
+            borderRadius: '50%',
+            backgroundColor: config.dotColor,
+            display: 'inline-block',
+            flexShrink: 0,
+          }}
+        />
+        {config.label}
+      </span>
+    );
   };
 
   if (loading)
@@ -262,6 +302,8 @@ export default function Condominios() {
             <option value="ciudad-desc">Ciudad Z-A</option>
             <option value="estado-asc">Estado (Activo primero)</option>
             <option value="estado-desc">Estado (Inactivo primero)</option>
+            <option value="administrador-asc">Administrador A-Z</option>
+            <option value="administrador-desc">Administrador Z-A</option>
           </Form.Select>
         </Col>
         <Col md={3} className="text-end">
@@ -290,6 +332,9 @@ export default function Condominios() {
                 <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('ciudad')}>
                   Ciudad {getSortIcon('ciudad')}
                 </th>
+                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('administrador')}>
+                  Administrador {getSortIcon('administrador')}
+                </th>
                 <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('estado')}>
                   Estado {getSortIcon('estado')}
                 </th>
@@ -303,10 +348,9 @@ export default function Condominios() {
                   <td><strong>{c.nombre}</strong></td>
                   <td>{c.direccion}</td>
                   <td>{c.nombreCiudad || '-'}</td>
+                  <td>{c.nombreAdministrador || <span className="text-muted">Sin asignar</span>}</td>
                   <td>
-                    <Badge bg={c.activo ? 'success' : 'secondary'} pill>
-                      {c.activo ? 'Activo' : 'Inactivo'}
-                    </Badge>
+                    <BadgeEstadoPunto activo={c.activo} />
                   </td>
                   <td>
                     <Button
