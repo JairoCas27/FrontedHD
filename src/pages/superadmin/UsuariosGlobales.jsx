@@ -1,13 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
-import { FiSearch, FiLock, FiRefreshCw, FiX, FiCheck, FiPlus, FiEdit2, FiArrowUp, FiArrowDown } from 'react-icons/fi';
+import { FiSearch, FiLock, FiRefreshCw, FiX, FiCheck, FiPlus, FiArrowUp, FiArrowDown } from 'react-icons/fi';
 import {
   getAllUsers,
   patchUserStatus,
   forceUserPassword,
   invalidateUserSession,
   getCondominiums,
+  getAdministrators,
   createAdministrator,
-  updateAdministrator,
   assignAdministratorCondo,
 } from '../../services/api';
 import { Modal, Form, Button, Table, Badge, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
@@ -16,6 +16,8 @@ import { toast } from 'react-toastify';
 export default function UsuariosGlobales() {
   const [users, setUsers] = useState([]);
   const [condominios, setCondominios] = useState([]);
+  const [admins, setAdmins] = useState([]);
+  const [occupiedCondos, setOccupiedCondos] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     search: '',
@@ -26,7 +28,6 @@ export default function UsuariosGlobales() {
   const [sortOrder, setSortOrder] = useState('asc');
   const [sortField, setSortField] = useState('nombre');
   const [showModal, setShowModal] = useState(false);
-  const [editingUser, setEditingUser] = useState(null);
   const [form, setForm] = useState({
     nombres: '',
     apellidos: '',
@@ -46,9 +47,10 @@ export default function UsuariosGlobales() {
     setLoading(true);
     setError(null);
     try {
-      const [usersData, condosData] = await Promise.all([
+      const [usersData, condosData, adminsData] = await Promise.all([
         getAllUsers(),
         getCondominiums(),
+        getAdministrators(),
       ]);
 
       let usersList = [];
@@ -73,13 +75,35 @@ export default function UsuariosGlobales() {
         condosList = condosData.data;
       }
 
+      let adminsList = [];
+      if (Array.isArray(adminsData)) {
+        adminsList = adminsData;
+      } else if (adminsData?.items && Array.isArray(adminsData.items)) {
+        adminsList = adminsData.items;
+      } else if (adminsData?.content && Array.isArray(adminsData.content)) {
+        adminsList = adminsData.content;
+      } else if (adminsData?.data && Array.isArray(adminsData.data)) {
+        adminsList = adminsData.data;
+      }
+
       setUsers(usersList);
       setCondominios(condosList);
+      setAdmins(adminsList);
+
+      // Calcular condominios ocupados por administradores activos
+      const occupied = new Set();
+      adminsList.forEach(admin => {
+        if (admin.activo && admin.idCondominio !== null && admin.idCondominio !== undefined) {
+          occupied.add(admin.idCondominio);
+        }
+      });
+      setOccupiedCondos(occupied);
     } catch (err) {
       console.error(err);
       setError(err.message);
       setUsers([]);
       setCondominios([]);
+      setAdmins([]);
       toast.error(`Error al cargar datos: ${err.message}`);
     } finally {
       setLoading(false);
@@ -132,48 +156,38 @@ export default function UsuariosGlobales() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      if (editingUser) {
-        // Actualizar administrador
-        const updatePayload = {
-          nombres: form.nombres.trim(),
-          apellidos: form.apellidos.trim(),
-          correo: form.correo.trim(),
-          telefono: form.telefono.trim(),
-        };
-        await updateAdministrator(editingUser.id, updatePayload);
-
-        // Gestionar asignación de condominio
-        const newCondoId = form.idCondominio ? parseInt(form.idCondominio, 10) : null;
-        const oldCondoId = editingUser.idCondominio ? parseInt(editingUser.idCondominio, 10) : null;
-        if (newCondoId !== oldCondoId) {
-          if (newCondoId !== null) {
-            await assignAdministratorCondo(editingUser.id, newCondoId);
-          } else {
-            try {
-              await assignAdministratorCondo(editingUser.id, null);
-            } catch (err) {
-              toast.warning('No se pudo desasignar el condominio.');
-            }
-          }
-        }
-        toast.success('Administrador actualizado correctamente.');
-      } else {
-        // Crear administrador
-        const createPayload = {
-          nombres: form.nombres.trim(),
-          apellidos: form.apellidos.trim(),
-          correo: form.correo.trim(),
-          telefono: form.telefono.trim(),
-          contrasena: form.contrasena.trim(),
-        };
-        const created = await createAdministrator(createPayload);
-
-        if (form.idCondominio && created.id) {
-          await assignAdministratorCondo(created.id, parseInt(form.idCondominio, 10));
-        }
-        toast.success('Administrador creado correctamente.');
+      // Validar contraseña
+      if (!form.contrasena || form.contrasena.trim().length < 6) {
+        toast.warning('La contraseña debe tener al menos 6 caracteres.');
+        setSubmitting(false);
+        return;
       }
+
+      // Validar que el condominio no esté ocupado
+      const selectedCondoId = form.idCondominio ? parseInt(form.idCondominio, 10) : null;
+      if (selectedCondoId && occupiedCondos.has(selectedCondoId)) {
+        toast.error('Este condominio ya tiene un administrador asignado.');
+        setSubmitting(false);
+        return;
+      }
+
+      // Crear administrador
+      const created = await createAdministrator({
+        nombres: form.nombres.trim(),
+        apellidos: form.apellidos.trim(),
+        correo: form.correo.trim(),
+        telefono: form.telefono.trim(),
+        contrasena: form.contrasena.trim(),
+      });
+
+      // Asignar condominio si se seleccionó
+      if (selectedCondoId && created.id) {
+        await assignAdministratorCondo(created.id, selectedCondoId);
+      }
+
+      toast.success('Administrador creado correctamente.');
       setShowModal(false);
+      setForm({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', idCondominio: '' });
       setTimeout(() => loadData(), 300);
     } catch (err) {
       console.error(err);
@@ -256,17 +270,25 @@ export default function UsuariosGlobales() {
       </div>
     );
 
-  const condominioOptions = condominios.map(c => ({
-    id: c.id,
-    nombre: c.nombre,
-  }));
+  // Opciones de condominios para el dropdown
+  const getCondoOptions = () => {
+    return condominios.map(c => {
+      const isOccupied = occupiedCondos.has(c.id);
+      const disabled = isOccupied || !c.activo;
+      let label = c.nombre;
+      if (isOccupied) label += ' (ocupado)';
+      else if (!c.activo) label += ' (inactivo)';
+      return { id: c.id, nombre: c.nombre, label, disabled };
+    });
+  };
+
+  const condominioOptions = getCondoOptions();
 
   return (
     <div style={{ padding: '1.5rem' }}>
       <div className="d-flex justify-content-between align-items-center mb-4">
-        <h1 style={{ fontWeight: 700, color: '#1e293b' }}>Administradores del Sistema</h1>
+        <h1 style={{ fontWeight: 700, color: '#1e293b' }}>Usuarios del Sistema</h1>
         <Button variant="primary" onClick={() => {
-          setEditingUser(null);
           setForm({
             nombres: '',
             apellidos: '',
@@ -306,7 +328,7 @@ export default function UsuariosGlobales() {
           >
             <option value="">Todos los roles</option>
             <option value="ADMINISTRADOR_CONDOMINIO">Administrador</option>
-            <option value="AGENTE_SEGURIDAD">Seguridad</option>
+            <option value="AGENTE_SEGURIDAD">Agente Seguridad</option>
             <option value="PROPIETARIO">Propietario</option>
           </Form.Select>
         </Col>
@@ -334,8 +356,10 @@ export default function UsuariosGlobales() {
             aria-label="Filtrar por condominio"
           >
             <option value="">Todos los condominios</option>
-            {condominioOptions.map(c => (
-              <option key={c.id} value={c.id}>{c.nombre}</option>
+            {condominios.map(c => (
+              <option key={c.id} value={c.id}>
+                {c.nombre} {occupiedCondos.has(c.id) ? '(ocupado)' : ''}
+              </option>
             ))}
           </Form.Select>
         </Col>
@@ -395,82 +419,57 @@ export default function UsuariosGlobales() {
               </tr>
             </thead>
             <tbody>
-              {filteredAndSorted.map(u => {
-                const isAdmin = u.rol === 'ADMINISTRADOR_CONDOMINIO';
-                return (
-                  <tr key={u.id}>
-                    <td><strong>{u.nombres} {u.apellidos}</strong></td>
-                    <td>{u.correo}</td>
-                    <td>{u.telefono}</td>
-                    <td><Badge bg="info">{u.rol}</Badge></td>
-                    <td>{u.nombreCondominio || <span className="text-muted">Sin asignar</span>}</td>
-                    <td>
-                      <Badge bg={u.activo ? 'success' : 'secondary'} pill>
-                        {u.activo ? 'Activo' : 'Inactivo'}
-                      </Badge>
-                    </td>
-                    <td>
-                      {/* Botón Editar solo para administradores */}
-                      {isAdmin && (
-                        <Button
-                          variant="outline-primary"
-                          size="sm"
-                          className="me-2"
-                          onClick={() => {
-                            setEditingUser(u);
-                            setForm({
-                              nombres: u.nombres,
-                              apellidos: u.apellidos,
-                              correo: u.correo,
-                              telefono: u.telefono || '',
-                              contrasena: '',
-                              idCondominio: u.idCondominio?.toString() || '',
-                            });
-                            setShowModal(true);
-                          }}
-                        >
-                          <FiEdit2 />
-                        </Button>
-                      )}
-                      <Button
-                        variant="outline-warning"
-                        size="sm"
-                        className="me-2"
-                        onClick={() => handleToggleStatus(u.id, u.activo)}
-                      >
-                        {u.activo ? <FiX /> : <FiCheck />}
-                      </Button>
-                      <Button
-                        variant="outline-primary"
-                        size="sm"
-                        className="me-2"
-                        onClick={() => {
-                          setSelectedUser(u);
-                          setShowPasswordModal(true);
-                        }}
-                      >
-                        <FiLock />
-                      </Button>
-                      <Button
-                        variant="outline-danger"
-                        size="sm"
-                        onClick={() => handleInvalidate(u.id)}
-                      >
-                        <FiRefreshCw />
-                      </Button>
-                    </td>
-                  </tr>
-                );
-              })}
+              {filteredAndSorted.map(u => (
+                <tr key={u.id}>
+                  <td><strong>{u.nombres} {u.apellidos}</strong></td>
+                  <td>{u.correo}</td>
+                  <td>{u.telefono}</td>
+                  <td><Badge bg="info">{u.rol}</Badge></td>
+                  <td>{u.nombreCondominio || <span className="text-muted">Sin asignar</span>}</td>
+                  <td>
+                    <Badge bg={u.activo ? 'success' : 'secondary'} pill>
+                      {u.activo ? 'Activo' : 'Inactivo'}
+                    </Badge>
+                  </td>
+                  <td>
+                    <Button
+                      variant="outline-warning"
+                      size="sm"
+                      className="me-2"
+                      onClick={() => handleToggleStatus(u.id, u.activo)}
+                    >
+                      {u.activo ? <FiX /> : <FiCheck />}
+                    </Button>
+                    <Button
+                      variant="outline-primary"
+                      size="sm"
+                      className="me-2"
+                      onClick={() => {
+                        setSelectedUser(u);
+                        setShowPasswordModal(true);
+                      }}
+                    >
+                      <FiLock />
+                    </Button>
+                    <Button
+                      variant="outline-danger"
+                      size="sm"
+                      onClick={() => handleInvalidate(u.id)}
+                    >
+                      <FiRefreshCw />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </Table>
         </div>
       )}
 
-      {/* Modal de creación/edición (solo administradores) */}
+      {/* Modal de creación de administrador */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton className="bg-light">
-          <Modal.Title>{editingUser ? 'Editar' : 'Nuevo'} Administrador</Modal.Title>
+          <Modal.Title>Nuevo Administrador de Condominio</Modal.Title>
         </Modal.Header>
         <Form onSubmit={handleSubmit}>
           <Modal.Body>
@@ -514,32 +513,23 @@ export default function UsuariosGlobales() {
                 onChange={(e) => setForm({ ...form, telefono: e.target.value })}
               />
             </Form.Group>
-            {!editingUser && (
-              <Form.Group className="mb-3">
-                <Form.Label htmlFor="userPassword">Contraseña</Form.Label>
-                <Form.Control
-                  id="userPassword"
-                  name="userPassword"
-                  type="password"
-                  value={form.contrasena}
-                  onChange={(e) => setForm({ ...form, contrasena: e.target.value })}
-                  required={!editingUser}
-                  minLength="6"
-                />
-                <Form.Text className="text-muted">Mínimo 6 caracteres.</Form.Text>
-              </Form.Group>
-            )}
             <Form.Group className="mb-3">
-              <Form.Label htmlFor="userRol">Rol</Form.Label>
+              <Form.Label htmlFor="userPassword">Contraseña</Form.Label>
               <Form.Control
-                id="userRol"
-                name="userRol"
-                value="ADMINISTRADOR_CONDOMINIO"
-                disabled
-                className="bg-light"
+                id="userPassword"
+                name="userPassword"
+                type="password"
+                value={form.contrasena}
+                onChange={(e) => setForm({ ...form, contrasena: e.target.value })}
+                required
+                minLength="6"
               />
-              <Form.Text className="text-muted">Solo se pueden gestionar administradores de condominio.</Form.Text>
+              <Form.Text className="text-muted">Mínimo 6 caracteres.</Form.Text>
             </Form.Group>
+
+            {/* Campo de rol oculto (fijo a administrador) */}
+            <input type="hidden" name="rol" value="ADMINISTRADOR_CONDOMINIO" />
+
             <Form.Group className="mb-3">
               <Form.Label htmlFor="userCondo">Asignar condominio</Form.Label>
               <Form.Select
@@ -550,7 +540,9 @@ export default function UsuariosGlobales() {
               >
                 <option value="">Sin asignar</option>
                 {condominioOptions.map(c => (
-                  <option key={c.id} value={c.id}>{c.nombre}</option>
+                  <option key={c.id} value={c.id} disabled={c.disabled}>
+                    {c.label}
+                  </option>
                 ))}
               </Form.Select>
             </Form.Group>
@@ -558,13 +550,13 @@ export default function UsuariosGlobales() {
           <Modal.Footer>
             <Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? 'Guardando...' : 'Guardar'}
+              {submitting ? 'Creando...' : 'Crear Administrador'}
             </Button>
           </Modal.Footer>
         </Form>
       </Modal>
 
-      {/* Modal para forzar contraseña (igual que antes) */}
+      {/* Modal para forzar contraseña */}
       <Modal show={showPasswordModal} onHide={() => setShowPasswordModal(false)} centered>
         <Modal.Header closeButton className="bg-light">
           <Modal.Title>Forzar cambio de contraseña</Modal.Title>
