@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiCheckCircle, FiXCircle, FiSearch, FiArrowUp, FiArrowDown } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiArrowUp, FiArrowDown } from 'react-icons/fi';
 import {
     getAdministrators,
     createAdministrator,
@@ -9,8 +9,53 @@ import {
     assignAdministratorCondo,
     getCondominiums,
 } from '../../services/api';
-import { Modal, Form, Button, Table, Badge, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
+import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
 import { toast } from 'react-toastify';
+
+// Componente Toggle Switch (igual que en Condominios)
+const ToggleSwitch = ({ checked, onChange }) => {
+    return (
+        <div
+            onClick={() => onChange(!checked)}
+            style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '8px',
+                cursor: 'pointer',
+                userSelect: 'none',
+            }}
+        >
+            <div
+                style={{
+                    position: 'relative',
+                    width: '48px',
+                    height: '26px',
+                    backgroundColor: checked ? '#22c55e' : '#ff0000',
+                    borderRadius: '13px',
+                    transition: 'background-color 0.3s ease',
+                    boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
+                }}
+            >
+                <div
+                    style={{
+                        position: 'absolute',
+                        top: '2px',
+                        left: checked ? '24px' : '2px',
+                        width: '22px',
+                        height: '22px',
+                        backgroundColor: 'white',
+                        borderRadius: '50%',
+                        transition: 'left 0.3s ease',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                    }}
+                />
+            </div>
+            <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#334155' }}>
+                {checked ? 'Activo' : 'Inactivo'}
+            </span>
+        </div>
+    );
+};
 
 export default function Administradores() {
     const [admins, setAdmins] = useState([]);
@@ -33,8 +78,8 @@ export default function Administradores() {
     const [searchTerm, setSearchTerm] = useState('');
     const [condominioFilter, setCondominioFilter] = useState('');
     const [estadoFilter, setEstadoFilter] = useState('');
-    const [sortOrder, setSortOrder] = useState('asc'); // 'asc' o 'desc'
-    const [sortField, setSortField] = useState('nombre'); // 'nombre', 'correo', 'estado'
+    const [sortOrder, setSortOrder] = useState('asc');
+    const [sortField, setSortField] = useState('nombre');
 
     // Mapa de condominios ocupados
     const [occupiedCondos, setOccupiedCondos] = useState(new Set());
@@ -106,7 +151,6 @@ export default function Administradores() {
             return matchSearch && matchCondo && matchEstado;
         });
 
-        // Ordenar
         result.sort((a, b) => {
             let valA, valB;
             if (sortField === 'nombre') {
@@ -256,7 +300,6 @@ export default function Administradores() {
 
     const condominioOptions = getCondoOptions();
 
-    // Helper para el ícono de orden
     const getSortIcon = (field) => {
         if (sortField !== field) return null;
         return sortOrder === 'asc' ? <FiArrowUp size={14} /> : <FiArrowDown size={14} />;
@@ -394,9 +437,10 @@ export default function Administradores() {
                                     <td>{a.telefono}</td>
                                     <td>{a.nombreCondominio || <span className="text-muted">Sin asignar</span>}</td>
                                     <td>
-                                        <Badge bg={a.activo ? 'success' : 'secondary'} pill>
-                                            {a.activo ? 'Activo' : 'Inactivo'}
-                                        </Badge>
+                                        <ToggleSwitch
+                                            checked={a.activo}
+                                            onChange={() => handleToggleStatus(a.id, a.activo)}
+                                        />
                                     </td>
                                     <td>
                                         <Button
@@ -419,14 +463,6 @@ export default function Administradores() {
                                             <FiEdit2 />
                                         </Button>
                                         <Button
-                                            variant="outline-warning"
-                                            size="sm"
-                                            className="me-2"
-                                            onClick={() => handleToggleStatus(a.id, a.activo)}
-                                        >
-                                            {a.activo ? <FiXCircle /> : <FiCheckCircle />}
-                                        </Button>
-                                        <Button
                                             variant="outline-danger"
                                             size="sm"
                                             onClick={() => handleDelete(a.id)}
@@ -441,7 +477,7 @@ export default function Administradores() {
                 </div>
             )}
 
-            {/* Modal igual que antes, solo mejoras visuales menores */}
+            {/* Modal igual que antes */}
             <Modal show={showModal} onHide={() => setShowModal(false)} centered>
                 <Modal.Header closeButton className="bg-light">
                     <Modal.Title>{editing ? 'Editar' : 'Nuevo'} administrador</Modal.Title>
