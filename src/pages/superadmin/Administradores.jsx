@@ -30,7 +30,7 @@ const ToggleSwitch = ({ checked, onChange }) => {
                     position: 'relative',
                     width: '48px',
                     height: '26px',
-                    backgroundColor: checked ? '#22c55e' : '#ff0000',
+                    backgroundColor: checked ? '#c3fac4' : '#f09393',
                     borderRadius: '13px',
                     transition: 'background-color 0.3s ease',
                     boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
