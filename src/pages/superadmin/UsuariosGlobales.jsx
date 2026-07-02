@@ -6,8 +6,9 @@ import {
   forceUserPassword,
   invalidateUserSession,
   getCondominiums,
-  createAdminUser,   // <-- Cambio: usar createAdminUser
-  updateAdminUser,   // <-- Cambio: usar updateAdminUser
+  createAdministrator,
+  updateAdministrator,
+  assignAdministratorCondo,
 } from '../../services/api';
 import { Modal, Form, Button, Table, Badge, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
 import { toast } from 'react-toastify';
@@ -47,6 +48,8 @@ export default function UsuariosGlobales() {
     { value: 'AGENTE_SEGURIDAD', label: 'Agente de Seguridad' },
     { value: 'PROPIETARIO', label: 'Propietario' },
   ];
+
+  const EDITABLE_ROLES = ['ADMINISTRADOR_CONDOMINIO'];
 
   const loadData = async () => {
     setLoading(true);
@@ -136,31 +139,49 @@ export default function UsuariosGlobales() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!EDITABLE_ROLES.includes(form.rol)) {
+      toast.warning('Solo se pueden crear/editar usuarios con rol "Administrador de Condominio" desde este panel.');
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const payload = {
-        nombres: form.nombres.trim(),
-        apellidos: form.apellidos.trim(),
-        correo: form.correo.trim(),
-        telefono: form.telefono.trim(),
-        rol: form.rol,
-        condominioId: form.idCondominio ? parseInt(form.idCondominio, 10) : null,
-      };
-
       if (editingUser) {
-        // Editar usuario existente
-        await updateAdminUser(editingUser.id, payload); // <-- Cambio
-        toast.success('Usuario actualizado correctamente.');
-      } else {
-        // Crear nuevo usuario (requiere contraseña)
-        if (!form.contrasena || form.contrasena.trim().length < 6) {
-          toast.warning('La contraseña debe tener al menos 6 caracteres.');
-          setSubmitting(false);
-          return;
+        await updateAdministrator(editingUser.id, {
+          nombres: form.nombres.trim(),
+          apellidos: form.apellidos.trim(),
+          correo: form.correo.trim(),
+          telefono: form.telefono.trim(),
+        });
+
+        const newCondoId = form.idCondominio ? parseInt(form.idCondominio, 10) : null;
+        const oldCondoId = editingUser.idCondominio ? parseInt(editingUser.idCondominio, 10) : null;
+        if (newCondoId !== oldCondoId) {
+          if (newCondoId !== null) {
+            await assignAdministratorCondo(editingUser.id, newCondoId);
+          } else {
+            try {
+              await assignAdministratorCondo(editingUser.id, null);
+            } catch (err) {
+              toast.warning('No se pudo desasignar el condominio.');
+            }
+          }
         }
-        payload.contrasena = form.contrasena.trim();
-        await createAdminUser(payload); // <-- Cambio
-        toast.success('Usuario creado correctamente.');
+        toast.success('Administrador actualizado correctamente.');
+      } else {
+        const created = await createAdministrator({
+          nombres: form.nombres.trim(),
+          apellidos: form.apellidos.trim(),
+          correo: form.correo.trim(),
+          telefono: form.telefono.trim(),
+          contrasena: form.contrasena.trim(),
+        });
+
+        if (form.idCondominio && created.id) {
+          await assignAdministratorCondo(created.id, parseInt(form.idCondominio, 10));
+        }
+        toast.success('Administrador creado correctamente.');
       }
       setShowModal(false);
       setTimeout(() => loadData(), 300);
@@ -249,6 +270,8 @@ export default function UsuariosGlobales() {
     id: c.id,
     nombre: c.nombre,
   }));
+
+  const isEditableRole = EDITABLE_ROLES.includes(form.rol);
 
   return (
     <div style={{ padding: '1.5rem' }}>
@@ -385,74 +408,79 @@ export default function UsuariosGlobales() {
               </tr>
             </thead>
             <tbody>
-              {filteredAndSorted.map(u => (
-                <tr key={u.id}>
-                  <td><strong>{u.nombres} {u.apellidos}</strong></td>
-                  <td>{u.correo}</td>
-                  <td>{u.telefono}</td>
-                  <td><Badge bg="info">{u.rol}</Badge></td>
-                  <td>{u.nombreCondominio || <span className="text-muted">Sin asignar</span>}</td>
-                  <td>
-                    <Badge bg={u.activo ? 'success' : 'secondary'} pill>
-                      {u.activo ? 'Activo' : 'Inactivo'}
-                    </Badge>
-                  </td>
-                  <td>
-                    <Button
-                      variant="outline-primary"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => {
-                        setEditingUser(u);
-                        setForm({
-                          nombres: u.nombres,
-                          apellidos: u.apellidos,
-                          correo: u.correo,
-                          telefono: u.telefono || '',
-                          contrasena: '',
-                          rol: u.rol,
-                          idCondominio: u.idCondominio?.toString() || '',
-                        });
-                        setShowModal(true);
-                      }}
-                    >
-                      <FiEdit2 />
-                    </Button>
-                    <Button
-                      variant="outline-warning"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => handleToggleStatus(u.id, u.activo)}
-                    >
-                      {u.activo ? <FiX /> : <FiCheck />}
-                    </Button>
-                    <Button
-                      variant="outline-primary"
-                      size="sm"
-                      className="me-2"
-                      onClick={() => {
-                        setSelectedUser(u);
-                        setShowPasswordModal(true);
-                      }}
-                    >
-                      <FiLock />
-                    </Button>
-                    <Button
-                      variant="outline-danger"
-                      size="sm"
-                      onClick={() => handleInvalidate(u.id)}
-                    >
-                      <FiRefreshCw />
-                    </Button>
-                  </td>
-                </tr>
-              ))}
+              {filteredAndSorted.map(u => {
+                const isAdmin = u.rol === 'ADMINISTRADOR_CONDOMINIO';
+                return (
+                  <tr key={u.id}>
+                    <td><strong>{u.nombres} {u.apellidos}</strong></td>
+                    <td>{u.correo}</td>
+                    <td>{u.telefono}</td>
+                    <td><Badge bg="info">{u.rol}</Badge></td>
+                    <td>{u.nombreCondominio || <span className="text-muted">Sin asignar</span>}</td>
+                    <td>
+                      <Badge bg={u.activo ? 'success' : 'secondary'} pill>
+                        {u.activo ? 'Activo' : 'Inactivo'}
+                      </Badge>
+                    </td>
+                    <td>
+                      {isAdmin && (
+                        <Button
+                          variant="outline-primary"
+                          size="sm"
+                          className="me-2"
+                          onClick={() => {
+                            setEditingUser(u);
+                            setForm({
+                              nombres: u.nombres,
+                              apellidos: u.apellidos,
+                              correo: u.correo,
+                              telefono: u.telefono || '',
+                              contrasena: '',
+                              rol: u.rol,
+                              idCondominio: u.idCondominio?.toString() || '',
+                            });
+                            setShowModal(true);
+                          }}
+                        >
+                          <FiEdit2 />
+                        </Button>
+                      )}
+                      <Button
+                        variant="outline-warning"
+                        size="sm"
+                        className="me-2"
+                        onClick={() => handleToggleStatus(u.id, u.activo)}
+                      >
+                        {u.activo ? <FiX /> : <FiCheck />}
+                      </Button>
+                      <Button
+                        variant="outline-primary"
+                        size="sm"
+                        className="me-2"
+                        onClick={() => {
+                          setSelectedUser(u);
+                          setShowPasswordModal(true);
+                        }}
+                      >
+                        <FiLock />
+                      </Button>
+                      <Button
+                        variant="outline-danger"
+                        size="sm"
+                        onClick={() => handleInvalidate(u.id)}
+                      >
+                        <FiRefreshCw />
+                      </Button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </Table>
         </div>
       )}
 
-      {/* Modal de creación/edición */}
+      {/* Modales (igual que antes) */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton className="bg-light">
           <Modal.Title>{editingUser ? 'Editar' : 'Nuevo'} usuario</Modal.Title>
@@ -509,9 +537,7 @@ export default function UsuariosGlobales() {
                   value={form.contrasena}
                   onChange={(e) => setForm({ ...form, contrasena: e.target.value })}
                   required={!editingUser}
-                  minLength="6"
                 />
-                <Form.Text className="text-muted">Mínimo 6 caracteres.</Form.Text>
               </Form.Group>
             )}
             <Form.Group className="mb-3">
@@ -529,6 +555,11 @@ export default function UsuariosGlobales() {
                   <option key={r.value} value={r.value}>{r.label}</option>
                 ))}
               </Form.Select>
+              {!isEditableRole && (
+                <div className="text-warning mt-1 small">
+                  ⚠️ Solo se pueden crear/editar Administradores de Condominio desde este panel.
+                </div>
+              )}
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label htmlFor="userCondo">Condominio</Form.Label>
@@ -537,6 +568,7 @@ export default function UsuariosGlobales() {
                 name="userCondo"
                 value={form.idCondominio}
                 onChange={(e) => setForm({ ...form, idCondominio: e.target.value })}
+                disabled={!isEditableRole}
               >
                 <option value="">Sin asignar</option>
                 {condominioOptions.map(c => (
@@ -547,14 +579,17 @@ export default function UsuariosGlobales() {
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
-            <Button type="submit" disabled={submitting}>
+            <Button
+              type="submit"
+              disabled={submitting || !isEditableRole}
+              title={!isEditableRole ? 'Solo se permite crear/editar Administradores de Condominio' : ''}
+            >
               {submitting ? 'Guardando...' : 'Guardar'}
             </Button>
           </Modal.Footer>
         </Form>
       </Modal>
 
-      {/* Modal para forzar contraseña */}
       <Modal show={showPasswordModal} onHide={() => setShowPasswordModal(false)} centered>
         <Modal.Header closeButton className="bg-light">
           <Modal.Title>Forzar cambio de contraseña</Modal.Title>
@@ -579,7 +614,6 @@ export default function UsuariosGlobales() {
               }}
               placeholder="Ingresa nueva contraseña"
               isInvalid={!!passwordError}
-              minLength="6"
             />
             <Form.Control.Feedback type="invalid">
               {passwordError}
