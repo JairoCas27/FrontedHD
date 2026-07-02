@@ -8,7 +8,6 @@ export function useAdminAssets() {
   const cargarBienes = async () => {
     try {
       setLoading(true);
-      // Mantenemos la paginación y filtros que ya tenías configurados
       const queryParams = "?pagina=0&tamano=100&type=Estacionamiento";
       const data = await getAdminAssets(queryParams);
       setBienes(data?.items || []);
@@ -22,19 +21,28 @@ export function useAdminAssets() {
   const registrarBien = async (assetData) => {
     try {
       await createAdminAsset(assetData);
-      await cargarBienes(); // Refresca la lista inmediatamente tras registrar
+      await cargarBienes();
     } catch (error) {
       console.error("Error al crear bien común:", error);
       throw error;
     }
   };
 
-  // 🟢 CORREGIDO: Ahora recibe y pasa solo el 'id' y el 'estado' ('AVAILABLE' o 'MAINTENANCE')
-  // para que calce con el Query Parameter (?status=) de api.js
-  const actualizarEstadoBien = async (id, estado) => {
+  // 🟢 RE-CORREGIDO: Recibe los datos necesarios para empaquetar el Request Body exacto de Diego
+  const actualizarEstadoBien = async (id, nuevoEstado, tipoActivo, esParaDisponible) => {
     try {
-      await updateAdminAssetStatus(id, estado);
-      await cargarBienes(); // 🔄 Hace el re-fetch automático para pintar la tabla en tiempo real
+      // 🎯 Estructura de payload requerida en el esquema del Swagger
+      const payload = {
+        tipo: tipoActivo ? tipoActivo.toUpperCase() : "ESTACIONAMIENTO",
+        estado: nuevoEstado,          // "AVAILABLE" o "MAINTENANCE"
+        disponible: esParaDisponible,  // true o false booleano
+        tipoVehiculo: "string",
+        capacidadMaxima: 1
+      };
+
+      // Invocamos pasándole el ID en la URL y el payload en el Body
+      await updateAdminAssetStatus(id, payload);
+      await cargarBienes(); // Refresca visualmente la tabla en tiempo real
     } catch (error) {
       console.error("Error al cambiar estado de activo:", error);
       throw error;

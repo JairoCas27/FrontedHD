@@ -56,13 +56,13 @@ export default function Bienes() {
     }
   }
 
-  // 🟢 EDITADO: Ahora invoca al hook usando únicamente los dos parámetros contractuales
+  // 🟢 SWAGGER SYNC: Pasa los 4 datos clave para estructurar el body completo en el hook
   const ejecutarCambioEstado = async () => {
     try {
-      const { bienId, nuevoEstado } = confirmModal
+      const { bienId, nuevoEstado, tipoBien, esParaDisponible } = confirmModal
       
-      // 🎯 Mandamos solo ID y el string de estado ('AVAILABLE' o 'MAINTENANCE')
-      await actualizarEstadoBien(bienId, nuevoEstado)
+      // Enviamos de forma ordenada para que calce con el hook
+      await actualizarEstadoBien(bienId, nuevoEstado, tipoBien, esParaDisponible)
       
       setConfirmModal({ visible: false, bienId: null, nuevoEstado: '', codigoBien: '', tipoBien: '', esParaDisponible: false })
       mostrarToast("Estado del activo actualizado correctamente", "info")

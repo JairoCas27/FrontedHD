@@ -242,13 +242,16 @@ export async function createAdminAsset(data) {
   });
 }
 
-// 🟢 CORREGIDO: Cumple con el Swagger de Diego usando Query Parameter (?status=) y sin Body
-export async function updateAdminAssetStatus(id, nuevoEstado) {
-  return safeFetch(`/api/admin/assets/${id}/status?status=${nuevoEstado}`, {
-    method: 'PUT'
+// 🟢 RE-CORREGIDO SEGÚN EL SWAGGER CON BODY: Envía un PUT con el JSON esperado por Java
+export async function updateAdminAssetStatus(id, payload) {
+  return safeFetch(`/api/admin/assets/${id}/status`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+    headers: {
+      'Content-Type': 'application/json'
+    }
   });
 }
-
 export async function getAdminUsers() {
   return safeFetch('/api/admin/users');
 }
