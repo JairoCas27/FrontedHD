@@ -26,12 +26,11 @@ const INITIAL_ERRORS = {
   telefono: "",
 };
 
-const NOMBRE_PATTERN   = /^[A-Za-zÁáÉéÍíÓóÚúÑñÜü\s]{2,}$/;
+const NOMBRE_PATTERN    = /^[A-Za-zÁáÉéÍíÓóÚúÑñÜü\s]{2,}$/;
 const NOMBRE_MAX_LENGTH = 50;
 
-const TELEFONO_PATTERN     = /^\+?[\d\s\-]{7,15}$/;
-const TELEFONO_MIN_DIGITOS = 7;
-const TELEFONO_MAX_DIGITOS = 15;
+// Teléfono Perú: exactamente 9 dígitos, empieza en 9
+const TELEFONO_PATTERN = /^9\d{8}$/;
 
 // ─── Validación ──────────────────────────────────────────────────────────────
 
@@ -64,15 +63,9 @@ function validateForm({ nombres, apellidos, telefono }) {
   }
 
   const telefonoTrim = telefono?.trim() ?? "";
-  if (telefonoTrim) {
-    const soloDigitos = telefonoTrim.replace(/\D/g, "");
-    if (!TELEFONO_PATTERN.test(telefonoTrim)) {
-      errors.telefono = "Formato inválido. Ej: +51999000000";
-      valid = false;
-    } else if (soloDigitos.length < TELEFONO_MIN_DIGITOS || soloDigitos.length > TELEFONO_MAX_DIGITOS) {
-      errors.telefono = `Debe tener entre ${TELEFONO_MIN_DIGITOS} y ${TELEFONO_MAX_DIGITOS} dígitos.`;
-      valid = false;
-    }
+  if (telefonoTrim && !TELEFONO_PATTERN.test(telefonoTrim)) {
+    errors.telefono = "Debe tener 9 dígitos y empezar con 9. Ej: 987654321";
+    valid = false;
   }
 
   return { errors, valid };
@@ -274,7 +267,7 @@ export default function PerfilPropietario() {
                 name="telefono"
                 value={form.telefono}
                 onChange={handleChange}
-                placeholder="+51999000000"
+                placeholder="987654321"
               />
               <FieldError message={errors.telefono} />
             </div>
