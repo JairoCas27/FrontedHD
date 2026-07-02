@@ -1,5 +1,3 @@
-// src/pages/propietario/MisVehiculos.jsx
-
 import { useEffect, useState } from "react";
 import { Car, Plus, Trash2 } from "lucide-react";
 import {
@@ -39,10 +37,8 @@ const INITIAL_FORM = {
 };
 
 const TIPO_OPTIONS = [
-  { value: "Auto", label: "Auto" },
-  { value: "Camioneta", label: "Camioneta" },
-  { value: "Moto", label: "Moto" },
-  { value: "Otro", label: "Otro" },
+  { value: "AUTO", label: "Auto" },
+  { value: "MOTO", label: "Moto" },
 ];
 
 function VehicleCard({ vehicle, onDelete }) {
