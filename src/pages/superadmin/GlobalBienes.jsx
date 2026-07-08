@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { FiPackage, FiRefreshCw, FiX, FiTool, FiAlertTriangle, FiInfo, FiTruck, FiChevronLeft, FiChevronRight, FiSearch, FiSettings, FiPlayCircle, FiCheckCircle } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import BadgeEstado from '../../components/BadgeEstado'
-import { getCondominiums, getAdminAssets, createAdminAsset, updateAdminAssetStatus } from '../../services/api'
+import { getCondominiums, getSuperAdminAssets, createSuperAdminAsset, updateSuperAdminAssetStatus } from '../../services/api'
 
 const colorSuper = "rgb(124,58,237)"
 
@@ -48,7 +48,7 @@ export default function GlobalBienes() {
     setLoadingEst(true)
     setErrorCondo('')
     try {
-      const data = await getAdminAssets(`?type=ESTACIONAMIENTO&page=${pagina}&size=10`)
+      const data = await getSuperAdminAssets(condoSeleccionado, `?type=ESTACIONAMIENTO&page=${pagina}&size=10`)
       setEstacionamientos(data?.items || [])
       setTotalPagEst(data?.totalPaginas || 0)
       setTotalEst(data?.total || 0)
@@ -65,7 +65,7 @@ export default function GlobalBienes() {
     if (!condoSeleccionado) return
     setLoadingCar(true)
     try {
-      const data = await getAdminAssets(`?type=CARRITO&page=${pagina}&size=10`)
+      const data = await getSuperAdminAssets(condoSeleccionado, `?type=CARRITO&page=${pagina}&size=10`)
       setCarritos(data?.items || [])
       setTotalPagCar(data?.totalPaginas || 0)
       setTotalCar(data?.total || 0)
@@ -90,11 +90,11 @@ export default function GlobalBienes() {
     try {
       if (tabActiva === 'ESTACIONAMIENTO') {
         if (!numeroForm) return
-        await createAdminAsset({ tipo: "ESTACIONAMIENTO", numero: Number(numeroForm) })
+        await createSuperAdminAsset(condoSeleccionado, { tipo: "ESTACIONAMIENTO", numero: Number(numeroForm) })
         mostrarToast("¡Estacionamiento registrado!")
       } else {
         if (!codigoForm.trim()) return
-        await createAdminAsset({ tipo: "CARRITO", codigo: codigoForm.trim() })
+        await createSuperAdminAsset(condoSeleccionado, { tipo: "CARRITO", codigo: codigoForm.trim() })
         mostrarToast("¡Carrito registrado!")
       }
       setShowModal(false)
@@ -111,7 +111,7 @@ export default function GlobalBienes() {
 
   const ejecutarCambioEstadoCarrito = async () => {
     try {
-      await updateAdminAssetStatus(confirmModal.id, { tipo: "CARRITO", estado: confirmModal.estadoDestino })
+      await updateSuperAdminAssetStatus(condoSeleccionado, confirmModal.id, { tipo: "CARRITO", estado: confirmModal.estadoDestino })
       setConfirmModal({ visible: false })
       mostrarToast("Estado actualizado", "info")
       await cargarCar(paginaCar)
@@ -123,7 +123,7 @@ export default function GlobalBienes() {
   const guardarConfigEstacionamiento = async (e) => {
     e.preventDefault()
     try {
-      await updateAdminAssetStatus(estConfig.id, { tipo: "ESTACIONAMIENTO", tipoVehiculo: tipoVehiculoForm || null, capacidadMaxima: capacidadForm ? Number(capacidadForm) : null })
+      await updateSuperAdminAssetStatus(condoSeleccionado, estConfig.id, { tipo: "ESTACIONAMIENTO", tipoVehiculo: tipoVehiculoForm || null, capacidadMaxima: capacidadForm ? Number(capacidadForm) : null })
       setShowModalConfig(false)
       mostrarToast("Configuración actualizada")
       await cargarEst(paginaEst)
@@ -134,7 +134,7 @@ export default function GlobalBienes() {
 
   const reiniciarConfigEstacionamiento = async () => {
     try {
-      await updateAdminAssetStatus(estConfig.id, { tipo: "ESTACIONAMIENTO", tipoVehiculo: null, capacidadMaxima: null })
+      await updateSuperAdminAssetStatus(condoSeleccionado, estConfig.id, { tipo: "ESTACIONAMIENTO", tipoVehiculo: null, capacidadMaxima: null })
       setShowModalConfig(false)
       mostrarToast("Configuración reiniciada")
       await cargarEst(paginaEst)

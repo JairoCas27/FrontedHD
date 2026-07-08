@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react'
 import { FiGitCommit, FiTrash2, FiFolder, FiX, FiPlus, FiAlertTriangle, FiHome } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
-import { getCondominiums, getAdminStructure, createAdminStructureNode, deleteAdminStructureNode } from '../../services/api'
+import { getCondominiums, getSuperAdminStructure, createSuperAdminStructureNode, deleteSuperAdminStructureNode } from '../../services/api'
 
 const colorSuper = "rgb(124,58,237)"
 
@@ -32,7 +32,7 @@ export default function GlobalEstructura() {
     setLoading(true)
     setErrorCondo('')
     try {
-      const data = await getAdminStructure()
+      const data = await getSuperAdminStructure(condoSeleccionado)
       setEstructura(data || [])
     } catch (err) {
       setErrorCondo(err.message || 'Error. El backend puede no soportar superadmin para estructura.')
@@ -72,7 +72,7 @@ export default function GlobalEstructura() {
   const handleConfirmarTorre = async () => {
     try {
       setProcesando(true)
-      await createAdminStructureNode({ tipo: "TORRE", nombre: nombreNuevaTorre, nombreTorre: null, numeroPiso: null, numero: null })
+      await createSuperAdminStructureNode(condoSeleccionado, { tipo: "TORRE", nombre: nombreNuevaTorre, nombreTorre: null, numeroPiso: null, numero: null })
       setShowModalTorre(false)
       await cargarDatos()
       mostrarNotificacion('exito', 'Torre creada', `${nombreNuevaTorre} registrada correctamente.`)
@@ -89,7 +89,7 @@ export default function GlobalEstructura() {
     const siguienteNumero = calcularSiguientePiso(torreParaPiso)
     try {
       setProcesando(true)
-      await createAdminStructureNode({ tipo: "PISO", nombre: `Piso ${siguienteNumero}`, nombreTorre: torreParaPiso.nombre, numeroPiso: siguienteNumero, numero: siguienteNumero })
+      await createSuperAdminStructureNode(condoSeleccionado, { tipo: "PISO", nombre: `Piso ${siguienteNumero}`, nombreTorre: torreParaPiso.nombre, numeroPiso: siguienteNumero, numero: siguienteNumero })
       setShowModalPiso(false)
       await cargarDatos()
       mostrarNotificacion('exito', 'Piso creado', `Piso ${siguienteNumero} añadido a ${torreParaPiso.nombre}.`)
@@ -107,7 +107,7 @@ export default function GlobalEstructura() {
     const etiqueta = nodoAEliminar.type === 'PISO' ? 'Nivel' : 'Torre'
     try {
       setProcesando(true)
-      await deleteAdminStructureNode(nodoAEliminar.id, nodoAEliminar.type)
+      await deleteSuperAdminStructureNode(condoSeleccionado, nodoAEliminar.id, nodoAEliminar.type)
       setShowModalEliminar(false)
       await cargarDatos()
       mostrarNotificacion('exito', `${etiqueta} eliminado`, `${nodoAEliminar.nombre} eliminado correctamente.`)

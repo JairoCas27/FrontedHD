@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react'
 import { FiHome, FiUserCheck, FiX, FiSearch, FiChevronLeft, FiChevronRight, FiShield, FiLock, FiGrid } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
-import { getCondominiums, getAdminApartments, assignApartmentOwner, getAdminUsers } from '../../services/api'
+import { getCondominiums, getSuperAdminApartments, assignApartmentOwnerSuperAdmin, getAllUsers } from '../../services/api'
 
 const colorSuper = "rgb(124,58,237)"
 
@@ -35,7 +35,7 @@ export default function GlobalDepartamentos() {
     setLoading(true)
     setErrorCondo('')
     try {
-      const data = await getAdminApartments(`?page=${pagina}&size=9`)
+      const data = await getSuperAdminApartments(condoSeleccionado, `?page=${pagina}&size=9`)
       setDepartamentos(data?.items || [])
       setMeta({
         total: data?.total ?? 0,
@@ -58,7 +58,7 @@ export default function GlobalDepartamentos() {
 
   useEffect(() => {
     if (!condoSeleccionado) return
-    getAdminUsers().then(data => {
+    getAllUsers().then(data => {
       const lista = Array.isArray(data) ? data : (data?.items || [])
       setUsuarios(lista)
     }).catch(() => {})
@@ -110,7 +110,7 @@ export default function GlobalDepartamentos() {
     if (!deptoSeleccionado || !idPropietarioSeleccionado) return
     try {
       setGuardando(true)
-      await assignApartmentOwner(deptoSeleccionado.id, Number(idPropietarioSeleccionado))
+      await assignApartmentOwnerSuperAdmin(deptoSeleccionado.id, Number(idPropietarioSeleccionado), condoSeleccionado)
       setShowModal(false)
       await cargarDatos()
     } catch (error) {

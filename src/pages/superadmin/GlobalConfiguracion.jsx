@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { FiSave, FiSettings, FiTruck, FiClock, FiGrid } from "react-icons/fi"
-import { getCondominiums, getAdminCondoConfig, updateAdminCondoConfig } from '../../services/api'
+import { getCondominiums, getSuperAdminCondoConfig, updateSuperAdminCondoConfig } from '../../services/api'
 
 const colorSuper = "rgb(124,58,237)"
 
@@ -23,7 +23,7 @@ export default function GlobalConfiguracion() {
     if (!condoSeleccionado) return
     setLoading(true)
     setErrorCondo('')
-    getAdminCondoConfig()
+    getSuperAdminCondoConfig(condoSeleccionado)
       .then(data => setConfig(data))
       .catch(err => {
         setErrorCondo(err.message || 'Error. Verifica que el backend soporte superadmin para configuración.')
@@ -42,7 +42,7 @@ export default function GlobalConfiguracion() {
     e.preventDefault()
     if (!config) return
     try {
-      const data = await updateAdminCondoConfig(config)
+      const data = await updateSuperAdminCondoConfig(condoSeleccionado, config)
       setConfig(data)
       setMensaje('Parámetros actualizados correctamente')
       setTimeout(() => setMensaje(''), 3000)
