@@ -254,7 +254,7 @@ export default function DashboardSuperAdmin() {
             <Col xs={12} sm={6} lg={3} key={idx}>
               <Card className="border-0 shadow-sm h-100" style={{ transition: 'transform 0.2s' }}>
                 <Card.Body>
-                  <div className="d-flex justify-content-between align-items-start">
+                  <div className="d-flex justify-content-between align-items-start flex-wrap gap-2">
                     <div>
                       <div className="text-muted small fw-bold text-uppercase tracking-wide">
                         {stat.title}

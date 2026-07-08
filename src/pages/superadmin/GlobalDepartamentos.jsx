@@ -5,6 +5,14 @@ import { getCondominiums, getAllUsers } from '../../services/api'
 
 const colorSuper = "rgb(124,58,237)"
 
+const globalResponsive = `
+@media (max-width: 767px) {
+  .global-card-padding { padding: 1rem !important; }
+  .global-table-wrap { overflow-x: auto !important; }
+  .global-search-wrap { width: 100% !important; max-width: 260px !important; }
+}
+`;
+
 export default function GlobalDepartamentos() {
   const [condominios, setCondominios] = useState([])
   const [usuarios, setUsuarios] = useState([])
@@ -50,11 +58,12 @@ export default function GlobalDepartamentos() {
   }
 
   return (
-    <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
+    <div className="global-card-padding" style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
+      <style>{globalResponsive}</style>
       <EncabezadoTabla titulo="Departamentos Global" subtitulo="Vista general de unidades inmobiliarias en todos los condominios" />
 
       <div style={{ backgroundColor: "#ffffff", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", marginBottom: "2rem", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
-        <div style={{ width: "280px" }}>
+        <div style={{ width: "100%", maxWidth: "280px" }}>
           <select style={estiloInput} value={condoSeleccionado} onChange={(e) => { setCondoSeleccionado(e.target.value); setBusqueda('') }}>
             <option value="">Seleccionar condominio</option>
             {condominios.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
@@ -109,7 +118,7 @@ export default function GlobalDepartamentos() {
               <span style={{ fontWeight: "700", fontSize: "0.9rem", color: "#1e293b" }}>
                 Propietarios de {condoActual?.nombre} <span style={{ color: "#94a3b8", fontWeight: "600" }}>({propietariosFiltrados.length})</span>
               </span>
-              <div style={{ width: "260px", position: "relative" }}>
+              <div className="global-search-wrap" style={{ width: "260px", maxWidth: "260px", position: "relative" }}>
                 <FiSearch size={14} style={{ position: "absolute", left: "0.65rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
                 <input type="text" placeholder="Buscar propietario..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)}
                   style={{ ...estiloInput, paddingLeft: "2rem", paddingTop: "0.45rem", paddingBottom: "0.45rem", fontSize: "0.8rem" }} />
@@ -120,6 +129,7 @@ export default function GlobalDepartamentos() {
                 {busqueda ? 'No se encontraron coincidencias.' : 'No hay propietarios registrados en este condominio.'}
               </div>
             ) : (
+              <div className="global-table-wrap" style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
                 <thead>
                   <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: "700", fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
@@ -170,6 +180,7 @@ export default function GlobalDepartamentos() {
                   ))}
                 </tbody>
               </table>
+              </div>
             )}
           </div>
         </>

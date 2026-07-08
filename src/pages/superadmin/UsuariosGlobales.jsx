@@ -311,7 +311,7 @@ export default function UsuariosGlobales() {
       </div>
 
       <Row className="mb-4 g-2 align-items-end">
-        <Col md={3}>
+        <Col xs={12} sm={6} md={3}>
           <InputGroup>
             <InputGroup.Text><FiSearch /></InputGroup.Text>
             <Form.Control
@@ -324,7 +324,7 @@ export default function UsuariosGlobales() {
             />
           </InputGroup>
         </Col>
-        <Col md={2}>
+        <Col xs={12} sm={6} md={2}>
           <Form.Label htmlFor="filterRol" className="visually-hidden">Filtrar por rol</Form.Label>
           <Form.Select
             id="filterRol"
@@ -339,7 +339,7 @@ export default function UsuariosGlobales() {
             <option value="PROPIETARIO">Propietario</option>
           </Form.Select>
         </Col>
-        <Col md={2}>
+        <Col xs={12} sm={6} md={2}>
           <Form.Label htmlFor="filterEstado" className="visually-hidden">Filtrar por estado</Form.Label>
           <Form.Select
             id="filterEstado"
@@ -353,7 +353,7 @@ export default function UsuariosGlobales() {
             <option value="inactivo">Inactivo</option>
           </Form.Select>
         </Col>
-        <Col md={2}>
+        <Col xs={12} sm={6} md={2}>
           <Form.Label htmlFor="filterCondo" className="visually-hidden">Filtrar por condominio</Form.Label>
           <Form.Select
             id="filterCondo"
@@ -370,7 +370,7 @@ export default function UsuariosGlobales() {
             ))}
           </Form.Select>
         </Col>
-        <Col md={3} className="text-end">
+        <Col xs={12} sm={6} md={3} className="text-sm-start text-md-end">
           <Button variant="outline-secondary" onClick={() => {
             setFilters({ search: '', rol: '', estado: '', condominio: '' });
           }}>
@@ -439,11 +439,10 @@ export default function UsuariosGlobales() {
                       onChange={() => setConfirmAction({ type: 'status', user: u })}
                     />
                   </td>
-                  <td>
+                  <td className="d-flex flex-wrap gap-1">
                     <Button
                       variant="outline-info"
                       size="sm"
-                      className="me-1"
                       onClick={() => { setDetailItem(u); setShowDetail(true); }}
                       title="Ver detalle"
                     >
@@ -452,7 +451,6 @@ export default function UsuariosGlobales() {
                     <Button
                       variant="outline-primary"
                       size="sm"
-                      className="me-1"
                       onClick={() => {
                         setSelectedUser(u);
                         setShowPasswordModal(true);

@@ -5,6 +5,12 @@ import { getCondominiums } from '../../services/api'
 
 const colorSuper = "rgb(124,58,237)"
 
+const globalResponsive = `
+@media (max-width: 767px) {
+  .global-card-padding { padding: 1rem !important; }
+}
+`;
+
 export default function GlobalConfiguracion() {
   const [condominios, setCondominios] = useState([])
   const [condoSeleccionado, setCondoSeleccionado] = useState('')
@@ -32,14 +38,15 @@ export default function GlobalConfiguracion() {
   }
 
   return (
-    <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
+    <div className="global-card-padding" style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
+      <style>{globalResponsive}</style>
       <div style={{ marginBottom: "2rem" }}>
         <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>Configuraci&oacute;n Global</h1>
         <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>L&iacute;mites operacionales y reglas de negocio por condominio</p>
       </div>
 
       <div style={{ backgroundColor: "#ffffff", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", marginBottom: "2rem", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
-        <div style={{ width: "280px" }}>
+        <div style={{ width: "100%", maxWidth: "280px" }}>
           <select style={estiloInput} value={condoSeleccionado} onChange={(e) => setCondoSeleccionado(e.target.value)}>
             <option value="">Seleccionar condominio</option>
             {condominios.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}

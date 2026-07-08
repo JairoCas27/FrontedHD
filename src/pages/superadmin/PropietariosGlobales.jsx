@@ -215,7 +215,7 @@ export default function PropietariosGlobales() {
       </div>
 
       <Row className="mb-4 g-2 align-items-end">
-        <Col md={4}>
+        <Col xs={12} sm={6} md={4}>
           <InputGroup>
             <InputGroup.Text><FiSearch /></InputGroup.Text>
             <Form.Control
@@ -225,7 +225,7 @@ export default function PropietariosGlobales() {
             />
           </InputGroup>
         </Col>
-        <Col md={2}>
+        <Col xs={12} sm={6} md={2}>
           <Form.Select
             value={filters.condominio}
             onChange={(e) => setFilters({ ...filters, condominio: e.target.value })}
@@ -236,7 +236,7 @@ export default function PropietariosGlobales() {
             ))}
           </Form.Select>
         </Col>
-        <Col md={2}>
+        <Col xs={12} sm={6} md={2}>
           <Form.Select
             value={`${sortField}-${sortOrder}`}
             onChange={(e) => {
@@ -252,7 +252,7 @@ export default function PropietariosGlobales() {
 
           </Form.Select>
         </Col>
-        <Col md={2}>
+        <Col xs={12} sm={6} md={2}>
           <Button variant="outline-secondary" onClick={() => setFilters({ search: '', condominio: '' })}>
             Limpiar
           </Button>
@@ -286,12 +286,12 @@ export default function PropietariosGlobales() {
                   <td>{u.correo}</td>
                   <td>{u.telefono}</td>
                   <td>{u.nombreCondominio || <span className="text-muted">Sin asignar</span>}</td>
-                  <td>
-                    <Button variant="outline-info" size="sm" className="me-1"
+                  <td className="d-flex flex-wrap gap-1">
+                    <Button variant="outline-info" size="sm"
                       onClick={() => { setDetailItem(u); setShowDetail(true); }} title="Ver detalle">
                       <FiEye />
                     </Button>
-                    <Button variant="outline-warning" size="sm" className="me-1"
+                    <Button variant="outline-warning" size="sm"
                       onClick={() => { setEditingUser(u); setEditForm({ nombres: u.nombres, apellidos: u.apellidos, telefono: u.telefono || '', idCondominio: u.idCondominio?.toString() || '' }); setShowEditModal(true); }} title="Editar">
                       <FiEdit2 />
                     </Button>

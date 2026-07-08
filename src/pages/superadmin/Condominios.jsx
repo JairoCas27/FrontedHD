@@ -228,7 +228,7 @@ export default function Condominios() {
       </div>
 
       <Row className="mb-4 g-2 align-items-end">
-        <Col md={3}>
+        <Col xs={12} sm={6} md={3}>
           <InputGroup>
             <InputGroup.Text><FiSearch /></InputGroup.Text>
             <Form.Control
@@ -239,7 +239,7 @@ export default function Condominios() {
             />
           </InputGroup>
         </Col>
-        <Col md={2}>
+        <Col xs={12} sm={6} md={2}>
           <Form.Select
             value={ciudadFilter}
             onChange={(e) => setCiudadFilter(e.target.value)}
@@ -251,7 +251,7 @@ export default function Condominios() {
             ))}
           </Form.Select>
         </Col>
-        <Col md={2}>
+        <Col xs={12} sm={6} md={2}>
           <Form.Select
             value={estadoFilter}
             onChange={(e) => setEstadoFilter(e.target.value)}
@@ -262,7 +262,7 @@ export default function Condominios() {
             <option value="inactivo">Inactivo</option>
           </Form.Select>
         </Col>
-        <Col md={2}>
+        <Col xs={12} sm={6} md={2}>
           <Form.Select
             value={`${sortField}-${sortOrder}`}
             onChange={(e) => {
@@ -282,7 +282,7 @@ export default function Condominios() {
             <option value="administrador-desc">Administrador Z-A</option>
           </Form.Select>
         </Col>
-        <Col md={3} className="text-end">
+        <Col xs={12} sm={6} md={3} className="text-sm-start text-md-end">
           <Button variant="outline-secondary" onClick={() => {
             setSearchTerm('');
             setCiudadFilter('');
@@ -331,11 +331,10 @@ export default function Condominios() {
                       onChange={() => handleToggleStatus(c.id, c.activo)}
                     />
                   </td>
-                  <td>
+                  <td className="d-flex flex-wrap gap-1">
                     <Button
                       variant="outline-info"
                       size="sm"
-                      className="me-1"
                       onClick={() => { setDetailItem(c); setShowDetail(true); }}
                       title="Ver detalle"
                     >
@@ -344,7 +343,6 @@ export default function Condominios() {
                     <Button
                       variant="outline-primary"
                       size="sm"
-                      className="me-1"
                       onClick={() => {
                         setEditing(c);
                         setForm({

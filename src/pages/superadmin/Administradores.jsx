@@ -299,7 +299,7 @@ export default function Administradores() {
 
             {/* Filtros y orden */}
             <Row className="mb-4 g-2 align-items-end">
-                <Col md={3}>
+                <Col xs={12} md={3}>
                     <InputGroup>
                         <InputGroup.Text><FiSearch /></InputGroup.Text>
                         <Form.Control
@@ -312,7 +312,7 @@ export default function Administradores() {
                         />
                     </InputGroup>
                 </Col>
-                <Col md={2}>
+                <Col xs={12} sm={6} md={2}>
                     <Form.Label htmlFor="filterCondo" className="visually-hidden">Filtrar por condominio</Form.Label>
                     <Form.Select
                         id="filterCondo"
@@ -329,7 +329,7 @@ export default function Administradores() {
                         ))}
                     </Form.Select>
                 </Col>
-                <Col md={2}>
+                <Col xs={12} sm={6} md={2}>
                     <Form.Label htmlFor="sortOrder" className="visually-hidden">Ordenar por</Form.Label>
                     <Form.Select
                         id="sortOrder"
@@ -348,7 +348,7 @@ export default function Administradores() {
                         <option value="correo-desc">Correo Z-A</option>
                     </Form.Select>
                 </Col>
-                <Col md={3} className="text-end">
+                <Col xs={12} sm={6} md={3} className="text-sm-start text-md-end">
                     <Button variant="outline-secondary" onClick={() => {
                         setSearchTerm('');
                         setCondominioFilter('');
@@ -388,11 +388,10 @@ export default function Administradores() {
                                     <td>{a.correo}</td>
                                     <td>{a.telefono}</td>
                                     <td>{a.nombreCondominio || <span className="text-muted">Sin asignar</span>}</td>
-                                    <td>
+                                    <td className="d-flex flex-wrap gap-1">
                                         <Button
                                             variant="outline-info"
                                             size="sm"
-                                            className="me-1"
                                             onClick={() => { setDetailItem(a); setShowDetail(true); }}
                                             title="Ver detalle"
                                         >
@@ -401,7 +400,6 @@ export default function Administradores() {
                                         <Button
                                             variant="outline-primary"
                                             size="sm"
-                                            className="me-1"
                                             onClick={() => {
                                                 setEditing(a);
                                                 setForm({

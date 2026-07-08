@@ -16,6 +16,24 @@ const COLORS = {
   purple: '#8b5cf6',
 };
 
+const responsiveStyle = `
+@media (max-width: 767px) {
+  .auditoria-timeline-item {
+    flex-wrap: wrap !important;
+  }
+  .auditoria-timeline-content {
+    min-width: 0 !important;
+    flex: 1 1 100% !important;
+  }
+  .auditoria-timeline-badge {
+    flex-wrap: wrap !important;
+  }
+  .auditoria-title {
+    font-size: 0.95rem !important;
+  }
+}
+`;
+
 export default function AuditoriaGlobal() {
   const [recentAdmins, setRecentAdmins] = useState([]);
   const [recentCondos, setRecentCondos] = useState([]);
@@ -126,6 +144,8 @@ export default function AuditoriaGlobal() {
   }
 
   return (
+    <>
+      <style>{responsiveStyle}</style>
     <div style={{ padding: '1.5rem', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
       <div className="d-flex justify-content-between align-items-start mb-4">
         <div>
@@ -207,6 +227,7 @@ export default function AuditoriaGlobal() {
               {allActivity.map((item, idx) => (
                 <div
                   key={item.id}
+                  className="auditoria-timeline-item"
                   style={{
                     display: 'flex',
                     gap: '16px',
@@ -247,8 +268,8 @@ export default function AuditoriaGlobal() {
                       />
                     )}
                   </div>
-                  <div style={{ flex: 1, paddingTop: '4px' }}>
-                    <div className="d-flex justify-content-between align-items-start">
+                  <div className="auditoria-timeline-content" style={{ flex: 1, paddingTop: '4px', minWidth: 0 }}>
+                    <div className="auditoria-timeline-badge d-flex justify-content-between align-items-start">
                       <div>
                         <strong style={{ color: '#0f172a' }}>{item.title}</strong>
                         {item.subtitle && (
@@ -282,5 +303,6 @@ export default function AuditoriaGlobal() {
         </Card.Body>
       </Card>
     </div>
+    </>
   );
 }
