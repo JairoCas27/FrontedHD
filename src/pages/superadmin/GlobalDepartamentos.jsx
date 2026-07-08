@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react'
-import { FiHome, FiUser, FiUsers, FiGrid, FiSearch, FiMail, FiPhone, FiX, FiCheck, FiEye, FiUserPlus, FiAlertTriangle, FiRefreshCw } from "react-icons/fi"
+import React, { useState, useEffect, useMemo } from 'react'
+import { FiHome, FiUser, FiUsers, FiGrid, FiSearch, FiMail, FiPhone, FiX, FiCheck, FiEye, FiUserPlus, FiAlertTriangle, FiRefreshCw, FiEdit3, FiTrash2, FiPlus } from "react-icons/fi"
 import { toast } from 'react-toastify'
 import EncabezadoTabla from '../../components/EncabezadoTabla'
-import { getCondominiums, getAdminApartments, assignApartmentOwner, getAllUsers } from '../../services/api'
+import { getCondominiums, getAdminApartments, assignApartmentOwner, getAllUsers, getAdminAssets, assignAssetApartment, updateApartmentOccupants } from '../../services/api'
 
 const colorSuper = "rgb(124,58,237)"
 
@@ -35,14 +35,24 @@ export default function GlobalDepartamentos() {
   const [condominios, setCondominios] = useState([])
   const [apartments, setApartments] = useState([])
   const [allUsers, setAllUsers] = useState([])
+  const [parkingAssets, setParkingAssets] = useState([])
   const [condoSeleccionado, setCondoSeleccionado] = useState('')
   const [loading, setLoading] = useState(true)
   const [loadingApts, setLoadingApts] = useState(false)
   const [busqueda, setBusqueda] = useState('')
+  const [filtroTorre, setFiltroTorre] = useState('')
+  const [filtroPiso, setFiltroPiso] = useState('')
+  const [filtroEstado, setFiltroEstado] = useState('')
   const [modalAssign, setModalAssign] = useState(null)
   const [assignUserId, setAssignUserId] = useState('')
   const [assigning, setAssigning] = useState(false)
   const [modalDetail, setModalDetail] = useState(null)
+  const [modalTenant, setModalTenant] = useState(null)
+  const [tenantForm, setTenantForm] = useState({ nombres: '', apellidos: '', email: '', telefono: '' })
+  const [addingTenant, setAddingTenant] = useState(false)
+  const [modalParking, setModalParking] = useState(null)
+  const [selectedParkingId, setSelectedParkingId] = useState('')
+  const [assigningParking, setAssigningParking] = useState(false)
 
   useEffect(() => {
     setLoading(true)
@@ -58,35 +68,54 @@ export default function GlobalDepartamentos() {
   useEffect(() => {
     if (!condoSeleccionado) {
       setApartments([])
+      setParkingAssets([])
       return
     }
     setLoadingApts(true)
-    getAdminApartments(condoSeleccionado)
-      .then(d => {
-        const lista = Array.isArray(d) ? d : (d?.items || [])
-        setApartments(lista)
-      })
-      .catch(err => {
-        toast.error(`Error al cargar departamentos: ${err.message}`)
-        setApartments([])
-      })
-      .finally(() => setLoadingApts(false))
+    Promise.all([
+      getAdminApartments(condoSeleccionado)
+        .then(d => setApartments(Array.isArray(d) ? d : (d?.items || [])))
+        .catch(() => setApartments([])),
+      getAdminAssets(condoSeleccionado, 'ESTACIONAMIENTO', 0, 200)
+        .then(d => setParkingAssets(Array.isArray(d) ? d : (d?.items || [])))
+        .catch(() => setParkingAssets([])),
+    ]).finally(() => setLoadingApts(false))
   }, [condoSeleccionado])
 
   const condoActual = condominios.find(c => String(c.id) === String(condoSeleccionado))
+
+  const torres = useMemo(() => {
+    const set = new Set(apartments.map(a => a.torreNombre).filter(Boolean))
+    return [...set].sort()
+  }, [apartments])
+
+  const pisos = useMemo(() => {
+    const set = new Set(apartments.map(a => a.pisoNumero).filter(Boolean))
+    return [...set].sort((a, b) => Number(a) - Number(b))
+  }, [apartments])
+
+  const filteredApts = useMemo(() => {
+    let list = apartments
+    const q = busqueda.toLowerCase().trim()
+    if (q) {
+      list = list.filter(a => {
+        const nro = String(a.numero || '').toLowerCase()
+        const torre = (a.torreNombre || '').toLowerCase()
+        const piso = (a.pisoNumero || '').toLowerCase()
+        const prop = (a.nombrePropietario || '').toLowerCase()
+        return nro.includes(q) || torre.includes(q) || piso.includes(q) || prop.includes(q)
+      })
+    }
+    if (filtroTorre) list = list.filter(a => a.torreNombre === filtroTorre)
+    if (filtroPiso) list = list.filter(a => a.pisoNumero === filtroPiso)
+    if (filtroEstado === 'ocupado') list = list.filter(a => a.idPropietario != null)
+    else if (filtroEstado === 'disponible') list = list.filter(a => a.idPropietario == null)
+    return list
+  }, [apartments, busqueda, filtroTorre, filtroPiso, filtroEstado])
+
   const totalApts = apartments.length
   const occupiedApts = apartments.filter(a => a.idPropietario != null)
   const unoccupiedApts = apartments.filter(a => a.idPropietario == null)
-
-  const apartmentsFiltrados = apartments.filter(a => {
-    const termino = busqueda.toLowerCase().trim()
-    if (!termino) return true
-    const nro = String(a.numero || '').toLowerCase()
-    const torre = (a.torreNombre || '').toLowerCase()
-    const piso = (a.pisoNumero || '').toLowerCase()
-    const prop = (a.nombrePropietario || '').toLowerCase()
-    return nro.includes(termino) || torre.includes(termino) || piso.includes(termino) || prop.includes(termino)
-  })
 
   const propietariosDisponibles = allUsers.filter(u => {
     const mismoCondo = String(u.idCondominio || u.condominioId || '') === String(condoSeleccionado)
@@ -95,11 +124,14 @@ export default function GlobalDepartamentos() {
 
   function getContacto(apt) {
     if (!apt.idPropietario) return null
-    const user = allUsers.find(u => String(u.id) === String(apt.idPropietario))
-    return user || null
+    return allUsers.find(u => String(u.id) === String(apt.idPropietario)) || null
   }
 
-  async function handleAssign() {
+  function getAssignedParking(apt) {
+    return parkingAssets.find(p => String(p.idApartamento) === String(apt.id))
+  }
+
+  async function handleAssignOwner() {
     if (!assignUserId) {
       toast.warning('Selecciona un propietario')
       return
@@ -108,19 +140,15 @@ export default function GlobalDepartamentos() {
     try {
       await assignApartmentOwner(modalAssign.id, assignUserId, condoSeleccionado)
       toast.success('Propietario asignado correctamente')
+      const assignedUser = allUsers.find(u => String(u.id) === String(assignUserId))
+      const nombreCompleto = assignedUser ? `${assignedUser.nombres || ''} ${assignedUser.apellidos || ''}`.trim() : ''
       setApartments(prev => prev.map(a =>
         String(a.id) === String(modalAssign.id)
-          ? { ...a, idPropietario: Number(assignUserId), nombrePropietario: '' }
+          ? { ...a, idPropietario: Number(assignUserId), nombrePropietario: nombreCompleto }
           : a
       ))
-      const assignedUser = allUsers.find(u => String(u.id) === String(assignUserId))
-      if (assignedUser) {
-        const nombreCompleto = `${assignedUser.nombres || ''} ${assignedUser.apellidos || ''}`.trim()
-        setApartments(prev => prev.map(a =>
-          String(a.id) === String(modalAssign.id)
-            ? { ...a, nombrePropietario: nombreCompleto }
-            : a
-        ))
+      if (modalDetail && String(modalDetail.id) === String(modalAssign.id)) {
+        setModalDetail(prev => ({ ...prev, idPropietario: Number(assignUserId), nombrePropietario: nombreCompleto }))
       }
       setModalAssign(null)
       setAssignUserId('')
@@ -131,9 +159,83 @@ export default function GlobalDepartamentos() {
     }
   }
 
-  function openDetail(apt) {
-    setModalDetail(apt)
+  async function handleAddTenant() {
+    if (!tenantForm.nombres.trim()) {
+      toast.warning('El nombre del inquilino es obligatorio')
+      return
+    }
+    setAddingTenant(true)
+    try {
+      const currentTenants = Array.isArray(modalTenant.inquilinos) ? modalTenant.inquilinos : []
+      const newTenant = {
+        nombres: tenantForm.nombres.trim(),
+        apellidos: tenantForm.apellidos.trim(),
+        email: tenantForm.email.trim(),
+        telefono: tenantForm.telefono.trim(),
+      }
+      const updatedTenants = [...currentTenants, newTenant]
+      await updateApartmentOccupants(modalTenant.id, { inquilinos: updatedTenants }, condoSeleccionado)
+      toast.success('Inquilino agregado correctamente')
+      setApartments(prev => prev.map(a =>
+        String(a.id) === String(modalTenant.id)
+          ? { ...a, inquilinos: updatedTenants }
+          : a
+      ))
+      setModalTenant(prev => ({ ...prev, inquilinos: updatedTenants }))
+      setTenantForm({ nombres: '', apellidos: '', email: '', telefono: '' })
+    } catch (err) {
+      toast.error(`Error al agregar inquilino: ${err.message}`)
+    } finally {
+      setAddingTenant(false)
+    }
   }
+
+  async function handleRemoveTenant(idx) {
+    try {
+      const currentTenants = Array.isArray(modalDetail.inquilinos) ? modalDetail.inquilinos : []
+      const updatedTenants = currentTenants.filter((_, i) => i !== idx)
+      await updateApartmentOccupants(modalDetail.id, { inquilinos: updatedTenants }, condoSeleccionado)
+      toast.success('Inquilino eliminado')
+      setApartments(prev => prev.map(a =>
+        String(a.id) === String(modalDetail.id)
+          ? { ...a, inquilinos: updatedTenants }
+          : a
+      ))
+      setModalDetail(prev => ({ ...prev, inquilinos: updatedTenants }))
+    } catch (err) {
+      toast.error(`Error al eliminar inquilino: ${err.message}`)
+    }
+  }
+
+  async function handleAssignParking() {
+    if (!selectedParkingId) {
+      toast.warning('Selecciona un estacionamiento')
+      return
+    }
+    setAssigningParking(true)
+    try {
+      await assignAssetApartment(selectedParkingId, modalParking.id, condoSeleccionado)
+      toast.success('Estacionamiento asignado correctamente')
+      setParkingAssets(prev => prev.map(p =>
+        String(p.id) === String(selectedParkingId)
+          ? { ...p, idApartamento: modalParking.id }
+          : p
+      ))
+      if (modalDetail && String(modalDetail.id) === String(modalParking.id)) {
+        setModalDetail(prev => ({ ...prev }))
+      }
+      setModalParking(null)
+      setSelectedParkingId('')
+    } catch (err) {
+      toast.error(`Error al asignar estacionamiento: ${err.message}`)
+    } finally {
+      setAssigningParking(false)
+    }
+  }
+
+  const parkingDisponibles = parkingAssets.filter(p =>
+    String(p.idApartamento) !== String(modalParking?.id) && (p.disponible === true || !p.idApartamento)
+  )
 
   const btnStyle = {
     padding: "0.45rem 0.75rem", borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: "700",
@@ -156,7 +258,7 @@ export default function GlobalDepartamentos() {
 
       <div style={{ backgroundColor: "#ffffff", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", marginBottom: "2rem", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
         <div style={{ width: "100%", maxWidth: "280px" }}>
-          <select style={estiloInput} value={condoSeleccionado} onChange={(e) => { setCondoSeleccionado(e.target.value); setBusqueda('') }}>
+          <select style={estiloInput} value={condoSeleccionado} onChange={(e) => { setCondoSeleccionado(e.target.value); setBusqueda(''); setFiltroTorre(''); setFiltroPiso(''); setFiltroEstado('') }}>
             <option value="">Seleccionar condominio</option>
             {condominios.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
           </select>
@@ -215,19 +317,45 @@ export default function GlobalDepartamentos() {
           </div>
 
           <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)" }}>
-            <div style={{ padding: "1rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem" }}>
-              <span style={{ fontWeight: "700", fontSize: "0.9rem", color: "#1e293b" }}>
-                Departamentos de {condoActual?.nombre} <span style={{ color: "#94a3b8", fontWeight: "600" }}>({apartmentsFiltrados.length})</span>
-              </span>
-              <div className="global-search-wrap" style={{ width: "260px", maxWidth: "260px", position: "relative" }}>
-                <FiSearch size={14} style={{ position: "absolute", left: "0.65rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
-                <input type="text" placeholder="Buscar departamento..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)}
-                  style={{ ...estiloInput, paddingLeft: "2rem", paddingTop: "0.45rem", paddingBottom: "0.45rem", fontSize: "0.8rem" }} />
+            <div style={{ padding: "1rem 1.5rem", borderBottom: "1px solid #f1f5f9" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem", marginBottom: "0.75rem" }}>
+                <span style={{ fontWeight: "700", fontSize: "0.9rem", color: "#1e293b" }}>
+                  Departamentos de {condoActual?.nombre} <span style={{ color: "#94a3b8", fontWeight: "600" }}>({filteredApts.length})</span>
+                </span>
+                <div className="global-search-wrap" style={{ width: "260px", maxWidth: "260px", position: "relative" }}>
+                  <FiSearch size={14} style={{ position: "absolute", left: "0.65rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
+                  <input type="text" placeholder="Buscar departamento..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)}
+                    style={{ ...estiloInput, paddingLeft: "2rem", paddingTop: "0.45rem", paddingBottom: "0.45rem", fontSize: "0.8rem" }} />
+                </div>
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                <select value={filtroTorre} onChange={(e) => setFiltroTorre(e.target.value)}
+                  style={{ ...estiloInput, width: "auto", minWidth: "120px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
+                  <option value="">Todas las torres</option>
+                  {torres.map(t => <option key={t} value={t}>{t}</option>)}
+                </select>
+                <select value={filtroPiso} onChange={(e) => setFiltroPiso(e.target.value)}
+                  style={{ ...estiloInput, width: "auto", minWidth: "100px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
+                  <option value="">Todos los pisos</option>
+                  {pisos.map(p => <option key={p} value={p}>Piso {p}</option>)}
+                </select>
+                <select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}
+                  style={{ ...estiloInput, width: "auto", minWidth: "130px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
+                  <option value="">Todos los estados</option>
+                  <option value="ocupado">Ocupado</option>
+                  <option value="disponible">Disponible</option>
+                </select>
+                {(filtroTorre || filtroPiso || filtroEstado || busqueda) && (
+                  <button onClick={() => { setFiltroTorre(''); setFiltroPiso(''); setFiltroEstado(''); setBusqueda('') }}
+                    style={{ ...btnStyle, backgroundColor: "#f1f5f9", color: "#64748b", fontSize: "0.7rem" }}>
+                    <FiX size={12} /> Limpiar filtros
+                  </button>
+                )}
               </div>
             </div>
-            {apartmentsFiltrados.length === 0 ? (
+            {filteredApts.length === 0 ? (
               <div style={{ padding: "2.5rem", textAlign: "center", color: "#94a3b8", fontStyle: "italic", fontWeight: "600" }}>
-                {busqueda ? 'No se encontraron coincidencias.' : 'No hay departamentos registrados en este condominio.'}
+                No se encontraron coincidencias.
               </div>
             ) : (
               <div className="global-table-wrap" style={{ overflowX: "auto" }}>
@@ -240,22 +368,19 @@ export default function GlobalDepartamentos() {
                       <th style={{ padding: "0.75rem 1rem" }}>Propietario</th>
                       <th style={{ padding: "0.75rem 1rem" }}>Contacto</th>
                       <th style={{ padding: "0.75rem 1rem" }}>Inquilinos</th>
+                      <th style={{ padding: "0.75rem 1rem" }}>Estacionamiento</th>
                       <th style={{ padding: "0.75rem 1rem" }}>Estado</th>
                       <th style={{ padding: "0.75rem 1rem" }}>Acci&oacute;n</th>
                     </tr>
                   </thead>
                   <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
-                    {apartmentsFiltrados.map((apt, i) => {
+                    {filteredApts.map((apt, i) => {
                       const contacto = getContacto(apt)
                       const tienePropietario = apt.idPropietario != null
+                      const parking = getAssignedParking(apt)
                       return (
                         <tr key={apt.id} style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: i % 2 === 0 ? "#ffffff" : "#fafafa" }}>
-                          <td style={{ padding: "0.75rem 1rem", fontWeight: "700", color: "#0f172a" }}>
-                            <span style={{ cursor: "pointer", color: colorSuper, textDecoration: "underline", textDecorationColor: "rgba(124,58,237,0.3)" }}
-                              onClick={() => openDetail(apt)}>
-                              {apt.numero}
-                            </span>
-                          </td>
+                          <td style={{ padding: "0.75rem 1rem", fontWeight: "700", color: "#0f172a" }}>{apt.numero}</td>
                           <td style={{ padding: "0.75rem 1rem", color: "#64748b" }}>{apt.torreNombre || <span style={{ fontStyle: "italic", color: "#cbd5e1" }}>---</span>}</td>
                           <td style={{ padding: "0.75rem 1rem", color: "#64748b" }}>{apt.pisoNumero || <span style={{ fontStyle: "italic", color: "#cbd5e1" }}>---</span>}</td>
                           <td style={{ padding: "0.75rem 1rem" }}>
@@ -287,6 +412,13 @@ export default function GlobalDepartamentos() {
                               <span>{Array.isArray(apt.inquilinos) ? apt.inquilinos.length : 0}</span>
                             </div>
                           </td>
+                          <td style={{ padding: "0.75rem 1rem", fontSize: "0.8rem", color: "#64748b" }}>
+                            {parking ? (
+                              <span style={{ fontWeight: "600", color: "#0f172a" }}>{parking.codigo}</span>
+                            ) : (
+                              <span style={{ fontStyle: "italic", color: "#cbd5e1", fontSize: "0.75rem" }}>---</span>
+                            )}
+                          </td>
                           <td style={{ padding: "0.75rem 1rem" }}>
                             <span style={{
                               fontSize: "0.65rem", fontWeight: "700", padding: "0.2rem 0.55rem", borderRadius: "0.375rem",
@@ -298,17 +430,10 @@ export default function GlobalDepartamentos() {
                             </span>
                           </td>
                           <td style={{ padding: "0.75rem 1rem" }}>
-                            {!tienePropietario ? (
-                              <button style={{ ...btnStyle, backgroundColor: colorSuper, color: "#fff" }}
-                                onClick={() => { setModalAssign(apt); setAssignUserId('') }}>
-                                <FiUserPlus size={14} /> Asignar
-                              </button>
-                            ) : (
-                              <button style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper }}
-                                onClick={() => openDetail(apt)}>
-                                <FiEye size={14} /> Ver
-                              </button>
-                            )}
+                            <button style={{ ...btnStyle, backgroundColor: colorSuper, color: "#fff" }}
+                              onClick={() => openDetail(apt)}>
+                              <FiEye size={14} /> Detalle
+                            </button>
                           </td>
                         </tr>
                       )
@@ -321,63 +446,10 @@ export default function GlobalDepartamentos() {
         </>
       )}
 
-      {modalAssign && (
-        <div style={modalOverlay} onClick={() => setModalAssign(null)}>
-          <div style={modalContent} onClick={(e) => e.stopPropagation()}>
-            <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>Asignar Propietario</h3>
-              <button onClick={() => setModalAssign(null)}
-                style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}>
-                <FiX size={20} />
-              </button>
-            </div>
-            <div style={{ padding: "1.5rem" }}>
-              <p style={{ margin: "0 0 1rem", fontSize: "0.85rem", color: "#475569" }}>
-                Departamento <strong>{modalAssign.numero}</strong>
-                {modalAssign.torreNombre && <> &mdash; Torre <strong>{modalAssign.torreNombre}</strong></>}
-                {modalAssign.pisoNumero && <> &mdash; Piso <strong>{modalAssign.pisoNumero}</strong></>}
-              </p>
-              <label style={{ fontWeight: "700", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.5rem", display: "block" }}>Seleccionar propietario</label>
-              <select
-                style={estiloInput}
-                value={assignUserId}
-                onChange={(e) => setAssignUserId(e.target.value)}
-              >
-                <option value="">-- Seleccionar --</option>
-                {propietariosDisponibles.map(u => (
-                  <option key={u.id} value={u.id}>
-                    {u.nombres || ''} {u.apellidos || ''} {u.email ? `(${u.email})` : ''}
-                  </option>
-                ))}
-              </select>
-              {propietariosDisponibles.length === 0 && (
-                <p style={{ marginTop: "0.75rem", fontSize: "0.8rem", color: "#ef4444", fontWeight: "600" }}>
-                  No hay propietarios disponibles en este condominio.
-                </p>
-              )}
-              <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
-                <button onClick={() => setModalAssign(null)}
-                  style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>
-                  Cancelar
-                </button>
-                <button onClick={handleAssign} disabled={assigning || !assignUserId}
-                  style={{
-                    padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none",
-                    backgroundColor: assignUserId ? colorSuper : "#cbd5e1", color: "#fff",
-                    fontWeight: "600", cursor: assignUserId ? "pointer" : "not-allowed", fontSize: "0.85rem",
-                    display: "flex", alignItems: "center", gap: "0.4rem"
-                  }}>
-                  {assigning ? 'Asignando...' : <><FiCheck size={16} /> Asignar</>}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
+      {/* Detail Modal */}
       {modalDetail && (
         <div style={modalOverlay} onClick={() => setModalDetail(null)}>
-          <div style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
+          <div style={{ ...modalContent, maxWidth: "640px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>
                 Depto. {modalDetail.numero}
@@ -388,7 +460,7 @@ export default function GlobalDepartamentos() {
               </button>
             </div>
             <div style={{ padding: "1.5rem" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
                 <div>
                   <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.025em" }}>Torre</span>
                   <p style={{ margin: "0.2rem 0 0", fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>{modalDetail.torreNombre || '---'}</p>
@@ -401,16 +473,19 @@ export default function GlobalDepartamentos() {
                   <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.025em" }}>Metraje</span>
                   <p style={{ margin: "0.2rem 0 0", fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>{modalDetail.metraje ? `${modalDetail.metraje} m²` : '---'}</p>
                 </div>
-                <div>
-                  <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.025em" }}>Estacionamiento</span>
-                  <p style={{ margin: "0.2rem 0 0", fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>{modalDetail.derechoEstacionamiento ? 'Sí' : 'No'}</p>
-                </div>
               </div>
 
+              {/* Owner Section */}
               <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "1rem", marginBottom: "1.5rem" }}>
-                <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.025em" }}>Propietario</span>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                  <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.025em" }}>Propietario</span>
+                  <button onClick={() => { setModalAssign(modalDetail); setAssignUserId(String(modalDetail.idPropietario || '')) }}
+                    style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper, fontSize: "0.7rem" }}>
+                    <FiEdit3 size={12} /> {modalDetail.idPropietario ? 'Cambiar' : 'Asignar'}
+                  </button>
+                </div>
                 {modalDetail.idPropietario ? (
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", marginTop: "0.4rem" }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", marginTop: "0.2rem" }}>
                     <div style={{ width: "36px", height: "36px", borderRadius: "50%", backgroundColor: colorSuper, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: "700", flexShrink: 0 }}>
                       {(modalDetail.nombrePropietario || '??').split(' ').map(s => s[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()}
                     </div>
@@ -429,31 +504,224 @@ export default function GlobalDepartamentos() {
                     </div>
                   </div>
                 ) : (
-                  <p style={{ margin: "0.4rem 0 0", fontStyle: "italic", color: "#94a3b8", fontSize: "0.9rem" }}>Sin propietario asignado</p>
+                  <p style={{ margin: "0.2rem 0 0", fontStyle: "italic", color: "#94a3b8", fontSize: "0.9rem" }}>Sin propietario asignado</p>
                 )}
               </div>
 
+              {/* Parking Section */}
+              <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "1rem", marginBottom: "1.5rem" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                  <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.025em" }}>Estacionamiento</span>
+                  <button onClick={() => { setModalParking(modalDetail); setSelectedParkingId('') }}
+                    style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper, fontSize: "0.7rem" }}>
+                    <FiEdit3 size={12} /> Asignar
+                  </button>
+                </div>
+                {(() => {
+                  const parking = getAssignedParking(modalDetail)
+                  return parking ? (
+                    <p style={{ margin: "0.2rem 0 0", fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>
+                      {parking.codigo}
+                    </p>
+                  ) : (
+                    <p style={{ margin: "0.2rem 0 0", fontStyle: "italic", color: "#94a3b8", fontSize: "0.9rem" }}>Sin estacionamiento asignado</p>
+                  )
+                })()}
+              </div>
+
+              {/* Tenants Section */}
               <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "1rem" }}>
-                <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.025em" }}>
-                  Inquilinos ({Array.isArray(modalDetail.inquilinos) ? modalDetail.inquilinos.length : 0})
-                </span>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                  <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.025em" }}>
+                    Inquilinos ({Array.isArray(modalDetail.inquilinos) ? modalDetail.inquilinos.length : 0})
+                  </span>
+                  <button onClick={() => { setModalTenant(modalDetail); setTenantForm({ nombres: '', apellidos: '', email: '', telefono: '' }) }}
+                    style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper, fontSize: "0.7rem" }}>
+                    <FiPlus size={12} /> Agregar
+                  </button>
+                </div>
                 {Array.isArray(modalDetail.inquilinos) && modalDetail.inquilinos.length > 0 ? (
-                  <div style={{ marginTop: "0.5rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                     {modalDetail.inquilinos.map((inq, idx) => (
-                      <div key={inq.id || idx} style={{ display: "flex", alignItems: "center", gap: "0.6rem", padding: "0.5rem 0.75rem", backgroundColor: "#f8fafc", borderRadius: "0.5rem" }}>
+                      <div key={idx} style={{ display: "flex", alignItems: "center", gap: "0.6rem", padding: "0.5rem 0.75rem", backgroundColor: "#f8fafc", borderRadius: "0.5rem" }}>
                         <div style={{ width: "28px", height: "28px", borderRadius: "50%", backgroundColor: "#e2e8f0", color: "#64748b", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6rem", fontWeight: "700", flexShrink: 0 }}>
                           <FiUsers size={14} />
                         </div>
-                        <div>
+                        <div style={{ flex: 1 }}>
                           <span style={{ fontWeight: "600", fontSize: "0.85rem", color: "#0f172a" }}>{inq.nombre || inq.nombres || 'Inquilino'} {inq.apellidos || ''}</span>
                           {inq.email && <span style={{ display: "block", fontSize: "0.7rem", color: "#64748b" }}>{inq.email}</span>}
                         </div>
+                        <button onClick={() => handleRemoveTenant(idx)}
+                          style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", padding: "0.25rem", display: "flex" }}
+                          title="Eliminar inquilino">
+                          <FiTrash2 size={14} />
+                        </button>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <p style={{ margin: "0.4rem 0 0", fontStyle: "italic", color: "#94a3b8", fontSize: "0.85rem" }}>No hay inquilinos registrados</p>
+                  <p style={{ margin: "0.2rem 0 0", fontStyle: "italic", color: "#94a3b8", fontSize: "0.85rem" }}>No hay inquilinos registrados</p>
                 )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assign Owner Modal */}
+      {modalAssign && (
+        <div style={modalOverlay} onClick={() => setModalAssign(null)}>
+          <div style={modalContent} onClick={(e) => e.stopPropagation()}>
+            <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>{modalAssign.idPropietario ? 'Cambiar Propietario' : 'Asignar Propietario'}</h3>
+              <button onClick={() => setModalAssign(null)}
+                style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}>
+                <FiX size={20} />
+              </button>
+            </div>
+            <div style={{ padding: "1.5rem" }}>
+              <p style={{ margin: "0 0 1rem", fontSize: "0.85rem", color: "#475569" }}>
+                Departamento <strong>{modalAssign.numero}</strong>
+                {modalAssign.torreNombre && <> &mdash; Torre <strong>{modalAssign.torreNombre}</strong></>}
+              </p>
+              <label style={{ fontWeight: "700", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.5rem", display: "block" }}>Seleccionar propietario</label>
+              <select style={estiloInput} value={assignUserId} onChange={(e) => setAssignUserId(e.target.value)}>
+                <option value="">-- Seleccionar --</option>
+                {propietariosDisponibles.map(u => (
+                  <option key={u.id} value={u.id}>
+                    {u.nombres || ''} {u.apellidos || ''} {u.email ? `(${u.email})` : ''}
+                  </option>
+                ))}
+              </select>
+              {propietariosDisponibles.length === 0 && (
+                <p style={{ marginTop: "0.75rem", fontSize: "0.8rem", color: "#ef4444", fontWeight: "600" }}>
+                  No hay propietarios disponibles en este condominio.
+                </p>
+              )}
+              <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
+                <button onClick={() => setModalAssign(null)}
+                  style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>
+                  Cancelar
+                </button>
+                <button onClick={handleAssignOwner} disabled={assigning || !assignUserId}
+                  style={{
+                    padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none",
+                    backgroundColor: assignUserId ? colorSuper : "#cbd5e1", color: "#fff",
+                    fontWeight: "600", cursor: assignUserId ? "pointer" : "not-allowed", fontSize: "0.85rem",
+                    display: "flex", alignItems: "center", gap: "0.4rem"
+                  }}>
+                  {assigning ? 'Asignando...' : <><FiCheck size={16} /> Asignar</>}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add Tenant Modal */}
+      {modalTenant && (
+        <div style={modalOverlay} onClick={() => setModalTenant(null)}>
+          <div style={{ ...modalContent, maxWidth: "480px" }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>Agregar Inquilino</h3>
+              <button onClick={() => setModalTenant(null)}
+                style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}>
+                <FiX size={20} />
+              </button>
+            </div>
+            <div style={{ padding: "1.5rem" }}>
+              <p style={{ margin: "0 0 1rem", fontSize: "0.85rem", color: "#475569" }}>
+                Departamento <strong>{modalTenant.numero}</strong>
+                {modalTenant.torreNombre && <> &mdash; Torre <strong>{modalTenant.torreNombre}</strong></>}
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                <div>
+                  <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Nombres *</label>
+                  <input type="text" value={tenantForm.nombres} onChange={(e) => setTenantForm({ ...tenantForm, nombres: e.target.value })}
+                    style={estiloInput} placeholder="Nombres del inquilino" />
+                </div>
+                <div>
+                  <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Apellidos</label>
+                  <input type="text" value={tenantForm.apellidos} onChange={(e) => setTenantForm({ ...tenantForm, apellidos: e.target.value })}
+                    style={estiloInput} placeholder="Apellidos del inquilino" />
+                </div>
+                <div>
+                  <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Email</label>
+                  <input type="email" value={tenantForm.email} onChange={(e) => setTenantForm({ ...tenantForm, email: e.target.value })}
+                    style={estiloInput} placeholder="correo@ejemplo.com" />
+                </div>
+                <div>
+                  <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Teléfono</label>
+                  <input type="text" value={tenantForm.telefono} onChange={(e) => setTenantForm({ ...tenantForm, telefono: e.target.value })}
+                    style={estiloInput} placeholder="Teléfono" />
+                </div>
+              </div>
+              <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
+                <button onClick={() => setModalTenant(null)}
+                  style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>
+                  Cancelar
+                </button>
+                <button onClick={handleAddTenant} disabled={addingTenant || !tenantForm.nombres.trim()}
+                  style={{
+                    padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none",
+                    backgroundColor: tenantForm.nombres.trim() ? colorSuper : "#cbd5e1", color: "#fff",
+                    fontWeight: "600", cursor: tenantForm.nombres.trim() ? "pointer" : "not-allowed", fontSize: "0.85rem",
+                    display: "flex", alignItems: "center", gap: "0.4rem"
+                  }}>
+                  {addingTenant ? 'Agregando...' : <><FiPlus size={16} /> Agregar</>}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assign Parking Modal */}
+      {modalParking && (
+        <div style={modalOverlay} onClick={() => setModalParking(null)}>
+          <div style={{ ...modalContent, maxWidth: "480px" }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>Asignar Estacionamiento</h3>
+              <button onClick={() => setModalParking(null)}
+                style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}>
+                <FiX size={20} />
+              </button>
+            </div>
+            <div style={{ padding: "1.5rem" }}>
+              <p style={{ margin: "0 0 1rem", fontSize: "0.85rem", color: "#475569" }}>
+                Departamento <strong>{modalParking.numero}</strong>
+                {modalParking.torreNombre && <> &mdash; Torre <strong>{modalParking.torreNombre}</strong></>}
+              </p>
+              <label style={{ fontWeight: "700", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.5rem", display: "block" }}>
+                Estacionamientos disponibles
+              </label>
+              <select style={estiloInput} value={selectedParkingId} onChange={(e) => setSelectedParkingId(e.target.value)}>
+                <option value="">-- Seleccionar --</option>
+                {parkingDisponibles.map(p => (
+                  <option key={p.id} value={p.id}>
+                    {p.codigo} {p.piso ? `- Piso ${p.piso}` : ''}
+                  </option>
+                ))}
+              </select>
+              {parkingDisponibles.length === 0 && (
+                <p style={{ marginTop: "0.75rem", fontSize: "0.8rem", color: "#ef4444", fontWeight: "600" }}>
+                  No hay estacionamientos disponibles en este condominio.
+                </p>
+              )}
+              <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
+                <button onClick={() => setModalParking(null)}
+                  style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>
+                  Cancelar
+                </button>
+                <button onClick={handleAssignParking} disabled={assigningParking || !selectedParkingId}
+                  style={{
+                    padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none",
+                    backgroundColor: selectedParkingId ? colorSuper : "#cbd5e1", color: "#fff",
+                    fontWeight: "600", cursor: selectedParkingId ? "pointer" : "not-allowed", fontSize: "0.85rem",
+                    display: "flex", alignItems: "center", gap: "0.4rem"
+                  }}>
+                  {assigningParking ? 'Asignando...' : <><FiCheck size={16} /> Asignar</>}
+                </button>
               </div>
             </div>
           </div>
