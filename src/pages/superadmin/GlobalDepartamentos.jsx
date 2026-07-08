@@ -181,12 +181,10 @@ export default function GlobalDepartamentos() {
     try {
         await createAdminStructureNode({
           tipo: 'APARTAMENTO',
-          nombre: createAptForm.numero.trim(),
-          numero: Number(createAptForm.numero.trim()),
           nombreTorre: createAptForm.torreNombre,
           numeroPiso: Number(createAptForm.pisoNumero),
-          metraje: createAptForm.metraje ? Number(createAptForm.metraje) : null,
-          derechoEstacionamiento: createAptForm.derechoEstacionamiento,
+          numeroApartamento: Number(createAptForm.numero.trim()),
+          metraje: createAptForm.metraje ? Number(createAptForm.metraje) : 50.0,
         }, condoSeleccionado)
       toast.success('Departamento creado correctamente')
       setShowCreateApt(false)
