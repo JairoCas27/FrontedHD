@@ -79,8 +79,8 @@ export default function GlobalEstructura() {
 
   useEffect(() => {
     Promise.all([
-      getCondominiums().then(d => setCondominios(d?.items || d || [])).catch(() => {}),
-      getAllUsers().then(d => setAllUsers(Array.isArray(d) ? d : (d?.items || []))).catch(() => {}),
+      getCondominiums().then(d => setCondominios(d?.items || d || [])).catch(() => { }),
+      getAllUsers().then(d => setAllUsers(Array.isArray(d) ? d : (d?.items || []))).catch(() => { }),
     ]).finally(() => setLoading(false))
   }, [])
 
@@ -428,11 +428,11 @@ export default function GlobalEstructura() {
                                     </div>
                                     <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
                                       <button onClick={(e) => { e.stopPropagation(); setEditFloorTarget(piso); setEditFloorNum(String(piso.numero || '')); setShowEditFloorModal(true) }}
-                                      style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.08)", color: colorSuper }}><FiEdit3 size={11} /></button>
+                                        style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.08)", color: colorSuper }}><FiEdit3 size={11} /></button>
                                       <button onClick={(e) => { e.stopPropagation(); setAddAptContext({ nombreTorre: torre.nombre, numeroPiso: piso.numero }); setAptNumero(''); setAptMetraje(''); setAptParking(false); setShowAddAptModal(true) }}
-                                      style={{ ...btnStyle, backgroundColor: "transparent", color: colorSuper, border: `1px solid ${colorSuper}` }}><FiPlus size={11} /> Apto</button>
+                                        style={{ ...btnStyle, backgroundColor: "transparent", color: colorSuper, border: `1px solid ${colorSuper}` }}><FiPlus size={11} /> Apto</button>
                                       <button onClick={(e) => { e.stopPropagation(); handleDeleteFloor(piso.id) }} disabled={deletingId === piso.id}
-                                      style={{ ...btnStyle, color: "#ef4444", background: "transparent" }}>{deletingId === piso.id ? '...' : <FiTrash2 size={12} />}</button>
+                                        style={{ ...btnStyle, color: "#ef4444", background: "transparent" }}>{deletingId === piso.id ? '...' : <FiTrash2 size={12} />}</button>
                                       {isFloorOpen ? <FiChevronDown size={15} color="#94a3b8" /> : <FiChevronRight size={15} color="#94a3b8" />}
                                     </div>
                                   </div>
@@ -571,7 +571,9 @@ export default function GlobalEstructura() {
                   Torre: <strong>{addAptContext?.nombreTorre}</strong> &mdash; Piso: <strong>{addAptContext?.numeroPiso}</strong>
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                  <p style={{ margin: "0 0 1.25rem", fontSize: "0.85rem", color: "#64748b" }}>Número de Departamento: </p>
                   <input type="text" placeholder="Número (ej: 101)" value={aptNumero} onChange={e => setAptNumero(e.target.value)} style={estiloInput} autoFocus />
+                  <p style={{ margin: "0 0 1.25rem", fontSize: "0.85rem", color: "#64748b" }}>Medidas de Metraje m²: </p>
                   <input type="number" placeholder="Metraje m² (opcional)" value={aptMetraje} onChange={e => setAptMetraje(e.target.value)} style={estiloInput} />
                   <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", color: "#334155", fontWeight: "600", cursor: "pointer" }}>
                     <input type="checkbox" checked={aptParking} onChange={e => setAptParking(e.target.checked)} /> Derecho estacionamiento
