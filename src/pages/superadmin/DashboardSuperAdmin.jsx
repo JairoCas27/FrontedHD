@@ -117,7 +117,6 @@ export default function DashboardSuperAdmin() {
     await loadData(false);
   };
 
-
   if (loading) {
     return (
       <div className="text-center py-5">
@@ -126,7 +125,6 @@ export default function DashboardSuperAdmin() {
       </div>
     );
   }
-
 
   if (error) {
     return (
@@ -139,10 +137,9 @@ export default function DashboardSuperAdmin() {
     );
   }
 
-
   const totalCondos = allCondos.length;
-  const activeCondos = allCondos.filter(c => c.activo === true).length;
-  const inactiveCondos = totalCondos - activeCondos;
+    const activeCondos = allCondos.filter(c => c.activo === true).length;
+    const inactiveCondos = totalCondos - activeCondos;
 
 
   const condoStatusData = [
@@ -150,18 +147,9 @@ export default function DashboardSuperAdmin() {
     { name: 'Inactivos', value: inactiveCondos },
   ].filter(item => item.value > 0);
 
-
-  const roleDistribution = [
-    { name: 'Administradores', value: adminTotal },
-    { name: 'Propietarios', value: propietariosTotal },
-    { name: 'Agentes Seguridad', value: agentesTotal },
-  ].filter(item => item.value > 0);
-
-
   const lastCondos = [...recentCondos]
     .sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
     .slice(0, 3);
-
 
   const lastAdmins = recentAdmins.slice(0, 3);
   const adminTotal = allAdmins.length || metrics?.totalAdministradores || 0;
@@ -169,305 +157,312 @@ export default function DashboardSuperAdmin() {
   const adminsInactive = adminTotal - adminsActive;
 
   const propietariosTotal = allUsers.filter(u => u.rol === 'PROPIETARIO').length || metrics?.totalPropietarios || 0;
+  const agentesTotal = allUsers.filter(u => u.rol === 'AGENTE_SEGURIDAD').length || 0;
   const usuariosTotal = allUsers.length || metrics?.totalUsuarios || 0;
 
-  const stats = [
-    {
-      title: 'Condominios',
-      value: totalCondos,
-      icon: <FiGrid size={24} />,
-      color: COLORS.primary,
-      subtitle: `${activeCondos} activos, ${inactiveCondos} inactivos`,
-    },
-    {
-      title: 'Administradores',
-      value: adminTotal,
-      icon: <FiUsers size={24} />,
-      color: COLORS.success,
-      subtitle: `${adminsActive} activos, ${adminsInactive} inactivos`,
-    },
-    {
-      title: 'Propietarios',
-      value: propietariosTotal,
-      icon: <FiUserCheck size={24} />,
-      color: COLORS.warning,
-      subtitle: 'Residentes registrados',
-    },
-    {
-      title: 'Usuarios Totales',
-      value: usuariosTotal,
-      icon: <FiActivity size={24} />,
-      color: COLORS.purple,
-      subtitle: 'Todos los roles',
-    },
-  ];
+  const roleDistribution = [
+    { name: 'Administradores', value: adminTotal },
+    { name: 'Propietarios', value: propietariosTotal },
+    { name: 'Agentes Seguridad', value: agentesTotal },
+  ].filter(item => item.value > 0);
+
+    const stats = [
+      {
+        title: 'Condominios',
+        value: totalCondos,
+        icon: <FiGrid size={24} />,
+        color: COLORS.primary,
+        subtitle: `${activeCondos} activos, ${inactiveCondos} inactivos`,
+      },
+      {
+        title: 'Administradores',
+        value: adminTotal,
+        icon: <FiUsers size={24} />,
+        color: COLORS.success,
+        subtitle: `${adminsActive} activos, ${adminsInactive} inactivos`,
+      },
+      {
+        title: 'Propietarios',
+        value: propietariosTotal,
+        icon: <FiUserCheck size={24} />,
+        color: COLORS.warning,
+        subtitle: 'Residentes registrados',
+      },
+      {
+        title: 'Usuarios Totales',
+        value: usuariosTotal,
+        icon: <FiActivity size={24} />,
+        color: COLORS.purple,
+        subtitle: 'Todos los roles',
+      },
+    ];
 
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '—';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+    const formatDate = (dateStr) => {
+      if (!dateStr) return '—';
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('es-ES', {
+        day: '2-digit',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      });
+    };
 
 
-  const chartHeight = isMobile ? 220 : 300;
+    const chartHeight = isMobile ? 220 : 300;
 
 
-  return (
-    <div style={{ padding: '1.5rem', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
-      <div className="d-flex justify-content-between align-items-start mb-4">
-        <div>
-          <h1 style={{ fontWeight: 800, color: '#0f172a', marginBottom: '4px' }}>
-            Dashboard Global del Sistema
-          </h1>
+    return (
+      <div style={{ padding: '1.5rem', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+        <div className="d-flex justify-content-between align-items-start mb-4">
+          <div>
+            <h1 style={{ fontWeight: 800, color: '#0f172a', marginBottom: '4px' }}>
+              Dashboard Global del Sistema
+            </h1>
+          </div>
+          <div className="d-flex align-items-center gap-2 flex-wrap">
+            <Badge bg="primary" className="text-nowrap" style={{ fontSize: '0.85rem', padding: '8px 16px' }}>
+              <FiCalendar className="me-1" /> {new Date().toLocaleDateString()}
+            </Badge>
+            <Button
+              variant="outline-primary"
+              size="sm"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+            >
+              {refreshing ? (
+                <>
+                  <Spinner as="span" animation="border" size="sm" />
+                  Actualizando...
+                </>
+              ) : (
+                <>
+                  <FiRefreshCw size={16} />
+                  Actualizar
+                </>
+              )}
+            </Button>
+          </div>
         </div>
-        <div className="d-flex align-items-center gap-2 flex-wrap">
-          <Badge bg="primary" className="text-nowrap" style={{ fontSize: '0.85rem', padding: '8px 16px' }}>
-            <FiCalendar className="me-1" /> {new Date().toLocaleDateString()}
-          </Badge>
-          <Button
-            variant="outline-primary"
-            size="sm"
-            onClick={handleRefresh}
-            disabled={refreshing}
-            style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-          >
-            {refreshing ? (
-              <>
-                <Spinner as="span" animation="border" size="sm" />
-                Actualizando...
-              </>
-            ) : (
-              <>
-                <FiRefreshCw size={16} />
-                Actualizar
-              </>
-            )}
-          </Button>
-        </div>
-      </div>
 
 
-      <Row className="g-4 mb-4">
-        {stats.map((stat, idx) => (
-          <Col xs={12} sm={6} lg={3} key={idx}>
-            <Card className="border-0 shadow-sm h-100" style={{ transition: 'transform 0.2s' }}>
+        <Row className="g-4 mb-4">
+          {stats.map((stat, idx) => (
+            <Col xs={12} sm={6} lg={3} key={idx}>
+              <Card className="border-0 shadow-sm h-100" style={{ transition: 'transform 0.2s' }}>
+                <Card.Body>
+                  <div className="d-flex justify-content-between align-items-start">
+                    <div>
+                      <div className="text-muted small fw-bold text-uppercase tracking-wide">
+                        {stat.title}
+                      </div>
+                      <div className="fs-2 fw-bold mt-1" style={{ color: stat.color }}>
+                        {stat.value}
+                      </div>
+                      <div className="small text-muted mt-1">{stat.subtitle}</div>
+                    </div>
+                    <div
+                      style={{
+                        background: `${stat.color}15`,
+                        color: stat.color,
+                        padding: '12px',
+                        borderRadius: '12px',
+                      }}
+                    >
+                      {stat.icon}
+                    </div>
+                  </div>
+                </Card.Body>
+              </Card>
+            </Col>
+          ))}
+        </Row>
+
+
+        <Row className="g-4 mb-4">
+          <Col xs={12} lg={8}>
+            <Card className="border-0 shadow-sm h-100">
+              <Card.Header className="bg-white fw-bold">
+                Distribución de usuarios por rol
+              </Card.Header>
               <Card.Body>
-                <div className="d-flex justify-content-between align-items-start">
-                  <div>
-                    <div className="text-muted small fw-bold text-uppercase tracking-wide">
-                      {stat.title}
-                    </div>
-                    <div className="fs-2 fw-bold mt-1" style={{ color: stat.color }}>
-                      {stat.value}
-                    </div>
-                    <div className="small text-muted mt-1">{stat.subtitle}</div>
-                  </div>
-                  <div
-                    style={{
-                      background: `${stat.color}15`,
-                      color: stat.color,
-                      padding: '12px',
-                      borderRadius: '12px',
-                    }}
-                  >
-                    {stat.icon}
-                  </div>
-                </div>
+                {roleDistribution.length === 0 ? (
+                  <p className="text-muted text-center">Sin datos para mostrar</p>
+                ) : (
+                  <ResponsiveContainer width="100%" height={chartHeight}>
+                    <BarChart data={roleDistribution} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                      <XAxis dataKey="name" stroke="#94a3b8" tickLine={false} axisLine={false} />
+                      <YAxis stroke="#94a3b8" tickLine={false} axisLine={false} allowDecimals={false} />
+                      <Tooltip
+                        cursor={{ fill: 'rgba(79, 70, 229, 0.06)' }}
+                        formatter={(value) => [`${value} usuarios`, 'Cantidad']}
+                        labelStyle={{ fontWeight: 600 }}
+                      />
+                      <Bar dataKey="value" name="Cantidad" radius={[8, 8, 0, 0]} barSize={isMobile ? 32 : 56}>
+                        {roleDistribution.map((entry, index) => (
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={CHART_COLORS[index % CHART_COLORS.length]}
+                          />
+                        ))}
+                        <LabelList dataKey="value" position="top" style={{ fontWeight: 700, fill: '#334155' }} />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                )}
               </Card.Body>
             </Card>
           </Col>
-        ))}
-      </Row>
 
 
-      <Row className="g-4 mb-4">
-        <Col xs={12} lg={8}>
-          <Card className="border-0 shadow-sm h-100">
-            <Card.Header className="bg-white fw-bold">
-              Distribución de usuarios por rol
-            </Card.Header>
-            <Card.Body>
-              {roleDistribution.length === 0 ? (
-                <p className="text-muted text-center">Sin datos para mostrar</p>
-              ) : (
-                <ResponsiveContainer width="100%" height={chartHeight}>
-                  <BarChart data={roleDistribution} margin={{ top: 20, right: 20, left: 0, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                    <XAxis dataKey="name" stroke="#94a3b8" tickLine={false} axisLine={false} />
-                    <YAxis stroke="#94a3b8" tickLine={false} axisLine={false} allowDecimals={false} />
-                    <Tooltip
-                      cursor={{ fill: 'rgba(79, 70, 229, 0.06)' }}
-                      formatter={(value) => [`${value} usuarios`, 'Cantidad']}
-                      labelStyle={{ fontWeight: 600 }}
-                    />
-                    <Bar dataKey="value" name="Cantidad" radius={[8, 8, 0, 0]} barSize={isMobile ? 32 : 56}>
-                      {roleDistribution.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={CHART_COLORS[index % CHART_COLORS.length]}
-                        />
-                      ))}
-                      <LabelList dataKey="value" position="top" style={{ fontWeight: 700, fill: '#334155' }} />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
+          <Col xs={12} lg={4}>
+            <Card className="border-0 shadow-sm h-100">
+              <Card.Header className="bg-white fw-bold">
+                Estado de condominios
+              </Card.Header>
+              <Card.Body className="d-flex flex-column align-items-center justify-content-center">
+                {condoStatusData.length === 0 ? (
+                  <p className="text-muted text-center">Sin datos</p>
+                ) : (
+                  <>
+                    <ResponsiveContainer width="100%" height={isMobile ? 200 : 240}>
+                      <PieChart>
+                        <Pie
+                          data={condoStatusData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={isMobile ? 40 : 60}
+                          outerRadius={isMobile ? 70 : 90}
+                          paddingAngle={2}
+                          dataKey="value"
+                        >
+                          {condoStatusData.map((entry, index) => (
+                            <Cell
+                              key={`cell-${index}`}
+                              fill={entry.name === 'Activos' ? COLORS.success : COLORS.danger}
+                            />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                      </PieChart>
+                    </ResponsiveContainer>
+                    <div className="d-flex gap-3 mt-2 flex-wrap justify-content-center">
+                      <div>
+                        <span className="badge bg-success me-1">●</span> Activos:{' '}
+                        <strong>{activeCondos}</strong>
+                      </div>
+                      <div>
+                        <span className="badge bg-danger me-1">●</span> Inactivos:{' '}
+                        <strong>{inactiveCondos}</strong>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
 
 
-        <Col xs={12} lg={4}>
-          <Card className="border-0 shadow-sm h-100">
-            <Card.Header className="bg-white fw-bold">
-              Estado de condominios
-            </Card.Header>
-            <Card.Body className="d-flex flex-column align-items-center justify-content-center">
-              {condoStatusData.length === 0 ? (
-                <p className="text-muted text-center">Sin datos</p>
-              ) : (
-                <>
-                  <ResponsiveContainer width="100%" height={isMobile ? 200 : 240}>
-                    <PieChart>
-                      <Pie
-                        data={condoStatusData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={isMobile ? 40 : 60}
-                        outerRadius={isMobile ? 70 : 90}
-                        paddingAngle={2}
-                        dataKey="value"
+        <Row className="g-4">
+          <Col xs={12} lg={6}>
+            <Card className="border-0 shadow-sm">
+              <Card.Header className="bg-white fw-bold d-flex justify-content-between align-items-center">
+                <span className="d-flex align-items-center gap-2">
+                  <FiClipboard size={16} />
+                  Últimos administradores
+                </span>
+                <Badge bg="primary" pill>
+                  {lastAdmins.length}
+                </Badge>
+              </Card.Header>
+              <Card.Body style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                {lastAdmins.length === 0 ? (
+                  <p className="text-muted text-center">Sin registros</p>
+                ) : (
+                  <ul className="list-unstyled m-0">
+                    {lastAdmins.map((admin) => (
+                      <li
+                        key={admin.id}
+                        className="d-flex flex-column align-items-start border-bottom py-3"
                       >
-                        {condoStatusData.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={entry.name === 'Activos' ? COLORS.success : COLORS.danger}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="d-flex gap-3 mt-2 flex-wrap justify-content-center">
-                    <div>
-                      <span className="badge bg-success me-1">●</span> Activos:{' '}
-                      <strong>{activeCondos}</strong>
-                    </div>
-                    <div>
-                      <span className="badge bg-danger me-1">●</span> Inactivos:{' '}
-                      <strong>{inactiveCondos}</strong>
-                    </div>
-                  </div>
-                </>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-
-
-      <Row className="g-4">
-        <Col xs={12} lg={6}>
-          <Card className="border-0 shadow-sm">
-            <Card.Header className="bg-white fw-bold d-flex justify-content-between align-items-center">
-              <span className="d-flex align-items-center gap-2">
-                <FiClipboard size={16} />
-                Últimos administradores
-              </span>
-              <Badge bg="primary" pill>
-                {lastAdmins.length}
-              </Badge>
-            </Card.Header>
-            <Card.Body style={{ maxHeight: '400px', overflowY: 'auto' }}>
-              {lastAdmins.length === 0 ? (
-                <p className="text-muted text-center">Sin registros</p>
-              ) : (
-                <ul className="list-unstyled m-0">
-                  {lastAdmins.map((admin) => (
-                    <li
-                      key={admin.id}
-                      className="d-flex flex-column align-items-start border-bottom py-3"
-                    >
-                      <div className="fw-bold">
-                        {admin.nombres} {admin.apellidos}
-                      </div>
-                      <div className="small text-muted">
-                        {admin.correo} · {admin.nombreCondominio || 'Sin condominio'}
-                      </div>
-                      <div className="d-flex align-items-center gap-2 mt-2">
-                        <Badge bg={admin.activo ? 'success' : 'secondary'}>
-                          {admin.activo ? 'Activo' : 'Inactivo'}
-                        </Badge>
-                        <div className="small text-muted d-flex align-items-center">
-                          <FiClock size={12} className="me-1" />
-                          {formatDate(admin.fechaCreacion)}
+                        <div className="fw-bold">
+                          {admin.nombres} {admin.apellidos}
                         </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-
-
-        <Col xs={12} lg={6}>
-          <Card className="border-0 shadow-sm">
-            <Card.Header className="bg-white fw-bold d-flex justify-content-between align-items-center">
-              <span className="d-flex align-items-center gap-2">
-                <FiHome size={16} />
-                Últimos condominios
-              </span>
-              <Badge bg="primary" pill>
-                {lastCondos.length}
-              </Badge>
-            </Card.Header>
-            <Card.Body style={{ maxHeight: '400px', overflowY: 'auto' }}>
-              {lastCondos.length === 0 ? (
-                <p className="text-muted text-center">Sin registros</p>
-              ) : (
-                <ul className="list-unstyled m-0">
-                  {lastCondos.map((c) => (
-                    <li
-                      key={c.id}
-                      className="d-flex flex-column align-items-start border-bottom py-3"
-                    >
-                      <div className="fw-bold">{c.nombre}</div>
-                      <div className="small text-muted">
-                        {c.direccion} · {c.nombreCiudad || 'Sin ciudad'}
-                      </div>
-                      <div className="d-flex align-items-center gap-2 mt-2">
-                        <Badge bg={c.activo ? 'success' : 'secondary'}>
-                          {c.activo ? 'Activo' : 'Inactivo'}
-                        </Badge>
-                        <div className="small text-muted d-flex align-items-center">
-                          <FiClock size={12} className="me-1" />
-                          {formatDate(c.fechaCreacion)}
+                        <div className="small text-muted">
+                          {admin.correo} · {admin.nombreCondominio || 'Sin condominio'}
                         </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+                        <div className="d-flex align-items-center gap-2 mt-2">
+                          <Badge bg={admin.activo ? 'success' : 'secondary'}>
+                            {admin.activo ? 'Activo' : 'Inactivo'}
+                          </Badge>
+                          <div className="small text-muted d-flex align-items-center">
+                            <FiClock size={12} className="me-1" />
+                            {formatDate(admin.fechaCreacion)}
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Card.Body>
+            </Card>
+          </Col>
 
 
-      <div className="mt-4 text-center text-muted small">
-        <span>
-          Dashboard actualizado automáticamente · Datos en tiempo real
-        </span>
+          <Col xs={12} lg={6}>
+            <Card className="border-0 shadow-sm">
+              <Card.Header className="bg-white fw-bold d-flex justify-content-between align-items-center">
+                <span className="d-flex align-items-center gap-2">
+                  <FiHome size={16} />
+                  Últimos condominios
+                </span>
+                <Badge bg="primary" pill>
+                  {lastCondos.length}
+                </Badge>
+              </Card.Header>
+              <Card.Body style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                {lastCondos.length === 0 ? (
+                  <p className="text-muted text-center">Sin registros</p>
+                ) : (
+                  <ul className="list-unstyled m-0">
+                    {lastCondos.map((c) => (
+                      <li
+                        key={c.id}
+                        className="d-flex flex-column align-items-start border-bottom py-3"
+                      >
+                        <div className="fw-bold">{c.nombre}</div>
+                        <div className="small text-muted">
+                          {c.direccion} · {c.nombreCiudad || 'Sin ciudad'}
+                        </div>
+                        <div className="d-flex align-items-center gap-2 mt-2">
+                          <Badge bg={c.activo ? 'success' : 'secondary'}>
+                            {c.activo ? 'Activo' : 'Inactivo'}
+                          </Badge>
+                          <div className="small text-muted d-flex align-items-center">
+                            <FiClock size={12} className="me-1" />
+                            {formatDate(c.fechaCreacion)}
+                          </div>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </Card.Body>
+            </Card>
+          </Col>
+        </Row>
+
+
+        <div className="mt-4 text-center text-muted small">
+          <span>
+            Dashboard actualizado automáticamente · Datos en tiempo real
+          </span>
+        </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
