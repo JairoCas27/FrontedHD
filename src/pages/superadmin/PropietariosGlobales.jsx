@@ -4,7 +4,7 @@ import {
   FiArrowUp, FiArrowDown,
 } from 'react-icons/fi';
 import {
-  getAllUsers, updateAdministrator, deleteAdministrator, assignAdministratorCondo,
+  getAllUsers, updateAdministrator, deleteAdministrator,
   getCondominiums, createUserWithRole,
 } from '../../services/api';
 import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner, Badge } from 'react-bootstrap';
@@ -136,20 +136,14 @@ export default function PropietariosGlobales() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await updateAdministrator(editingUser.id, {
+      const payload = {
         nombres: editForm.nombres.trim(),
         apellidos: editForm.apellidos.trim(),
         telefono: editForm.telefono.trim(),
-      });
+      };
       const newCondoId = editForm.idCondominio ? parseInt(editForm.idCondominio, 10) : null;
-      const oldCondoId = editingUser.idCondominio ? parseInt(editingUser.idCondominio, 10) : null;
-      if (newCondoId && newCondoId !== oldCondoId) {
-        try {
-          await assignAdministratorCondo(editingUser.id, newCondoId);
-        } catch (err) {
-          toast.warning('No se pudo asignar el condominio. El administrador del condominio debe hacerlo manualmente.');
-        }
-      }
+      if (newCondoId) payload.idCondominio = newCondoId;
+      await updateAdministrator(editingUser.id, payload);
       toast.success('Propietario actualizado correctamente.');
       setShowEditModal(false);
       setEditingUser(null);
