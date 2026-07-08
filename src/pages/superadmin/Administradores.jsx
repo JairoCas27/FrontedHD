@@ -8,6 +8,7 @@ import {
     patchAdministratorStatus,
     assignAdministratorCondo,
     getCondominiums,
+    extractItems,
 } from '../../services/api';
 import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner, Badge } from 'react-bootstrap';
 import { toast } from 'react-toastify';
@@ -61,28 +62,8 @@ export default function Administradores() {
             ]);
 
 
-            let adminsList = [];
-            if (Array.isArray(adminsData)) {
-                adminsList = adminsData;
-            } else if (adminsData?.items && Array.isArray(adminsData.items)) {
-                adminsList = adminsData.items;
-            } else if (adminsData?.content && Array.isArray(adminsData.content)) {
-                adminsList = adminsData.content;
-            } else if (adminsData?.data && Array.isArray(adminsData.data)) {
-                adminsList = adminsData.data;
-            }
-
-
-            let condosList = [];
-            if (Array.isArray(condosData)) {
-                condosList = condosData;
-            } else if (condosData?.items && Array.isArray(condosData.items)) {
-                condosList = condosData.items;
-            } else if (condosData?.content && Array.isArray(condosData.content)) {
-                condosList = condosData.content;
-            } else if (condosData?.data && Array.isArray(condosData.data)) {
-                condosList = condosData.data;
-            }
+            let adminsList = extractItems(adminsData);
+            let condosList = extractItems(condosData);
 
 
             // Construir set de condominios ocupados

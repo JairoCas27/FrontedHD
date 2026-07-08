@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { FiFolder, FiGrid, FiHome, FiMapPin, FiChevronDown, FiChevronRight, FiPlus, FiTrash2, FiLayers, FiX, FiAlertCircle, FiEdit3, FiUser, FiUsers } from "react-icons/fi"
 import { toast } from 'react-toastify'
 import EncabezadoTabla from '../../components/EncabezadoTabla'
-import { getCondominiums, getAdminStructure, createAdminStructureNode, deleteAdminStructureNode, getAllUsers } from '../../services/api'
+import { getCondominiums, getAdminStructure, createAdminStructureNode, updateAdminStructureNode, deleteAdminStructureNode, getAllUsers, extractItems } from '../../services/api'
 
 const colorSuper = "rgb(124,58,237)"
 
@@ -79,8 +79,8 @@ export default function GlobalEstructura() {
 
   useEffect(() => {
     Promise.all([
-      getCondominiums().then(d => setCondominios(d?.items || d || [])).catch(() => { }),
-      getAllUsers().then(d => setAllUsers(Array.isArray(d) ? d : (d?.items || []))).catch(() => { }),
+      getCondominiums().then(d => setCondominios(extractItems(d))).catch(() => { }),
+      getAllUsers().then(d => setAllUsers(extractItems(d))).catch(() => { }),
     ]).finally(() => setLoading(false))
   }, [])
 
@@ -141,12 +141,7 @@ export default function GlobalEstructura() {
     if (!editTowerName.trim()) { toast.warning('Ingresa un nombre'); return }
     setSavingEditTower(true)
     try {
-      await fetch(`https://sgc-backend-vfvl.onrender.com/api/admin/structure/nodes/${editTowerTarget.id}?condominioId=${condominioId}`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nombre: editTowerName.trim(), tipo: 'TORRE' })
-      }).then(r => { if (!r.ok) return r.json().then(d => { throw new Error(d.error || d.message || 'Error') }); return r.json() })
+      await updateAdminStructureNode(editTowerTarget.id, { nombre: editTowerName.trim(), tipo: 'TORRE' }, condominioId)
       toast.success('Torre actualizada')
       setShowEditTowerModal(false)
       setEditTowerTarget(null)
@@ -196,12 +191,7 @@ export default function GlobalEstructura() {
     if (isNaN(num) || num < 1) { toast.warning('Número de piso inválido'); return }
     setSavingEditFloor(true)
     try {
-      await fetch(`https://sgc-backend-vfvl.onrender.com/api/admin/structure/nodes/${editFloorTarget.id}?condominioId=${condominioId}`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ numero: num, nombre: `Piso ${num}`, tipo: 'PISO' })
-      }).then(r => { if (!r.ok) return r.json().then(d => { throw new Error(d.error || d.message || 'Error') }); return r.json() })
+      await updateAdminStructureNode(editFloorTarget.id, { numero: num, nombre: `Piso ${num}`, tipo: 'PISO' }, condominioId)
       toast.success('Piso actualizado')
       setShowEditFloorModal(false)
       setEditFloorTarget(null)
@@ -259,18 +249,13 @@ export default function GlobalEstructura() {
     if (!editAptNumero.trim()) { toast.warning('Ingresa el número'); return }
     setSavingEditApt(true)
     try {
-      await fetch(`https://sgc-backend-vfvl.onrender.com/api/admin/structure/nodes/${editAptTarget.id}?condominioId=${condominioId}`, {
-        method: 'PUT',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          numero: Number(editAptNumero.trim()),
-          nombre: editAptNumero.trim(),
-          metraje: editAptMetraje ? Number(editAptMetraje) : undefined,
-          derechoEstacionamiento: editAptParking,
-          tipo: 'APARTAMENTO',
-        })
-      }).then(r => { if (!r.ok) return r.json().then(d => { throw new Error(d.error || d.message || 'Error') }); return r.json() })
+      await updateAdminStructureNode(editAptTarget.id, {
+        numero: Number(editAptNumero.trim()),
+        nombre: editAptNumero.trim(),
+        metraje: editAptMetraje ? Number(editAptMetraje) : undefined,
+        derechoEstacionamiento: editAptParking,
+        tipo: 'APARTAMENTO',
+      }, condominioId)
       toast.success('Apartamento actualizado')
       setShowEditAptModal(false)
       setEditAptTarget(null)

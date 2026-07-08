@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { FiHome, FiUser, FiUsers, FiGrid, FiSearch, FiMail, FiPhone, FiX, FiCheck, FiEye, FiUserPlus, FiAlertTriangle, FiRefreshCw, FiEdit3, FiTrash2, FiPlus } from "react-icons/fi"
 import { toast } from 'react-toastify'
 import EncabezadoTabla from '../../components/EncabezadoTabla'
-import { getCondominiums, getAdminApartments, assignApartmentOwner, getAllUsers, getAdminAssets, assignAssetApartment, updateApartmentOccupants } from '../../services/api'
+import { getCondominiums, getAdminApartments, assignApartmentOwner, getAllUsers, getAdminAssets, assignAssetApartment, updateApartmentOccupants, extractItems } from '../../services/api'
 
 const colorSuper = "rgb(124,58,237)"
 
@@ -60,11 +60,8 @@ export default function GlobalDepartamentos() {
   useEffect(() => {
     setLoading(true)
     Promise.all([
-      getCondominiums().then(d => setCondominios(d?.items || d || [])).catch(() => {}),
-      getAllUsers().then(d => {
-        const lista = Array.isArray(d) ? d : (d?.items || [])
-        setAllUsers(lista)
-      }).catch(() => {})
+      getCondominiums().then(d => setCondominios(extractItems(d))).catch(() => {}),
+      getAllUsers().then(d => setAllUsers(extractItems(d))).catch(() => {})
     ]).finally(() => setLoading(false))
   }, [])
 
@@ -77,10 +74,10 @@ export default function GlobalDepartamentos() {
     setLoadingApts(true)
     Promise.all([
       getAdminApartments(condoSeleccionado)
-        .then(d => setApartments(Array.isArray(d) ? d : (d?.items || [])))
+        .then(d => setApartments(extractItems(d)))
         .catch(() => setApartments([])),
       getAdminAssets(condoSeleccionado, 'ESTACIONAMIENTO', 0, 200)
-        .then(d => setParkingAssets(Array.isArray(d) ? d : (d?.items || [])))
+        .then(d => setParkingAssets(extractItems(d)))
         .catch(() => setParkingAssets([])),
     ]).finally(() => setLoadingApts(false))
   }, [condoSeleccionado])
@@ -160,7 +157,12 @@ export default function GlobalDepartamentos() {
       setModalAssign(null)
       setAssignUserId('')
     } catch (err) {
-      toast.error(`Error al asignar: ${err.message}`)
+      const msg = err.message.toLowerCase()
+      if (msg.includes('ya tiene') || msg.includes('already') || msg.includes('ocupado')) {
+        toast.warning('El departamento ya tiene un propietario. El backend no permite cambiarlo directamente. Desasigna primero desde el panel de administración del condominio.')
+      } else {
+        toast.error(`Error al asignar: ${err.message}`)
+      }
     } finally {
       setAssigning(false)
     }

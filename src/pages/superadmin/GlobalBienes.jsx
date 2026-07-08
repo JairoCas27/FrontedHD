@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { FiPackage, FiHome, FiMapPin, FiTruck, FiPlus, FiX, FiInfo, FiEye, FiEdit2, FiTrash2 } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
-import { getCondominiums, getAdminAssets, createAdminAsset, updateAdminAssetStatus, assignAssetApartment, getAdminApartments } from '../../services/api'
+import { getCondominiums, getAdminAssets, createAdminAsset, updateAdminAssetStatus, updateAdminAsset, assignAssetApartment, getAdminApartments, deleteAdminAsset, extractItems } from '../../services/api'
 
 const colorSuper = "rgb(124,58,237)"
 
@@ -88,7 +88,7 @@ export default function GlobalBienes() {
   }
 
   useEffect(() => {
-    getCondominiums().then(d => setCondominios(d?.items || d || [])).catch(() => {})
+    getCondominiums().then(d => setCondominios(extractItems(d))).catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
@@ -101,9 +101,9 @@ export default function GlobalBienes() {
         getAdminAssets(condominioId, 'CARRITO'),
         getAdminApartments(condominioId).catch(() => ({ items: [] }))
       ])
-      setEstacionamientos(parkingRes?.items || [])
-      setCarritos(cartRes?.items || [])
-      setApartamentos(aptRes?.items || [])
+      setEstacionamientos(extractItems(parkingRes))
+      setCarritos(extractItems(cartRes))
+      setApartamentos(extractItems(aptRes))
     } catch (err) {
       mostrarToast('Error al cargar activos: ' + err.message, 'error')
     } finally {
@@ -144,11 +144,20 @@ export default function GlobalBienes() {
   const handleToggle = async (item) => {
     try {
       const nuevoDisponible = !item.disponible
-      const payload = item.tipo === 'CARRITO'
-        ? { tipo: 'CARRITO', estado: nuevoDisponible ? 'DISPONIBLE' : 'EN_USO', disponible: nuevoDisponible }
-        : { tipo: 'ESTACIONAMIENTO', estado: nuevoDisponible ? 'DISPONIBLE' : 'OCUPADO', disponible: nuevoDisponible }
-      await updateAdminAssetStatus(item.id, payload, condoSeleccionado)
-      mostrarToast(nuevoDisponible ? 'Disponible' : (item.tipo === 'CARRITO' ? 'En Préstamo' : 'Ocupado'), 'info')
+      let estadoLabel
+      if (item.tipo === 'CARRITO') {
+        estadoLabel = nuevoDisponible ? 'Disponible' : 'En Préstamo'
+      } else if (item.tipo === 'ESTACIONAMIENTO') {
+        estadoLabel = nuevoDisponible ? 'Disponible' : 'Ocupado'
+      } else {
+        estadoLabel = nuevoDisponible ? 'Disponible' : 'No Disponible'
+      }
+      await updateAdminAssetStatus(item.id, {
+        tipo: item.tipo,
+        estado: nuevoDisponible ? 'DISPONIBLE' : 'NO_DISPONIBLE',
+        disponible: nuevoDisponible
+      }, condoSeleccionado)
+      mostrarToast(estadoLabel, 'info')
       cargarActivos(condoSeleccionado)
     } catch (err) {
       mostrarToast('Error al actualizar estado: ' + err.message, 'error')
@@ -169,15 +178,12 @@ export default function GlobalBienes() {
     if (!editItem) return
     setSaving(true)
     try {
-      await updateAdminAssetStatus(editItem.id, {
-        tipo: 'ESTACIONAMIENTO',
+      await updateAdminAsset(editItem.id, {
         tipoVehiculo: editForm.tipoVehiculo || null,
         capacidadMaxima: editForm.capacidadMaxima ? Number(editForm.capacidadMaxima) : null
       }, condoSeleccionado)
       if (editForm.idApartamento && String(editForm.idApartamento) !== String(editItem.idApartamento)) {
-        try {
-          await assignAssetApartment(editItem.id, Number(editForm.idApartamento), condoSeleccionado)
-        } catch { }
+        await assignAssetApartment(editItem.id, Number(editForm.idApartamento), condoSeleccionado)
       }
       mostrarToast('Estacionamiento actualizado con éxito')
       setEditItem(null)
@@ -192,13 +198,7 @@ export default function GlobalBienes() {
   const handleDelete = async (item) => {
     setConfirmDelete(null)
     try {
-      const params = new URLSearchParams()
-      if (condoSeleccionado) params.append('condominioId', condoSeleccionado)
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/assets/${item.id}?${params.toString()}`, {
-        method: 'DELETE', credentials: 'include', headers: { 'Content-Type': 'application/json' }
-      })
-      const data = await response.json().catch(() => null)
-      if (!response.ok) throw new Error(data?.message || data?.error || `Error ${response.status}`)
+      await deleteAdminAsset(item.id, condoSeleccionado)
       mostrarToast(`${item.tipo === 'CARRITO' ? 'Carrito' : 'Estacionamiento'} eliminado con éxito`)
       cargarActivos(condoSeleccionado)
     } catch (err) {

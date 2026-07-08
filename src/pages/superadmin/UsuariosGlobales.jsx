@@ -9,6 +9,7 @@ import {
   getAdministrators,
   createAdministrator,
   assignAdministratorCondo,
+  extractItems,
 } from '../../services/api';
 import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner, Badge } from 'react-bootstrap';
 import { toast } from 'react-toastify';
@@ -57,38 +58,9 @@ export default function UsuariosGlobales() {
         getAdministrators(),
       ]);
 
-      let usersList = [];
-      if (Array.isArray(usersData)) {
-        usersList = usersData;
-      } else if (usersData?.items && Array.isArray(usersData.items)) {
-        usersList = usersData.items;
-      } else if (usersData?.content && Array.isArray(usersData.content)) {
-        usersList = usersData.content;
-      } else if (usersData?.data && Array.isArray(usersData.data)) {
-        usersList = usersData.data;
-      }
-
-      let condosList = [];
-      if (Array.isArray(condosData)) {
-        condosList = condosData;
-      } else if (condosData?.items && Array.isArray(condosData.items)) {
-        condosList = condosData.items;
-      } else if (condosData?.content && Array.isArray(condosData.content)) {
-        condosList = condosData.content;
-      } else if (condosData?.data && Array.isArray(condosData.data)) {
-        condosList = condosData.data;
-      }
-
-      let adminsList = [];
-      if (Array.isArray(adminsData)) {
-        adminsList = adminsData;
-      } else if (adminsData?.items && Array.isArray(adminsData.items)) {
-        adminsList = adminsData.items;
-      } else if (adminsData?.content && Array.isArray(adminsData.content)) {
-        adminsList = adminsData.content;
-      } else if (adminsData?.data && Array.isArray(adminsData.data)) {
-        adminsList = adminsData.data;
-      }
+      let usersList = extractItems(usersData);
+      let condosList = extractItems(condosData);
+      let adminsList = extractItems(adminsData);
 
       setUsers(usersList);
       setCondominios(condosList);

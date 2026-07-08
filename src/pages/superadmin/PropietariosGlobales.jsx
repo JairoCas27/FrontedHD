@@ -6,7 +6,7 @@ import {
 import {
   getAllUsers, deleteAdministrator, getCondominiums,
   createAdminUser, updateAdministrator,
-  assignAdministratorCondo,
+  assignAdministratorCondo, extractItems,
 } from '../../services/api';
 import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner, Badge } from 'react-bootstrap';
 import { toast } from 'react-toastify';
@@ -34,14 +34,6 @@ export default function PropietariosGlobales() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [editForm, setEditForm] = useState({ nombres: '', apellidos: '', telefono: '', idCondominio: '' });
-
-  const extractItems = (data) => {
-    if (Array.isArray(data)) return data;
-    if (data?.items && Array.isArray(data.items)) return data.items;
-    if (data?.content && Array.isArray(data.content)) return data.content;
-    if (data?.data && Array.isArray(data.data)) return data.data;
-    return [];
-  };
 
   const loadData = async () => {
     setLoading(true);
@@ -145,11 +137,15 @@ export default function PropietariosGlobales() {
         telefono: telefonoVal || editingUser.telefono || '0000000',
       });
       const newCondoId = editForm.idCondominio ? parseInt(editForm.idCondominio, 10) : null;
-      if (newCondoId && newCondoId !== editingUser.idCondominio) {
+      if (newCondoId !== (editingUser.idCondominio || null)) {
         try {
           await assignAdministratorCondo(editingUser.id, newCondoId);
         } catch (assignErr) {
-          toast.warning(`Datos guardados, pero no se pudo reasignar el condominio: ${assignErr.message}`);
+          if (newCondoId === null && assignErr.message.includes('no puede ser null')) {
+            toast.warning('El backend no permite desasignar el condominio. Solo se puede cambiar a otro.');
+          } else {
+            toast.warning(`Datos guardados, pero no se pudo reasignar el condominio: ${assignErr.message}`);
+          }
         }
       }
       toast.success('Propietario actualizado correctamente.');

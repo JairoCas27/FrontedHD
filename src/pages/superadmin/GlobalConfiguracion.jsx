@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react'
 import { FiSettings, FiHome, FiMapPin, FiSave, FiTruck, FiClock, FiCheckCircle, FiAlertCircle, FiLoader } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
-import { getCondominiums, getAdminCondoConfig, updateAdminCondoConfig } from '../../services/api'
+import { getCondominiums, getAdminCondoConfig, updateAdminCondoConfig, extractItems } from '../../services/api'
 
 const colorSuper = "rgb(124,58,237)"
 
@@ -39,7 +39,7 @@ export default function GlobalConfiguracion() {
   const [toast, setToast] = useState(null)
 
   useEffect(() => {
-    getCondominiums().then(d => setCondominios(d?.items || d || [])).catch(() => {})
+    getCondominiums().then(d => setCondominios(extractItems(d))).catch(() => {})
       .finally(() => setLoading(false))
   }, [])
 
@@ -65,7 +65,7 @@ export default function GlobalConfiguracion() {
           maxInquilinosPorDepto: data.maxInquilinosPorDepto ?? 0
         })
       })
-      .catch(() => setToast({ type: 'error', message: 'Error al cargar configuración del condominio.' }))
+      .catch(err => setToast({ type: 'error', message: `Error al cargar: ${err.message}` }))
       .finally(() => setConfigLoading(false))
   }, [condoSeleccionado])
 
@@ -100,8 +100,8 @@ export default function GlobalConfiguracion() {
         maxInquilinosPorDepto: Number(form.maxInquilinosPorDepto)
       }, condoSeleccionado)
       setToast({ type: 'success', message: 'Configuración guardada exitosamente.' })
-    } catch {
-      setToast({ type: 'error', message: 'Error al guardar la configuración.' })
+    } catch (err) {
+      setToast({ type: 'error', message: `Error al guardar: ${err.message}` })
     } finally {
       setSaving(false)
     }

@@ -312,6 +312,20 @@ export async function assignAssetApartment(assetId, idApartamento, condominioId)
   });
 }
 
+export async function deleteAdminAsset(id, condominioId) {
+  const params = new URLSearchParams();
+  if (condominioId) params.append('condominioId', condominioId);
+  return safeFetch(`/api/admin/assets/${id}?${params.toString()}`, { method: 'DELETE' });
+}
+
+export function extractItems(data) {
+  if (Array.isArray(data)) return data;
+  if (data?.items && Array.isArray(data.items)) return data.items;
+  if (data?.content && Array.isArray(data.content)) return data.content;
+  if (data?.data && Array.isArray(data.data)) return data.data;
+  return [];
+}
+
 export async function getAdminUsers(condominioId, params = {}) {
   const qs = new URLSearchParams();
   if (condominioId) qs.append('condominioId', condominioId);
