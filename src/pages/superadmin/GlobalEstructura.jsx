@@ -571,9 +571,9 @@ export default function GlobalEstructura() {
                   Torre: <strong>{addAptContext?.nombreTorre}</strong> &mdash; Piso: <strong>{addAptContext?.numeroPiso}</strong>
                 </p>
                 <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                  <p style={{ margin: "0 0 1.25rem", fontSize: "0.85rem", color: "#64748b" }}>Número de Departamento: </p>
+                  <p style={{ margin: "0 0 1.25rem", color: "#64748b" }}>Número de Departamento: </p>
                   <input type="text" placeholder="Número (ej: 101)" value={aptNumero} onChange={e => setAptNumero(e.target.value)} style={estiloInput} autoFocus />
-                  <p style={{ margin: "0 0 1.25rem", fontSize: "0.85rem", color: "#64748b" }}>Medidas de Metraje m²: </p>
+                  <p style={{ margin: "0 0 1.25rem", color: "#64748b" }}>Medidas de Metraje m²: </p>
                   <input type="number" placeholder="Metraje m² (opcional)" value={aptMetraje} onChange={e => setAptMetraje(e.target.value)} style={estiloInput} />
                   <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", color: "#334155", fontWeight: "600", cursor: "pointer" }}>
                     <input type="checkbox" checked={aptParking} onChange={e => setAptParking(e.target.checked)} /> Derecho estacionamiento
