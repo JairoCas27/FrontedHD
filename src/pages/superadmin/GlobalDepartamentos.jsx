@@ -48,7 +48,7 @@ export default function GlobalDepartamentos() {
   const [assigning, setAssigning] = useState(false)
   const [modalDetail, setModalDetail] = useState(null)
   const [modalTenant, setModalTenant] = useState(null)
-  const [tenantForm, setTenantForm] = useState({ nombres: '', apellidos: '', email: '', telefono: '' })
+  const [tenantForm, setTenantForm] = useState({ nombres: '', apellidos: '', email: '', telefono: '', tipoDocumento: 'DNI', numeroDocumento: '' })
   const [addingTenant, setAddingTenant] = useState(false)
   const [modalParking, setModalParking] = useState(null)
   const [selectedParkingId, setSelectedParkingId] = useState('')
@@ -176,6 +176,8 @@ export default function GlobalDepartamentos() {
         apellidos: tenantForm.apellidos.trim(),
         email: tenantForm.email.trim(),
         telefono: tenantForm.telefono.trim(),
+        tipoDocumento: tenantForm.tipoDocumento.trim() || 'DNI',
+        numeroDocumento: tenantForm.numeroDocumento.trim() || '00000000',
       }
       const updatedTenants = [...currentTenants, newTenant]
       await updateApartmentOccupants(modalTenant.id, { inquilinos: updatedTenants }, condoSeleccionado)
@@ -483,10 +485,12 @@ export default function GlobalDepartamentos() {
               <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "1rem", marginBottom: "1.5rem" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
                   <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.025em" }}>Propietario</span>
-                  <button onClick={() => { setModalAssign(modalDetail); setAssignUserId(String(modalDetail.idPropietario || '')) }}
-                    style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper, fontSize: "0.7rem" }}>
-                    <FiEdit3 size={12} /> {modalDetail.idPropietario ? 'Cambiar' : 'Asignar'}
-                  </button>
+                  {!modalDetail.idPropietario && (
+                    <button onClick={() => { setModalAssign(modalDetail); setAssignUserId('') }}
+                      style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper, fontSize: "0.7rem" }}>
+                      <FiEdit3 size={12} /> Asignar
+                    </button>
+                  )}
                 </div>
                 {modalDetail.idPropietario ? (
                   <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", marginTop: "0.2rem" }}>
@@ -539,7 +543,7 @@ export default function GlobalDepartamentos() {
                   <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.025em" }}>
                     Inquilinos ({Array.isArray(modalDetail.inquilinos) ? modalDetail.inquilinos.length : 0})
                   </span>
-                  <button onClick={() => { setModalTenant(modalDetail); setTenantForm({ nombres: '', apellidos: '', email: '', telefono: '' }) }}
+                  <button onClick={() => { setModalTenant(modalDetail); setTenantForm({ nombres: '', apellidos: '', email: '', telefono: '', tipoDocumento: 'DNI', numeroDocumento: '' }) }}
                     style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper, fontSize: "0.7rem" }}>
                     <FiPlus size={12} /> Agregar
                   </button>
@@ -658,6 +662,23 @@ export default function GlobalDepartamentos() {
                   <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Teléfono</label>
                   <input type="text" value={tenantForm.telefono} onChange={(e) => setTenantForm({ ...tenantForm, telefono: e.target.value })}
                     style={estiloInput} placeholder="Teléfono" />
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "0.5rem" }}>
+                  <div>
+                    <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Tipo Doc. *</label>
+                    <select value={tenantForm.tipoDocumento} onChange={(e) => setTenantForm({ ...tenantForm, tipoDocumento: e.target.value })}
+                      style={estiloInput}>
+                      <option value="DNI">DNI</option>
+                      <option value="CE">CE</option>
+                      <option value="RUC">RUC</option>
+                      <option value="Pasaporte">Pasaporte</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>N&deg; Documento *</label>
+                    <input type="text" value={tenantForm.numeroDocumento} onChange={(e) => setTenantForm({ ...tenantForm, numeroDocumento: e.target.value })}
+                      style={estiloInput} placeholder="Número de documento" />
+                  </div>
                 </div>
               </div>
               <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
