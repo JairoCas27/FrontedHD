@@ -360,63 +360,6 @@ export async function updateAdminMyInfo(data) {
   });
 }
 
-// SuperAdmin wrappers - try simpler paths with query params
-export async function getSuperAdminApartments(condominioId, params = "") {
-  const hasQuery = params.startsWith('?');
-  const separator = hasQuery ? '&' : '?';
-  return safeFetch(`/api/super-admin/apartments${params}${separator}condominioId=${condominioId}`);
-}
-
-export async function assignApartmentOwnerSuperAdmin(id, idPropietario, condominioId) {
-  return safeFetch(`/api/super-admin/apartments/${id}/assign-owner?condominioId=${condominioId}`, {
-    method: 'PUT',
-    body: JSON.stringify({ idPropietario: Number(idPropietario), idUsuario: Number(idPropietario) }),
-  });
-}
-
-export async function getSuperAdminStructure(condominioId) {
-  return safeFetch(`/api/super-admin/structure?condominioId=${condominioId}`);
-}
-
-export async function createSuperAdminStructureNode(condominioId, data) {
-  return safeFetch(`/api/super-admin/structure/nodes?condominioId=${condominioId}`, {
-    method: 'POST', body: JSON.stringify(data),
-  });
-}
-
-export async function deleteSuperAdminStructureNode(condominioId, id, type = 'TORRE') {
-  const query = type === 'PISO' ? `?type=PISO` : '';
-  return safeFetch(`/api/super-admin/structure/nodes/${id}${query}&condominioId=${condominioId}`, { method: 'DELETE' });
-}
-
-export async function getSuperAdminAssets(condominioId, params = "") {
-  const hasQuery = params.startsWith('?');
-  const separator = hasQuery ? '&' : '?';
-  return safeFetch(`/api/super-admin/assets${params}${separator}condominioId=${condominioId}`);
-}
-
-export async function createSuperAdminAsset(condominioId, data) {
-  return safeFetch(`/api/super-admin/assets?condominioId=${condominioId}`, {
-    method: 'POST', body: JSON.stringify(data),
-  });
-}
-
-export async function updateSuperAdminAssetStatus(condominioId, id, payload) {
-  return safeFetch(`/api/super-admin/assets/${id}/status?condominioId=${condominioId}`, {
-    method: 'PUT', body: JSON.stringify(payload),
-  });
-}
-
-export async function getSuperAdminCondoConfig(condominioId) {
-  return safeFetch(`/api/super-admin/condominiums/${condominioId}/configuracion`);
-}
-
-export async function updateSuperAdminCondoConfig(condominioId, data) {
-  return safeFetch(`/api/super-admin/condominiums/${condominioId}/configuracion`, {
-    method: 'PUT', body: JSON.stringify(data),
-  });
-}
-
 export async function getSecurityDashboardStatus() {
   return safeFetch('/api/security/dashboard/status');
 }
