@@ -1,15 +1,14 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
-  FiSearch, FiLock, FiTrash2, FiEye, FiPlus,
+  FiSearch, FiEdit2, FiTrash2, FiEye, FiPlus,
   FiArrowUp, FiArrowDown,
 } from 'react-icons/fi';
 import {
-  getAllUsers, patchUserStatus, forceUserPassword,
+  getAllUsers, updateAdministrator, deleteAdministrator,
   getCondominiums, createUserWithRole,
 } from '../../services/api';
 import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner, Badge } from 'react-bootstrap';
 import { toast } from 'react-toastify';
-import ToggleSwitch from '../../components/common/ToggleSwitch';
 import ConfirmModal from '../../components/common/ConfirmModal';
 
 const ROL = 'PROPIETARIO';
@@ -19,7 +18,7 @@ export default function PropietariosGlobales() {
   const [users, setUsers] = useState([]);
   const [condominios, setCondominios] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filters, setFilters] = useState({ search: '', estado: '', condominio: '' });
+  const [filters, setFilters] = useState({ search: '', condominio: '' });
   const [sortOrder, setSortOrder] = useState('asc');
   const [sortField, setSortField] = useState('nombre');
   const [error, setError] = useState(null);
@@ -31,10 +30,9 @@ export default function PropietariosGlobales() {
   const [form, setForm] = useState({
     nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', idCondominio: '',
   });
-  const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [newPassword, setNewPassword] = useState('');
-  const [passwordError, setPasswordError] = useState('');
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [editForm, setEditForm] = useState({ nombres: '', apellidos: '', telefono: '' });
 
   const extractItems = (data) => {
     if (Array.isArray(data)) return data;
@@ -76,9 +74,8 @@ export default function PropietariosGlobales() {
       const email = (u.correo || '').toLowerCase();
       const search = filters.search.toLowerCase();
       const matchSearch = fullName.includes(search) || email.includes(search);
-      const matchEstado = filters.estado !== '' ? (filters.estado === 'activo' ? u.activo : !u.activo) : true;
       const matchCondo = filters.condominio ? u.idCondominio === parseInt(filters.condominio, 10) : true;
-      return matchSearch && matchEstado && matchCondo;
+      return matchSearch && matchCondo;
     });
     result.sort((a, b) => {
       let valA, valB;
@@ -88,9 +85,6 @@ export default function PropietariosGlobales() {
       } else if (sortField === 'correo') {
         valA = (a.correo || '').toLowerCase();
         valB = (b.correo || '').toLowerCase();
-      } else if (sortField === 'estado') {
-        valA = a.activo ? 1 : 0;
-        valB = b.activo ? 1 : 0;
       } else {
         return 0;
       }
@@ -138,48 +132,35 @@ export default function PropietariosGlobales() {
     }
   };
 
-  const handleToggleStatus = async (userId, activo) => {
+  const handleEdit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
     try {
-      await patchUserStatus(userId, !activo);
-      toast.success(`Usuario ${!activo ? 'activado' : 'desactivado'}.`);
-      setConfirmAction(null);
+      await updateAdministrator(editingUser.id, {
+        nombres: editForm.nombres.trim(),
+        apellidos: editForm.apellidos.trim(),
+        telefono: editForm.telefono.trim(),
+      });
+      toast.success('Propietario actualizado correctamente.');
+      setShowEditModal(false);
+      setEditingUser(null);
       await loadData();
     } catch (err) {
-      toast.error(`Error: ${err.message}`);
-      setConfirmAction(null);
+      toast.error(`Error al actualizar: ${err.message}`);
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleDelete = async (user) => {
     try {
-      await patchUserStatus(user.id, false);
-      toast.success('Propietario desactivado.');
+      await deleteAdministrator(user.id);
+      toast.success('Propietario eliminado permanentemente.');
       setConfirmAction(null);
       await loadData();
     } catch (err) {
-      toast.error(`Error: ${err.message}`);
+      toast.error(`Error al eliminar: ${err.message}`);
       setConfirmAction(null);
-    }
-  };
-
-  const handleForcePassword = async (userId) => {
-    if (!newPassword || newPassword.trim() === '') {
-      toast.warning('La contraseña no puede estar vacía');
-      return;
-    }
-    if (newPassword.length < 6) {
-      toast.error('La contraseña debe tener al menos 6 caracteres.');
-      return;
-    }
-    try {
-      await forceUserPassword(userId, newPassword.trim());
-      toast.success('Contraseña actualizada correctamente.');
-      setShowPasswordModal(false);
-      setNewPassword('');
-      setPasswordError('');
-      await loadData();
-    } catch (err) {
-      toast.error(`Error: ${err.message}`);
     }
   };
 
@@ -237,16 +218,6 @@ export default function PropietariosGlobales() {
         </Col>
         <Col md={2}>
           <Form.Select
-            value={filters.estado}
-            onChange={(e) => setFilters({ ...filters, estado: e.target.value })}
-          >
-            <option value="">Todos los estados</option>
-            <option value="activo">Activo</option>
-            <option value="inactivo">Inactivo</option>
-          </Form.Select>
-        </Col>
-        <Col md={2}>
-          <Form.Select
             value={filters.condominio}
             onChange={(e) => setFilters({ ...filters, condominio: e.target.value })}
           >
@@ -269,12 +240,11 @@ export default function PropietariosGlobales() {
             <option value="nombre-desc">Nombre Z-A</option>
             <option value="correo-asc">Correo A-Z</option>
             <option value="correo-desc">Correo Z-A</option>
-            <option value="estado-asc">Activos primero</option>
-            <option value="estado-desc">Inactivos primero</option>
+
           </Form.Select>
         </Col>
         <Col md={2}>
-          <Button variant="outline-secondary" onClick={() => setFilters({ search: '', estado: '', condominio: '' })}>
+          <Button variant="outline-secondary" onClick={() => setFilters({ search: '', condominio: '' })}>
             Limpiar
           </Button>
         </Col>
@@ -297,9 +267,6 @@ export default function PropietariosGlobales() {
                 </th>
                 <th>Teléfono</th>
                 <th>Condominio</th>
-                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('estado')}>
-                  Estado {getSortIcon('estado')}
-                </th>
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -311,22 +278,16 @@ export default function PropietariosGlobales() {
                   <td>{u.telefono}</td>
                   <td>{u.nombreCondominio || <span className="text-muted">Sin asignar</span>}</td>
                   <td>
-                    <ToggleSwitch
-                      checked={u.activo}
-                      onChange={() => setConfirmAction({ type: 'status', user: u })}
-                    />
-                  </td>
-                  <td>
                     <Button variant="outline-info" size="sm" className="me-1"
                       onClick={() => { setDetailItem(u); setShowDetail(true); }} title="Ver detalle">
                       <FiEye />
                     </Button>
-                    <Button variant="outline-primary" size="sm" className="me-1"
-                      onClick={() => { setSelectedUser(u); setShowPasswordModal(true); }} title="Forzar contraseña">
-                      <FiLock />
+                    <Button variant="outline-warning" size="sm" className="me-1"
+                      onClick={() => { setEditingUser(u); setEditForm({ nombres: u.nombres, apellidos: u.apellidos, telefono: u.telefono || '' }); setShowEditModal(true); }} title="Editar">
+                      <FiEdit2 />
                     </Button>
                     <Button variant="outline-danger" size="sm"
-                      onClick={() => setConfirmAction({ type: 'delete', user: u })} title="Desactivar">
+                      onClick={() => setConfirmAction({ type: 'delete', user: u })} title="Eliminar permanentemente">
                       <FiTrash2 />
                     </Button>
                   </td>
@@ -375,23 +336,11 @@ export default function PropietariosGlobales() {
       {/* Confirm Modal */}
       <ConfirmModal
         open={!!confirmAction}
-        title={confirmAction?.type === 'status'
-          ? `${confirmAction?.user?.activo ? 'Desactivar' : 'Activar'} propietario`
-          : 'Desactivar propietario'}
-        description={confirmAction?.type === 'status'
-          ? `¿${confirmAction?.user?.activo ? 'Desactivar' : 'Activar'} a "${confirmAction?.user?.nombres} ${confirmAction?.user?.apellidos}"?`
-          : `¿Desactivar a "${confirmAction?.user?.nombres} ${confirmAction?.user?.apellidos}"?`}
-        onConfirm={() => {
-          if (confirmAction?.type === 'status') {
-            handleToggleStatus(confirmAction.user.id, confirmAction.user.activo);
-          } else {
-            handleDelete(confirmAction.user);
-          }
-        }}
+        title="Eliminar propietario"
+        description={`¿Eliminar permanentemente a "${confirmAction?.user?.nombres} ${confirmAction?.user?.apellidos}"? Esta acción no se puede deshacer.`}
+        onConfirm={() => handleDelete(confirmAction.user)}
         onCancel={() => setConfirmAction(null)}
-        confirmLabel={confirmAction?.type === 'status'
-          ? `${confirmAction?.user?.activo ? 'Desactivar' : 'Activar'}`
-          : 'Desactivar'}
+        confirmLabel="Eliminar"
         variant="danger"
       />
 
@@ -446,36 +395,33 @@ export default function PropietariosGlobales() {
         </Form>
       </Modal>
 
-      {/* Password Modal */}
-      <Modal show={showPasswordModal} onHide={() => setShowPasswordModal(false)} centered>
+      {/* Edit Modal */}
+      <Modal show={showEditModal} onHide={() => setShowEditModal(false)} centered>
         <Modal.Header closeButton className="bg-light">
-          <Modal.Title>Forzar cambio de contraseña</Modal.Title>
+          <Modal.Title>Editar Propietario</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
-          <p>Usuario: <strong>{selectedUser?.nombres} {selectedUser?.apellidos}</strong></p>
-          <Form.Group>
-            <Form.Label>Nueva contraseña</Form.Label>
-            <Form.Control
-              type="text" value={newPassword}
-              onChange={(e) => {
-                const value = e.target.value;
-                setNewPassword(value);
-                setPasswordError(value && value.length < 6 ? 'Mínimo 6 caracteres.' : '');
-              }}
-              placeholder="Ingresa nueva contraseña"
-              isInvalid={!!passwordError}
-              minLength={6}
-            />
-            <Form.Control.Feedback type="invalid">{passwordError}</Form.Control.Feedback>
-          </Form.Group>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={() => setShowPasswordModal(false)}>Cancelar</Button>
-          <Button variant="primary" onClick={() => handleForcePassword(selectedUser?.id)}
-            disabled={!!passwordError || !newPassword || newPassword.length < 6}>
-            Guardar
-          </Button>
-        </Modal.Footer>
+        <Form onSubmit={handleEdit}>
+          <Modal.Body>
+            <Form.Group className="mb-3">
+              <Form.Label>Nombres</Form.Label>
+              <Form.Control value={editForm.nombres} onChange={(e) => setEditForm({ ...editForm, nombres: e.target.value })} required />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Apellidos</Form.Label>
+              <Form.Control value={editForm.apellidos} onChange={(e) => setEditForm({ ...editForm, apellidos: e.target.value })} required />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Teléfono</Form.Label>
+              <Form.Control value={editForm.telefono} onChange={(e) => setEditForm({ ...editForm, telefono: e.target.value })} />
+            </Form.Group>
+          </Modal.Body>
+          <Modal.Footer>
+            <Button variant="secondary" onClick={() => setShowEditModal(false)}>Cancelar</Button>
+            <Button type="submit" disabled={submitting}>
+              {submitting ? 'Guardando...' : 'Guardar cambios'}
+            </Button>
+          </Modal.Footer>
+        </Form>
       </Modal>
     </div>
   );
