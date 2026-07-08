@@ -53,6 +53,7 @@ export default function GlobalDepartamentos() {
   const [modalParking, setModalParking] = useState(null)
   const [selectedParkingId, setSelectedParkingId] = useState('')
   const [assigningParking, setAssigningParking] = useState(false)
+  const [confirmRemoveTenantIdx, setConfirmRemoveTenantIdx] = useState(null)
 
   useEffect(() => {
     setLoading(true)
@@ -187,8 +188,11 @@ export default function GlobalDepartamentos() {
           ? { ...a, inquilinos: updatedTenants }
           : a
       ))
+      if (modalDetail && String(modalDetail.id) === String(modalTenant.id)) {
+        setModalDetail(prev => ({ ...prev, inquilinos: updatedTenants }))
+      }
       setModalTenant(prev => ({ ...prev, inquilinos: updatedTenants }))
-      setTenantForm({ nombres: '', apellidos: '', email: '', telefono: '' })
+      setTenantForm({ nombres: '', apellidos: '', email: '', telefono: '', tipoDocumento: 'DNI', numeroDocumento: '' })
     } catch (err) {
       toast.error(`Error al agregar inquilino: ${err.message}`)
     } finally {
@@ -197,6 +201,7 @@ export default function GlobalDepartamentos() {
   }
 
   async function handleRemoveTenant(idx) {
+    setConfirmRemoveTenantIdx(null)
     try {
       const currentTenants = Array.isArray(modalDetail.inquilinos) ? modalDetail.inquilinos : []
       const updatedTenants = currentTenants.filter((_, i) => i !== idx)
@@ -240,7 +245,7 @@ export default function GlobalDepartamentos() {
   }
 
   const parkingDisponibles = parkingAssets.filter(p =>
-    String(p.idApartamento) !== String(modalParking?.id) && (p.disponible === true || !p.idApartamento)
+    String(p.idApartamento) !== String(modalParking?.id) && p.disponible === true
   )
 
   const btnStyle = {
@@ -420,7 +425,7 @@ export default function GlobalDepartamentos() {
                           </td>
                           <td style={{ padding: "0.75rem 1rem", fontSize: "0.8rem", color: "#64748b" }}>
                             {parking ? (
-                              <span style={{ fontWeight: "600", color: "#0f172a" }}>{parking.codigo}</span>
+                              <span style={{ fontWeight: "600", color: "#0f172a" }}>N° {parking.numero}</span>
                             ) : (
                               <span style={{ fontStyle: "italic", color: "#cbd5e1", fontSize: "0.75rem" }}>---</span>
                             )}
@@ -485,12 +490,10 @@ export default function GlobalDepartamentos() {
               <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "1rem", marginBottom: "1.5rem" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
                   <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.025em" }}>Propietario</span>
-                  {!modalDetail.idPropietario && (
-                    <button onClick={() => { setModalAssign(modalDetail); setAssignUserId('') }}
-                      style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper, fontSize: "0.7rem" }}>
-                      <FiEdit3 size={12} /> Asignar
-                    </button>
-                  )}
+                  <button onClick={() => { setModalAssign(modalDetail); setAssignUserId(String(modalDetail.idPropietario || '')) }}
+                    style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper, fontSize: "0.7rem" }}>
+                    <FiEdit3 size={12} /> {modalDetail.idPropietario ? 'Cambiar' : 'Asignar'}
+                  </button>
                 </div>
                 {modalDetail.idPropietario ? (
                   <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", marginTop: "0.2rem" }}>
@@ -529,7 +532,7 @@ export default function GlobalDepartamentos() {
                   const parking = getAssignedParking(modalDetail)
                   return parking ? (
                     <p style={{ margin: "0.2rem 0 0", fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>
-                      {parking.codigo}
+                      N° {parking.numero}
                     </p>
                   ) : (
                     <p style={{ margin: "0.2rem 0 0", fontStyle: "italic", color: "#94a3b8", fontSize: "0.9rem" }}>Sin estacionamiento asignado</p>
@@ -557,9 +560,12 @@ export default function GlobalDepartamentos() {
                         </div>
                         <div style={{ flex: 1 }}>
                           <span style={{ fontWeight: "600", fontSize: "0.85rem", color: "#0f172a" }}>{inq.nombre || inq.nombres || 'Inquilino'} {inq.apellidos || ''}</span>
-                          {inq.email && <span style={{ display: "block", fontSize: "0.7rem", color: "#64748b" }}>{inq.email}</span>}
+                          <span style={{ display: "block", fontSize: "0.7rem", color: "#64748b" }}>
+                            {inq.tipoDocumento && inq.numeroDocumento ? `${inq.tipoDocumento}: ${inq.numeroDocumento}` : ''}
+                            {inq.email ? `${inq.tipoDocumento && inq.numeroDocumento ? ' | ' : ''}${inq.email}` : ''}
+                          </span>
                         </div>
-                        <button onClick={() => handleRemoveTenant(idx)}
+                        <button onClick={() => setConfirmRemoveTenantIdx(idx)}
                           style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", padding: "0.25rem", display: "flex" }}
                           title="Eliminar inquilino">
                           <FiTrash2 size={14} />
@@ -724,7 +730,7 @@ export default function GlobalDepartamentos() {
                 <option value="">-- Seleccionar --</option>
                 {parkingDisponibles.map(p => (
                   <option key={p.id} value={p.id}>
-                    {p.codigo} {p.piso ? `- Piso ${p.piso}` : ''}
+                    N° {p.numero}{p.tipoVehiculo ? ` (${p.tipoVehiculo})` : ''}
                   </option>
                 ))}
               </select>
@@ -746,6 +752,28 @@ export default function GlobalDepartamentos() {
                     display: "flex", alignItems: "center", gap: "0.4rem"
                   }}>
                   {assigningParking ? 'Asignando...' : <><FiCheck size={16} /> Asignar</>}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmRemoveTenantIdx !== null && (
+        <div style={modalOverlay} onClick={() => setConfirmRemoveTenantIdx(null)}>
+          <div style={{ ...modalContent, maxWidth: "400px" }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ padding: "1.5rem", textAlign: "center" }}>
+              <FiAlertTriangle size={40} style={{ color: "#ef4444", marginBottom: "1rem" }} />
+              <h3 style={{ margin: "0 0 0.5rem", fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>¿Eliminar inquilino?</h3>
+              <p style={{ color: "#64748b", fontSize: "0.85rem" }}>Esta acción no se puede deshacer.</p>
+              <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", justifyContent: "center" }}>
+                <button onClick={() => setConfirmRemoveTenantIdx(null)}
+                  style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>
+                  Cancelar
+                </button>
+                <button onClick={() => handleRemoveTenant(confirmRemoveTenantIdx)}
+                  style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: "#ef4444", color: "#fff", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>
+                  Eliminar
                 </button>
               </div>
             </div>
