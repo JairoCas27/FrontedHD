@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { FiPackage, FiHome, FiMapPin, FiTruck, FiPlus, FiX, FiInfo, FiEye, FiEdit2 } from "react-icons/fi"
+import { FiPackage, FiHome, FiMapPin, FiTruck, FiPlus, FiX, FiInfo, FiEye, FiEdit2, FiTrash2 } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import { getCondominiums, getAdminAssets, createAdminAsset, updateAdminAssetStatus, assignAssetApartment, getAdminApartments } from '../../services/api'
 
@@ -80,6 +80,7 @@ export default function GlobalBienes() {
   const [detailItem, setDetailItem] = useState(null)
   const [editForm, setEditForm] = useState({})
   const [saving, setSaving] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(null)
 
   const mostrarToast = (mensaje, tipo = 'success') => {
     setToast({ visible: true, mensaje, tipo })
@@ -143,11 +144,10 @@ export default function GlobalBienes() {
   const handleToggle = async (item) => {
     try {
       const nuevoDisponible = !item.disponible
-      await updateAdminAssetStatus(item.id, {
-        tipo: item.tipo,
-        estado: nuevoDisponible ? 'DISPONIBLE' : (item.tipo === 'CARRITO' ? 'EN_USO' : 'OCUPADO'),
-        disponible: nuevoDisponible
-      }, condoSeleccionado)
+      const payload = item.tipo === 'CARRITO'
+        ? { tipo: 'CARRITO', estado: nuevoDisponible ? 'DISPONIBLE' : 'EN_USO', disponible: nuevoDisponible }
+        : { tipo: 'ESTACIONAMIENTO', estado: nuevoDisponible ? 'DISPONIBLE' : 'OCUPADO', disponible: nuevoDisponible }
+      await updateAdminAssetStatus(item.id, payload, condoSeleccionado)
       mostrarToast(nuevoDisponible ? 'Disponible' : (item.tipo === 'CARRITO' ? 'En Préstamo' : 'Ocupado'), 'info')
       cargarActivos(condoSeleccionado)
     } catch (err) {
@@ -186,6 +186,23 @@ export default function GlobalBienes() {
       mostrarToast('Error al actualizar: ' + err.message, 'error')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleDelete = async (item) => {
+    setConfirmDelete(null)
+    try {
+      const params = new URLSearchParams()
+      if (condoSeleccionado) params.append('condominioId', condoSeleccionado)
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/admin/assets/${item.id}?${params.toString()}`, {
+        method: 'DELETE', credentials: 'include', headers: { 'Content-Type': 'application/json' }
+      })
+      const data = await response.json().catch(() => null)
+      if (!response.ok) throw new Error(data?.message || data?.error || `Error ${response.status}`)
+      mostrarToast(`${item.tipo === 'CARRITO' ? 'Carrito' : 'Estacionamiento'} eliminado con éxito`)
+      cargarActivos(condoSeleccionado)
+    } catch (err) {
+      mostrarToast('Error al eliminar: ' + err.message, 'error')
     }
   }
 
@@ -329,10 +346,7 @@ export default function GlobalBienes() {
                   <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
                     {estacionamientos.map((est) => (
                       <tr key={est.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                        <td style={{ padding: "1rem 1.5rem" }}>
-                          <span style={{ fontWeight: "700", color: "#0f172a" }}>N° {est.numero}</span>
-                          {est.codigo && <span style={{ display: "block", fontSize: "0.7rem", color: "#94a3b8", fontFamily: "monospace" }}>{est.codigo}</span>}
-                        </td>
+                        <td style={{ padding: "1rem 1.5rem", fontWeight: "600", color: "#0f172a", fontFamily: "monospace" }}>{est.codigo || '—'}</td>
                         <td style={tdCenter}>
                           {est.tipoVehiculo ? (
                             <span style={{
@@ -360,6 +374,7 @@ export default function GlobalBienes() {
                           <div style={{ display: "flex", gap: "0.35rem", justifyContent: "flex-end" }}>
                             <button onClick={() => openDetail(est)} style={btnAction("rgba(59,130,246,0.1)", "#3b82f6")} title="Ver detalles"><FiEye size={13} /></button>
                             <button onClick={() => openEdit(est)} style={btnAction("rgba(124,58,237,0.1)", colorSuper)} title="Editar"><FiEdit2 size={13} /></button>
+                            <button onClick={() => setConfirmDelete(est)} style={btnAction("rgba(239,68,68,0.1)", "#ef4444")} title="Eliminar"><FiTrash2 size={13} /></button>
                           </div>
                         </td>
                       </tr>
@@ -422,6 +437,7 @@ export default function GlobalBienes() {
                         <td style={tdRight}>
                           <div style={{ display: "flex", gap: "0.35rem", justifyContent: "flex-end" }}>
                             <button onClick={() => openDetail(car)} style={btnAction("rgba(59,130,246,0.1)", "#3b82f6")} title="Ver detalles"><FiEye size={13} /></button>
+                            <button onClick={() => setConfirmDelete(car)} style={btnAction("rgba(239,68,68,0.1)", "#ef4444")} title="Eliminar"><FiTrash2 size={13} /></button>
                           </div>
                         </td>
                       </tr>
@@ -557,6 +573,24 @@ export default function GlobalBienes() {
             </div>
             <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", backgroundColor: "#f8fafc" }}>
               <button onClick={() => setDetailItem(null)} style={{ backgroundColor: "#ffffff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmDelete && (
+        <div style={modalOverlay}>
+          <div style={{ ...modalBox, maxWidth: "400px" }}>
+            <div style={{ padding: "1.5rem", textAlign: "center" }}>
+              <FiTrash2 size={36} color="#ef4444" style={{ marginBottom: "0.75rem" }} />
+              <h3 style={{ margin: "0 0 0.5rem", fontSize: "1.05rem", fontWeight: "800", color: "#1e293b" }}>Confirmar Eliminación</h3>
+              <p style={{ fontSize: "0.85rem", color: "#64748b", margin: 0 }}>
+                ¿Estás seguro de eliminar {confirmDelete.tipo === 'CARRITO' ? 'el carrito' : 'el estacionamiento'} <strong>{confirmDelete.codigo || `N° ${confirmDelete.numero}`}</strong>?
+              </p>
+            </div>
+            <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: "0.75rem", backgroundColor: "#f8fafc" }}>
+              <button onClick={() => setConfirmDelete(null)} style={{ backgroundColor: "#ffffff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Cancelar</button>
+              <button onClick={() => handleDelete(confirmDelete)} style={{ backgroundColor: "#ef4444", border: "none", color: "#ffffff", padding: "0.5rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Eliminar</button>
             </div>
           </div>
         </div>
