@@ -127,6 +127,10 @@ export default function GlobalDepartamentos() {
     return allUsers.find(u => String(u.id) === String(apt.idPropietario)) || null
   }
 
+  function openDetail(apt) {
+    setModalDetail(apt)
+  }
+
   function getAssignedParking(apt) {
     return parkingAssets.find(p => String(p.idApartamento) === String(apt.id))
   }
