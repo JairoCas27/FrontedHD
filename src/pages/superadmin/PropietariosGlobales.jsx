@@ -132,11 +132,22 @@ export default function PropietariosGlobales() {
     e.preventDefault();
     setSubmitting(true);
     try {
+      const telefonoVal = editForm.telefono.trim();
+      if (telefonoVal && (telefonoVal.length < 7 || telefonoVal.length > 16)) {
+        toast.warning('El teléfono debe tener entre 7 y 16 caracteres.');
+        setSubmitting(false);
+        return;
+      }
       const newCondoId = editForm.idCondominio ? parseInt(editForm.idCondominio, 10) : null;
+      if (!newCondoId) {
+        toast.error('Debes seleccionar un condominio.');
+        setSubmitting(false);
+        return;
+      }
       await updateAdminUser(editingUser.id, {
         nombres: editForm.nombres.trim(),
         apellidos: editForm.apellidos.trim(),
-        telefono: editForm.telefono.trim(),
+        telefono: telefonoVal || editingUser.telefono || '0000000',
         rol: ROL,
       }, newCondoId);
       toast.success('Propietario actualizado correctamente.');
