@@ -185,7 +185,7 @@ export default function GlobalDepartamentos() {
         numero: Number(createAptForm.numero.trim()),
         nombreTorre: createAptForm.torreNombre,
         numeroPiso: Number(createAptForm.pisoNumero),
-        metraje: createAptForm.metraje ? Number(createAptForm.metraje) : undefined,
+        metraje: createAptForm.metraje ? Number(createAptForm.metraje) : 0,
         derechoEstacionamiento: createAptForm.derechoEstacionamiento,
       }, condoSeleccionado)
       toast.success('Departamento creado correctamente')
