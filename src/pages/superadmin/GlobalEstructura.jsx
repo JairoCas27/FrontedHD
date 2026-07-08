@@ -44,20 +44,10 @@ export default function GlobalEstructura() {
   const [towerName, setTowerName] = useState('')
   const [creatingTower, setCreatingTower] = useState(false)
 
-  const [showEditTowerModal, setShowEditTowerModal] = useState(false)
-  const [editTowerTarget, setEditTowerTarget] = useState(null)
-  const [editTowerName, setEditTowerName] = useState('')
-  const [savingEditTower, setSavingEditTower] = useState(false)
-
   const [showAddFloorModal, setShowAddFloorModal] = useState(false)
   const [selectedTowerForFloor, setSelectedTowerForFloor] = useState(null)
   const [floorNumber, setFloorNumber] = useState('')
   const [creatingFloor, setCreatingFloor] = useState(false)
-
-  const [showEditFloorModal, setShowEditFloorModal] = useState(false)
-  const [editFloorTarget, setEditFloorTarget] = useState(null)
-  const [editFloorNum, setEditFloorNum] = useState('')
-  const [savingEditFloor, setSavingEditFloor] = useState(false)
 
   const [showAddAptModal, setShowAddAptModal] = useState(false)
   const [addAptContext, setAddAptContext] = useState(null)
@@ -65,13 +55,6 @@ export default function GlobalEstructura() {
   const [aptMetraje, setAptMetraje] = useState('')
   const [aptParking, setAptParking] = useState(false)
   const [creatingApt, setCreatingApt] = useState(false)
-
-  const [showEditAptModal, setShowEditAptModal] = useState(false)
-  const [editAptTarget, setEditAptTarget] = useState(null)
-  const [editAptNumero, setEditAptNumero] = useState('')
-  const [editAptMetraje, setEditAptMetraje] = useState('')
-  const [editAptParking, setEditAptParking] = useState(false)
-  const [savingEditApt, setSavingEditApt] = useState(false)
 
   const [confirmDeleteApt, setConfirmDeleteApt] = useState(null)
   const [deletingId, setDeletingId] = useState(null)
@@ -137,22 +120,6 @@ export default function GlobalEstructura() {
     }
   }
 
-  const handleEditTower = async () => {
-    if (!editTowerName.trim()) { toast.warning('Ingresa un nombre'); return }
-    setSavingEditTower(true)
-    try {
-      await updateAdminStructureNode(editTowerTarget.id, { nombre: editTowerName.trim(), tipo: 'TORRE' }, condominioId)
-      toast.success('Torre actualizada')
-      setShowEditTowerModal(false)
-      setEditTowerTarget(null)
-      await fetchStructure(condominioId)
-    } catch (err) {
-      toast.error(`Error: ${err.message}`)
-    } finally {
-      setSavingEditTower(false)
-    }
-  }
-
   const handleDeleteTower = async (id) => {
     if (!window.confirm('¿Eliminar esta torre y todo su contenido?')) return
     setDeletingId(id)
@@ -186,23 +153,6 @@ export default function GlobalEstructura() {
     }
   }
 
-  const handleEditFloor = async () => {
-    const num = parseInt(editFloorNum, 10)
-    if (isNaN(num) || num < 1) { toast.warning('Número de piso inválido'); return }
-    setSavingEditFloor(true)
-    try {
-      await updateAdminStructureNode(editFloorTarget.id, { numero: num, nombre: `Piso ${num}`, tipo: 'PISO' }, condominioId)
-      toast.success('Piso actualizado')
-      setShowEditFloorModal(false)
-      setEditFloorTarget(null)
-      await fetchStructure(condominioId)
-    } catch (err) {
-      toast.error(`Error: ${err.message}`)
-    } finally {
-      setSavingEditFloor(false)
-    }
-  }
-
   const handleDeleteFloor = async (id) => {
     if (!window.confirm('¿Eliminar este piso y todos sus apartamentos?')) return
     setDeletingId(id)
@@ -221,16 +171,13 @@ export default function GlobalEstructura() {
     if (!aptNumero.trim()) { toast.warning('Ingresa el número del apartamento'); return }
     setCreatingApt(true)
     try {
-      const body = {
+      await createAdminStructureNode({
         tipo: 'APARTAMENTO',
-        nombre: aptNumero.trim(),
-        numero: Number(aptNumero.trim()),
         nombreTorre: addAptContext.nombreTorre,
-        numeroPiso: addAptContext.numeroPiso,
-        metraje: aptMetraje ? Number(aptMetraje) : undefined,
-        derechoEstacionamiento: aptParking,
-      }
-      await createAdminStructureNode(body, condominioId)
+        numeroPiso: Number(addAptContext.numeroPiso),
+        numeroApartamento: Number(aptNumero.trim()),
+        metraje: aptMetraje ? Number(aptMetraje) : 50.0,
+      }, condominioId)
       toast.success('Apartamento creado')
       setShowAddAptModal(false)
       setAddAptContext(null)
@@ -242,28 +189,6 @@ export default function GlobalEstructura() {
       toast.error(`Error: ${err.message}`)
     } finally {
       setCreatingApt(false)
-    }
-  }
-
-  const handleEditApt = async () => {
-    if (!editAptNumero.trim()) { toast.warning('Ingresa el número'); return }
-    setSavingEditApt(true)
-    try {
-      await updateAdminStructureNode(editAptTarget.id, {
-        numero: Number(editAptNumero.trim()),
-        nombre: editAptNumero.trim(),
-        metraje: editAptMetraje ? Number(editAptMetraje) : undefined,
-        derechoEstacionamiento: editAptParking,
-        tipo: 'APARTAMENTO',
-      }, condominioId)
-      toast.success('Apartamento actualizado')
-      setShowEditAptModal(false)
-      setEditAptTarget(null)
-      await fetchStructure(condominioId)
-    } catch (err) {
-      toast.error(`Error: ${err.message}`)
-    } finally {
-      setSavingEditApt(false)
     }
   }
 
@@ -379,8 +304,6 @@ export default function GlobalEstructura() {
                         </span>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                        <button onClick={(e) => { e.stopPropagation(); setEditTowerTarget(torre); setEditTowerName(torre.nombre); setShowEditTowerModal(true) }}
-                          style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.08)", color: colorSuper }}><FiEdit3 size={12} /></button>
                         <button onClick={(e) => { e.stopPropagation(); setSelectedTowerForFloor(torre); setShowAddFloorModal(true) }}
                           style={{ ...btnStyle, backgroundColor: "transparent", color: colorSuper, border: `1px solid ${colorSuper}` }}><FiPlus size={13} /> Piso</button>
                         <button onClick={(e) => { e.stopPropagation(); handleDeleteTower(torre.id) }} disabled={deletingId === torre.id}
@@ -412,8 +335,6 @@ export default function GlobalEstructura() {
                                       </span>
                                     </div>
                                     <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                                      <button onClick={(e) => { e.stopPropagation(); setEditFloorTarget(piso); setEditFloorNum(String(piso.numero || '')); setShowEditFloorModal(true) }}
-                                        style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.08)", color: colorSuper }}><FiEdit3 size={11} /></button>
                                       <button onClick={(e) => { e.stopPropagation(); setAddAptContext({ nombreTorre: torre.nombre, numeroPiso: piso.numero }); setAptNumero(''); setAptMetraje(''); setAptParking(false); setShowAddAptModal(true) }}
                                         style={{ ...btnStyle, backgroundColor: "transparent", color: colorSuper, border: `1px solid ${colorSuper}` }}><FiPlus size={11} /> Apto</button>
                                       <button onClick={(e) => { e.stopPropagation(); handleDeleteFloor(piso.id) }} disabled={deletingId === piso.id}
@@ -458,8 +379,6 @@ export default function GlobalEstructura() {
                                                     <span style={{ fontSize: "0.65rem", color: "#94a3b8", fontStyle: "italic" }}>Sin propietario</span>
                                                   )}
                                                   <div style={{ marginLeft: "auto", display: "flex", gap: "0.2rem" }}>
-                                                    <button onClick={() => { setEditAptTarget(apt); setEditAptNumero(apt.numero); setEditAptMetraje(apt.metraje || ''); setEditAptParking(apt.derechoParking || false); setShowEditAptModal(true) }}
-                                                      style={{ ...btnStyle, padding: "0.15rem 0.35rem", backgroundColor: "rgba(124,58,237,0.08)", color: colorSuper }}><FiEdit3 size={10} /></button>
                                                     <button onClick={() => setConfirmDeleteApt(apt)}
                                                       style={{ ...btnStyle, padding: "0.15rem 0.35rem", color: "#ef4444", background: "transparent" }}><FiTrash2 size={10} /></button>
                                                   </div>
@@ -494,21 +413,6 @@ export default function GlobalEstructura() {
                 <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem", justifyContent: "flex-end" }}>
                   <button onClick={() => { setShowAddTowerModal(false); setTowerName('') }} disabled={creatingTower} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
                   <button onClick={handleAddTower} disabled={creatingTower} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: colorSuper, color: "#fff", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>{creatingTower ? 'Creando...' : 'Crear'}</button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Edit Tower */}
-          {showEditTowerModal && (
-            <div style={modalOverlay} onClick={() => { if (!savingEditTower) { setShowEditTowerModal(false); setEditTowerTarget(null) } }}>
-              <div style={modalBox} onClick={e => e.stopPropagation()}>
-                <button onClick={() => { setShowEditTowerModal(false); setEditTowerTarget(null) }} style={{ position: "absolute", top: "1rem", right: "1rem", background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={20} /></button>
-                <h3 style={{ margin: "0 0 1.5rem", fontSize: "1.1rem", fontWeight: "700", color: "#0f172a" }}>Editar Torre</h3>
-                <input type="text" placeholder="Nombre" value={editTowerName} onChange={e => setEditTowerName(e.target.value)} style={estiloInput} autoFocus />
-                <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem", justifyContent: "flex-end" }}>
-                  <button onClick={() => { setShowEditTowerModal(false); setEditTowerTarget(null) }} disabled={savingEditTower} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
-                  <button onClick={handleEditTower} disabled={savingEditTower} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: colorSuper, color: "#fff", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>{savingEditTower ? 'Guardando...' : 'Guardar'}</button>
                 </div>
               </div>
             </div>
@@ -626,8 +530,8 @@ export default function GlobalEstructura() {
                     <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginTop: "0.3rem" }}>
                       <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: colorSuper, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6rem", fontWeight: "700" }}><FiUser size={16} /></div>
                       <div>
-                        <p style={{ margin: 0, fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>{aptDetail.nombrePropietario || 'Propietario'}</p>
-                        {aptDetail.owner && <span style={{ fontSize: "0.7rem", color: "#64748b" }}>{aptDetail.owner.email && <span>{aptDetail.owner.email}</span>}{aptDetail.owner.email && aptDetail.owner.telefono && <span> · </span>}{aptDetail.owner.telefono && <span>{aptDetail.owner.telefono}</span>}</span>}
+                        <p style={{ margin: 0, fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>{(() => { const o = aptDetail.owner || getOwnerInfo(aptDetail); return o ? (o.nombres + ' ' + (o.apellidos || '')).trim() : 'Propietario'; })()}</p>
+                        {(() => { const o = aptDetail.owner || getOwnerInfo(aptDetail); return o ? <span style={{ fontSize: "0.7rem", color: "#64748b" }}>{o.email && <span>{o.email}</span>}{o.email && o.telefono && <span> · </span>}{o.telefono && <span>{o.telefono}</span>}</span> : null; })()}
                       </div>
                     </div>
                     {Array.isArray(aptDetail.inquilinos) && aptDetail.inquilinos.length > 0 && (
