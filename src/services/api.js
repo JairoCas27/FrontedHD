@@ -203,6 +203,18 @@ export async function deleteUser(userId, rol) {
   });
 }
 
+export async function createUserWithRole(data) {
+  const { rol, idCondominio, ...userData } = data;
+  const created = await createAdministrator(userData);
+  if (created?.id && rol !== 'ADMINISTRADOR_CONDOMINIO') {
+    await updateAdministrator(created.id, { nombres: userData.nombres, apellidos: userData.apellidos, telefono: userData.telefono, rol });
+  }
+  if (created?.id && idCondominio) {
+    await assignAdministratorCondo(created.id, idCondominio);
+  }
+  return created;
+}
+
 export async function getAdminLogsByCondo(condominiumId, params = "") {
   return safeFetch(`/api/admin/logs?${params}`);
 }

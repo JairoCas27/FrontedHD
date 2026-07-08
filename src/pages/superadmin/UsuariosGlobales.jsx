@@ -8,7 +8,6 @@ import {
   getCondominiums,
   getAdministrators,
   createAdministrator,
-  createAdminUser,
   assignAdministratorCondo,
 } from '../../services/api';
 import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner, Badge } from 'react-bootstrap';
@@ -39,7 +38,6 @@ export default function UsuariosGlobales() {
     correo: '',
     telefono: '',
     contrasena: '',
-    rol: 'ADMINISTRADOR_CONDOMINIO',
     idCondominio: '',
   });
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -165,48 +163,31 @@ export default function UsuariosGlobales() {
         return;
       }
 
-      const selectedRole = form.rol;
       const selectedCondoId = form.idCondominio ? parseInt(form.idCondominio, 10) : null;
 
-      if (selectedRole === 'ADMINISTRADOR_CONDOMINIO') {
-        if (selectedCondoId && occupiedCondos.has(selectedCondoId)) {
-          toast.error('Este condominio ya tiene un administrador asignado.');
-          setSubmitting(false);
-          return;
-        }
-        const created = await createAdministrator({
-          nombres: form.nombres.trim(),
-          apellidos: form.apellidos.trim(),
-          correo: form.correo.trim(),
-          telefono: form.telefono.trim(),
-          contrasena: form.contrasena.trim(),
-        });
-        if (selectedCondoId && created.id) {
-          await assignAdministratorCondo(created.id, selectedCondoId);
-        }
-        toast.success('Administrador de condominio creado correctamente.');
-      } else {
-        if (!selectedCondoId) {
-          toast.error('Debes seleccionar un condominio para este rol.');
-          setSubmitting(false);
-          return;
-        }
-        await createAdminUser({
-          nombres: form.nombres.trim(),
-          apellidos: form.apellidos.trim(),
-          correo: form.correo.trim(),
-          telefono: form.telefono.trim(),
-          contrasena: form.contrasena.trim(),
-          rol: selectedRole,
-          idCondominio: selectedCondoId,
-        });
-        toast.success(`Usuario creado correctamente (${selectedRole}).`);
+      if (selectedCondoId && occupiedCondos.has(selectedCondoId)) {
+        toast.error('Este condominio ya tiene un administrador asignado.');
+        setSubmitting(false);
+        return;
       }
 
+      const created = await createAdministrator({
+        nombres: form.nombres.trim(),
+        apellidos: form.apellidos.trim(),
+        correo: form.correo.trim(),
+        telefono: form.telefono.trim(),
+        contrasena: form.contrasena.trim(),
+      });
+
+      if (selectedCondoId && created.id) {
+        await assignAdministratorCondo(created.id, selectedCondoId);
+      }
+
+      toast.success('Administrador de condominio creado correctamente.');
       setShowModal(false);
       setForm({
         nombres: '', apellidos: '', correo: '', telefono: '',
-        contrasena: '', rol: 'ADMINISTRADOR_CONDOMINIO', idCondominio: '',
+        contrasena: '', idCondominio: '',
       });
       setTimeout(() => loadData(), 300);
     } catch (err) {
@@ -321,12 +302,11 @@ export default function UsuariosGlobales() {
             correo: '',
             telefono: '',
             contrasena: '',
-            rol: 'ADMINISTRADOR_CONDOMINIO',
             idCondominio: '',
           });
           setShowModal(true);
         }}>
-          <FiPlus className="me-2" /> Nuevo Usuario
+          <FiPlus className="me-2" /> Nuevo Administrador
         </Button>
       </div>
 
@@ -571,22 +551,14 @@ export default function UsuariosGlobales() {
 
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton className="bg-light">
-          <Modal.Title>Crear nuevo usuario</Modal.Title>
+          <Modal.Title>Nuevo Administrador de Condominio</Modal.Title>
         </Modal.Header>
         <Form onSubmit={handleSubmit}>
           <Modal.Body>
-            <Form.Group className="mb-3">
-              <Form.Label htmlFor="userRol">Rol</Form.Label>
-              <Form.Select
-                id="userRol"
-                value={form.rol}
-                onChange={(e) => setForm({ ...form, rol: e.target.value })}
-              >
-                <option value="ADMINISTRADOR_CONDOMINIO">Administrador de Condominio</option>
-                <option value="PROPIETARIO">Propietario</option>
-                <option value="AGENTE_SEGURIDAD">Agente de Seguridad</option>
-              </Form.Select>
-            </Form.Group>
+            <div className="alert alert-info py-2 px-3 mb-3 small">
+              Solo puedes crear <strong>Administradores de Condominio</strong>. Los roles Propietario y Agente de Seguridad se crean desde el panel de cada condominio.
+            </div>
+            <input type="hidden" name="rol" value="ADMINISTRADOR_CONDOMINIO" />
             <Form.Group className="mb-3">
               <Form.Label htmlFor="userNombres">Nombres</Form.Label>
               <Form.Control
@@ -641,47 +613,27 @@ export default function UsuariosGlobales() {
               <Form.Text className="text-muted">Mínimo 6 caracteres.</Form.Text>
             </Form.Group>
 
-            {form.rol === 'ADMINISTRADOR_CONDOMINIO' ? (
-              <Form.Group className="mb-3">
-                <Form.Label htmlFor="userCondo">Asignar condominio</Form.Label>
-                <Form.Select
-                  id="userCondo"
-                  name="userCondo"
-                  value={form.idCondominio}
-                  onChange={(e) => setForm({ ...form, idCondominio: e.target.value })}
-                >
-                  <option value="">Sin asignar</option>
-                  {condominioOptions.map(c => (
-                    <option key={c.id} value={c.id} disabled={c.disabled}>
-                      {c.label}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            ) : (
-              <Form.Group className="mb-3">
-                <Form.Label htmlFor="userCondo">Condominio <span className="text-danger">*</span></Form.Label>
-                <Form.Select
-                  id="userCondo"
-                  name="userCondo"
-                  value={form.idCondominio}
-                  onChange={(e) => setForm({ ...form, idCondominio: e.target.value })}
-                  required
-                >
-                  <option value="">Seleccione un condominio</option>
-                  {condominios.map(c => (
-                    <option key={c.id} value={c.id}>
-                      {c.nombre}
-                    </option>
-                  ))}
-                </Form.Select>
-              </Form.Group>
-            )}
+            <Form.Group className="mb-3">
+              <Form.Label htmlFor="userCondo">Asignar condominio</Form.Label>
+              <Form.Select
+                id="userCondo"
+                name="userCondo"
+                value={form.idCondominio}
+                onChange={(e) => setForm({ ...form, idCondominio: e.target.value })}
+              >
+                <option value="">Sin asignar</option>
+                {condominioOptions.map(c => (
+                  <option key={c.id} value={c.id} disabled={c.disabled}>
+                    {c.label}
+                  </option>
+                ))}
+              </Form.Select>
+            </Form.Group>
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? 'Creando...' : 'Crear Usuario'}
+              {submitting ? 'Creando...' : 'Crear Administrador'}
             </Button>
           </Modal.Footer>
         </Form>
