@@ -1,10 +1,10 @@
 import { useState, useEffect, useMemo } from 'react';
-import { FiSearch, FiLock, FiRefreshCw, FiEye, FiX, FiCheck, FiPlus, FiArrowUp, FiArrowDown } from 'react-icons/fi';
+import { FiSearch, FiLock, FiTrash2, FiEye, FiPlus, FiArrowUp, FiArrowDown } from 'react-icons/fi';
 import {
   getAllUsers,
   patchUserStatus,
   forceUserPassword,
-  invalidateUserSession,
+  deleteUser,
   getCondominiums,
   getAdministrators,
   createAdministrator,
@@ -31,13 +31,14 @@ export default function UsuariosGlobales() {
   const [showModal, setShowModal] = useState(false);
   const [detailItem, setDetailItem] = useState(null);
   const [showDetail, setShowDetail] = useState(false);
-  const [confirmAction, setConfirmAction] = useState(null); // { type: 'status'|'invalidate', user }
+  const [confirmAction, setConfirmAction] = useState(null); // { type: 'status'|'delete', user }
   const [form, setForm] = useState({
     nombres: '',
     apellidos: '',
     correo: '',
     telefono: '',
     contrasena: '',
+    rol: 'ADMINISTRADOR_CONDOMINIO',
     idCondominio: '',
   });
   const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -163,28 +164,40 @@ export default function UsuariosGlobales() {
         return;
       }
 
+      const selectedRole = form.rol;
       const selectedCondoId = form.idCondominio ? parseInt(form.idCondominio, 10) : null;
-      if (selectedCondoId && occupiedCondos.has(selectedCondoId)) {
+
+      if (selectedRole === 'ADMINISTRADOR_CONDOMINIO' && selectedCondoId && occupiedCondos.has(selectedCondoId)) {
         toast.error('Este condominio ya tiene un administrador asignado.');
         setSubmitting(false);
         return;
       }
 
-      const created = await createAdministrator({
+      const userData = {
         nombres: form.nombres.trim(),
         apellidos: form.apellidos.trim(),
         correo: form.correo.trim(),
         telefono: form.telefono.trim(),
         contrasena: form.contrasena.trim(),
-      });
+        rol: selectedRole,
+      };
 
-      if (selectedCondoId && created.id) {
-        await assignAdministratorCondo(created.id, selectedCondoId);
+      const created = await createAdministrator(userData);
+
+      if (selectedCondoId && created.id && selectedRole === 'ADMINISTRADOR_CONDOMINIO') {
+        try {
+          await assignAdministratorCondo(created.id, selectedCondoId);
+        } catch (err) {
+          toast.warning(`Usuario creado pero no se pudo asignar condominio: ${err.message}`);
+        }
       }
 
-      toast.success('Administrador creado correctamente.');
+      toast.success(`Usuario creado correctamente (${selectedRole}).`);
       setShowModal(false);
-      setForm({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', idCondominio: '' });
+      setForm({
+        nombres: '', apellidos: '', correo: '', telefono: '',
+        contrasena: '', rol: 'ADMINISTRADOR_CONDOMINIO', idCondominio: '',
+      });
       setTimeout(() => loadData(), 300);
     } catch (err) {
       console.error(err);
@@ -228,10 +241,15 @@ export default function UsuariosGlobales() {
     }
   };
 
-  const handleInvalidate = async (userId) => {
+  const handleDeleteUser = async (user) => {
     try {
-      await invalidateUserSession(userId);
-      toast.success('Sesión invalidada');
+      const isAdmin = user.rol === 'ADMINISTRADOR_CONDOMINIO';
+      await deleteUser(user.id, user.rol);
+      if (isAdmin) {
+        toast.success('Administrador eliminado correctamente.');
+      } else {
+        toast.success('Usuario desactivado (eliminación lógica).');
+      }
       setConfirmAction(null);
       await loadData();
     } catch (err) {
@@ -293,11 +311,12 @@ export default function UsuariosGlobales() {
             correo: '',
             telefono: '',
             contrasena: '',
+            rol: 'ADMINISTRADOR_CONDOMINIO',
             idCondominio: '',
           });
           setShowModal(true);
         }}>
-          <FiPlus className="me-2" /> Nuevo Administrador
+          <FiPlus className="me-2" /> Nuevo Usuario
         </Button>
       </div>
 
@@ -455,10 +474,10 @@ export default function UsuariosGlobales() {
                     <Button
                       variant="outline-danger"
                       size="sm"
-                      onClick={() => setConfirmAction({ type: 'invalidate', user: u })}
-                      title="Invalidar sesión"
+                      onClick={() => setConfirmAction({ type: 'delete', user: u })}
+                      title="Eliminar usuario"
                     >
-                      <FiRefreshCw />
+                      <FiTrash2 />
                     </Button>
                   </td>
                 </tr>
@@ -522,30 +541,42 @@ export default function UsuariosGlobales() {
         open={!!confirmAction}
         title={confirmAction?.type === 'status'
           ? `${confirmAction?.user?.activo ? 'Desactivar' : 'Activar'} usuario`
-          : 'Invalidar sesión'}
+          : 'Eliminar usuario'}
         description={confirmAction?.type === 'status'
           ? `¿Estás seguro de ${confirmAction?.user?.activo ? 'desactivar' : 'activar'} a "${confirmAction?.user?.nombres} ${confirmAction?.user?.apellidos}"?`
-          : `¿Estás seguro de invalidar la sesión de "${confirmAction?.user?.nombres} ${confirmAction?.user?.apellidos}"?`}
+          : `¿Estás seguro de eliminar a "${confirmAction?.user?.nombres} ${confirmAction?.user?.apellidos}"?`}
         onConfirm={() => {
           if (confirmAction?.type === 'status') {
             handleToggleStatus(confirmAction.user.id, confirmAction.user.activo);
-          } else if (confirmAction?.type === 'invalidate') {
-            handleInvalidate(confirmAction.user.id);
+          } else if (confirmAction?.type === 'delete') {
+            handleDeleteUser(confirmAction.user);
           }
         }}
         onCancel={() => setConfirmAction(null)}
         confirmLabel={confirmAction?.type === 'status'
           ? `${confirmAction?.user?.activo ? 'Desactivar' : 'Activar'}`
-          : 'Invalidar'}
-        variant={confirmAction?.type === 'invalidate' ? 'danger' : 'primary'}
+          : 'Eliminar'}
+        variant="danger"
       />
 
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton className="bg-light">
-          <Modal.Title>Nuevo Administrador de Condominio</Modal.Title>
+          <Modal.Title>Crear nuevo usuario</Modal.Title>
         </Modal.Header>
         <Form onSubmit={handleSubmit}>
           <Modal.Body>
+            <Form.Group className="mb-3">
+              <Form.Label htmlFor="userRol">Rol</Form.Label>
+              <Form.Select
+                id="userRol"
+                value={form.rol}
+                onChange={(e) => setForm({ ...form, rol: e.target.value })}
+              >
+                <option value="ADMINISTRADOR_CONDOMINIO">Administrador de Condominio</option>
+                <option value="PROPIETARIO">Propietario</option>
+                <option value="AGENTE_SEGURIDAD">Agente de Seguridad</option>
+              </Form.Select>
+            </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label htmlFor="userNombres">Nombres</Form.Label>
               <Form.Control
@@ -600,8 +631,6 @@ export default function UsuariosGlobales() {
               <Form.Text className="text-muted">Mínimo 6 caracteres.</Form.Text>
             </Form.Group>
 
-            <input type="hidden" name="rol" value="ADMINISTRADOR_CONDOMINIO" />
-
             <Form.Group className="mb-3">
               <Form.Label htmlFor="userCondo">Asignar condominio</Form.Label>
               <Form.Select
@@ -622,7 +651,7 @@ export default function UsuariosGlobales() {
           <Modal.Footer>
             <Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
             <Button type="submit" disabled={submitting}>
-              {submitting ? 'Creando...' : 'Crear Administrador'}
+              {submitting ? 'Creando...' : 'Crear Usuario'}
             </Button>
           </Modal.Footer>
         </Form>

@@ -193,6 +193,16 @@ export async function invalidateUserSession(userId) {
   return safeFetch(`/api/super-admin/users/${userId}/invalidate-session`, { method: 'POST' });
 }
 
+export async function deleteUser(userId, rol) {
+  if (rol === 'ADMINISTRADOR_CONDOMINIO') {
+    return safeFetch(`/api/super-admin/administrators/${userId}`, { method: 'DELETE' });
+  }
+  return safeFetch(`/api/super-admin/users/${userId}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({ activo: false }),
+  });
+}
+
 export async function getAdminLogsByCondo(condominiumId, params = "") {
   return safeFetch(`/api/admin/logs?${params}`);
 }
