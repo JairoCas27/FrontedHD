@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiArrowUp, FiArrowDown, FiAlertTriangle } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiEye, FiArrowUp, FiArrowDown, FiAlertTriangle } from 'react-icons/fi';
 import {
     getAdministrators,
     createAdministrator,
@@ -9,54 +9,10 @@ import {
     assignAdministratorCondo,
     getCondominiums,
 } from '../../services/api';
-import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
+import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner, Badge } from 'react-bootstrap';
 import { toast } from 'react-toastify';
-
-
-// Componente Toggle Switch (igual que en Condominios)
-const ToggleSwitch = ({ checked, onChange }) => {
-    return (
-        <div
-            onClick={() => onChange(!checked)}
-            style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '8px',
-                cursor: 'pointer',
-                userSelect: 'none',
-            }}
-        >
-            <div
-                style={{
-                    position: 'relative',
-                    width: '48px',
-                    height: '26px',
-                    backgroundColor: checked ? '#c3fac4' : '#f09393',
-                    borderRadius: '13px',
-                    transition: 'background-color 0.3s ease',
-                    boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
-                }}
-            >
-                <div
-                    style={{
-                        position: 'absolute',
-                        top: '2px',
-                        left: checked ? '24px' : '2px',
-                        width: '22px',
-                        height: '22px',
-                        backgroundColor: 'white',
-                        borderRadius: '50%',
-                        transition: 'left 0.3s ease',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-                    }}
-                />
-            </div>
-            <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#334155' }}>
-                {checked ? 'Activo' : 'Inactivo'}
-            </span>
-        </div>
-    );
-};
+import ToggleSwitch from '../../components/common/ToggleSwitch';
+import ConfirmModal from '../../components/common/ConfirmModal';
 
 
 export default function Administradores() {
@@ -84,6 +40,13 @@ export default function Administradores() {
     const [sortOrder, setSortOrder] = useState('asc');
     const [sortField, setSortField] = useState('nombre');
 
+
+    // Detail modal
+    const [detailItem, setDetailItem] = useState(null);
+    const [showDetail, setShowDetail] = useState(false);
+
+    // Confirm delete
+    const [confirmDelete, setConfirmDelete] = useState(null);
 
     // Mapa de condominios ocupados
     const [occupiedCondos, setOccupiedCondos] = useState(new Set());
@@ -260,13 +223,14 @@ export default function Administradores() {
 
 
     const handleDelete = async (id) => {
-        if (!window.confirm('¿Eliminar administrador?')) return;
         try {
             await deleteAdministrator(id);
             toast.success('Administrador eliminado.');
+            setConfirmDelete(null);
             await loadAll();
         } catch (err) {
             toast.error(`Error al eliminar: ${err.message}`);
+            setConfirmDelete(null);
         }
     };
 
@@ -468,9 +432,18 @@ export default function Administradores() {
                                     </td>
                                     <td>
                                         <Button
+                                            variant="outline-info"
+                                            size="sm"
+                                            className="me-1"
+                                            onClick={() => { setDetailItem(a); setShowDetail(true); }}
+                                            title="Ver detalle"
+                                        >
+                                            <FiEye />
+                                        </Button>
+                                        <Button
                                             variant="outline-primary"
                                             size="sm"
-                                            className="me-2"
+                                            className="me-1"
                                             onClick={() => {
                                                 setEditing(a);
                                                 setForm({
@@ -489,7 +462,7 @@ export default function Administradores() {
                                         <Button
                                             variant="outline-danger"
                                             size="sm"
-                                            onClick={() => handleDelete(a.id)}
+                                            onClick={() => setConfirmDelete(a)}
                                         >
                                             <FiTrash2 />
                                         </Button>
@@ -501,6 +474,57 @@ export default function Administradores() {
                 </div>
             )}
 
+
+            {/* Detail Modal */}
+            <Modal show={showDetail} onHide={() => setShowDetail(false)} centered>
+                <Modal.Header closeButton className="bg-light">
+                    <Modal.Title>Detalle del Administrador</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    {detailItem && (
+                        <div>
+                            <div className="mb-3">
+                                <strong>ID:</strong> {detailItem.id}
+                            </div>
+                            <div className="mb-3">
+                                <strong>Nombres:</strong> {detailItem.nombres} {detailItem.apellidos}
+                            </div>
+                            <div className="mb-3">
+                                <strong>Correo:</strong> {detailItem.correo}
+                            </div>
+                            <div className="mb-3">
+                                <strong>Teléfono:</strong> {detailItem.telefono || '-'}
+                            </div>
+                            <div className="mb-3">
+                                <strong>Condominio:</strong> {detailItem.nombreCondominio || <span className="text-muted">Sin asignar</span>}
+                            </div>
+                            <div className="mb-3">
+                                <strong>Estado:</strong>{' '}
+                                <Badge bg={detailItem.activo ? 'success' : 'secondary'}>
+                                    {detailItem.activo ? 'Activo' : 'Inactivo'}
+                                </Badge>
+                            </div>
+                            <div className="mb-3">
+                                <strong>Fecha de creación:</strong>{' '}
+                                {detailItem.fechaCreacion ? new Date(detailItem.fechaCreacion).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
+                            </div>
+                        </div>
+                    )}
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={() => setShowDetail(false)}>Cerrar</Button>
+                </Modal.Footer>
+            </Modal>
+
+            {/* Confirm Delete Modal */}
+            <ConfirmModal
+                open={!!confirmDelete}
+                title="Eliminar administrador"
+                description={`¿Estás seguro de eliminar a "${confirmDelete?.nombres} ${confirmDelete?.apellidos}"? Esta acción no se puede deshacer.`}
+                onConfirm={() => handleDelete(confirmDelete.id)}
+                onCancel={() => setConfirmDelete(null)}
+                confirmLabel="Eliminar"
+            />
 
             {/* Modal igual que antes */}
             <Modal show={showModal} onHide={() => setShowModal(false)} centered>

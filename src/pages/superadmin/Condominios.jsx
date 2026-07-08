@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiArrowUp, FiArrowDown } from 'react-icons/fi';
+import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiEye, FiArrowUp, FiArrowDown } from 'react-icons/fi';
 import {
   getCondominiums,
   createCondominium,
@@ -9,53 +9,10 @@ import {
   getCountries,
   getCities,
 } from '../../services/api';
-import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner } from 'react-bootstrap';
+import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner, Badge } from 'react-bootstrap';
 import { toast } from 'react-toastify';
-
-// Componente Toggle Switch personalizado
-const ToggleSwitch = ({ checked, onChange }) => {
-  return (
-    <div
-      onClick={() => onChange(!checked)}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '8px',
-        cursor: 'pointer',
-        userSelect: 'none',
-      }}
-    >
-      <div
-        style={{
-          position: 'relative',
-          width: '48px',
-          height: '26px',
-          backgroundColor: checked ? '#c3fac4' : '#f09393',
-          borderRadius: '13px',
-          transition: 'background-color 0.3s ease',
-          boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
-        }}
-      >
-        <div
-          style={{
-            position: 'absolute',
-            top: '2px',
-            left: checked ? '24px' : '2px',
-            width: '22px',
-            height: '22px',
-            backgroundColor: 'white',
-            borderRadius: '50%',
-            transition: 'left 0.3s ease',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-          }}
-        />
-      </div>
-      <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#334155' }}>
-        {checked ? 'Activo' : 'Inactivo'}
-      </span>
-    </div>
-  );
-};
+import ToggleSwitch from '../../components/common/ToggleSwitch';
+import ConfirmModal from '../../components/common/ConfirmModal';
 
 export default function Condominios() {
   const [condominios, setCondominios] = useState([]);
@@ -76,6 +33,13 @@ export default function Condominios() {
   const [estadoFilter, setEstadoFilter] = useState('');
   const [sortOrder, setSortOrder] = useState('asc');
   const [sortField, setSortField] = useState('nombre');
+
+  // Detail modal
+  const [detailItem, setDetailItem] = useState(null);
+  const [showDetail, setShowDetail] = useState(false);
+
+  // Confirm delete
+  const [confirmDelete, setConfirmDelete] = useState(null);
 
   // Catálogos
   const [paises, setPaises] = useState([]);
@@ -195,13 +159,14 @@ export default function Condominios() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm('¿Eliminar condominio?')) return;
     try {
       await deleteCondominium(id);
       toast.success('Condominio eliminado');
+      setConfirmDelete(null);
       load();
     } catch (err) {
       toast.error(err.message);
+      setConfirmDelete(null);
     }
   };
 
@@ -368,9 +333,18 @@ export default function Condominios() {
                   </td>
                   <td>
                     <Button
+                      variant="outline-info"
+                      size="sm"
+                      className="me-1"
+                      onClick={() => { setDetailItem(c); setShowDetail(true); }}
+                      title="Ver detalle"
+                    >
+                      <FiEye />
+                    </Button>
+                    <Button
                       variant="outline-primary"
                       size="sm"
-                      className="me-2"
+                      className="me-1"
                       onClick={() => {
                         setEditing(c);
                         setForm({
@@ -390,7 +364,7 @@ export default function Condominios() {
                     <Button
                       variant="outline-danger"
                       size="sm"
-                      onClick={() => handleDelete(c.id)}
+                      onClick={() => setConfirmDelete(c)}
                     >
                       <FiTrash2 />
                     </Button>
@@ -402,7 +376,61 @@ export default function Condominios() {
         </div>
       )}
 
-      {/* Modal */}
+      {/* Detail Modal */}
+      <Modal show={showDetail} onHide={() => setShowDetail(false)} centered>
+        <Modal.Header closeButton className="bg-light">
+          <Modal.Title>Detalle del Condominio</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {detailItem && (
+            <div>
+              <div className="mb-3">
+                <strong>ID:</strong> {detailItem.id}
+              </div>
+              <div className="mb-3">
+                <strong>Nombre:</strong> {detailItem.nombre}
+              </div>
+              <div className="mb-3">
+                <strong>Dirección:</strong> {detailItem.direccion || '-'}
+              </div>
+              <div className="mb-3">
+                <strong>País:</strong> {detailItem.nombrePais || '-'}
+              </div>
+              <div className="mb-3">
+                <strong>Ciudad:</strong> {detailItem.nombreCiudad || '-'}
+              </div>
+              <div className="mb-3">
+                <strong>Administrador:</strong> {detailItem.nombreAdministrador || <span className="text-muted">Sin asignar</span>}
+              </div>
+              <div className="mb-3">
+                <strong>Estado:</strong>{' '}
+                <Badge bg={detailItem.activo ? 'success' : 'secondary'}>
+                  {detailItem.activo ? 'Activo' : 'Inactivo'}
+                </Badge>
+              </div>
+              <div className="mb-3">
+                <strong>Fecha de creación:</strong>{' '}
+                {detailItem.fechaCreacion ? new Date(detailItem.fechaCreacion).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
+              </div>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDetail(false)}>Cerrar</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Confirm Delete Modal */}
+      <ConfirmModal
+        open={!!confirmDelete}
+        title="Eliminar condominio"
+        description={`¿Estás seguro de eliminar "${confirmDelete?.nombre}"? Esta acción no se puede deshacer.`}
+        onConfirm={() => handleDelete(confirmDelete.id)}
+        onCancel={() => setConfirmDelete(null)}
+        confirmLabel="Eliminar"
+      />
+
+      {/* Create/Edit Modal */}
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton className="bg-light">
           <Modal.Title>{editing ? 'Editar' : 'Nuevo'} condominio</Modal.Title>

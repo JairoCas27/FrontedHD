@@ -1,5 +1,5 @@
 import SidebarLayout from "./SidebarLayout";
-import { FiHome, FiGrid, FiUsers, FiUser } from "react-icons/fi";
+import { FiHome, FiGrid, FiUsers, FiUser, FiBarChart2, FiClock } from "react-icons/fi";
 import { useSidebarUser } from "../hooks/useSidebarUser";
 
 const menuItems = [
@@ -9,6 +9,10 @@ const menuItems = [
   { title: "Condominios", icon: <FiGrid size={20} />, path: "/superadmin/condominios" },
   { title: "Administradores", icon: <FiUsers size={20} />, path: "/superadmin/administradores" },
   { title: "Usuarios", icon: <FiUsers size={20} />, path: "/superadmin/usuarios" },
+  { section: "Monitoreo" },
+  { title: "Auditoría", icon: <FiClock size={20} />, path: "/superadmin/auditoria" },
+  { title: "Reportes", icon: <FiBarChart2 size={20} />, path: "/superadmin/reportes" },
+  { section: "Cuenta" },
   { title: "Perfil", icon: <FiUser size={20} />, path: "/superadmin/perfil" },
 ];
 

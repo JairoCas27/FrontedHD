@@ -193,6 +193,10 @@ export async function invalidateUserSession(userId) {
   return safeFetch(`/api/super-admin/users/${userId}/invalidate-session`, { method: 'POST' });
 }
 
+export async function getAdminLogsByCondo(condominiumId, params = "") {
+  return safeFetch(`/api/admin/logs?${params}`);
+}
+
 export const getHomeownerDashboard = () => safeFetch('/api/homeowner/dashboard/summary');
 export const getHomeownerApartment = () => safeFetch('/api/homeowner/apartment/details');
 export const getHomeownerVehicles = () => safeFetch('/api/homeowner/vehicles');

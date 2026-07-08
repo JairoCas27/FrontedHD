@@ -37,6 +37,8 @@ import DashboardSuperAdmin from "./pages/superadmin/DashboardSuperAdmin"
 import Condominios from "./pages/superadmin/Condominios"
 import Administradores from "./pages/superadmin/Administradores"
 import UsuariosGlobales from "./pages/superadmin/UsuariosGlobales"
+import AuditoriaGlobal from "./pages/superadmin/AuditoriaGlobal"
+import ReportesGlobales from "./pages/superadmin/ReportesGlobales"
 import PerfilSuperAdmin from "./pages/superadmin/PerfilSuperAdmin"
 
 import AccesosSeguridad from "./pages/seguridad/AccesosSeguridad"
@@ -92,6 +94,8 @@ function App() {
           <Route path="/superadmin/condominios" element={<Condominios />} />
           <Route path="/superadmin/administradores" element={<Administradores />} />
           <Route path="/superadmin/usuarios" element={<UsuariosGlobales />} />
+          <Route path="/superadmin/auditoria" element={<AuditoriaGlobal />} />
+          <Route path="/superadmin/reportes" element={<ReportesGlobales />} />
           <Route path="/superadmin/perfil" element={<PerfilSuperAdmin />} />
         </Route>
 

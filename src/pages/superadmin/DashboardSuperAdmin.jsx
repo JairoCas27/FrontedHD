@@ -14,7 +14,6 @@ import {
   getSuperAdminDashboardMetrics,
   getSuperAdminRecentAdmins,
   getSuperAdminRecentCondos,
-  getCondominiums,
 } from '../../services/api';
 import {
   BarChart,
@@ -77,16 +76,15 @@ export default function DashboardSuperAdmin() {
     if (showLoading) setLoading(true);
     setError(null);
     try {
-      const [m, admins, allCondosData] = await Promise.all([
+      const [m, adminsData, recentCondosData] = await Promise.all([
         getSuperAdminDashboardMetrics(),
         getSuperAdminRecentAdmins(),
-        getCondominiums(),
+        getSuperAdminRecentCondos(),
       ]);
 
-
       setMetrics(m);
-      setRecentAdmins(extractItems(admins));
-      setAllCondos(extractItems(allCondosData));
+      setRecentAdmins(extractItems(adminsData));
+      setAllCondos(extractItems(recentCondosData));
     } catch (err) {
       console.error(err);
       setError(err.message);
@@ -161,6 +159,10 @@ export default function DashboardSuperAdmin() {
     .slice(0, 5);
 
 
+  const adminCount = recentAdmins.length;
+  const adminsActive = recentAdmins.filter(a => a.activo).length;
+  const adminsInactive = adminCount - adminsActive;
+
   const stats = [
     {
       title: 'Condominios',
@@ -174,7 +176,7 @@ export default function DashboardSuperAdmin() {
       value: metrics?.totalAdministradores || 0,
       icon: <FiUsers size={24} />,
       color: COLORS.success,
-      subtitle: 'Gestores de condominios',
+      subtitle: `${adminsActive} activos, ${adminsInactive} inactivos`,
     },
     {
       title: 'Propietarios',

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { FiSearch, FiLock, FiRefreshCw, FiX, FiCheck, FiPlus, FiArrowUp, FiArrowDown } from 'react-icons/fi';
+import { FiSearch, FiLock, FiRefreshCw, FiEye, FiX, FiCheck, FiPlus, FiArrowUp, FiArrowDown } from 'react-icons/fi';
 import {
   getAllUsers,
   patchUserStatus,
@@ -12,55 +12,12 @@ import {
 } from '../../services/api';
 import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner, Badge } from 'react-bootstrap';
 import { toast } from 'react-toastify';
-
-const ToggleSwitch = ({ checked, onChange }) => {
-  return (
-    <div
-      onClick={() => onChange(!checked)}
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '8px',
-        cursor: 'pointer',
-        userSelect: 'none',
-      }}
-    >
-      <div
-        style={{
-          position: 'relative',
-          width: '48px',
-          height: '26px',
-          backgroundColor: checked ? '#c3fac4' : '#f09393',
-          borderRadius: '13px',
-          transition: 'background-color 0.3s ease',
-          boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.1)',
-        }}
-      >
-        <div
-          style={{
-            position: 'absolute',
-            top: '2px',
-            left: checked ? '24px' : '2px',
-            width: '22px',
-            height: '22px',
-            backgroundColor: 'white',
-            borderRadius: '50%',
-            transition: 'left 0.3s ease',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-          }}
-        />
-      </div>
-      <span style={{ fontSize: '0.8rem', fontWeight: '600', color: '#334155' }}>
-        {checked ? 'Activo' : 'Inactivo'}
-      </span>
-    </div>
-  );
-};
+import ToggleSwitch from '../../components/common/ToggleSwitch';
+import ConfirmModal from '../../components/common/ConfirmModal';
 
 export default function UsuariosGlobales() {
   const [users, setUsers] = useState([]);
   const [condominios, setCondominios] = useState([]);
-  const [admins, setAdmins] = useState([]);
   const [occupiedCondos, setOccupiedCondos] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
@@ -72,6 +29,9 @@ export default function UsuariosGlobales() {
   const [sortOrder, setSortOrder] = useState('asc');
   const [sortField, setSortField] = useState('nombre');
   const [showModal, setShowModal] = useState(false);
+  const [detailItem, setDetailItem] = useState(null);
+  const [showDetail, setShowDetail] = useState(false);
+  const [confirmAction, setConfirmAction] = useState(null); // { type: 'status'|'invalidate', user }
   const [form, setForm] = useState({
     nombres: '',
     apellidos: '',
@@ -132,7 +92,6 @@ export default function UsuariosGlobales() {
 
       setUsers(usersList);
       setCondominios(condosList);
-      setAdmins(adminsList);
 
       const occupied = new Set();
       adminsList.forEach(admin => {
@@ -146,7 +105,6 @@ export default function UsuariosGlobales() {
       setError(err.message);
       setUsers([]);
       setCondominios([]);
-      setAdmins([]);
       toast.error(`Error al cargar datos: ${err.message}`);
     } finally {
       setLoading(false);
@@ -237,13 +195,14 @@ export default function UsuariosGlobales() {
   };
 
   const handleToggleStatus = async (userId, activo) => {
-    if (!window.confirm(`¿${activo ? 'Desactivar' : 'Activar'} usuario?`)) return;
     try {
       await patchUserStatus(userId, !activo);
       toast.success(`Usuario ${!activo ? 'activado' : 'desactivado'}.`);
+      setConfirmAction(null);
       await loadData();
     } catch (err) {
       toast.error(`Error: ${err.message}`);
+      setConfirmAction(null);
     }
   };
 
@@ -270,13 +229,14 @@ export default function UsuariosGlobales() {
   };
 
   const handleInvalidate = async (userId) => {
-    if (!window.confirm('¿Invalidar sesión de este usuario?')) return;
     try {
       await invalidateUserSession(userId);
       toast.success('Sesión invalidada');
+      setConfirmAction(null);
       await loadData();
     } catch (err) {
       toast.error(`Error: ${err.message}`);
+      setConfirmAction(null);
     }
   };
 
@@ -467,25 +427,36 @@ export default function UsuariosGlobales() {
                   <td>
                     <ToggleSwitch
                       checked={u.activo}
-                      onChange={() => handleToggleStatus(u.id, u.activo)}
+                      onChange={() => setConfirmAction({ type: 'status', user: u })}
                     />
                   </td>
                   <td>
                     <Button
+                      variant="outline-info"
+                      size="sm"
+                      className="me-1"
+                      onClick={() => { setDetailItem(u); setShowDetail(true); }}
+                      title="Ver detalle"
+                    >
+                      <FiEye />
+                    </Button>
+                    <Button
                       variant="outline-primary"
                       size="sm"
-                      className="me-2"
+                      className="me-1"
                       onClick={() => {
                         setSelectedUser(u);
                         setShowPasswordModal(true);
                       }}
+                      title="Forzar cambio de contraseña"
                     >
                       <FiLock />
                     </Button>
                     <Button
                       variant="outline-danger"
                       size="sm"
-                      onClick={() => handleInvalidate(u.id)}
+                      onClick={() => setConfirmAction({ type: 'invalidate', user: u })}
+                      title="Invalidar sesión"
                     >
                       <FiRefreshCw />
                     </Button>
@@ -496,6 +467,78 @@ export default function UsuariosGlobales() {
           </Table>
         </div>
       )}
+
+      {/* Detail Modal */}
+      <Modal show={showDetail} onHide={() => setShowDetail(false)} centered>
+        <Modal.Header closeButton className="bg-light">
+          <Modal.Title>Detalle del Usuario</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>
+          {detailItem && (
+            <div>
+              <div className="mb-3">
+                <strong>ID:</strong> {detailItem.id}
+              </div>
+              <div className="mb-3">
+                <strong>Nombres:</strong> {detailItem.nombres} {detailItem.apellidos}
+              </div>
+              <div className="mb-3">
+                <strong>Correo:</strong> {detailItem.correo}
+              </div>
+              <div className="mb-3">
+                <strong>Teléfono:</strong> {detailItem.telefono || '-'}
+              </div>
+              <div className="mb-3">
+                <strong>Rol:</strong>{' '}
+                <Badge bg="info">{detailItem.rol}</Badge>
+              </div>
+              <div className="mb-3">
+                <strong>Condominio:</strong> {detailItem.nombreCondominio || <span className="text-muted">Sin asignar</span>}
+              </div>
+              <div className="mb-3">
+                <strong>Correo verificado:</strong>{' '}
+                {detailItem.correoVerificado ? <Badge bg="success">Sí</Badge> : <Badge bg="warning">No</Badge>}
+              </div>
+              <div className="mb-3">
+                <strong>Estado:</strong>{' '}
+                <Badge bg={detailItem.activo ? 'success' : 'secondary'}>
+                  {detailItem.activo ? 'Activo' : 'Inactivo'}
+                </Badge>
+              </div>
+              <div className="mb-3">
+                <strong>Fecha de creación:</strong>{' '}
+                {detailItem.fechaCreacion ? new Date(detailItem.fechaCreacion).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '-'}
+              </div>
+            </div>
+          )}
+        </Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowDetail(false)}>Cerrar</Button>
+        </Modal.Footer>
+      </Modal>
+
+      {/* Confirm Action Modal */}
+      <ConfirmModal
+        open={!!confirmAction}
+        title={confirmAction?.type === 'status'
+          ? `${confirmAction?.user?.activo ? 'Desactivar' : 'Activar'} usuario`
+          : 'Invalidar sesión'}
+        description={confirmAction?.type === 'status'
+          ? `¿Estás seguro de ${confirmAction?.user?.activo ? 'desactivar' : 'activar'} a "${confirmAction?.user?.nombres} ${confirmAction?.user?.apellidos}"?`
+          : `¿Estás seguro de invalidar la sesión de "${confirmAction?.user?.nombres} ${confirmAction?.user?.apellidos}"?`}
+        onConfirm={() => {
+          if (confirmAction?.type === 'status') {
+            handleToggleStatus(confirmAction.user.id, confirmAction.user.activo);
+          } else if (confirmAction?.type === 'invalidate') {
+            handleInvalidate(confirmAction.user.id);
+          }
+        }}
+        onCancel={() => setConfirmAction(null)}
+        confirmLabel={confirmAction?.type === 'status'
+          ? `${confirmAction?.user?.activo ? 'Desactivar' : 'Activar'}`
+          : 'Invalidar'}
+        variant={confirmAction?.type === 'invalidate' ? 'danger' : 'primary'}
+      />
 
       <Modal show={showModal} onHide={() => setShowModal(false)} centered>
         <Modal.Header closeButton className="bg-light">
