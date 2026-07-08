@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { FiFolder, FiGrid, FiHome, FiMapPin, FiChevronDown, FiChevronRight, FiPlus, FiTrash2, FiLayers, FiX, FiAlertCircle, FiEdit3, FiEye, FiUser, FiUsers } from "react-icons/fi"
 import { toast } from 'react-toastify'
 import EncabezadoTabla from '../../components/EncabezadoTabla'
-import { getCondominiums, getAdminStructure, createAdminStructureNode, deleteAdminStructureNode, updateAdminStructureNode, getAllUsers } from '../../services/api'
+import { getCondominiums, getAdminStructure, createAdminStructureNode, deleteAdminStructureNode, getAllUsers } from '../../services/api'
 
 const colorSuper = "rgb(124,58,237)"
 
@@ -44,33 +44,12 @@ export default function GlobalEstructura() {
   const [towerName, setTowerName] = useState('')
   const [creatingTower, setCreatingTower] = useState(false)
 
-  const [showEditTowerModal, setShowEditTowerModal] = useState(false)
-  const [editTowerData, setEditTowerData] = useState(null)
-  const [editTowerName, setEditTowerName] = useState('')
-  const [editingTower, setEditingTower] = useState(false)
-
   const [showAddFloorModal, setShowAddFloorModal] = useState(false)
   const [selectedTowerForFloor, setSelectedTowerForFloor] = useState(null)
   const [floorNumber, setFloorNumber] = useState('')
   const [creatingFloor, setCreatingFloor] = useState(false)
 
-  const [showEditFloorModal, setShowEditFloorModal] = useState(false)
-  const [editFloorData, setEditFloorData] = useState(null)
-  const [editFloorNum, setEditFloorNum] = useState('')
-  const [editingFloor, setEditingFloor] = useState(false)
-
-  const [showAddAptModal, setShowAddAptModal] = useState(false)
-  const [selectedFloorForApt, setSelectedFloorForApt] = useState(null)
-  const [aptForm, setAptForm] = useState({ numero: '', metraje: '', derechoEstacionamiento: false })
-  const [creatingApt, setCreatingApt] = useState(false)
-
-  const [showEditAptModal, setShowEditAptModal] = useState(false)
-  const [editAptData, setEditAptData] = useState(null)
-  const [editAptForm, setEditAptForm] = useState({ numero: '', metraje: '', derechoEstacionamiento: false })
-  const [editingApt, setEditingApt] = useState(false)
-
   const [deletingId, setDeletingId] = useState(null)
-  const [confirmDeleteApt, setConfirmDeleteApt] = useState(null)
 
   const [aptDetail, setAptDetail] = useState(null)
 
@@ -139,22 +118,6 @@ export default function GlobalEstructura() {
     }
   }
 
-  const handleEditTower = async () => {
-    if (!editTowerName.trim()) { toast.warning('Ingresa un nombre'); return }
-    setEditingTower(true)
-    try {
-      await updateAdminStructureNode(editTowerData.id, { nombre: editTowerName.trim(), tipo: 'TORRE' }, condominioId)
-      toast.success('Torre actualizada')
-      setShowEditTowerModal(false)
-      setEditTowerData(null)
-      await fetchStructure(condominioId)
-    } catch (err) {
-      toast.error(`Error al actualizar: ${err.message}`)
-    } finally {
-      setEditingTower(false)
-    }
-  }
-
   const handleDeleteTower = async (id) => {
     if (!window.confirm('¿Eliminar esta torre y todos sus pisos y apartamentos?')) return
     setDeletingId(id)
@@ -196,27 +159,6 @@ export default function GlobalEstructura() {
     }
   }
 
-  const handleEditFloor = async () => {
-    const num = parseInt(editFloorNum, 10)
-    if (isNaN(num) || num < 1) { toast.warning('Número de piso inválido'); return }
-    setEditingFloor(true)
-    try {
-      await updateAdminStructureNode(editFloorData.id, {
-        nombre: `Piso ${num}`,
-        numero: num,
-        tipo: 'PISO'
-      }, condominioId)
-      toast.success('Piso actualizado')
-      setShowEditFloorModal(false)
-      setEditFloorData(null)
-      await fetchStructure(condominioId)
-    } catch (err) {
-      toast.error(`Error al actualizar piso: ${err.message}`)
-    } finally {
-      setEditingFloor(false)
-    }
-  }
-
   const handleDeleteFloor = async (id) => {
     if (!window.confirm('¿Eliminar este piso y todos sus apartamentos?')) return
     setDeletingId(id)
@@ -226,67 +168,6 @@ export default function GlobalEstructura() {
       await fetchStructure(condominioId)
     } catch (err) {
       toast.error(`Error al eliminar piso: ${err.message}`)
-    } finally {
-      setDeletingId(null)
-    }
-  }
-
-  const handleAddApt = async () => {
-    const num = aptForm.numero.trim()
-    if (!num) { toast.warning('Ingresa el número del apartamento'); return }
-    setCreatingApt(true)
-    try {
-      await createAdminStructureNode({
-        tipo: 'APARTAMENTO',
-        numero: num,
-        metraje: aptForm.metraje ? Number(aptForm.metraje) : null,
-        derechoEstacionamiento: aptForm.derechoEstacionamiento,
-        nombreTorre: selectedFloorForApt.nombreTorre,
-        numeroPiso: selectedFloorForApt.numero,
-      }, condominioId)
-      toast.success('Apartamento creado')
-      setShowAddAptModal(false)
-      setSelectedFloorForApt(null)
-      setAptForm({ numero: '', metraje: '', derechoEstacionamiento: false })
-      await fetchStructure(condominioId)
-    } catch (err) {
-      toast.error(`Error al crear apartamento: ${err.message}`)
-    } finally {
-      setCreatingApt(false)
-    }
-  }
-
-  const handleEditApt = async () => {
-    if (!editAptForm.numero.trim()) { toast.warning('Ingresa el número'); return }
-    setEditingApt(true)
-    try {
-      await updateAdminStructureNode(editAptData.id, {
-        numero: editAptForm.numero.trim(),
-        metraje: editAptForm.metraje ? Number(editAptForm.metraje) : null,
-        derechoEstacionamiento: editAptForm.derechoEstacionamiento,
-        tipo: 'APARTAMENTO',
-      }, condominioId)
-      toast.success('Apartamento actualizado')
-      setShowEditAptModal(false)
-      setEditAptData(null)
-      await fetchStructure(condominioId)
-    } catch (err) {
-      toast.error(`Error al actualizar apartamento: ${err.message}`)
-    } finally {
-      setEditingApt(false)
-    }
-  }
-
-  const handleDeleteApt = async () => {
-    if (!confirmDeleteApt) return
-    setDeletingId(confirmDeleteApt.id)
-    try {
-      await deleteAdminStructureNode(confirmDeleteApt.id, 'APARTAMENTO', condominioId)
-      toast.success('Apartamento eliminado')
-      setConfirmDeleteApt(null)
-      await fetchStructure(condominioId)
-    } catch (err) {
-      toast.error(`Error al eliminar apartamento: ${err.message}`)
     } finally {
       setDeletingId(null)
     }
@@ -397,10 +278,6 @@ export default function GlobalEstructura() {
                         </span>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                        <button onClick={(e) => { e.stopPropagation(); setEditTowerData(torre); setEditTowerName(torre.nombre); setShowEditTowerModal(true) }}
-                          style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.08)", color: colorSuper }}>
-                          <FiEdit3 size={12} />
-                        </button>
                         <button onClick={(e) => { e.stopPropagation(); setSelectedTowerForFloor(torre); setShowAddFloorModal(true) }}
                           style={{ ...btnStyle, backgroundColor: "transparent", color: colorSuper, border: `1px solid ${colorSuper}` }}>
                           <FiPlus size={13} /> Piso
