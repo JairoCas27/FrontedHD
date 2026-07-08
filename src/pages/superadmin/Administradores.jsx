@@ -11,7 +11,6 @@ import {
 } from '../../services/api';
 import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner, Badge } from 'react-bootstrap';
 import { toast } from 'react-toastify';
-import ToggleSwitch from '../../components/common/ToggleSwitch';
 import ConfirmModal from '../../components/common/ConfirmModal';
 
 
@@ -120,8 +119,7 @@ export default function Administradores() {
             const search = searchTerm.toLowerCase();
             const matchSearch = fullName.includes(search) || email.includes(search);
             const matchCondo = condominioFilter ? a.idCondominio === parseInt(condominioFilter, 10) : true;
-            const matchEstado = estadoFilter !== '' ? (estadoFilter === 'activo' ? a.activo : !a.activo) : true;
-            return matchSearch && matchCondo && matchEstado;
+            return matchSearch && matchCondo;
         });
 
 
@@ -133,9 +131,6 @@ export default function Administradores() {
             } else if (sortField === 'correo') {
                 valA = (a.correo || '').toLowerCase();
                 valB = (b.correo || '').toLowerCase();
-            } else if (sortField === 'estado') {
-                valA = a.activo ? 1 : 0;
-                valB = b.activo ? 1 : 0;
             } else {
                 return 0;
             }
@@ -233,18 +228,6 @@ export default function Administradores() {
             setConfirmDelete(null);
         }
     };
-
-
-    const handleToggleStatus = async (id, activo) => {
-        try {
-            await patchAdministratorStatus(id, !activo);
-            toast.success(`Administrador ${!activo ? 'activado' : 'desactivado'}.`);
-            await loadAll();
-        } catch (err) {
-            toast.error(`Error al cambiar estado: ${err.message}`);
-        }
-    };
-
 
     if (loading)
         return (
@@ -347,20 +330,6 @@ export default function Administradores() {
                     </Form.Select>
                 </Col>
                 <Col md={2}>
-                    <Form.Label htmlFor="filterEstado" className="visually-hidden">Filtrar por estado</Form.Label>
-                    <Form.Select
-                        id="filterEstado"
-                        name="filterEstado"
-                        value={estadoFilter}
-                        onChange={(e) => setEstadoFilter(e.target.value)}
-                        aria-label="Filtrar por estado"
-                    >
-                        <option value="">Todos los estados</option>
-                        <option value="activo">Activo</option>
-                        <option value="inactivo">Inactivo</option>
-                    </Form.Select>
-                </Col>
-                <Col md={2}>
                     <Form.Label htmlFor="sortOrder" className="visually-hidden">Ordenar por</Form.Label>
                     <Form.Select
                         id="sortOrder"
@@ -377,8 +346,6 @@ export default function Administradores() {
                         <option value="nombre-desc">Nombre Z-A</option>
                         <option value="correo-asc">Correo A-Z</option>
                         <option value="correo-desc">Correo Z-A</option>
-                        <option value="estado-asc">Estado (Activo primero)</option>
-                        <option value="estado-desc">Estado (Inactivo primero)</option>
                     </Form.Select>
                 </Col>
                 <Col md={3} className="text-end">
@@ -411,9 +378,6 @@ export default function Administradores() {
                                 </th>
                                 <th>Teléfono</th>
                                 <th>Condominio</th>
-                                <th style={{ cursor: 'pointer' }} onClick={() => toggleSort('estado')}>
-                                    Estado {getSortIcon('estado')}
-                                </th>
                                 <th>Acciones</th>
                             </tr>
                         </thead>
@@ -424,12 +388,6 @@ export default function Administradores() {
                                     <td>{a.correo}</td>
                                     <td>{a.telefono}</td>
                                     <td>{a.nombreCondominio || <span className="text-muted">Sin asignar</span>}</td>
-                                    <td>
-                                        <ToggleSwitch
-                                            checked={a.activo}
-                                            onChange={() => handleToggleStatus(a.id, a.activo)}
-                                        />
-                                    </td>
                                     <td>
                                         <Button
                                             variant="outline-info"
@@ -562,6 +520,8 @@ export default function Administradores() {
                                 value={form.correo}
                                 onChange={(e) => setForm({ ...form, correo: e.target.value })}
                                 required
+                                readOnly={!!editing}
+                                className={editing ? 'bg-light' : ''}
                             />
                         </Form.Group>
                         <Form.Group className="mb-3">

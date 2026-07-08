@@ -4,7 +4,7 @@ import {
   FiArrowUp, FiArrowDown,
 } from 'react-icons/fi';
 import {
-  getAllUsers, updateAdministrator, deleteAdministrator,
+  getAllUsers, updateAdministrator, deleteAdministrator, assignAdministratorCondo,
   getCondominiums, createUserWithRole,
 } from '../../services/api';
 import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner, Badge } from 'react-bootstrap';
@@ -32,7 +32,7 @@ export default function PropietariosGlobales() {
   });
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
-  const [editForm, setEditForm] = useState({ nombres: '', apellidos: '', telefono: '' });
+  const [editForm, setEditForm] = useState({ nombres: '', apellidos: '', telefono: '', idCondominio: '' });
 
   const extractItems = (data) => {
     if (Array.isArray(data)) return data;
@@ -141,6 +141,15 @@ export default function PropietariosGlobales() {
         apellidos: editForm.apellidos.trim(),
         telefono: editForm.telefono.trim(),
       });
+      const newCondoId = editForm.idCondominio ? parseInt(editForm.idCondominio, 10) : null;
+      const oldCondoId = editingUser.idCondominio ? parseInt(editingUser.idCondominio, 10) : null;
+      if (newCondoId && newCondoId !== oldCondoId) {
+        try {
+          await assignAdministratorCondo(editingUser.id, newCondoId);
+        } catch (err) {
+          toast.warning('No se pudo asignar el condominio. El administrador del condominio debe hacerlo manualmente.');
+        }
+      }
       toast.success('Propietario actualizado correctamente.');
       setShowEditModal(false);
       setEditingUser(null);
@@ -283,7 +292,7 @@ export default function PropietariosGlobales() {
                       <FiEye />
                     </Button>
                     <Button variant="outline-warning" size="sm" className="me-1"
-                      onClick={() => { setEditingUser(u); setEditForm({ nombres: u.nombres, apellidos: u.apellidos, telefono: u.telefono || '' }); setShowEditModal(true); }} title="Editar">
+                      onClick={() => { setEditingUser(u); setEditForm({ nombres: u.nombres, apellidos: u.apellidos, telefono: u.telefono || '', idCondominio: u.idCondominio?.toString() || '' }); setShowEditModal(true); }} title="Editar">
                       <FiEdit2 />
                     </Button>
                     <Button variant="outline-danger" size="sm"
@@ -413,6 +422,18 @@ export default function PropietariosGlobales() {
             <Form.Group className="mb-3">
               <Form.Label>Teléfono</Form.Label>
               <Form.Control value={editForm.telefono} onChange={(e) => setEditForm({ ...editForm, telefono: e.target.value })} />
+            </Form.Group>
+            <Form.Group className="mb-3">
+              <Form.Label>Condominio</Form.Label>
+              <Form.Select
+                value={editForm.idCondominio}
+                onChange={(e) => setEditForm({ ...editForm, idCondominio: e.target.value })}
+              >
+                <option value="">Sin condominio</option>
+                {condominios.map(c => (
+                  <option key={c.id} value={c.id}>{c.nombre}</option>
+                ))}
+              </Form.Select>
             </Form.Group>
           </Modal.Body>
           <Modal.Footer>
