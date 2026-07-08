@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { FiPackage, FiGrid, FiHome, FiMapPin, FiTruck, FiPlus, FiX, FiRefreshCw, FiInfo, FiCheckCircle, FiAlertTriangle } from "react-icons/fi"
+import { FiPackage, FiHome, FiMapPin, FiTruck, FiPlus, FiX, FiInfo, FiEye, FiEdit2 } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
-import { getCondominiums, getAdminAssets, createAdminAsset, updateAdminAssetStatus } from '../../services/api'
+import { getCondominiums, getAdminAssets, createAdminAsset, updateAdminAssetStatus, updateAdminAsset } from '../../services/api'
 
 const colorSuper = "rgb(124,58,237)"
 
@@ -9,7 +9,57 @@ const globalResponsive = `
 @media (max-width: 767px) {
   .global-card-padding { padding: 1rem !important; }
 }
-`;
+.toggle-switch {
+  position: relative; width: 44px; height: 24px; cursor: pointer; display: inline-block;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0; border-radius: 24px; transition: 0.3s;
+}
+.toggle-slider::before {
+  content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%;
+  top: 3px; left: 3px; transition: 0.3s; background: #fff;
+}
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
+`
+
+const estiloInput = {
+  width: "100%", padding: "0.65rem 0.75rem", borderRadius: "0.5rem",
+  border: "1px solid #cbd5e1", fontSize: "0.9rem", color: "#334155",
+  backgroundColor: "#ffffff", boxSizing: "border-box", outline: "none"
+}
+
+const estiloLabel = {
+  display: "block", fontSize: "0.75rem", fontWeight: "700",
+  color: "#475569", marginBottom: "0.4rem",
+  textTransform: "uppercase", letterSpacing: "0.025em"
+}
+
+const tdLeft = { padding: "1rem 1.5rem" }
+const tdCenter = { padding: "1rem" }
+const tdRight = { padding: "1rem 1.5rem", textAlign: "right" }
+
+const badge = (bg, color, label) => ({
+  backgroundColor: bg, color, padding: "0.25rem 0.6rem", borderRadius: "0.4rem",
+  fontSize: "0.72rem", fontWeight: "700", display: "inline-block"
+})
+
+const btnAction = (bg, color) => ({
+  padding: "0.3rem 0.55rem", border: "none", borderRadius: "0.4rem", fontSize: "0.7rem",
+  fontWeight: "700", cursor: "pointer", backgroundColor: bg, color
+})
+
+const modalOverlay = {
+  position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.3)",
+  display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100,
+  backdropFilter: "blur(4px)"
+}
+
+const modalBox = {
+  backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%",
+  maxWidth: "500px", boxShadow: "0 20px 25px -5px rgba(0,0,0,0.08)",
+  border: "1px solid #e2e8f0", overflow: "hidden", maxHeight: "90vh", overflowY: "auto"
+}
 
 export default function GlobalBienes() {
   const [condominios, setCondominios] = useState([])
@@ -22,6 +72,10 @@ export default function GlobalBienes() {
   const [showModal, setShowModal] = useState(null)
   const [codigoForm, setCodigoForm] = useState('')
   const [numeroForm, setNumeroForm] = useState('')
+  const [editItem, setEditItem] = useState(null)
+  const [detailItem, setDetailItem] = useState(null)
+  const [editForm, setEditForm] = useState({})
+  const [saving, setSaving] = useState(false)
 
   const mostrarToast = (mensaje, tipo = 'success') => {
     setToast({ visible: true, mensaje, tipo })
@@ -62,18 +116,6 @@ export default function GlobalBienes() {
   const totalCarts = carritos.length
   const cartsDisponible = carritos.filter(c => c.disponible).length
 
-  const estiloInput = {
-    width: "100%", padding: "0.65rem 0.75rem", borderRadius: "0.5rem",
-    border: "1px solid #cbd5e1", fontSize: "0.9rem", color: "#334155",
-    backgroundColor: "#ffffff", boxSizing: "border-box", outline: "none"
-  }
-
-  const estiloLabel = {
-    display: "block", fontSize: "0.75rem", fontWeight: "700",
-    color: "#475569", marginBottom: "0.4rem",
-    textTransform: "uppercase", letterSpacing: "0.025em"
-  }
-
   const handleCreateAsset = async (e) => {
     e.preventDefault()
     try {
@@ -94,13 +136,55 @@ export default function GlobalBienes() {
 
   const handleToggleDisponible = async (item) => {
     try {
-      await updateAdminAssetStatus(item.id, { tipo: item.tipo, estado: item.estado, disponible: !item.disponible }, condoSeleccionado)
-      mostrarToast(`Estado actualizado: ${item.disponible ? 'Ocupado' : 'Disponible'}`, 'info')
+      const nuevoDisponible = !item.disponible
+      if (item.tipo === 'ESTACIONAMIENTO') {
+        await updateAdminAssetStatus(item.id, { tipo: 'ESTACIONAMIENTO', disponible: nuevoDisponible, estado: nuevoDisponible ? 'DISPONIBLE' : 'OCUPADO' }, condoSeleccionado)
+      } else {
+        await updateAdminAssetStatus(item.id, { tipo: 'CARRITO', disponible: nuevoDisponible }, condoSeleccionado)
+      }
+      mostrarToast(nuevoDisponible ? 'Disponible' : 'Ocupado', 'info')
       cargarActivos(condoSeleccionado)
     } catch (err) {
       mostrarToast('Error al actualizar estado: ' + err.message, 'error')
     }
   }
+
+  const openEdit = (item) => {
+    setEditForm({
+      tipoVehiculo: item.tipoVehiculo || '',
+      capacidadMaxima: item.capacidadMaxima ?? '',
+      cantidadActual: item.cantidadActual ?? 0,
+      idApartamento: item.idApartamento || '',
+      disponible: item.disponible
+    })
+    setEditItem(item)
+  }
+
+  const handleEditSave = async (e) => {
+    e.preventDefault()
+    if (!editItem) return
+    setSaving(true)
+    try {
+      const payload = {
+        tipo: 'ESTACIONAMIENTO',
+        tipoVehiculo: editForm.tipoVehiculo || null,
+        capacidadMaxima: editForm.capacidadMaxima ? Number(editForm.capacidadMaxima) : null,
+        cantidadActual: Number(editForm.cantidadActual),
+        idApartamento: editForm.idApartamento || null,
+        disponible: editForm.disponible
+      }
+      await updateAdminAsset(editItem.id, payload, condoSeleccionado)
+      mostrarToast('Estacionamiento actualizado con éxito')
+      setEditItem(null)
+      cargarActivos(condoSeleccionado)
+    } catch (err) {
+      mostrarToast('Error al actualizar: ' + err.message, 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const openDetail = (item) => setDetailItem(item)
 
   if (loading) {
     return (
@@ -223,21 +307,22 @@ export default function GlobalBienes() {
                   <thead>
                     <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: "700", fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
                       <th style={{ padding: "1rem 1.5rem" }}>Código</th>
-                      <th style={{ padding: "1rem" }}>Número</th>
                       <th style={{ padding: "1rem" }}>Tipo Vehículo</th>
                       <th style={{ padding: "1rem" }}>Capacidad</th>
                       <th style={{ padding: "1rem" }}>Ocupación</th>
                       <th style={{ padding: "1rem" }}>Estado</th>
                       <th style={{ padding: "1rem" }}>Apartamento</th>
-                      <th style={{ padding: "1rem 1.5rem", textAlign: "right" }}>Acción</th>
+                      <th style={{ padding: "1rem 1.5rem", textAlign: "right" }}>Acciones</th>
                     </tr>
                   </thead>
                   <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
                     {estacionamientos.map((est) => (
                       <tr key={est.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                        <td style={{ padding: "1rem 1.5rem", fontFamily: "monospace", fontWeight: "700", color: "#94a3b8" }}>{est.codigo || '—'}</td>
-                        <td style={{ padding: "1rem", fontWeight: "700", color: "#0f172a" }}>N° {est.numero}</td>
-                        <td style={{ padding: "1rem" }}>
+                        <td style={{ padding: "1rem 1.5rem" }}>
+                          <span style={{ fontWeight: "700", color: "#0f172a" }}>N° {est.numero}</span>
+                          {est.codigo && <span style={{ display: "block", fontSize: "0.7rem", color: "#94a3b8", fontFamily: "monospace" }}>{est.codigo}</span>}
+                        </td>
+                        <td style={tdCenter}>
                           {est.tipoVehiculo ? (
                             <span style={{
                               fontSize: "0.72rem", fontWeight: "700", padding: "0.25rem 0.6rem", borderRadius: "0.4rem",
@@ -250,32 +335,31 @@ export default function GlobalBienes() {
                         </td>
                         <td style={{ padding: "1rem", fontWeight: "600", color: "#64748b" }}>{est.capacidadMaxima ?? '—'}</td>
                         <td style={{ padding: "1rem", fontWeight: "600", color: "#64748b" }}>{est.cantidadActual ?? 0} / {est.capacidadMaxima ?? '—'}</td>
-                        <td style={{ padding: "1rem" }}>
-                          {est.disponible ? (
-                            <span style={{ backgroundColor: "rgba(16,185,129,0.1)", color: "#10b981", padding: "0.25rem 0.6rem", borderRadius: "0.4rem", fontSize: "0.72rem", fontWeight: "700" }}>Disponible</span>
-                          ) : (
-                            <span style={{ backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444", padding: "0.25rem 0.6rem", borderRadius: "0.4rem", fontSize: "0.72rem", fontWeight: "700" }}>Ocupado</span>
-                          )}
+                        <td style={tdCenter}>
+                          <label className="toggle-switch" onClick={(e) => { e.stopPropagation(); handleToggleDisponible(est) }}>
+                            <input type="checkbox" checked={!est.disponible} readOnly />
+                            <span className="toggle-slider" style={{ backgroundColor: est.disponible ? "#10b981" : "#ef4444" }}></span>
+                          </label>
+                          <span style={{ fontSize: "0.7rem", fontWeight: "600", marginLeft: "0.4rem", color: est.disponible ? "#10b981" : "#ef4444" }}>
+                            {est.disponible ? 'Disponible' : 'Ocupado'}
+                          </span>
                         </td>
                         <td style={{ padding: "1rem", fontSize: "0.8rem", color: "#64748b" }}>{est.idApartamento ? `#${est.idApartamento}` : '—'}</td>
-                        <td style={{ padding: "1rem 1.5rem", textAlign: "right" }}>
-                          <button
-                            onClick={() => handleToggleDisponible(est)}
-                            style={{
-                              padding: "0.35rem 0.65rem", border: "1px solid", borderRadius: "0.5rem", fontSize: "0.72rem", fontWeight: "700", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.3rem",
-                              borderColor: est.disponible ? "#ef4444" : "#10b981",
-                              backgroundColor: est.disponible ? "rgba(239,68,68,0.05)" : "rgba(16,185,129,0.05)",
-                              color: est.disponible ? "#ef4444" : "#10b981"
-                            }}
-                          >
-                            <FiRefreshCw size={12} /> {est.disponible ? 'Marcar Ocupado' : 'Marcar Disponible'}
-                          </button>
+                        <td style={tdRight}>
+                          <div style={{ display: "flex", gap: "0.35rem", justifyContent: "flex-end" }}>
+                            <button onClick={() => openDetail(est)} style={btnAction("rgba(59,130,246,0.1)", "#3b82f6")} title="Ver detalles">
+                              <FiEye size={13} />
+                            </button>
+                            <button onClick={() => openEdit(est)} style={btnAction("rgba(124,58,237,0.1)", colorSuper)} title="Editar">
+                              <FiEdit2 size={13} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
                     {estacionamientos.length === 0 && (
                       <tr>
-                        <td colSpan={8} style={{ padding: "2rem", textAlign: "center", color: "#94a3b8", fontStyle: "italic" }}>No hay estacionamientos registrados.</td>
+                        <td colSpan={7} style={{ padding: "2rem", textAlign: "center", color: "#94a3b8", fontStyle: "italic" }}>No hay estacionamientos registrados.</td>
                       </tr>
                     )}
                   </tbody>
@@ -321,9 +405,9 @@ export default function GlobalBienes() {
                         <td style={{ padding: "1rem", fontWeight: "600", color: "#64748b" }}>{car.numero ? `N° ${car.numero}` : '—'}</td>
                         <td style={{ padding: "1rem" }}>
                           {car.disponible ? (
-                            <span style={{ backgroundColor: "rgba(16,185,129,0.1)", color: "#10b981", padding: "0.25rem 0.6rem", borderRadius: "0.4rem", fontSize: "0.72rem", fontWeight: "700" }}>Disponible</span>
+                            <span style={badge("rgba(16,185,129,0.1)", "#10b981", "")}>Disponible</span>
                           ) : (
-                            <span style={{ backgroundColor: "rgba(245,158,11,0.1)", color: "#f59e0b", padding: "0.25rem 0.6rem", borderRadius: "0.4rem", fontSize: "0.72rem", fontWeight: "700" }}>En Préstamo</span>
+                            <span style={badge("rgba(245,158,11,0.1)", "#f59e0b", "")}>En Préstamo</span>
                           )}
                         </td>
                         <td style={{ padding: "1rem 1.5rem", textAlign: "right" }}>
@@ -336,7 +420,7 @@ export default function GlobalBienes() {
                               color: car.disponible ? "#f59e0b" : "#10b981"
                             }}
                           >
-                            <FiRefreshCw size={12} /> {car.disponible ? 'Marcar Préstamo' : 'Marcar Disponible'}
+                            {car.disponible ? 'Marcar Préstamo' : 'Marcar Disponible'}
                           </button>
                         </td>
                       </tr>
@@ -355,8 +439,8 @@ export default function GlobalBienes() {
       )}
 
       {showModal && (
-        <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" }}>
-          <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "440px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.08)", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+        <div style={modalOverlay}>
+          <div style={modalBox}>
             <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: "800", color: "#1e293b" }}>
                 {showModal === 'ESTACIONAMIENTO' ? "Nuevo Estacionamiento" : "Nuevo Carrito"}
@@ -381,6 +465,109 @@ export default function GlobalBienes() {
                 <button type="submit" style={{ backgroundColor: colorSuper, border: "none", color: "#ffffff", padding: "0.5rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Guardar</button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {editItem && (
+        <div style={modalOverlay}>
+          <div style={modalBox}>
+            <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: "800", color: "#1e293b" }}>Editar Estacionamiento N° {editItem.numero}</h3>
+              <button onClick={() => setEditItem(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={18} /></button>
+            </div>
+
+            <form onSubmit={handleEditSave}>
+              <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+                <div>
+                  <label style={estiloLabel}>Tipo de Vehículo</label>
+                  <select style={estiloInput} value={editForm.tipoVehiculo} onChange={(e) => setEditForm(f => ({ ...f, tipoVehiculo: e.target.value }))}>
+                    <option value="">Sin asignar</option>
+                    <option value="AUTO">Auto</option>
+                    <option value="MOTO">Moto</option>
+                    <option value="CAMIONETA">Camioneta</option>
+                    <option value="BICICLETA">Bicicleta</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={estiloLabel}>Capacidad Máxima</label>
+                  <input type="number" min="0" style={estiloInput} placeholder="Ej: 2" value={editForm.capacidadMaxima} onChange={(e) => setEditForm(f => ({ ...f, capacidadMaxima: e.target.value }))} />
+                </div>
+                <div>
+                  <label style={estiloLabel}>Ocupación Actual</label>
+                  <input type="number" min="0" style={estiloInput} placeholder="Ej: 1" value={editForm.cantidadActual} onChange={(e) => setEditForm(f => ({ ...f, cantidadActual: e.target.value }))} />
+                </div>
+                <div>
+                  <label style={estiloLabel}>ID Apartamento</label>
+                  <input type="text" style={estiloInput} placeholder="ID del apartamento asignado" value={editForm.idApartamento} onChange={(e) => setEditForm(f => ({ ...f, idApartamento: e.target.value }))} />
+                </div>
+                <div>
+                  <label style={estiloLabel}>Estado</label>
+                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "0.3rem" }}>
+                    <label className="toggle-switch">
+                      <input type="checkbox" checked={!editForm.disponible} onChange={() => setEditForm(f => ({ ...f, disponible: !f.disponible }))} />
+                      <span className="toggle-slider" style={{ backgroundColor: editForm.disponible ? "#10b981" : "#ef4444" }}></span>
+                    </label>
+                    <span style={{ fontSize: "0.8rem", fontWeight: "700", color: editForm.disponible ? "#10b981" : "#ef4444" }}>
+                      {editForm.disponible ? 'Disponible' : 'Ocupado'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: "0.75rem", backgroundColor: "#f8fafc" }}>
+                <button type="button" onClick={() => setEditItem(null)} style={{ backgroundColor: "#ffffff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Cancelar</button>
+                <button type="submit" disabled={saving} style={{ backgroundColor: colorSuper, border: "none", color: "#ffffff", padding: "0.5rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer", opacity: saving ? 0.6 : 1 }}>
+                  {saving ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {detailItem && (
+        <div style={modalOverlay}>
+          <div style={{ ...modalBox, maxWidth: "480px" }}>
+            <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: "800", color: "#1e293b" }}>Detalles Estacionamiento</h3>
+              <button onClick={() => setDetailItem(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={18} /></button>
+            </div>
+            <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "0.5rem" }}>
+                <span style={{ fontWeight: "600", color: "#64748b", fontSize: "0.8rem" }}>Número</span>
+                <span style={{ fontWeight: "700", color: "#0f172a" }}>N° {detailItem.numero}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "0.5rem" }}>
+                <span style={{ fontWeight: "600", color: "#64748b", fontSize: "0.8rem" }}>Código</span>
+                <span style={{ fontWeight: "600", color: "#0f172a", fontFamily: "monospace" }}>{detailItem.codigo || '—'}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "0.5rem" }}>
+                <span style={{ fontWeight: "600", color: "#64748b", fontSize: "0.8rem" }}>Tipo Vehículo</span>
+                <span style={{ fontWeight: "700", color: "#0f172a" }}>{detailItem.tipoVehiculo || 'Sin asignar'}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "0.5rem" }}>
+                <span style={{ fontWeight: "600", color: "#64748b", fontSize: "0.8rem" }}>Capacidad Máxima</span>
+                <span style={{ fontWeight: "700", color: "#0f172a" }}>{detailItem.capacidadMaxima ?? '—'}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "0.5rem" }}>
+                <span style={{ fontWeight: "600", color: "#64748b", fontSize: "0.8rem" }}>Ocupación Actual</span>
+                <span style={{ fontWeight: "700", color: "#0f172a" }}>{detailItem.cantidadActual ?? 0}</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "0.5rem" }}>
+                <span style={{ fontWeight: "600", color: "#64748b", fontSize: "0.8rem" }}>Estado</span>
+                <span style={badge(detailItem.disponible ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", detailItem.disponible ? "#10b981" : "#ef4444", null)}>
+                  {detailItem.disponible ? 'Disponible' : 'Ocupado'}
+                </span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "0.5rem" }}>
+                <span style={{ fontWeight: "600", color: "#64748b", fontSize: "0.8rem" }}>Apartamento</span>
+                <span style={{ fontWeight: "600", color: "#0f172a" }}>{detailItem.idApartamento ? `#${detailItem.idApartamento}` : 'No asignado'}</span>
+              </div>
+            </div>
+            <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", backgroundColor: "#f8fafc" }}>
+              <button onClick={() => setDetailItem(null)} style={{ backgroundColor: "#ffffff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Cerrar</button>
+            </div>
           </div>
         </div>
       )}
