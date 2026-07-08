@@ -115,7 +115,7 @@ export default function PropietariosGlobales() {
         setSubmitting(false);
         return;
       }
-      await createUserWithRole({
+      const result = await createUserWithRole({
         nombres: form.nombres.trim(),
         apellidos: form.apellidos.trim(),
         correo: form.correo.trim(),
@@ -124,6 +124,9 @@ export default function PropietariosGlobales() {
         rol: ROL,
         idCondominio: selectedCondoId,
       });
+      if (!result._condoAssigned) {
+        toast.warning('No se pudo asignar condominio. El administrador del condominio debe asignarlo manualmente.');
+      }
       toast.success(`${ROL_LABEL} creado correctamente.`);
       setShowModal(false);
       setForm({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', idCondominio: '' });
@@ -417,7 +420,7 @@ export default function PropietariosGlobales() {
             </Form.Group>
             <Form.Group className="mb-3">
               <Form.Label>Contraseña</Form.Label>
-              <Form.Control type="password" value={form.contrasena} onChange={(e) => setForm({ ...form, contrasena: e.target.value })} required minLength={6} />
+              <Form.Control type="password" value={form.contrasena} onChange={(e) => setForm({ ...form, contrasena: e.target.value })} required minLength={6} autoComplete="new-password" />
               <Form.Text className="text-muted">Mínimo 6 caracteres.</Form.Text>
             </Form.Group>
             <Form.Group className="mb-3">

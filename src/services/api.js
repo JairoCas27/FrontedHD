@@ -205,14 +205,27 @@ export async function deleteUser(userId, rol) {
 
 export async function createUserWithRole(data) {
   const { rol, idCondominio, ...userData } = data;
-  const created = await createAdministrator(userData);
+  let created;
+  try {
+    created = await createAdministrator(userData);
+  } catch (err) {
+    throw new Error(`Error al crear usuario: ${err.message}`);
+  }
+  if (!created?.id) throw new Error('No se pudo crear el usuario');
+
+  let condoAssigned = false;
   if (created?.id && idCondominio) {
-    await assignAdministratorCondo(created.id, idCondominio);
+    try {
+      await assignAdministratorCondo(created.id, idCondominio);
+      condoAssigned = true;
+    } catch (err) {
+      console.warn('No se pudo asignar condominio al usuario:', err.message);
+    }
   }
   if (created?.id && rol !== 'ADMINISTRADOR_CONDOMINIO') {
     await updateAdministrator(created.id, { nombres: userData.nombres, apellidos: userData.apellidos, telefono: userData.telefono, rol });
   }
-  return created;
+  return { ...created, _condoAssigned: condoAssigned };
 }
 
 export async function getAdminLogsByCondo(condominiumId, params = "") {
