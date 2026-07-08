@@ -148,7 +148,6 @@ export default function AgentesSeguridad() {
         nombres: editForm.nombres.trim(),
         apellidos: editForm.apellidos.trim(),
         telefono: telefonoVal || editingUser.telefono || '0000000',
-        rol: ROL,
       }, newCondoId);
       toast.success('Agente actualizado correctamente.');
       setShowEditModal(false);

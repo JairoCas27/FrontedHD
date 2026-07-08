@@ -148,7 +148,6 @@ export default function PropietariosGlobales() {
         nombres: editForm.nombres.trim(),
         apellidos: editForm.apellidos.trim(),
         telefono: telefonoVal || editingUser.telefono || '0000000',
-        rol: ROL,
       }, newCondoId);
       toast.success('Propietario actualizado correctamente.');
       setShowEditModal(false);
