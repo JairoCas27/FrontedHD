@@ -4,8 +4,8 @@ import {
   FiArrowUp, FiArrowDown,
 } from 'react-icons/fi';
 import {
-  getAllUsers, updateAdministrator, deleteAdministrator, assignAdministratorCondo,
-  getCondominiums, createUserWithRole,
+  getAllUsers, deleteAdministrator, getCondominiums,
+  createAdminUser, updateAdminUser,
 } from '../../services/api';
 import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner, Badge } from 'react-bootstrap';
 import { toast } from 'react-toastify';
@@ -109,18 +109,14 @@ export default function PropietariosGlobales() {
         setSubmitting(false);
         return;
       }
-      const result = await createUserWithRole({
+      await createAdminUser({
         nombres: form.nombres.trim(),
         apellidos: form.apellidos.trim(),
         correo: form.correo.trim(),
         telefono: form.telefono.trim(),
         contrasena: form.contrasena.trim(),
         rol: ROL,
-        idCondominio: selectedCondoId,
-      });
-      if (!result._condoAssigned) {
-        toast.warning('No se pudo asignar condominio. El administrador del condominio debe asignarlo manualmente.');
-      }
+      }, selectedCondoId);
       toast.success(`${ROL_LABEL} creado correctamente.`);
       setShowModal(false);
       setForm({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', idCondominio: '' });
@@ -137,19 +133,12 @@ export default function PropietariosGlobales() {
     setSubmitting(true);
     try {
       const newCondoId = editForm.idCondominio ? parseInt(editForm.idCondominio, 10) : null;
-      await updateAdministrator(editingUser.id, {
+      await updateAdminUser(editingUser.id, {
         nombres: editForm.nombres.trim(),
         apellidos: editForm.apellidos.trim(),
         telefono: editForm.telefono.trim(),
-        ...(newCondoId ? { idCondominio: newCondoId } : {}),
-      });
-      if (newCondoId) {
-        try {
-          await assignAdministratorCondo(editingUser.id, newCondoId);
-        } catch {
-          toast.warning('Condominio asignado solo en datos básicos. Si no se refleja, el administrador del condominio debe asignarlo manualmente.');
-        }
-      }
+        rol: ROL,
+      }, newCondoId);
       toast.success('Propietario actualizado correctamente.');
       setShowEditModal(false);
       setEditingUser(null);
