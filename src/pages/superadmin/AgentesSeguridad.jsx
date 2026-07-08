@@ -4,7 +4,7 @@ import {
   FiArrowUp, FiArrowDown,
 } from 'react-icons/fi';
 import {
-  getAllUsers, updateAdministrator, deleteAdministrator, assignAdministratorCondo,
+  getAllUsers, updateAdminUser, updateAdministrator, deleteAdministrator, assignAdministratorCondo,
   getCondominiums, createUserWithRole,
 } from '../../services/api';
 import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner, Badge } from 'react-bootstrap';
@@ -136,21 +136,26 @@ export default function AgentesSeguridad() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      await updateAdministrator(editingUser.id, {
-        nombres: editForm.nombres.trim(),
-        apellidos: editForm.apellidos.trim(),
-        telefono: editForm.telefono.trim(),
-      });
       const newCondoId = editForm.idCondominio ? parseInt(editForm.idCondominio, 10) : null;
-      const oldCondoId = editingUser.idCondominio;
-      if (newCondoId && newCondoId !== oldCondoId) {
-        try {
-          await assignAdministratorCondo(editingUser.id, newCondoId);
-        } catch {
-          const originalRole = editingUser.rol;
-          await updateAdministrator(editingUser.id, { rol: 'ADMINISTRADOR_CONDOMINIO' });
-          await assignAdministratorCondo(editingUser.id, newCondoId);
-          await updateAdministrator(editingUser.id, { rol: originalRole });
+      try {
+        await updateAdminUser(editingUser.id, {
+          nombres: editForm.nombres.trim(),
+          apellidos: editForm.apellidos.trim(),
+          telefono: editForm.telefono.trim(),
+          ...(newCondoId ? { idCondominio: newCondoId } : {}),
+        });
+      } catch {
+        await updateAdministrator(editingUser.id, {
+          nombres: editForm.nombres.trim(),
+          apellidos: editForm.apellidos.trim(),
+          telefono: editForm.telefono.trim(),
+        });
+        if (newCondoId) {
+          try {
+            await assignAdministratorCondo(editingUser.id, newCondoId);
+          } catch {
+            throw new Error('Condominio no asignado. El administrador del condominio debe asignarlo manualmente.');
+          }
         }
       }
       toast.success('Agente actualizado correctamente.');
@@ -158,7 +163,7 @@ export default function AgentesSeguridad() {
       setEditingUser(null);
       await loadData();
     } catch (err) {
-      toast.error(`Error al actualizar: ${err.message}`);
+      toast.error(err.message);
     } finally {
       setSubmitting(false);
     }
