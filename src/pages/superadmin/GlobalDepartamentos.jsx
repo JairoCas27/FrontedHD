@@ -48,7 +48,7 @@ export default function GlobalDepartamentos() {
   const [assigning, setAssigning] = useState(false)
   const [modalDetail, setModalDetail] = useState(null)
   const [modalTenant, setModalTenant] = useState(null)
-  const [tenantForm, setTenantForm] = useState({ nombres: '', apellidos: '', email: '', telefono: '', tipoDocumento: 'DNI', numeroDocumento: '' })
+  const [tenantForm, setTenantForm] = useState({ nombres: '', apellidos: '', tipoDocumento: 'DNI', numeroDocumento: '' })
   const [addingTenant, setAddingTenant] = useState(false)
   const [modalParking, setModalParking] = useState(null)
   const [selectedParkingId, setSelectedParkingId] = useState('')
@@ -179,8 +179,6 @@ export default function GlobalDepartamentos() {
       const tenantData = {
         nombres: tenantForm.nombres.trim(),
         apellidos: tenantForm.apellidos.trim(),
-        email: tenantForm.email.trim(),
-        telefono: tenantForm.telefono.trim(),
         tipoDocumento: tenantForm.tipoDocumento.trim() || 'DNI',
         numeroDocumento: tenantForm.numeroDocumento.trim() || '00000000',
       }
@@ -201,7 +199,7 @@ export default function GlobalDepartamentos() {
         setModalDetail(prev => ({ ...prev, inquilinos: updatedTenants }))
       }
       setModalTenant(null)
-      setTenantForm({ nombres: '', apellidos: '', email: '', telefono: '', tipoDocumento: 'DNI', numeroDocumento: '' })
+      setTenantForm({ nombres: '', apellidos: '', tipoDocumento: 'DNI', numeroDocumento: '' })
       setEditingTenantIdx(null)
     } catch (err) {
       toast.error(`Error al ${editingTenantIdx !== null ? 'actualizar' : 'agregar'} inquilino: ${err.message}`)
@@ -500,10 +498,14 @@ export default function GlobalDepartamentos() {
               <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "1rem", marginBottom: "1.5rem" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
                   <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.025em" }}>Propietario</span>
-                  <button onClick={() => { setModalAssign(modalDetail); setAssignUserId(String(modalDetail.idPropietario || '')) }}
-                    style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper, fontSize: "0.7rem" }}>
-                    <FiEdit3 size={12} /> {modalDetail.idPropietario ? 'Cambiar' : 'Asignar'}
-                  </button>
+                  {modalDetail.idPropietario ? (
+                    <span style={{ fontSize: "0.65rem", color: "#94a3b8", fontStyle: "italic" }}>No se puede cambiar</span>
+                  ) : (
+                    <button onClick={() => { setModalAssign(modalDetail); setAssignUserId('') }}
+                      style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper, fontSize: "0.7rem" }}>
+                      <FiEdit3 size={12} /> Asignar
+                    </button>
+                  )}
                 </div>
                 {modalDetail.idPropietario ? (
                   <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", marginTop: "0.2rem" }}>
@@ -556,7 +558,7 @@ export default function GlobalDepartamentos() {
                   <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.025em" }}>
                     Inquilinos ({Array.isArray(modalDetail.inquilinos) ? modalDetail.inquilinos.length : 0})
                   </span>
-                  <button onClick={() => { setModalTenant(modalDetail); setTenantForm({ nombres: '', apellidos: '', email: '', telefono: '', tipoDocumento: 'DNI', numeroDocumento: '' }) }}
+                  <button onClick={() => { setModalTenant(modalDetail); setTenantForm({ nombres: '', apellidos: '', tipoDocumento: 'DNI', numeroDocumento: '' }) }}
                     style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper, fontSize: "0.7rem" }}>
                     <FiPlus size={12} /> Agregar
                   </button>
@@ -572,10 +574,9 @@ export default function GlobalDepartamentos() {
                           <span style={{ fontWeight: "600", fontSize: "0.85rem", color: "#0f172a" }}>{inq.nombre || inq.nombres || 'Inquilino'} {inq.apellidos || ''}</span>
                           <span style={{ display: "block", fontSize: "0.7rem", color: "#64748b" }}>
                             {inq.tipoDocumento && inq.numeroDocumento ? `${inq.tipoDocumento}: ${inq.numeroDocumento}` : ''}
-                            {inq.email ? `${inq.tipoDocumento && inq.numeroDocumento ? ' | ' : ''}${inq.email}` : ''}
                           </span>
                         </div>
-                        <button onClick={() => { setEditingTenantIdx(idx); setTenantForm({ nombres: inq.nombres || inq.nombre || '', apellidos: inq.apellidos || '', email: inq.email || '', telefono: inq.telefono || '', tipoDocumento: inq.tipoDocumento || 'DNI', numeroDocumento: inq.numeroDocumento || '' }); setModalTenant(modalDetail) }}
+                        <button onClick={() => { setEditingTenantIdx(idx); setTenantForm({ nombres: inq.nombres || inq.nombre || '', apellidos: inq.apellidos || '', tipoDocumento: inq.tipoDocumento || 'DNI', numeroDocumento: inq.numeroDocumento || '' }); setModalTenant(modalDetail) }}
                           style={{ background: "none", border: "none", cursor: "pointer", color: colorSuper, padding: "0.25rem", display: "flex" }}
                           title="Editar inquilino">
                           <FiEdit3 size={14} />
@@ -674,16 +675,6 @@ export default function GlobalDepartamentos() {
                   <input type="text" value={tenantForm.apellidos} onChange={(e) => setTenantForm({ ...tenantForm, apellidos: e.target.value })}
                     style={estiloInput} placeholder="Apellidos del inquilino" />
                 </div>
-                <div>
-                  <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Email</label>
-                  <input type="email" value={tenantForm.email} onChange={(e) => setTenantForm({ ...tenantForm, email: e.target.value })}
-                    style={estiloInput} placeholder="correo@ejemplo.com" />
-                </div>
-                <div>
-                  <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Teléfono</label>
-                  <input type="text" value={tenantForm.telefono} onChange={(e) => setTenantForm({ ...tenantForm, telefono: e.target.value })}
-                    style={estiloInput} placeholder="Teléfono" />
-                </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "0.5rem" }}>
                   <div>
                     <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Tipo Doc. *</label>
@@ -703,7 +694,7 @@ export default function GlobalDepartamentos() {
                 </div>
               </div>
               <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
-                <button onClick={() => { setModalTenant(null); setEditingTenantIdx(null); setTenantForm({ nombres: '', apellidos: '', email: '', telefono: '', tipoDocumento: 'DNI', numeroDocumento: '' }) }}
+<button onClick={() => { setModalTenant(null); setEditingTenantIdx(null); setTenantForm({ nombres: '', apellidos: '', tipoDocumento: 'DNI', numeroDocumento: '' }) }}
                   style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>
                   Cancelar
                 </button>
@@ -793,14 +784,6 @@ export default function GlobalDepartamentos() {
                 <div>
                   <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Apellidos</span>
                   <p style={{ margin: "0.2rem 0 0", fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>{tenantDetail.apellidos || '-'}</p>
-                </div>
-                <div>
-                  <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Email</span>
-                  <p style={{ margin: "0.2rem 0 0", fontWeight: "600", color: "#0f172a", fontSize: "0.85rem" }}>{tenantDetail.email || '-'}</p>
-                </div>
-                <div>
-                  <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Teléfono</span>
-                  <p style={{ margin: "0.2rem 0 0", fontWeight: "600", color: "#0f172a", fontSize: "0.85rem" }}>{tenantDetail.telefono || '-'}</p>
                 </div>
                 <div>
                   <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Tipo Documento</span>
