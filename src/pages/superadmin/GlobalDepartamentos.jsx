@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react'
 import { FiHome, FiUser, FiUsers, FiGrid, FiSearch, FiMail, FiPhone, FiX, FiCheck, FiEye, FiUserPlus, FiAlertTriangle, FiRefreshCw, FiEdit3, FiTrash2, FiPlus } from "react-icons/fi"
 import { toast } from 'react-toastify'
 import EncabezadoTabla from '../../components/EncabezadoTabla'
-import { getCondominiums, getAdminApartments, assignApartmentOwner, getAllUsers, getAdminAssets, assignAssetApartment, updateApartmentOccupants, extractItems } from '../../services/api'
+import { getCondominiums, getAdminApartments, assignApartmentOwner, getAllUsers, getAdminAssets, assignAssetApartment, updateApartmentOccupants, createAdminStructureNode, deleteAdminStructureNode, extractItems } from '../../services/api'
 
 const colorSuper = "rgb(124,58,237)"
 
@@ -56,6 +56,11 @@ export default function GlobalDepartamentos() {
   const [confirmRemoveTenantIdx, setConfirmRemoveTenantIdx] = useState(null)
   const [tenantDetail, setTenantDetail] = useState(null)
   const [editingTenantIdx, setEditingTenantIdx] = useState(null)
+  const [showCreateApt, setShowCreateApt] = useState(false)
+  const [createAptForm, setCreateAptForm] = useState({ numero: '', metraje: '', torreNombre: '', pisoNumero: '', derechoEstacionamiento: false })
+  const [creatingApt, setCreatingApt] = useState(false)
+  const [confirmDeleteApt, setConfirmDeleteApt] = useState(null)
+  const [deletingAptId, setDeletingAptId] = useState(null)
 
   useEffect(() => {
     setLoading(true)
@@ -165,6 +170,49 @@ export default function GlobalDepartamentos() {
       }
     } finally {
       setAssigning(false)
+    }
+  }
+
+  async function handleCreateApt() {
+    if (!createAptForm.numero.trim()) { toast.warning('Ingresa el número del departamento'); return }
+    if (!createAptForm.torreNombre) { toast.warning('Selecciona una torre'); return }
+    if (!createAptForm.pisoNumero) { toast.warning('Selecciona un piso'); return }
+    setCreatingApt(true)
+    try {
+      await createAdminStructureNode({
+        tipo: 'APARTAMENTO',
+        nombre: createAptForm.numero.trim(),
+        numero: Number(createAptForm.numero.trim()),
+        nombreTorre: createAptForm.torreNombre,
+        numeroPiso: Number(createAptForm.pisoNumero),
+        metraje: createAptForm.metraje ? Number(createAptForm.metraje) : undefined,
+        derechoEstacionamiento: createAptForm.derechoEstacionamiento,
+      }, condoSeleccionado)
+      toast.success('Departamento creado correctamente')
+      setShowCreateApt(false)
+      setCreateAptForm({ numero: '', metraje: '', torreNombre: '', pisoNumero: '', derechoEstacionamiento: false })
+      const data = await getAdminApartments(condoSeleccionado)
+      setApartments(extractItems(data))
+    } catch (err) {
+      toast.error(`Error al crear: ${err.message}`)
+    } finally {
+      setCreatingApt(false)
+    }
+  }
+
+  async function handleDeleteApt() {
+    if (!confirmDeleteApt) return
+    setDeletingAptId(confirmDeleteApt.id)
+    try {
+      await deleteAdminStructureNode(confirmDeleteApt.id, 'APARTAMENTO', condoSeleccionado)
+      toast.success('Departamento eliminado')
+      setConfirmDeleteApt(null)
+      const data = await getAdminApartments(condoSeleccionado)
+      setApartments(extractItems(data))
+    } catch (err) {
+      toast.error(`Error al eliminar: ${err.message}`)
+    } finally {
+      setDeletingAptId(null)
     }
   }
 
@@ -341,13 +389,19 @@ export default function GlobalDepartamentos() {
                 <span style={{ fontWeight: "700", fontSize: "0.9rem", color: "#1e293b" }}>
                   Departamentos de {condoActual?.nombre} <span style={{ color: "#94a3b8", fontWeight: "600" }}>({filteredApts.length})</span>
                 </span>
-                <div className="global-search-wrap" style={{ width: "260px", maxWidth: "260px", position: "relative" }}>
+                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+                <button onClick={() => setShowCreateApt(true)}
+                  style={{ backgroundColor: colorSuper, color: "#ffffff", border: "none", padding: "0.4rem 0.85rem", borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                  <FiPlus size={14} /> Nuevo Depto
+                </button>
+                <div className="global-search-wrap" style={{ width: "220px", maxWidth: "220px", position: "relative" }}>
                   <FiSearch size={14} style={{ position: "absolute", left: "0.65rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
                   <input type="text" placeholder="Buscar departamento..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)}
                     style={{ ...estiloInput, paddingLeft: "2rem", paddingTop: "0.45rem", paddingBottom: "0.45rem", fontSize: "0.8rem" }} />
                 </div>
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+            </div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
                 <select value={filtroTorre} onChange={(e) => setFiltroTorre(e.target.value)}
                   style={{ ...estiloInput, width: "auto", minWidth: "120px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
                   <option value="">Todas las torres</option>
@@ -448,10 +502,14 @@ export default function GlobalDepartamentos() {
                               {tienePropietario ? 'Ocupado' : 'Disponible'}
                             </span>
                           </td>
-                          <td style={{ padding: "0.75rem 1rem" }}>
-                            <button style={{ ...btnStyle, backgroundColor: colorSuper, color: "#fff" }}
+                          <td style={{ padding: "0.75rem 1rem", whiteSpace: "nowrap" }}>
+                            <button style={{ ...btnStyle, backgroundColor: colorSuper, color: "#fff", marginRight: "0.35rem" }}
                               onClick={() => openDetail(apt)}>
                               <FiEye size={14} /> Detalle
+                            </button>
+                            <button onClick={() => setConfirmDeleteApt(apt)}
+                              style={{ ...btnStyle, backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444" }}>
+                              <FiTrash2 size={14} />
                             </button>
                           </td>
                         </tr>
@@ -593,6 +651,12 @@ export default function GlobalDepartamentos() {
                   <p style={{ margin: "0.2rem 0 0", fontStyle: "italic", color: "#94a3b8", fontSize: "0.85rem" }}>No hay inquilinos registrados</p>
                 )}
               </div>
+              <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "1rem", marginTop: "1rem", display: "flex", justifyContent: "flex-end" }}>
+                <button onClick={() => setConfirmDeleteApt(modalDetail)}
+                  style={{ ...btnStyle, backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444", fontSize: "0.75rem" }}>
+                  <FiTrash2 size={14} /> Eliminar departamento
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -654,7 +718,7 @@ export default function GlobalDepartamentos() {
           <div style={{ ...modalContent, maxWidth: "480px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>{editingTenantIdx !== null ? 'Editar Inquilino' : 'Agregar Inquilino'}</h3>
-              <button onClick={() => { setModalTenant(null); setEditingTenantIdx(null); setTenantForm({ nombres: '', apellidos: '', email: '', telefono: '', tipoDocumento: 'DNI', numeroDocumento: '' }) }}
+              <button onClick={() => { setModalTenant(null); setEditingTenantIdx(null); setTenantForm({ nombres: '', apellidos: '', tipoDocumento: 'DNI', numeroDocumento: '' }) }}
                 style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}>
                 <FiX size={20} />
               </button>
@@ -814,6 +878,82 @@ export default function GlobalDepartamentos() {
                 <button onClick={() => handleRemoveTenant(confirmRemoveTenantIdx)}
                   style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: "#ef4444", color: "#fff", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>
                   Eliminar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Apartment Modal */}
+      {showCreateApt && (
+        <div style={modalOverlay} onClick={() => { if (!creatingApt) { setShowCreateApt(false); setCreateAptForm({ numero: '', metraje: '', torreNombre: '', pisoNumero: '', derechoEstacionamiento: false }) }}}>
+          <div style={{ ...modalContent, maxWidth: "480px" }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>Nuevo Departamento</h3>
+              <button onClick={() => { setShowCreateApt(false); setCreateAptForm({ numero: '', metraje: '', torreNombre: '', pisoNumero: '', derechoEstacionamiento: false }) }}
+                style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={20} /></button>
+            </div>
+            <div style={{ padding: "1.5rem" }}>
+              <p style={{ margin: "0 0 1rem", fontSize: "0.85rem", color: "#475569" }}>
+                Condominio: <strong>{condoActual?.nombre}</strong>
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+                <div>
+                  <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Torre *</label>
+                  <select style={estiloInput} value={createAptForm.torreNombre} onChange={(e) => setCreateAptForm(f => ({ ...f, torreNombre: e.target.value, pisoNumero: '' }))}>
+                    <option value="">Seleccionar torre</option>
+                    {torres.map(t => <option key={t} value={t}>{t}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Piso *</label>
+                  <select style={estiloInput} value={createAptForm.pisoNumero} onChange={(e) => setCreateAptForm(f => ({ ...f, pisoNumero: e.target.value }))} disabled={!createAptForm.torreNombre}>
+                    <option value="">Seleccionar piso</option>
+                    {createAptForm.torreNombre && pisos.map(p => <option key={p} value={p}>Piso {p}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Número *</label>
+                  <input type="text" style={estiloInput} placeholder="Ej: 101" value={createAptForm.numero} onChange={(e) => setCreateAptForm(f => ({ ...f, numero: e.target.value }))} />
+                </div>
+                <div>
+                  <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Metraje m²</label>
+                  <input type="number" min="0" style={estiloInput} placeholder="Opcional" value={createAptForm.metraje} onChange={(e) => setCreateAptForm(f => ({ ...f, metraje: e.target.value }))} />
+                </div>
+                <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", color: "#334155", fontWeight: "600", cursor: "pointer" }}>
+                  <input type="checkbox" checked={createAptForm.derechoEstacionamiento} onChange={(e) => setCreateAptForm(f => ({ ...f, derechoEstacionamiento: e.target.checked }))} /> Derecho estacionamiento
+                </label>
+              </div>
+              <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
+                <button onClick={() => { setShowCreateApt(false); setCreateAptForm({ numero: '', metraje: '', torreNombre: '', pisoNumero: '', derechoEstacionamiento: false }) }}
+                  style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
+                <button onClick={handleCreateApt} disabled={creatingApt || !createAptForm.numero.trim() || !createAptForm.torreNombre || !createAptForm.pisoNumero}
+                  style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: (creatingApt || !createAptForm.numero.trim() || !createAptForm.torreNombre || !createAptForm.pisoNumero) ? "#cbd5e1" : colorSuper, color: "#fff", fontWeight: "600", cursor: (creatingApt || !createAptForm.numero.trim() || !createAptForm.torreNombre || !createAptForm.pisoNumero) ? "not-allowed" : "pointer", fontSize: "0.85rem" }}>
+                  {creatingApt ? 'Creando...' : 'Crear'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirm Delete Department */}
+      {confirmDeleteApt && (
+        <div style={modalOverlay} onClick={() => setConfirmDeleteApt(null)}>
+          <div style={{ ...modalContent, maxWidth: "400px" }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ padding: "1.5rem", textAlign: "center" }}>
+              <FiTrash2 size={40} color="#ef4444" style={{ marginBottom: "0.75rem" }} />
+              <h3 style={{ margin: "0 0 0.5rem", fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>Eliminar Departamento</h3>
+              <p style={{ color: "#64748b", fontSize: "0.85rem", margin: 0 }}>
+                ¿Eliminar el departamento <strong>{confirmDeleteApt.numero}</strong>? Esta acción no se puede deshacer.
+              </p>
+              <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", justifyContent: "center" }}>
+                <button onClick={() => setConfirmDeleteApt(null)}
+                  style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
+                <button onClick={handleDeleteApt} disabled={deletingAptId === confirmDeleteApt.id}
+                  style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: "#ef4444", color: "#fff", fontWeight: "600", cursor: deletingAptId === confirmDeleteApt.id ? "not-allowed" : "pointer", fontSize: "0.85rem" }}>
+                  {deletingAptId === confirmDeleteApt.id ? 'Eliminando...' : 'Eliminar'}
                 </button>
               </div>
             </div>
