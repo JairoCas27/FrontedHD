@@ -353,6 +353,14 @@ export async function createAdminStructureNode(data, condominioId) {
   });
 }
 
+export async function updateAdminStructureNode(id, data, condominioId) {
+  const qs = condominioId ? `?condominioId=${condominioId}` : '';
+  return safeFetch(`/api/admin/structure/nodes/${id}${qs}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
 export async function deleteAdminStructureNode(id, type = 'TORRE', condominioId) {
   const params = new URLSearchParams({ type });
   if (condominioId) params.append('condominioId', condominioId);

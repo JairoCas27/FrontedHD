@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { FiFolder, FiGrid, FiHome, FiMapPin, FiChevronDown, FiChevronRight, FiPlus, FiTrash2, FiLayers, FiX, FiAlertCircle } from "react-icons/fi"
+import { FiFolder, FiGrid, FiHome, FiMapPin, FiChevronDown, FiChevronRight, FiPlus, FiTrash2, FiLayers, FiX, FiAlertCircle, FiEdit3, FiEye, FiUser, FiUsers } from "react-icons/fi"
 import { toast } from 'react-toastify'
 import EncabezadoTabla from '../../components/EncabezadoTabla'
-import { getCondominiums, getAdminStructure, createAdminStructureNode, deleteAdminStructureNode } from '../../services/api'
+import { getCondominiums, getAdminStructure, createAdminStructureNode, deleteAdminStructureNode, updateAdminStructureNode, getAllUsers } from '../../services/api'
 
 const colorSuper = "rgb(124,58,237)"
 
@@ -34,6 +34,7 @@ export default function GlobalEstructura() {
   const [condominios, setCondominios] = useState([])
   const [condominioId, setCondominioId] = useState('')
   const [structure, setStructure] = useState(null)
+  const [allUsers, setAllUsers] = useState([])
   const [loading, setLoading] = useState(true)
   const [structureLoading, setStructureLoading] = useState(false)
   const [expandedTowers, setExpandedTowers] = useState({})
@@ -43,18 +44,41 @@ export default function GlobalEstructura() {
   const [towerName, setTowerName] = useState('')
   const [creatingTower, setCreatingTower] = useState(false)
 
+  const [showEditTowerModal, setShowEditTowerModal] = useState(false)
+  const [editTowerData, setEditTowerData] = useState(null)
+  const [editTowerName, setEditTowerName] = useState('')
+  const [editingTower, setEditingTower] = useState(false)
+
   const [showAddFloorModal, setShowAddFloorModal] = useState(false)
   const [selectedTowerForFloor, setSelectedTowerForFloor] = useState(null)
   const [floorNumber, setFloorNumber] = useState('')
   const [creatingFloor, setCreatingFloor] = useState(false)
 
+  const [showEditFloorModal, setShowEditFloorModal] = useState(false)
+  const [editFloorData, setEditFloorData] = useState(null)
+  const [editFloorNum, setEditFloorNum] = useState('')
+  const [editingFloor, setEditingFloor] = useState(false)
+
+  const [showAddAptModal, setShowAddAptModal] = useState(false)
+  const [selectedFloorForApt, setSelectedFloorForApt] = useState(null)
+  const [aptForm, setAptForm] = useState({ numero: '', metraje: '', derechoEstacionamiento: false })
+  const [creatingApt, setCreatingApt] = useState(false)
+
+  const [showEditAptModal, setShowEditAptModal] = useState(false)
+  const [editAptData, setEditAptData] = useState(null)
+  const [editAptForm, setEditAptForm] = useState({ numero: '', metraje: '', derechoEstacionamiento: false })
+  const [editingApt, setEditingApt] = useState(false)
+
   const [deletingId, setDeletingId] = useState(null)
+  const [confirmDeleteApt, setConfirmDeleteApt] = useState(null)
+
+  const [aptDetail, setAptDetail] = useState(null)
 
   useEffect(() => {
-    getCondominiums()
-      .then(d => setCondominios(d?.items || d || []))
-      .catch(() => toast.error('Error al cargar condominios'))
-      .finally(() => setLoading(false))
+    Promise.all([
+      getCondominiums().then(d => setCondominios(d?.items || d || [])).catch(() => {}),
+      getAllUsers().then(d => setAllUsers(Array.isArray(d) ? d : (d?.items || []))).catch(() => {}),
+    ]).finally(() => setLoading(false))
   }, [])
 
   const fetchStructure = useCallback(async (id) => {
@@ -85,6 +109,11 @@ export default function GlobalEstructura() {
     sum + (t.pisos?.reduce((s, p) => s + (p.apartamentos?.length || 0), 0) || 0), 0
   ) || 0
 
+  function getOwnerInfo(apt) {
+    if (!apt.idPropietario) return null
+    return allUsers.find(u => String(u.id) === String(apt.idPropietario)) || null
+  }
+
   const toggleTower = (id) => {
     setExpandedTowers(prev => ({ ...prev, [id]: !prev[id] }))
   }
@@ -107,6 +136,22 @@ export default function GlobalEstructura() {
       toast.error(`Error al crear torre: ${err.message}`)
     } finally {
       setCreatingTower(false)
+    }
+  }
+
+  const handleEditTower = async () => {
+    if (!editTowerName.trim()) { toast.warning('Ingresa un nombre'); return }
+    setEditingTower(true)
+    try {
+      await updateAdminStructureNode(editTowerData.id, { nombre: editTowerName.trim(), tipo: 'TORRE' }, condominioId)
+      toast.success('Torre actualizada')
+      setShowEditTowerModal(false)
+      setEditTowerData(null)
+      await fetchStructure(condominioId)
+    } catch (err) {
+      toast.error(`Error al actualizar: ${err.message}`)
+    } finally {
+      setEditingTower(false)
     }
   }
 
@@ -151,6 +196,27 @@ export default function GlobalEstructura() {
     }
   }
 
+  const handleEditFloor = async () => {
+    const num = parseInt(editFloorNum, 10)
+    if (isNaN(num) || num < 1) { toast.warning('Número de piso inválido'); return }
+    setEditingFloor(true)
+    try {
+      await updateAdminStructureNode(editFloorData.id, {
+        nombre: `Piso ${num}`,
+        numero: num,
+        tipo: 'PISO'
+      }, condominioId)
+      toast.success('Piso actualizado')
+      setShowEditFloorModal(false)
+      setEditFloorData(null)
+      await fetchStructure(condominioId)
+    } catch (err) {
+      toast.error(`Error al actualizar piso: ${err.message}`)
+    } finally {
+      setEditingFloor(false)
+    }
+  }
+
   const handleDeleteFloor = async (id) => {
     if (!window.confirm('¿Eliminar este piso y todos sus apartamentos?')) return
     setDeletingId(id)
@@ -163,6 +229,73 @@ export default function GlobalEstructura() {
     } finally {
       setDeletingId(null)
     }
+  }
+
+  const handleAddApt = async () => {
+    const num = aptForm.numero.trim()
+    if (!num) { toast.warning('Ingresa el número del apartamento'); return }
+    setCreatingApt(true)
+    try {
+      await createAdminStructureNode({
+        tipo: 'APARTAMENTO',
+        numero: num,
+        metraje: aptForm.metraje ? Number(aptForm.metraje) : null,
+        derechoEstacionamiento: aptForm.derechoEstacionamiento,
+        nombreTorre: selectedFloorForApt.nombreTorre,
+        numeroPiso: selectedFloorForApt.numero,
+      }, condominioId)
+      toast.success('Apartamento creado')
+      setShowAddAptModal(false)
+      setSelectedFloorForApt(null)
+      setAptForm({ numero: '', metraje: '', derechoEstacionamiento: false })
+      await fetchStructure(condominioId)
+    } catch (err) {
+      toast.error(`Error al crear apartamento: ${err.message}`)
+    } finally {
+      setCreatingApt(false)
+    }
+  }
+
+  const handleEditApt = async () => {
+    if (!editAptForm.numero.trim()) { toast.warning('Ingresa el número'); return }
+    setEditingApt(true)
+    try {
+      await updateAdminStructureNode(editAptData.id, {
+        numero: editAptForm.numero.trim(),
+        metraje: editAptForm.metraje ? Number(editAptForm.metraje) : null,
+        derechoEstacionamiento: editAptForm.derechoEstacionamiento,
+        tipo: 'APARTAMENTO',
+      }, condominioId)
+      toast.success('Apartamento actualizado')
+      setShowEditAptModal(false)
+      setEditAptData(null)
+      await fetchStructure(condominioId)
+    } catch (err) {
+      toast.error(`Error al actualizar apartamento: ${err.message}`)
+    } finally {
+      setEditingApt(false)
+    }
+  }
+
+  const handleDeleteApt = async () => {
+    if (!confirmDeleteApt) return
+    setDeletingId(confirmDeleteApt.id)
+    try {
+      await deleteAdminStructureNode(confirmDeleteApt.id, 'APARTAMENTO', condominioId)
+      toast.success('Apartamento eliminado')
+      setConfirmDeleteApt(null)
+      await fetchStructure(condominioId)
+    } catch (err) {
+      toast.error(`Error al eliminar apartamento: ${err.message}`)
+    } finally {
+      setDeletingId(null)
+    }
+  }
+
+  const btnStyle = {
+    padding: "0.3rem 0.5rem", borderRadius: "0.4rem", fontSize: "0.7rem", fontWeight: "600",
+    border: "none", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.25rem",
+    transition: "all 0.15s"
   }
 
   if (loading) {
@@ -237,15 +370,8 @@ export default function GlobalEstructura() {
 
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
             <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: "700", color: "#0f172a" }}>Torres</h3>
-            <button
-              onClick={() => setShowAddTowerModal(true)}
-              style={{
-                display: "flex", alignItems: "center", gap: "0.4rem",
-                backgroundColor: colorSuper, color: "#fff", border: "none",
-                borderRadius: "0.5rem", padding: "0.5rem 1rem",
-                fontSize: "0.85rem", fontWeight: "600", cursor: "pointer"
-              }}
-            >
+            <button onClick={() => setShowAddTowerModal(true)}
+              style={{ display: "flex", alignItems: "center", gap: "0.4rem", backgroundColor: colorSuper, color: "#fff", border: "none", borderRadius: "0.5rem", padding: "0.5rem 1rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>
               <FiPlus size={16} /> Agregar Torre
             </button>
           </div>
@@ -261,16 +387,8 @@ export default function GlobalEstructura() {
                 const isTowerOpen = expandedTowers[torre.id]
                 return (
                   <div key={torre.id} style={{ background: "#ffffff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
-                    <div
-                      onClick={() => toggleTower(torre.id)}
-                      style={{
-                        display: "flex", alignItems: "center", justifyContent: "space-between",
-                        padding: "1rem 1.25rem", cursor: "pointer",
-                        backgroundColor: isTowerOpen ? "rgba(124,58,237,0.03)" : "#fff",
-                        borderBottom: isTowerOpen ? "1px solid #f1f5f9" : "none",
-                        transition: "background 0.15s"
-                      }}
-                    >
+                    <div onClick={() => toggleTower(torre.id)}
+                      style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem 1.25rem", cursor: "pointer", backgroundColor: isTowerOpen ? "rgba(124,58,237,0.03)" : "#fff", borderBottom: isTowerOpen ? "1px solid #f1f5f9" : "none", transition: "background 0.15s" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                         <FiHome size={20} color={colorSuper} />
                         <span style={{ fontWeight: "700", fontSize: "0.95rem", color: "#0f172a" }}>{torre.nombre}</span>
@@ -278,32 +396,19 @@ export default function GlobalEstructura() {
                           {torre.pisos?.length || 0} pisos
                         </span>
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setSelectedTowerForFloor(torre)
-                            setShowAddFloorModal(true)
-                          }}
-                          style={{
-                            display: "flex", alignItems: "center", gap: "0.3rem",
-                            backgroundColor: "transparent", color: colorSuper, border: `1px solid ${colorSuper}`,
-                            borderRadius: "0.4rem", padding: "0.3rem 0.65rem",
-                            fontSize: "0.75rem", fontWeight: "600", cursor: "pointer"
-                          }}
-                        >
+                      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                        <button onClick={(e) => { e.stopPropagation(); setEditTowerData(torre); setEditTowerName(torre.nombre); setShowEditTowerModal(true) }}
+                          style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.08)", color: colorSuper }}>
+                          <FiEdit3 size={12} />
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); setSelectedTowerForFloor(torre); setShowAddFloorModal(true) }}
+                          style={{ ...btnStyle, backgroundColor: "transparent", color: colorSuper, border: `1px solid ${colorSuper}` }}>
                           <FiPlus size={13} /> Piso
                         </button>
-                        <button
-                          onClick={(e) => { e.stopPropagation(); handleDeleteTower(torre.id) }}
+                        <button onClick={(e) => { e.stopPropagation(); handleDeleteTower(torre.id) }}
                           disabled={deletingId === torre.id}
-                          style={{
-                            display: "flex", alignItems: "center", justifyContent: "center",
-                            backgroundColor: "transparent", color: "#ef4444", border: "none",
-                            borderRadius: "0.4rem", padding: "0.3rem", cursor: "pointer", fontSize: "0.85rem"
-                          }}
-                        >
-                          {deletingId === torre.id ? '...' : <FiTrash2 size={15} />}
+                          style={{ ...btnStyle, color: "#ef4444", background: "transparent", fontSize: "0.85rem" }}>
+                          {deletingId === torre.id ? '...' : <FiTrash2 size={14} />}
                         </button>
                         {isTowerOpen ? <FiChevronDown size={18} color="#64748b" /> : <FiChevronRight size={18} color="#64748b" />}
                       </div>
@@ -322,15 +427,8 @@ export default function GlobalEstructura() {
                               const isFloorOpen = expandedFloors[piso.id]
                               return (
                                 <div key={piso.id} style={{ background: "#fff", borderRadius: "0.65rem", border: "1px solid #e2e8f0", overflow: "hidden" }}>
-                                  <div
-                                    onClick={() => toggleFloor(piso.id)}
-                                    style={{
-                                      display: "flex", alignItems: "center", justifyContent: "space-between",
-                                      padding: "0.65rem 1rem", cursor: "pointer",
-                                      backgroundColor: isFloorOpen ? "rgba(124,58,237,0.02)" : "#fff",
-                                      borderBottom: isFloorOpen ? "1px solid #f1f5f9" : "none"
-                                    }}
-                                  >
+                                  <div onClick={() => toggleFloor(piso.id)}
+                                    style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0.65rem 1rem", cursor: "pointer", backgroundColor: isFloorOpen ? "rgba(124,58,237,0.02)" : "#fff", borderBottom: isFloorOpen ? "1px solid #f1f5f9" : "none" }}>
                                     <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
                                       <FiLayers size={16} color="#64748b" />
                                       <span style={{ fontWeight: "600", fontSize: "0.9rem", color: "#0f172a" }}>{piso.nombre || `Piso ${piso.numero}`}</span>
@@ -338,17 +436,19 @@ export default function GlobalEstructura() {
                                         {piso.apartamentos?.length || 0} aptos
                                       </span>
                                     </div>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                                      <button
-                                        onClick={(e) => { e.stopPropagation(); handleDeleteFloor(piso.id) }}
+                                    <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                                      <button onClick={(e) => { e.stopPropagation(); setEditFloorData(piso); setEditFloorNum(String(piso.numero || '')); setShowEditFloorModal(true) }}
+                                        style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.08)", color: colorSuper }}>
+                                        <FiEdit3 size={11} />
+                                      </button>
+                                      <button onClick={(e) => { e.stopPropagation(); setSelectedFloorForApt({ id: piso.id, numero: piso.numero, nombreTorre: torre.nombre }); setAptForm({ numero: '', metraje: '', derechoEstacionamiento: false }); setShowAddAptModal(true) }}
+                                        style={{ ...btnStyle, backgroundColor: "transparent", color: colorSuper, border: `1px solid ${colorSuper}` }}>
+                                        <FiPlus size={11} /> Apto
+                                      </button>
+                                      <button onClick={(e) => { e.stopPropagation(); handleDeleteFloor(piso.id) }}
                                         disabled={deletingId === piso.id}
-                                        style={{
-                                          display: "flex", alignItems: "center", justifyContent: "center",
-                                          backgroundColor: "transparent", color: "#ef4444", border: "none",
-                                          borderRadius: "0.3rem", padding: "0.2rem", cursor: "pointer", fontSize: "0.8rem"
-                                        }}
-                                      >
-                                        {deletingId === piso.id ? '...' : <FiTrash2 size={13} />}
+                                        style={{ ...btnStyle, color: "#ef4444", background: "transparent" }}>
+                                        {deletingId === piso.id ? '...' : <FiTrash2 size={12} />}
                                       </button>
                                       {isFloorOpen ? <FiChevronDown size={15} color="#94a3b8" /> : <FiChevronRight size={15} color="#94a3b8" />}
                                     </div>
@@ -361,29 +461,57 @@ export default function GlobalEstructura() {
                                           <p style={{ margin: 0 }}>No hay apartamentos en este piso</p>
                                         </div>
                                       ) : (
-                                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "0.5rem" }}>
-                                          {piso.apartamentos.map(apt => (
-                                            <div key={apt.id} style={{
-                                              background: "#fff", borderRadius: "0.5rem", border: "1px solid #e2e8f0",
-                                              padding: "0.6rem 0.75rem", display: "flex", alignItems: "center",
-                                              justifyContent: "space-between"
-                                            }}>
-                                              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                                                <FiGrid size={14} color={colorSuper} />
-                                                <div>
-                                                  <span style={{ fontSize: "0.85rem", fontWeight: "600", color: "#0f172a" }}>{apt.numero}</span>
-                                                  <span style={{ fontSize: "0.7rem", color: "#94a3b8", marginLeft: "0.4rem" }}>
-                                                    {apt.metraje ? `${apt.metraje}m²` : ''}
+                                        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "0.5rem" }}>
+                                          {piso.apartamentos.map(apt => {
+                                            const ocupado = apt.idPropietario != null
+                                            const owner = getOwnerInfo(apt)
+                                            return (
+                                              <div key={apt.id} style={{
+                                                background: "#fff", borderRadius: "0.5rem", border: `1px solid ${ocupado ? "#bbf7d0" : "#fecaca"}`,
+                                                padding: "0.6rem 0.75rem"
+                                              }}>
+                                                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "0.3rem" }}>
+                                                  <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                                                    <FiGrid size={13} color={colorSuper} />
+                                                    <span style={{ fontSize: "0.85rem", fontWeight: "700", color: "#0f172a" }}>{apt.numero}</span>
+                                                    {apt.metraje && <span style={{ fontSize: "0.65rem", color: "#94a3b8" }}>{apt.metraje}m²</span>}
+                                                  </div>
+                                                  <span style={{
+                                                    fontSize: "0.6rem", fontWeight: "700", padding: "0.1rem 0.4rem", borderRadius: "999px",
+                                                    backgroundColor: ocupado ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
+                                                    color: ocupado ? "#10b981" : "#ef4444"
+                                                  }}>
+                                                    {ocupado ? 'Ocupado' : 'Disponible'}
                                                   </span>
                                                 </div>
+                                                <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", flexWrap: "wrap" }}>
+                                                  {apt.derechoEstacionamiento && (
+                                                    <span style={{ fontSize: "0.6rem", color: colorSuper, fontWeight: "700", backgroundColor: "rgba(124,58,237,0.08)", padding: "0.05rem 0.35rem", borderRadius: "999px" }}>
+                                                      P
+                                                    </span>
+                                                  )}
+                                                  {ocupado ? (
+                                                    <span style={{ fontSize: "0.65rem", color: "#64748b", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.2rem" }}
+                                                      onClick={() => setAptDetail({ ...apt, torreNombre: torre.nombre, pisoNumero: piso.numero, owner })}>
+                                                      <FiUser size={10} /> {apt.nombrePropietario || 'Ver'}
+                                                    </span>
+                                                  ) : (
+                                                    <span style={{ fontSize: "0.65rem", color: "#94a3b8", fontStyle: "italic" }}>Sin propietario</span>
+                                                  )}
+                                                  <div style={{ marginLeft: "auto", display: "flex", gap: "0.2rem" }}>
+                                                    <button onClick={() => { setEditAptData(apt); setEditAptForm({ numero: apt.numero, metraje: apt.metraje || '', derechoEstacionamiento: apt.derechoEstacionamiento || false }); setShowEditAptModal(true) }}
+                                                      style={{ ...btnStyle, padding: "0.15rem 0.35rem", backgroundColor: "rgba(124,58,237,0.08)", color: colorSuper }}>
+                                                      <FiEdit3 size={10} />
+                                                    </button>
+                                                    <button onClick={() => setConfirmDeleteApt(apt)}
+                                                      style={{ ...btnStyle, padding: "0.15rem 0.35rem", color: "#ef4444", background: "transparent" }}>
+                                                      <FiTrash2 size={10} />
+                                                    </button>
+                                                  </div>
+                                                </div>
                                               </div>
-                                              {apt.derechoEstacionamiento && (
-                                                <span style={{ fontSize: "0.6rem", color: colorSuper, fontWeight: "700", backgroundColor: "rgba(124,58,237,0.08)", padding: "0.1rem 0.4rem", borderRadius: "999px" }}>
-                                                  P
-                                                </span>
-                                              )}
-                                            </div>
-                                          ))}
+                                            )
+                                          })}
                                         </div>
                                       )}
                                     </div>
@@ -401,43 +529,23 @@ export default function GlobalEstructura() {
             </div>
           )}
 
+          {/* Add Tower Modal */}
           {showAddTowerModal && (
             <div style={modalOverlay} onClick={() => { if (!creatingTower) { setShowAddTowerModal(false); setTowerName('') } }}>
               <div style={modalBox} onClick={e => e.stopPropagation()}>
-                <button
-                  onClick={() => { setShowAddTowerModal(false); setTowerName('') }}
-                  style={{ position: "absolute", top: "1rem", right: "1rem", background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}
-                >
+                <button onClick={() => { setShowAddTowerModal(false); setTowerName('') }}
+                  style={{ position: "absolute", top: "1rem", right: "1rem", background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}>
                   <FiX size={20} />
                 </button>
                 <h3 style={{ margin: "0 0 1.5rem", fontSize: "1.1rem", fontWeight: "700", color: "#0f172a" }}>Agregar Torre</h3>
-                <input
-                  type="text"
-                  placeholder="Nombre de la torre"
-                  value={towerName}
-                  onChange={e => setTowerName(e.target.value)}
-                  style={estiloInput}
-                  autoFocus
-                />
+                <input type="text" placeholder="Nombre de la torre" value={towerName} onChange={e => setTowerName(e.target.value)} style={estiloInput} autoFocus />
                 <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem", justifyContent: "flex-end" }}>
-                  <button
-                    onClick={() => { setShowAddTowerModal(false); setTowerName('') }}
-                    disabled={creatingTower}
-                    style={{
-                      padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0",
-                      backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer"
-                    }}
-                  >
+                  <button onClick={() => { setShowAddTowerModal(false); setTowerName('') }} disabled={creatingTower}
+                    style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>
                     Cancelar
                   </button>
-                  <button
-                    onClick={handleAddTower}
-                    disabled={creatingTower}
-                    style={{
-                      padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none",
-                      backgroundColor: colorSuper, color: "#fff", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer"
-                    }}
-                  >
+                  <button onClick={handleAddTower} disabled={creatingTower}
+                    style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: colorSuper, color: "#fff", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>
                     {creatingTower ? 'Creando...' : 'Crear'}
                   </button>
                 </div>
@@ -445,50 +553,230 @@ export default function GlobalEstructura() {
             </div>
           )}
 
+          {/* Edit Tower Modal */}
+          {showEditTowerModal && (
+            <div style={modalOverlay} onClick={() => { if (!editingTower) { setShowEditTowerModal(false); setEditTowerData(null) } }}>
+              <div style={modalBox} onClick={e => e.stopPropagation()}>
+                <button onClick={() => { setShowEditTowerModal(false); setEditTowerData(null) }}
+                  style={{ position: "absolute", top: "1rem", right: "1rem", background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}>
+                  <FiX size={20} />
+                </button>
+                <h3 style={{ margin: "0 0 1.5rem", fontSize: "1.1rem", fontWeight: "700", color: "#0f172a" }}>Editar Torre</h3>
+                <input type="text" placeholder="Nombre de la torre" value={editTowerName} onChange={e => setEditTowerName(e.target.value)} style={estiloInput} autoFocus />
+                <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem", justifyContent: "flex-end" }}>
+                  <button onClick={() => { setShowEditTowerModal(false); setEditTowerData(null) }} disabled={editingTower}
+                    style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>
+                    Cancelar
+                  </button>
+                  <button onClick={handleEditTower} disabled={editingTower}
+                    style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: colorSuper, color: "#fff", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>
+                    {editingTower ? 'Guardando...' : 'Guardar'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Add Floor Modal */}
           {showAddFloorModal && selectedTowerForFloor && (
             <div style={modalOverlay} onClick={() => { if (!creatingFloor) { setShowAddFloorModal(false); setFloorNumber(''); setSelectedTowerForFloor(null) } }}>
               <div style={modalBox} onClick={e => e.stopPropagation()}>
-                <button
-                  onClick={() => { setShowAddFloorModal(false); setFloorNumber(''); setSelectedTowerForFloor(null) }}
-                  style={{ position: "absolute", top: "1rem", right: "1rem", background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}
-                >
+                <button onClick={() => { setShowAddFloorModal(false); setFloorNumber(''); setSelectedTowerForFloor(null) }}
+                  style={{ position: "absolute", top: "1rem", right: "1rem", background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}>
                   <FiX size={20} />
                 </button>
                 <h3 style={{ margin: "0 0 0.25rem", fontSize: "1.1rem", fontWeight: "700", color: "#0f172a" }}>Agregar Piso</h3>
-                <p style={{ margin: "0 0 1.25rem", fontSize: "0.85rem", color: "#64748b" }}>
-                  Torre: <strong>{selectedTowerForFloor.nombre}</strong>
-                </p>
-                <input
-                  type="number"
-                  min="1"
-                  placeholder="Número de piso"
-                  value={floorNumber}
-                  onChange={e => setFloorNumber(e.target.value)}
-                  style={estiloInput}
-                  autoFocus
-                />
+                <p style={{ margin: "0 0 1.25rem", fontSize: "0.85rem", color: "#64748b" }}>Torre: <strong>{selectedTowerForFloor.nombre}</strong></p>
+                <input type="number" min="1" placeholder="Número de piso" value={floorNumber} onChange={e => setFloorNumber(e.target.value)} style={estiloInput} autoFocus />
                 <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem", justifyContent: "flex-end" }}>
-                  <button
-                    onClick={() => { setShowAddFloorModal(false); setFloorNumber(''); setSelectedTowerForFloor(null) }}
-                    disabled={creatingFloor}
-                    style={{
-                      padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0",
-                      backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer"
-                    }}
-                  >
+                  <button onClick={() => { setShowAddFloorModal(false); setFloorNumber(''); setSelectedTowerForFloor(null) }} disabled={creatingFloor}
+                    style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>
                     Cancelar
                   </button>
-                  <button
-                    onClick={handleAddFloor}
-                    disabled={creatingFloor}
-                    style={{
-                      padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none",
-                      backgroundColor: colorSuper, color: "#fff", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer"
-                    }}
-                  >
+                  <button onClick={handleAddFloor} disabled={creatingFloor}
+                    style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: colorSuper, color: "#fff", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>
                     {creatingFloor ? 'Creando...' : 'Crear'}
                   </button>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* Edit Floor Modal */}
+          {showEditFloorModal && (
+            <div style={modalOverlay} onClick={() => { if (!editingFloor) { setShowEditFloorModal(false); setEditFloorData(null) } }}>
+              <div style={modalBox} onClick={e => e.stopPropagation()}>
+                <button onClick={() => { setShowEditFloorModal(false); setEditFloorData(null) }}
+                  style={{ position: "absolute", top: "1rem", right: "1rem", background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}>
+                  <FiX size={20} />
+                </button>
+                <h3 style={{ margin: "0 0 0.25rem", fontSize: "1.1rem", fontWeight: "700", color: "#0f172a" }}>Editar Piso</h3>
+                <p style={{ margin: "0 0 1.25rem", fontSize: "0.85rem", color: "#64748b" }}>Torre: <strong>{editFloorData?.nombreTorre || structure?.torres?.find(t => t.pisos?.some(p => p.id === editFloorData?.id))?.nombre || ''}</strong></p>
+                <input type="number" min="1" placeholder="Número de piso" value={editFloorNum} onChange={e => setEditFloorNum(e.target.value)} style={estiloInput} autoFocus />
+                <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem", justifyContent: "flex-end" }}>
+                  <button onClick={() => { setShowEditFloorModal(false); setEditFloorData(null) }} disabled={editingFloor}
+                    style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>
+                    Cancelar
+                  </button>
+                  <button onClick={handleEditFloor} disabled={editingFloor}
+                    style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: colorSuper, color: "#fff", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>
+                    {editingFloor ? 'Guardando...' : 'Guardar'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Add Apartment Modal */}
+          {showAddAptModal && (
+            <div style={modalOverlay} onClick={() => { if (!creatingApt) { setShowAddAptModal(false); setSelectedFloorForApt(null) } }}>
+              <div style={modalBox} onClick={e => e.stopPropagation()}>
+                <button onClick={() => { setShowAddAptModal(false); setSelectedFloorForApt(null) }}
+                  style={{ position: "absolute", top: "1rem", right: "1rem", background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}>
+                  <FiX size={20} />
+                </button>
+                <h3 style={{ margin: "0 0 0.25rem", fontSize: "1.1rem", fontWeight: "700", color: "#0f172a" }}>Agregar Apartamento</h3>
+                <p style={{ margin: "0 0 1.25rem", fontSize: "0.85rem", color: "#64748b" }}>
+                  Torre: <strong>{selectedFloorForApt?.nombreTorre}</strong> &mdash; Piso: <strong>{selectedFloorForApt?.numero}</strong>
+                </p>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                  <input type="text" placeholder="Número (ej: 101)" value={aptForm.numero} onChange={e => setAptForm({ ...aptForm, numero: e.target.value })} style={estiloInput} autoFocus />
+                  <input type="number" placeholder="Metraje (m², opcional)" value={aptForm.metraje} onChange={e => setAptForm({ ...aptForm, metraje: e.target.value })} style={estiloInput} />
+                  <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", color: "#334155", fontWeight: "600", cursor: "pointer" }}>
+                    <input type="checkbox" checked={aptForm.derechoEstacionamiento} onChange={e => setAptForm({ ...aptForm, derechoEstacionamiento: e.target.checked })} />
+                    Derecho a estacionamiento
+                  </label>
+                </div>
+                <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem", justifyContent: "flex-end" }}>
+                  <button onClick={() => { setShowAddAptModal(false); setSelectedFloorForApt(null) }} disabled={creatingApt}
+                    style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>
+                    Cancelar
+                  </button>
+                  <button onClick={handleAddApt} disabled={creatingApt}
+                    style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: colorSuper, color: "#fff", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>
+                    {creatingApt ? 'Creando...' : 'Crear'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Edit Apartment Modal */}
+          {showEditAptModal && (
+            <div style={modalOverlay} onClick={() => { if (!editingApt) { setShowEditAptModal(false); setEditAptData(null) } }}>
+              <div style={modalBox} onClick={e => e.stopPropagation()}>
+                <button onClick={() => { setShowEditAptModal(false); setEditAptData(null) }}
+                  style={{ position: "absolute", top: "1rem", right: "1rem", background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}>
+                  <FiX size={20} />
+                </button>
+                <h3 style={{ margin: "0 0 1.25rem", fontSize: "1.1rem", fontWeight: "700", color: "#0f172a" }}>Editar Apartamento</h3>
+                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                  <input type="text" placeholder="Número (ej: 101)" value={editAptForm.numero} onChange={e => setEditAptForm({ ...editAptForm, numero: e.target.value })} style={estiloInput} autoFocus />
+                  <input type="number" placeholder="Metraje (m², opcional)" value={editAptForm.metraje} onChange={e => setEditAptForm({ ...editAptForm, metraje: e.target.value })} style={estiloInput} />
+                  <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", color: "#334155", fontWeight: "600", cursor: "pointer" }}>
+                    <input type="checkbox" checked={editAptForm.derechoEstacionamiento} onChange={e => setEditAptForm({ ...editAptForm, derechoEstacionamiento: e.target.checked })} />
+                    Derecho a estacionamiento
+                  </label>
+                </div>
+                <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem", justifyContent: "flex-end" }}>
+                  <button onClick={() => { setShowEditAptModal(false); setEditAptData(null) }} disabled={editingApt}
+                    style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>
+                    Cancelar
+                  </button>
+                  <button onClick={handleEditApt} disabled={editingApt}
+                    style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: colorSuper, color: "#fff", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>
+                    {editingApt ? 'Guardando...' : 'Guardar'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Confirm Delete Apartment */}
+          {confirmDeleteApt && (
+            <div style={modalOverlay} onClick={() => setConfirmDeleteApt(null)}>
+              <div style={{ ...modalBox, maxWidth: "380px", textAlign: "center" }} onClick={e => e.stopPropagation()}>
+                <FiAlertCircle size={40} style={{ color: "#ef4444", marginBottom: "1rem" }} />
+                <h3 style={{ margin: "0 0 0.5rem", fontSize: "1rem", fontWeight: "700", color: "#0f172a" }}>¿Eliminar apartamento?</h3>
+                <p style={{ color: "#64748b", fontSize: "0.85rem", margin: "0 0 1.5rem" }}>
+                  Apartamento <strong>{confirmDeleteApt.numero}</strong>. Esta acción no se puede deshacer.
+                </p>
+                <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center" }}>
+                  <button onClick={() => setConfirmDeleteApt(null)} disabled={deletingId === confirmDeleteApt.id}
+                    style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>
+                    Cancelar
+                  </button>
+                  <button onClick={handleDeleteApt} disabled={deletingId === confirmDeleteApt.id}
+                    style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: "#ef4444", color: "#fff", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>
+                    {deletingId === confirmDeleteApt.id ? 'Eliminando...' : 'Eliminar'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Apartment Detail */}
+          {aptDetail && (
+            <div style={modalOverlay} onClick={() => setAptDetail(null)}>
+              <div style={{ ...modalBox, maxWidth: "440px" }} onClick={e => e.stopPropagation()}>
+                <button onClick={() => setAptDetail(null)}
+                  style={{ position: "absolute", top: "1rem", right: "1rem", background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}>
+                  <FiX size={20} />
+                </button>
+                <h3 style={{ margin: "0 0 1.25rem", fontSize: "1.1rem", fontWeight: "700", color: "#0f172a" }}>
+                  Apartamento {aptDetail.numero}
+                </h3>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "1rem" }}>
+                  <div>
+                    <span style={{ fontSize: "0.65rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Torre</span>
+                    <p style={{ margin: "0.15rem 0 0", fontWeight: "600", color: "#0f172a", fontSize: "0.85rem" }}>{aptDetail.torreNombre || '-'}</p>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: "0.65rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Piso</span>
+                    <p style={{ margin: "0.15rem 0 0", fontWeight: "600", color: "#0f172a", fontSize: "0.85rem" }}>{aptDetail.pisoNumero || '-'}</p>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: "0.65rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Metraje</span>
+                    <p style={{ margin: "0.15rem 0 0", fontWeight: "600", color: "#0f172a", fontSize: "0.85rem" }}>{aptDetail.metraje ? `${aptDetail.metraje} m²` : '-'}</p>
+                  </div>
+                  <div>
+                    <span style={{ fontSize: "0.65rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Estado</span>
+                    <p style={{ margin: "0.15rem 0 0", fontWeight: "600", fontSize: "0.85rem" }}>
+                      <span style={{
+                        padding: "0.15rem 0.5rem", borderRadius: "999px", fontSize: "0.7rem",
+                        backgroundColor: aptDetail.idPropietario ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
+                        color: aptDetail.idPropietario ? "#10b981" : "#ef4444"
+                      }}>
+                        {aptDetail.idPropietario ? 'Ocupado' : 'Disponible'}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+                {aptDetail.idPropietario ? (
+                  <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "1rem" }}>
+                    <span style={{ fontSize: "0.65rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Propietario</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginTop: "0.3rem" }}>
+                      <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: colorSuper, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6rem", fontWeight: "700", flexShrink: 0 }}>
+                        <FiUser size={16} />
+                      </div>
+                      <div>
+                        <p style={{ margin: 0, fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>{aptDetail.nombrePropietario || 'Propietario'}</p>
+                        {aptDetail.owner && (
+                          <span style={{ fontSize: "0.7rem", color: "#64748b" }}>
+                            {aptDetail.owner.email && <span>{aptDetail.owner.email}</span>}
+                            {aptDetail.owner.email && aptDetail.owner.telefono && <span> · </span>}
+                            {aptDetail.owner.telefono && <span>{aptDetail.owner.telefono}</span>}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "1rem" }}>
+                    <span style={{ fontSize: "0.65rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Propietario</span>
+                    <p style={{ margin: "0.3rem 0 0", fontStyle: "italic", color: "#94a3b8", fontSize: "0.85rem" }}>Sin asignar</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
