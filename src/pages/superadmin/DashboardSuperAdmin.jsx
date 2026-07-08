@@ -14,6 +14,9 @@ import {
   getSuperAdminDashboardMetrics,
   getSuperAdminRecentAdmins,
   getSuperAdminRecentCondos,
+  getCondominiums,
+  getAdministrators,
+  getAllUsers,
 } from '../../services/api';
 import {
   BarChart,
@@ -50,6 +53,9 @@ export default function DashboardSuperAdmin() {
   const [metrics, setMetrics] = useState(null);
   const [recentAdmins, setRecentAdmins] = useState([]);
   const [allCondos, setAllCondos] = useState([]);
+  const [recentCondos, setRecentCondos] = useState([]);
+  const [allAdmins, setAllAdmins] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
@@ -76,15 +82,21 @@ export default function DashboardSuperAdmin() {
     if (showLoading) setLoading(true);
     setError(null);
     try {
-      const [m, adminsData, recentCondosData] = await Promise.all([
+      const [m, adminsData, recentCondosData, allCondosData, allAdminsData, allUsersData] = await Promise.all([
         getSuperAdminDashboardMetrics(),
         getSuperAdminRecentAdmins(),
         getSuperAdminRecentCondos(),
+        getCondominiums(),
+        getAdministrators(),
+        getAllUsers(),
       ]);
 
       setMetrics(m);
       setRecentAdmins(extractItems(adminsData));
-      setAllCondos(extractItems(recentCondosData));
+      setRecentCondos(extractItems(recentCondosData));
+      setAllCondos(extractItems(allCondosData));
+      setAllAdmins(extractItems(allAdminsData));
+      setAllUsers(extractItems(allUsersData));
     } catch (err) {
       console.error(err);
       setError(err.message);
@@ -140,28 +152,24 @@ export default function DashboardSuperAdmin() {
 
 
   const roleDistribution = [
-    { name: 'Administradores', value: metrics?.totalAdministradores || 0 },
-    { name: 'Propietarios', value: metrics?.totalPropietarios || 0 },
-    {
-      name: 'Agentes Seguridad',
-      value: Math.max(
-        0,
-        (metrics?.totalUsuarios || 0) -
-        (metrics?.totalAdministradores || 0) -
-        (metrics?.totalPropietarios || 0)
-      ),
-    },
+    { name: 'Administradores', value: adminTotal },
+    { name: 'Propietarios', value: propietariosTotal },
+    { name: 'Agentes Seguridad', value: agentesTotal },
   ].filter(item => item.value > 0);
 
 
-  const lastCondos = [...allCondos]
+  const lastCondos = [...recentCondos]
     .sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
-    .slice(0, 5);
+    .slice(0, 3);
 
 
-  const adminCount = recentAdmins.length;
-  const adminsActive = recentAdmins.filter(a => a.activo).length;
-  const adminsInactive = adminCount - adminsActive;
+  const lastAdmins = recentAdmins.slice(0, 3);
+  const adminTotal = allAdmins.length || metrics?.totalAdministradores || 0;
+  const adminsActive = allAdmins.filter(a => a.activo).length;
+  const adminsInactive = adminTotal - adminsActive;
+
+  const propietariosTotal = allUsers.filter(u => u.rol === 'PROPIETARIO').length || metrics?.totalPropietarios || 0;
+  const usuariosTotal = allUsers.length || metrics?.totalUsuarios || 0;
 
   const stats = [
     {
@@ -173,21 +181,21 @@ export default function DashboardSuperAdmin() {
     },
     {
       title: 'Administradores',
-      value: metrics?.totalAdministradores || 0,
+      value: adminTotal,
       icon: <FiUsers size={24} />,
       color: COLORS.success,
       subtitle: `${adminsActive} activos, ${adminsInactive} inactivos`,
     },
     {
       title: 'Propietarios',
-      value: metrics?.totalPropietarios || 0,
+      value: propietariosTotal,
       icon: <FiUserCheck size={24} />,
       color: COLORS.warning,
       subtitle: 'Residentes registrados',
     },
     {
       title: 'Usuarios Totales',
-      value: metrics?.totalUsuarios || 0,
+      value: usuariosTotal,
       icon: <FiActivity size={24} />,
       color: COLORS.purple,
       subtitle: 'Todos los roles',
@@ -374,15 +382,15 @@ export default function DashboardSuperAdmin() {
                 Últimos administradores
               </span>
               <Badge bg="primary" pill>
-                {recentAdmins.length}
+                {lastAdmins.length}
               </Badge>
             </Card.Header>
             <Card.Body style={{ maxHeight: '400px', overflowY: 'auto' }}>
-              {recentAdmins.length === 0 ? (
+              {lastAdmins.length === 0 ? (
                 <p className="text-muted text-center">Sin registros</p>
               ) : (
                 <ul className="list-unstyled m-0">
-                  {recentAdmins.map((admin) => (
+                  {lastAdmins.map((admin) => (
                     <li
                       key={admin.id}
                       className="d-flex flex-column align-items-start border-bottom py-3"
