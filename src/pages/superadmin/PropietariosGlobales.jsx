@@ -136,17 +136,18 @@ export default function PropietariosGlobales() {
     e.preventDefault();
     setSubmitting(true);
     try {
+      const newCondoId = editForm.idCondominio ? parseInt(editForm.idCondominio, 10) : null;
       await updateAdministrator(editingUser.id, {
         nombres: editForm.nombres.trim(),
         apellidos: editForm.apellidos.trim(),
         telefono: editForm.telefono.trim(),
+        ...(newCondoId ? { idCondominio: newCondoId } : {}),
       });
-      const newCondoId = editForm.idCondominio ? parseInt(editForm.idCondominio, 10) : null;
       if (newCondoId) {
         try {
           await assignAdministratorCondo(editingUser.id, newCondoId);
         } catch {
-          toast.warning('No se pudo asignar el condominio. El administrador del condominio debe hacerlo manualmente.');
+          toast.warning('Condominio asignado solo en datos básicos. Si no se refleja, el administrador del condominio debe asignarlo manualmente.');
         }
       }
       toast.success('Propietario actualizado correctamente.');
