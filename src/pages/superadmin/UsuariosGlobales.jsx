@@ -8,6 +8,7 @@ import {
   getCondominiums,
   getAdministrators,
   createAdministrator,
+  createAdminUser,
   assignAdministratorCondo,
 } from '../../services/api';
 import { Modal, Form, Button, Table, InputGroup, Row, Col, Spinner, Badge } from 'react-bootstrap';
@@ -167,32 +168,35 @@ export default function UsuariosGlobales() {
       const selectedRole = form.rol;
       const selectedCondoId = form.idCondominio ? parseInt(form.idCondominio, 10) : null;
 
-      if (selectedRole === 'ADMINISTRADOR_CONDOMINIO' && selectedCondoId && occupiedCondos.has(selectedCondoId)) {
-        toast.error('Este condominio ya tiene un administrador asignado.');
-        setSubmitting(false);
-        return;
-      }
-
-      const userData = {
-        nombres: form.nombres.trim(),
-        apellidos: form.apellidos.trim(),
-        correo: form.correo.trim(),
-        telefono: form.telefono.trim(),
-        contrasena: form.contrasena.trim(),
-        rol: selectedRole,
-      };
-
-      const created = await createAdministrator(userData);
-
-      if (selectedCondoId && created.id && selectedRole === 'ADMINISTRADOR_CONDOMINIO') {
-        try {
-          await assignAdministratorCondo(created.id, selectedCondoId);
-        } catch (err) {
-          toast.warning(`Usuario creado pero no se pudo asignar condominio: ${err.message}`);
+      if (selectedRole === 'ADMINISTRADOR_CONDOMINIO') {
+        if (selectedCondoId && occupiedCondos.has(selectedCondoId)) {
+          toast.error('Este condominio ya tiene un administrador asignado.');
+          setSubmitting(false);
+          return;
         }
+        const created = await createAdministrator({
+          nombres: form.nombres.trim(),
+          apellidos: form.apellidos.trim(),
+          correo: form.correo.trim(),
+          telefono: form.telefono.trim(),
+          contrasena: form.contrasena.trim(),
+        });
+        if (selectedCondoId && created.id) {
+          await assignAdministratorCondo(created.id, selectedCondoId);
+        }
+        toast.success('Administrador de condominio creado correctamente.');
+      } else {
+        await createAdminUser({
+          nombres: form.nombres.trim(),
+          apellidos: form.apellidos.trim(),
+          correo: form.correo.trim(),
+          telefono: form.telefono.trim(),
+          contrasena: form.contrasena.trim(),
+          rol: selectedRole,
+        });
+        toast.success(`Usuario creado correctamente (${selectedRole}).`);
       }
 
-      toast.success(`Usuario creado correctamente (${selectedRole}).`);
       setShowModal(false);
       setForm({
         nombres: '', apellidos: '', correo: '', telefono: '',
@@ -631,22 +635,24 @@ export default function UsuariosGlobales() {
               <Form.Text className="text-muted">Mínimo 6 caracteres.</Form.Text>
             </Form.Group>
 
-            <Form.Group className="mb-3">
-              <Form.Label htmlFor="userCondo">Asignar condominio</Form.Label>
-              <Form.Select
-                id="userCondo"
-                name="userCondo"
-                value={form.idCondominio}
-                onChange={(e) => setForm({ ...form, idCondominio: e.target.value })}
-              >
-                <option value="">Sin asignar</option>
-                {condominioOptions.map(c => (
-                  <option key={c.id} value={c.id} disabled={c.disabled}>
-                    {c.label}
-                  </option>
-                ))}
-              </Form.Select>
-            </Form.Group>
+            {form.rol === 'ADMINISTRADOR_CONDOMINIO' && (
+              <Form.Group className="mb-3">
+                <Form.Label htmlFor="userCondo">Asignar condominio</Form.Label>
+                <Form.Select
+                  id="userCondo"
+                  name="userCondo"
+                  value={form.idCondominio}
+                  onChange={(e) => setForm({ ...form, idCondominio: e.target.value })}
+                >
+                  <option value="">Sin asignar</option>
+                  {condominioOptions.map(c => (
+                    <option key={c.id} value={c.id} disabled={c.disabled}>
+                      {c.label}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+            )}
           </Modal.Body>
           <Modal.Footer>
             <Button variant="secondary" onClick={() => setShowModal(false)}>Cancelar</Button>
