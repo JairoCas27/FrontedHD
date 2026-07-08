@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
-import { FiPackage, FiHome, FiMapPin, FiTruck, FiPlus, FiX, FiInfo, FiEye, FiEdit2 } from "react-icons/fi"
+import { FiPackage, FiHome, FiMapPin, FiTruck, FiPlus, FiX, FiInfo, FiEye, FiEdit2, FiTrash2 } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
-import { getCondominiums, getAdminAssets, createAdminAsset, updateAdminAssetStatus, getAdminApartments } from '../../services/api'
+import { getCondominiums, getAdminAssets, createAdminAsset, updateAdminAssetStatus, assignAssetApartment, getAdminApartments } from '../../services/api'
 
 const colorSuper = "rgb(124,58,237)"
 
@@ -85,6 +85,7 @@ export default function GlobalBienes() {
   const [detailItem, setDetailItem] = useState(null)
   const [editForm, setEditForm] = useState({})
   const [saving, setSaving] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(null)
 
   const mostrarToast = (mensaje, tipo = 'success') => {
     setToast({ visible: true, mensaje, tipo })
@@ -147,12 +148,11 @@ export default function GlobalBienes() {
 
   const handleToggleDisponible = async (item) => {
     try {
-      const nuevoDisponible = !item.disponible
-      const payload = item.tipo === 'ESTACIONAMIENTO'
-        ? { tipo: 'ESTACIONAMIENTO', disponible: nuevoDisponible, estado: nuevoDisponible ? 'DISPONIBLE' : 'OCUPADO' }
-        : { tipo: 'CARRITO', estado: nuevoDisponible ? 'DISPONIBLE' : 'EN_USO' }
+      const payload = item.tipo === 'CARRITO'
+        ? { tipo: 'CARRITO', estado: item.disponible ? 'EN_USO' : 'DISPONIBLE' }
+        : { tipo: 'ESTACIONAMIENTO', estado: item.disponible ? 'OCUPADO' : 'DISPONIBLE' }
       await updateAdminAssetStatus(item.id, payload, condoSeleccionado)
-      mostrarToast(nuevoDisponible ? 'Disponible' : 'Ocupado', 'info')
+      mostrarToast(item.disponible ? 'Ocupado' : 'Disponible', 'info')
       cargarActivos(condoSeleccionado)
     } catch (err) {
       mostrarToast('Error al actualizar estado: ' + err.message, 'error')
@@ -163,9 +163,7 @@ export default function GlobalBienes() {
     setEditForm({
       tipoVehiculo: item.tipoVehiculo || '',
       capacidadMaxima: item.capacidadMaxima ?? '',
-      cantidadActual: item.cantidadActual ?? 0,
-      idApartamento: item.idApartamento || '',
-      disponible: item.disponible
+      idApartamento: item.idApartamento || ''
     })
     setEditItem(item)
   }
@@ -178,11 +176,13 @@ export default function GlobalBienes() {
       await updateAdminAssetStatus(editItem.id, {
         tipo: 'ESTACIONAMIENTO',
         tipoVehiculo: editForm.tipoVehiculo || null,
-        capacidadMaxima: editForm.capacidadMaxima ? Number(editForm.capacidadMaxima) : null,
-        cantidadActual: Number(editForm.cantidadActual),
-        idApartamento: editForm.idApartamento || null,
-        disponible: editForm.disponible
+        capacidadMaxima: editForm.capacidadMaxima ? Number(editForm.capacidadMaxima) : null
       }, condoSeleccionado)
+      if (editForm.idApartamento && String(editForm.idApartamento) !== String(editItem.idApartamento)) {
+        try {
+          await assignAssetApartment(editItem.id, Number(editForm.idApartamento), condoSeleccionado)
+        } catch { }
+      }
       mostrarToast('Estacionamiento actualizado con éxito')
       setEditItem(null)
       cargarActivos(condoSeleccionado)
@@ -190,6 +190,22 @@ export default function GlobalBienes() {
       mostrarToast('Error al actualizar: ' + err.message, 'error')
     } finally {
       setSaving(false)
+    }
+  }
+
+  const handleDelete = async (item) => {
+    setConfirmDelete(null)
+    try {
+      const response = await fetch(`https://sgc-backend-vfvl.onrender.com/api/admin/assets/${item.id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' }
+      })
+      if (!response.ok) throw new Error(`Error ${response.status}: No se pudo eliminar`)
+      mostrarToast(`${item.tipo === 'CARRITO' ? 'Carrito' : 'Estacionamiento'} eliminado con éxito`)
+      cargarActivos(condoSeleccionado)
+    } catch (err) {
+      mostrarToast('Error al eliminar: ' + err.message, 'error')
     }
   }
 
@@ -362,12 +378,9 @@ export default function GlobalBienes() {
                         <td style={{ padding: "1rem", fontSize: "0.8rem", color: "#64748b" }}>{getAptLabel(est.idApartamento) || '—'}</td>
                         <td style={tdRight}>
                           <div style={{ display: "flex", gap: "0.35rem", justifyContent: "flex-end" }}>
-                            <button onClick={() => openDetail(est)} style={btnAction("rgba(59,130,246,0.1)", "#3b82f6")} title="Ver detalles">
-                              <FiEye size={13} />
-                            </button>
-                            <button onClick={() => openEdit(est)} style={btnAction("rgba(124,58,237,0.1)", colorSuper)} title="Editar">
-                              <FiEdit2 size={13} />
-                            </button>
+                            <button onClick={() => openDetail(est)} style={btnAction("rgba(59,130,246,0.1)", "#3b82f6")} title="Ver detalles"><FiEye size={13} /></button>
+                            <button onClick={() => openEdit(est)} style={btnAction("rgba(124,58,237,0.1)", colorSuper)} title="Editar"><FiEdit2 size={13} /></button>
+                            <button onClick={() => setConfirmDelete(est)} style={btnAction("rgba(239,68,68,0.1)", "#ef4444")} title="Eliminar"><FiTrash2 size={13} /></button>
                           </div>
                         </td>
                       </tr>
@@ -403,7 +416,7 @@ export default function GlobalBienes() {
                       <th style={{ padding: "1rem 1.5rem" }}>Código</th>
                       <th style={{ padding: "1rem" }}>Número</th>
                       <th style={{ padding: "1rem" }}>Estado</th>
-                      <th style={{ padding: "1rem 1.5rem", textAlign: "right" }}>Acción</th>
+                      <th style={{ padding: "1rem 1.5rem", textAlign: "right" }}>Acciones</th>
                     </tr>
                   </thead>
                   <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
@@ -427,15 +440,18 @@ export default function GlobalBienes() {
                             {car.disponible ? 'Disponible' : 'En Préstamo'}
                           </span>
                         </td>
-                        <td style={{ padding: "1rem 1.5rem", textAlign: "right" }}>
-                          <button onClick={() => handleToggleDisponible(car)} style={{
-                            padding: "0.35rem 0.65rem", border: "1px solid", borderRadius: "0.5rem", fontSize: "0.72rem", fontWeight: "700", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.3rem",
-                            borderColor: car.disponible ? "#f59e0b" : "#10b981",
-                            backgroundColor: car.disponible ? "rgba(245,158,11,0.05)" : "rgba(16,185,129,0.05)",
-                            color: car.disponible ? "#f59e0b" : "#10b981"
-                          }}>
-                            {car.disponible ? 'Marcar Préstamo' : 'Marcar Disponible'}
-                          </button>
+                        <td style={tdRight}>
+                          <div style={{ display: "flex", gap: "0.35rem", justifyContent: "flex-end" }}>
+                            <button onClick={() => handleToggleDisponible(car)} style={{
+                              padding: "0.35rem 0.65rem", border: "1px solid", borderRadius: "0.5rem", fontSize: "0.72rem", fontWeight: "700", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.3rem",
+                              borderColor: car.disponible ? "#f59e0b" : "#10b981",
+                              backgroundColor: car.disponible ? "rgba(245,158,11,0.05)" : "rgba(16,185,129,0.05)",
+                              color: car.disponible ? "#f59e0b" : "#10b981"
+                            }}>
+                              {car.disponible ? 'Marcar Préstamo' : 'Marcar Disponible'}
+                            </button>
+                            <button onClick={() => setConfirmDelete(car)} style={btnAction("rgba(239,68,68,0.1)", "#ef4444")} title="Eliminar"><FiTrash2 size={13} /></button>
+                          </div>
                         </td>
                       </tr>
                     ))}
@@ -508,10 +524,6 @@ export default function GlobalBienes() {
                   <input type="number" min="0" style={estiloInput} placeholder="Ej: 2" value={editForm.capacidadMaxima} onChange={(e) => setEditForm(f => ({ ...f, capacidadMaxima: e.target.value }))} />
                 </div>
                 <div>
-                  <label style={estiloLabel}>Ocupación Actual</label>
-                  <input type="number" min="0" style={estiloInput} placeholder="Ej: 1" value={editForm.cantidadActual} onChange={(e) => setEditForm(f => ({ ...f, cantidadActual: e.target.value }))} />
-                </div>
-                <div>
                   <label style={estiloLabel}>Apartamento Asignado</label>
                   <select style={selectEstilo} value={editForm.idApartamento} onChange={(e) => setEditForm(f => ({ ...f, idApartamento: e.target.value }))}>
                     <option value="">Sin asignar</option>
@@ -521,18 +533,6 @@ export default function GlobalBienes() {
                       </option>
                     ))}
                   </select>
-                </div>
-                <div>
-                  <label style={estiloLabel}>Estado</label>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginTop: "0.3rem" }}>
-                    <label className="toggle-switch">
-                      <input type="checkbox" checked={!editForm.disponible} onChange={() => setEditForm(f => ({ ...f, disponible: !f.disponible }))} />
-                      <span className="toggle-slider" style={{ backgroundColor: editForm.disponible ? "#10b981" : "#ef4444" }}></span>
-                    </label>
-                    <span style={{ fontSize: "0.8rem", fontWeight: "700", color: editForm.disponible ? "#10b981" : "#ef4444" }}>
-                      {editForm.disponible ? 'Disponible' : 'Ocupado'}
-                    </span>
-                  </div>
                 </div>
               </div>
 
@@ -555,29 +555,21 @@ export default function GlobalBienes() {
               <button onClick={() => setDetailItem(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={18} /></button>
             </div>
             <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "0.85rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "0.5rem" }}>
-                <span style={{ fontWeight: "600", color: "#64748b", fontSize: "0.8rem" }}>Número</span>
-                <span style={{ fontWeight: "700", color: "#0f172a" }}>N° {detailItem.numero}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "0.5rem" }}>
-                <span style={{ fontWeight: "600", color: "#64748b", fontSize: "0.8rem" }}>Código</span>
-                <span style={{ fontWeight: "600", color: "#0f172a", fontFamily: "monospace" }}>{detailItem.codigo || '—'}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "0.5rem" }}>
-                <span style={{ fontWeight: "600", color: "#64748b", fontSize: "0.8rem" }}>Tipo Vehículo</span>
-                <span style={{ fontWeight: "700", color: "#0f172a" }}>{detailItem.tipoVehiculo || 'Sin asignar'}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "0.5rem" }}>
-                <span style={{ fontWeight: "600", color: "#64748b", fontSize: "0.8rem" }}>Capacidad Máxima</span>
-                <span style={{ fontWeight: "700", color: "#0f172a" }}>{detailItem.capacidadMaxima ?? '—'}</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "0.5rem" }}>
-                <span style={{ fontWeight: "600", color: "#64748b", fontSize: "0.8rem" }}>Ocupación Actual</span>
-                <span style={{ fontWeight: "700", color: "#0f172a" }}>{detailItem.cantidadActual ?? 0}</span>
-              </div>
+              {[
+                ['Número', `N° ${detailItem.numero}`],
+                ['Código', detailItem.codigo || '—'],
+                ['Tipo Vehículo', detailItem.tipoVehiculo || 'Sin asignar'],
+                ['Capacidad Máxima', detailItem.capacidadMaxima ?? '—'],
+                ['Ocupación Actual', detailItem.cantidadActual ?? 0],
+              ].map(([label, value]) => (
+                <div key={label} style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "0.5rem" }}>
+                  <span style={{ fontWeight: "600", color: "#64748b", fontSize: "0.8rem" }}>{label}</span>
+                  <span style={{ fontWeight: "700", color: "#0f172a" }}>{value}</span>
+                </div>
+              ))}
               <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "0.5rem" }}>
                 <span style={{ fontWeight: "600", color: "#64748b", fontSize: "0.8rem" }}>Estado</span>
-                <span style={badge(detailItem.disponible ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", detailItem.disponible ? "#10b981" : "#ef4444", null)}>
+                <span style={badge(detailItem.disponible ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", detailItem.disponible ? "#10b981" : "#ef4444")}>
                   {detailItem.disponible ? 'Disponible' : 'Ocupado'}
                 </span>
               </div>
@@ -588,6 +580,24 @@ export default function GlobalBienes() {
             </div>
             <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", backgroundColor: "#f8fafc" }}>
               <button onClick={() => setDetailItem(null)} style={{ backgroundColor: "#ffffff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmDelete && (
+        <div style={modalOverlay}>
+          <div style={{ ...modalBox, maxWidth: "400px" }}>
+            <div style={{ padding: "1.5rem", textAlign: "center" }}>
+              <FiTrash2 size={36} color="#ef4444" style={{ marginBottom: "0.75rem" }} />
+              <h3 style={{ margin: "0 0 0.5rem", fontSize: "1.05rem", fontWeight: "800", color: "#1e293b" }}>Confirmar Eliminación</h3>
+              <p style={{ fontSize: "0.85rem", color: "#64748b", margin: 0 }}>
+                ¿Estás seguro de eliminar {confirmDelete.tipo === 'CARRITO' ? 'el carrito' : 'el estacionamiento'} <strong>{confirmDelete.codigo || `N° ${confirmDelete.numero}`}</strong>?
+              </p>
+            </div>
+            <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: "0.75rem", backgroundColor: "#f8fafc" }}>
+              <button onClick={() => setConfirmDelete(null)} style={{ backgroundColor: "#ffffff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Cancelar</button>
+              <button onClick={() => handleDelete(confirmDelete)} style={{ backgroundColor: "#ef4444", border: "none", color: "#ffffff", padding: "0.5rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Eliminar</button>
             </div>
           </div>
         </div>
