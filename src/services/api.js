@@ -296,6 +296,14 @@ export async function updateAdminAssetStatus(id, payload, condominioId) {
   });
 }
 
+export async function updateAdminAsset(id, data, condominioId) {
+  const qs = condominioId ? `?condominioId=${condominioId}` : '';
+  return safeFetch(`/api/admin/assets/${id}${qs}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
 export async function assignAssetApartment(assetId, idApartamento, condominioId) {
   const qs = condominioId ? `?condominioId=${condominioId}` : '';
   return safeFetch(`/api/admin/assets/${assetId}/assign-apartment${qs}`, {
