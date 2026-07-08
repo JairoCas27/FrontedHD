@@ -186,6 +186,11 @@ export default function UsuariosGlobales() {
         }
         toast.success('Administrador de condominio creado correctamente.');
       } else {
+        if (!selectedCondoId) {
+          toast.error('Debes seleccionar un condominio para este rol.');
+          setSubmitting(false);
+          return;
+        }
         await createAdminUser({
           nombres: form.nombres.trim(),
           apellidos: form.apellidos.trim(),
@@ -193,6 +198,7 @@ export default function UsuariosGlobales() {
           telefono: form.telefono.trim(),
           contrasena: form.contrasena.trim(),
           rol: selectedRole,
+          idCondominio: selectedCondoId,
         });
         toast.success(`Usuario creado correctamente (${selectedRole}).`);
       }
@@ -635,7 +641,7 @@ export default function UsuariosGlobales() {
               <Form.Text className="text-muted">Mínimo 6 caracteres.</Form.Text>
             </Form.Group>
 
-            {form.rol === 'ADMINISTRADOR_CONDOMINIO' && (
+            {form.rol === 'ADMINISTRADOR_CONDOMINIO' ? (
               <Form.Group className="mb-3">
                 <Form.Label htmlFor="userCondo">Asignar condominio</Form.Label>
                 <Form.Select
@@ -648,6 +654,24 @@ export default function UsuariosGlobales() {
                   {condominioOptions.map(c => (
                     <option key={c.id} value={c.id} disabled={c.disabled}>
                       {c.label}
+                    </option>
+                  ))}
+                </Form.Select>
+              </Form.Group>
+            ) : (
+              <Form.Group className="mb-3">
+                <Form.Label htmlFor="userCondo">Condominio <span className="text-danger">*</span></Form.Label>
+                <Form.Select
+                  id="userCondo"
+                  name="userCondo"
+                  value={form.idCondominio}
+                  onChange={(e) => setForm({ ...form, idCondominio: e.target.value })}
+                  required
+                >
+                  <option value="">Seleccione un condominio</option>
+                  {condominios.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.nombre}
                     </option>
                   ))}
                 </Form.Select>
