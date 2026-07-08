@@ -54,6 +54,8 @@ export default function GlobalDepartamentos() {
   const [selectedParkingId, setSelectedParkingId] = useState('')
   const [assigningParking, setAssigningParking] = useState(false)
   const [confirmRemoveTenantIdx, setConfirmRemoveTenantIdx] = useState(null)
+  const [tenantDetail, setTenantDetail] = useState(null)
+  const [editingTenantIdx, setEditingTenantIdx] = useState(null)
 
   useEffect(() => {
     setLoading(true)
@@ -172,7 +174,7 @@ export default function GlobalDepartamentos() {
     setAddingTenant(true)
     try {
       const currentTenants = Array.isArray(modalTenant.inquilinos) ? modalTenant.inquilinos : []
-      const newTenant = {
+      const tenantData = {
         nombres: tenantForm.nombres.trim(),
         apellidos: tenantForm.apellidos.trim(),
         email: tenantForm.email.trim(),
@@ -180,9 +182,14 @@ export default function GlobalDepartamentos() {
         tipoDocumento: tenantForm.tipoDocumento.trim() || 'DNI',
         numeroDocumento: tenantForm.numeroDocumento.trim() || '00000000',
       }
-      const updatedTenants = [...currentTenants, newTenant]
+      let updatedTenants
+      if (editingTenantIdx !== null) {
+        updatedTenants = currentTenants.map((t, i) => i === editingTenantIdx ? tenantData : t)
+      } else {
+        updatedTenants = [...currentTenants, tenantData]
+      }
       await updateApartmentOccupants(modalTenant.id, { inquilinos: updatedTenants }, condoSeleccionado)
-      toast.success('Inquilino agregado correctamente')
+      toast.success(editingTenantIdx !== null ? 'Inquilino actualizado correctamente' : 'Inquilino agregado correctamente')
       setApartments(prev => prev.map(a =>
         String(a.id) === String(modalTenant.id)
           ? { ...a, inquilinos: updatedTenants }
@@ -191,10 +198,11 @@ export default function GlobalDepartamentos() {
       if (modalDetail && String(modalDetail.id) === String(modalTenant.id)) {
         setModalDetail(prev => ({ ...prev, inquilinos: updatedTenants }))
       }
-      setModalTenant(prev => ({ ...prev, inquilinos: updatedTenants }))
+      setModalTenant(null)
       setTenantForm({ nombres: '', apellidos: '', email: '', telefono: '', tipoDocumento: 'DNI', numeroDocumento: '' })
+      setEditingTenantIdx(null)
     } catch (err) {
-      toast.error(`Error al agregar inquilino: ${err.message}`)
+      toast.error(`Error al ${editingTenantIdx !== null ? 'actualizar' : 'agregar'} inquilino: ${err.message}`)
     } finally {
       setAddingTenant(false)
     }
@@ -427,7 +435,7 @@ export default function GlobalDepartamentos() {
                             {parking ? (
                               <span style={{ fontWeight: "600", color: "#0f172a" }}>N° {parking.numero}</span>
                             ) : (
-                              <span style={{ fontStyle: "italic", color: "#cbd5e1", fontSize: "0.75rem" }}>---</span>
+                              <span style={{ fontStyle: "italic", color: "#cbd5e1", fontSize: "0.75rem" }}>No asignado</span>
                             )}
                           </td>
                           <td style={{ padding: "0.75rem 1rem" }}>
@@ -558,13 +566,18 @@ export default function GlobalDepartamentos() {
                         <div style={{ width: "28px", height: "28px", borderRadius: "50%", backgroundColor: "#e2e8f0", color: "#64748b", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6rem", fontWeight: "700", flexShrink: 0 }}>
                           <FiUsers size={14} />
                         </div>
-                        <div style={{ flex: 1 }}>
+                        <div style={{ flex: 1, cursor: "pointer" }} onClick={() => setTenantDetail(inq)}>
                           <span style={{ fontWeight: "600", fontSize: "0.85rem", color: "#0f172a" }}>{inq.nombre || inq.nombres || 'Inquilino'} {inq.apellidos || ''}</span>
                           <span style={{ display: "block", fontSize: "0.7rem", color: "#64748b" }}>
                             {inq.tipoDocumento && inq.numeroDocumento ? `${inq.tipoDocumento}: ${inq.numeroDocumento}` : ''}
                             {inq.email ? `${inq.tipoDocumento && inq.numeroDocumento ? ' | ' : ''}${inq.email}` : ''}
                           </span>
                         </div>
+                        <button onClick={() => { setEditingTenantIdx(idx); setTenantForm({ nombres: inq.nombres || inq.nombre || '', apellidos: inq.apellidos || '', email: inq.email || '', telefono: inq.telefono || '', tipoDocumento: inq.tipoDocumento || 'DNI', numeroDocumento: inq.numeroDocumento || '' }); setModalTenant(modalDetail) }}
+                          style={{ background: "none", border: "none", cursor: "pointer", color: colorSuper, padding: "0.25rem", display: "flex" }}
+                          title="Editar inquilino">
+                          <FiEdit3 size={14} />
+                        </button>
                         <button onClick={() => setConfirmRemoveTenantIdx(idx)}
                           style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", padding: "0.25rem", display: "flex" }}
                           title="Eliminar inquilino">
@@ -637,8 +650,8 @@ export default function GlobalDepartamentos() {
         <div style={modalOverlay} onClick={() => setModalTenant(null)}>
           <div style={{ ...modalContent, maxWidth: "480px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>Agregar Inquilino</h3>
-              <button onClick={() => setModalTenant(null)}
+              <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>{editingTenantIdx !== null ? 'Editar Inquilino' : 'Agregar Inquilino'}</h3>
+              <button onClick={() => { setModalTenant(null); setEditingTenantIdx(null); setTenantForm({ nombres: '', apellidos: '', email: '', telefono: '', tipoDocumento: 'DNI', numeroDocumento: '' }) }}
                 style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}>
                 <FiX size={20} />
               </button>
@@ -688,7 +701,7 @@ export default function GlobalDepartamentos() {
                 </div>
               </div>
               <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
-                <button onClick={() => setModalTenant(null)}
+                <button onClick={() => { setModalTenant(null); setEditingTenantIdx(null); setTenantForm({ nombres: '', apellidos: '', email: '', telefono: '', tipoDocumento: 'DNI', numeroDocumento: '' }) }}
                   style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>
                   Cancelar
                 </button>
@@ -699,7 +712,7 @@ export default function GlobalDepartamentos() {
                     fontWeight: "600", cursor: tenantForm.nombres.trim() ? "pointer" : "not-allowed", fontSize: "0.85rem",
                     display: "flex", alignItems: "center", gap: "0.4rem"
                   }}>
-                  {addingTenant ? 'Agregando...' : <><FiPlus size={16} /> Agregar</>}
+                  {addingTenant ? 'Guardando...' : <><FiCheck size={16} /> {editingTenantIdx !== null ? 'Guardar' : 'Agregar'}</>}
                 </button>
               </div>
             </div>
@@ -753,6 +766,48 @@ export default function GlobalDepartamentos() {
                   }}>
                   {assigningParking ? 'Asignando...' : <><FiCheck size={16} /> Asignar</>}
                 </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {tenantDetail && (
+        <div style={modalOverlay} onClick={() => setTenantDetail(null)}>
+          <div style={{ ...modalContent, maxWidth: "420px" }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>Detalle del Inquilino</h3>
+              <button onClick={() => setTenantDetail(null)}
+                style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}>
+                <FiX size={20} />
+              </button>
+            </div>
+            <div style={{ padding: "1.5rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                <div>
+                  <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Nombres</span>
+                  <p style={{ margin: "0.2rem 0 0", fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>{tenantDetail.nombres || tenantDetail.nombre || '-'}</p>
+                </div>
+                <div>
+                  <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Apellidos</span>
+                  <p style={{ margin: "0.2rem 0 0", fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>{tenantDetail.apellidos || '-'}</p>
+                </div>
+                <div>
+                  <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Email</span>
+                  <p style={{ margin: "0.2rem 0 0", fontWeight: "600", color: "#0f172a", fontSize: "0.85rem" }}>{tenantDetail.email || '-'}</p>
+                </div>
+                <div>
+                  <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Teléfono</span>
+                  <p style={{ margin: "0.2rem 0 0", fontWeight: "600", color: "#0f172a", fontSize: "0.85rem" }}>{tenantDetail.telefono || '-'}</p>
+                </div>
+                <div>
+                  <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Tipo Documento</span>
+                  <p style={{ margin: "0.2rem 0 0", fontWeight: "600", color: "#0f172a", fontSize: "0.85rem" }}>{tenantDetail.tipoDocumento || '-'}</p>
+                </div>
+                <div>
+                  <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>N° Documento</span>
+                  <p style={{ margin: "0.2rem 0 0", fontWeight: "600", color: "#0f172a", fontSize: "0.85rem" }}>{tenantDetail.numeroDocumento || '-'}</p>
+                </div>
               </div>
             </div>
           </div>
