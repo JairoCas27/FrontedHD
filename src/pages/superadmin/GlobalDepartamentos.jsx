@@ -179,15 +179,15 @@ export default function GlobalDepartamentos() {
     if (!createAptForm.pisoNumero) { toast.warning('Selecciona un piso'); return }
     setCreatingApt(true)
     try {
-      await createAdminStructureNode({
-        tipo: 'APARTAMENTO',
-        nombre: createAptForm.numero.trim(),
-        numero: Number(createAptForm.numero.trim()),
-        nombreTorre: createAptForm.torreNombre,
-        numeroPiso: Number(createAptForm.pisoNumero),
-        metraje: createAptForm.metraje ? Number(createAptForm.metraje) : 0,
-        derechoEstacionamiento: createAptForm.derechoEstacionamiento,
-      }, condoSeleccionado)
+        await createAdminStructureNode({
+          tipo: 'APARTAMENTO',
+          nombre: createAptForm.numero.trim(),
+          numero: Number(createAptForm.numero.trim()),
+          nombreTorre: createAptForm.torreNombre,
+          numeroPiso: Number(createAptForm.pisoNumero),
+          metraje: createAptForm.metraje ? Number(createAptForm.metraje) : null,
+          derechoEstacionamiento: createAptForm.derechoEstacionamiento,
+        }, condoSeleccionado)
       toast.success('Departamento creado correctamente')
       setShowCreateApt(false)
       setCreateAptForm({ numero: '', metraje: '', torreNombre: '', pisoNumero: '', derechoEstacionamiento: false })
