@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { FiPackage, FiHome, FiMapPin, FiTruck, FiPlus, FiX, FiInfo, FiEye, FiEdit2 } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
-import { getCondominiums, getAdminAssets, createAdminAsset, updateAdminAssetStatus, updateAdminAsset } from '../../services/api'
+import { getCondominiums, getAdminAssets, createAdminAsset, updateAdminAssetStatus, getAdminApartments } from '../../services/api'
 
 const colorSuper = "rgb(124,58,237)"
 
@@ -35,11 +35,10 @@ const estiloLabel = {
   textTransform: "uppercase", letterSpacing: "0.025em"
 }
 
-const tdLeft = { padding: "1rem 1.5rem" }
 const tdCenter = { padding: "1rem" }
 const tdRight = { padding: "1rem 1.5rem", textAlign: "right" }
 
-const badge = (bg, color, label) => ({
+const badge = (bg, color) => ({
   backgroundColor: bg, color, padding: "0.25rem 0.6rem", borderRadius: "0.4rem",
   fontSize: "0.72rem", fontWeight: "700", display: "inline-block"
 })
@@ -61,6 +60,15 @@ const modalBox = {
   border: "1px solid #e2e8f0", overflow: "hidden", maxHeight: "90vh", overflowY: "auto"
 }
 
+const selectEstilo = {
+  ...estiloInput,
+  appearance: "none",
+  backgroundImage: "url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%2364748b'%3E%3Cpath d='M6 8L1 3h10z'/%3E%3C/svg%3E\")",
+  backgroundRepeat: "no-repeat",
+  backgroundPosition: "right 0.75rem center",
+  paddingRight: "2rem"
+}
+
 export default function GlobalBienes() {
   const [condominios, setCondominios] = useState([])
   const [condoSeleccionado, setCondoSeleccionado] = useState('')
@@ -68,6 +76,7 @@ export default function GlobalBienes() {
   const [loadingData, setLoadingData] = useState(false)
   const [estacionamientos, setEstacionamientos] = useState([])
   const [carritos, setCarritos] = useState([])
+  const [apartamentos, setApartamentos] = useState([])
   const [toast, setToast] = useState({ visible: false, mensaje: '', tipo: 'success' })
   const [showModal, setShowModal] = useState(null)
   const [codigoForm, setCodigoForm] = useState('')
@@ -91,12 +100,14 @@ export default function GlobalBienes() {
     if (!condominioId) return
     setLoadingData(true)
     try {
-      const [parkingRes, cartRes] = await Promise.all([
+      const [parkingRes, cartRes, aptRes] = await Promise.all([
         getAdminAssets(condominioId, 'ESTACIONAMIENTO'),
-        getAdminAssets(condominioId, 'CARRITO')
+        getAdminAssets(condominioId, 'CARRITO'),
+        getAdminApartments(condominioId).catch(() => ({ items: [] }))
       ])
       setEstacionamientos(parkingRes?.items || [])
       setCarritos(cartRes?.items || [])
+      setApartamentos(aptRes?.items || [])
     } catch (err) {
       mostrarToast('Error al cargar activos: ' + err.message, 'error')
     } finally {
@@ -137,11 +148,10 @@ export default function GlobalBienes() {
   const handleToggleDisponible = async (item) => {
     try {
       const nuevoDisponible = !item.disponible
-      if (item.tipo === 'ESTACIONAMIENTO') {
-        await updateAdminAssetStatus(item.id, { tipo: 'ESTACIONAMIENTO', disponible: nuevoDisponible, estado: nuevoDisponible ? 'DISPONIBLE' : 'OCUPADO' }, condoSeleccionado)
-      } else {
-        await updateAdminAssetStatus(item.id, { tipo: 'CARRITO', disponible: nuevoDisponible }, condoSeleccionado)
-      }
+      const payload = item.tipo === 'ESTACIONAMIENTO'
+        ? { tipo: 'ESTACIONAMIENTO', disponible: nuevoDisponible, estado: nuevoDisponible ? 'DISPONIBLE' : 'OCUPADO' }
+        : { tipo: 'CARRITO', estado: nuevoDisponible ? 'DISPONIBLE' : 'EN_USO' }
+      await updateAdminAssetStatus(item.id, payload, condoSeleccionado)
       mostrarToast(nuevoDisponible ? 'Disponible' : 'Ocupado', 'info')
       cargarActivos(condoSeleccionado)
     } catch (err) {
@@ -165,15 +175,14 @@ export default function GlobalBienes() {
     if (!editItem) return
     setSaving(true)
     try {
-      const payload = {
+      await updateAdminAssetStatus(editItem.id, {
         tipo: 'ESTACIONAMIENTO',
         tipoVehiculo: editForm.tipoVehiculo || null,
         capacidadMaxima: editForm.capacidadMaxima ? Number(editForm.capacidadMaxima) : null,
         cantidadActual: Number(editForm.cantidadActual),
         idApartamento: editForm.idApartamento || null,
         disponible: editForm.disponible
-      }
-      await updateAdminAsset(editItem.id, payload, condoSeleccionado)
+      }, condoSeleccionado)
       mostrarToast('Estacionamiento actualizado con éxito')
       setEditItem(null)
       cargarActivos(condoSeleccionado)
@@ -185,6 +194,12 @@ export default function GlobalBienes() {
   }
 
   const openDetail = (item) => setDetailItem(item)
+
+  const getAptLabel = (id) => {
+    if (!id) return null
+    const apt = apartamentos.find(a => String(a.id) === String(id))
+    return apt ? `N° ${apt.numero}${apt.torreNombre ? ` - ${apt.torreNombre}` : ''}${apt.pisoNumero ? ` P${apt.pisoNumero}` : ''}` : `#${id}`
+  }
 
   if (loading) {
     return (
@@ -227,7 +242,7 @@ export default function GlobalBienes() {
         </div>
       ) : loadingData ? (
         <div style={{ textAlign: "center", padding: "4rem", color: "#64748b", fontWeight: "600" }}>
-          Sincronizando.
+          Cargando...
         </div>
       ) : (
         <>
@@ -336,15 +351,15 @@ export default function GlobalBienes() {
                         <td style={{ padding: "1rem", fontWeight: "600", color: "#64748b" }}>{est.capacidadMaxima ?? '—'}</td>
                         <td style={{ padding: "1rem", fontWeight: "600", color: "#64748b" }}>{est.cantidadActual ?? 0} / {est.capacidadMaxima ?? '—'}</td>
                         <td style={tdCenter}>
-                          <label className="toggle-switch" onClick={(e) => { e.stopPropagation(); handleToggleDisponible(est) }}>
-                            <input type="checkbox" checked={!est.disponible} readOnly />
+                          <label className="toggle-switch">
+                            <input type="checkbox" checked={!est.disponible} onChange={() => handleToggleDisponible(est)} />
                             <span className="toggle-slider" style={{ backgroundColor: est.disponible ? "#10b981" : "#ef4444" }}></span>
                           </label>
                           <span style={{ fontSize: "0.7rem", fontWeight: "600", marginLeft: "0.4rem", color: est.disponible ? "#10b981" : "#ef4444" }}>
                             {est.disponible ? 'Disponible' : 'Ocupado'}
                           </span>
                         </td>
-                        <td style={{ padding: "1rem", fontSize: "0.8rem", color: "#64748b" }}>{est.idApartamento ? `#${est.idApartamento}` : '—'}</td>
+                        <td style={{ padding: "1rem", fontSize: "0.8rem", color: "#64748b" }}>{getAptLabel(est.idApartamento) || '—'}</td>
                         <td style={tdRight}>
                           <div style={{ display: "flex", gap: "0.35rem", justifyContent: "flex-end" }}>
                             <button onClick={() => openDetail(est)} style={btnAction("rgba(59,130,246,0.1)", "#3b82f6")} title="Ver detalles">
@@ -404,22 +419,21 @@ export default function GlobalBienes() {
                         </td>
                         <td style={{ padding: "1rem", fontWeight: "600", color: "#64748b" }}>{car.numero ? `N° ${car.numero}` : '—'}</td>
                         <td style={{ padding: "1rem" }}>
-                          {car.disponible ? (
-                            <span style={badge("rgba(16,185,129,0.1)", "#10b981", "")}>Disponible</span>
-                          ) : (
-                            <span style={badge("rgba(245,158,11,0.1)", "#f59e0b", "")}>En Préstamo</span>
-                          )}
+                          <label className="toggle-switch">
+                            <input type="checkbox" checked={!car.disponible} onChange={() => handleToggleDisponible(car)} />
+                            <span className="toggle-slider" style={{ backgroundColor: car.disponible ? "#10b981" : "#f59e0b" }}></span>
+                          </label>
+                          <span style={{ fontSize: "0.7rem", fontWeight: "600", marginLeft: "0.4rem", color: car.disponible ? "#10b981" : "#f59e0b" }}>
+                            {car.disponible ? 'Disponible' : 'En Préstamo'}
+                          </span>
                         </td>
                         <td style={{ padding: "1rem 1.5rem", textAlign: "right" }}>
-                          <button
-                            onClick={() => handleToggleDisponible(car)}
-                            style={{
-                              padding: "0.35rem 0.65rem", border: "1px solid", borderRadius: "0.5rem", fontSize: "0.72rem", fontWeight: "700", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.3rem",
-                              borderColor: car.disponible ? "#f59e0b" : "#10b981",
-                              backgroundColor: car.disponible ? "rgba(245,158,11,0.05)" : "rgba(16,185,129,0.05)",
-                              color: car.disponible ? "#f59e0b" : "#10b981"
-                            }}
-                          >
+                          <button onClick={() => handleToggleDisponible(car)} style={{
+                            padding: "0.35rem 0.65rem", border: "1px solid", borderRadius: "0.5rem", fontSize: "0.72rem", fontWeight: "700", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.3rem",
+                            borderColor: car.disponible ? "#f59e0b" : "#10b981",
+                            backgroundColor: car.disponible ? "rgba(245,158,11,0.05)" : "rgba(16,185,129,0.05)",
+                            color: car.disponible ? "#f59e0b" : "#10b981"
+                          }}>
                             {car.disponible ? 'Marcar Préstamo' : 'Marcar Disponible'}
                           </button>
                         </td>
@@ -481,7 +495,7 @@ export default function GlobalBienes() {
               <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
                 <div>
                   <label style={estiloLabel}>Tipo de Vehículo</label>
-                  <select style={estiloInput} value={editForm.tipoVehiculo} onChange={(e) => setEditForm(f => ({ ...f, tipoVehiculo: e.target.value }))}>
+                  <select style={selectEstilo} value={editForm.tipoVehiculo} onChange={(e) => setEditForm(f => ({ ...f, tipoVehiculo: e.target.value }))}>
                     <option value="">Sin asignar</option>
                     <option value="AUTO">Auto</option>
                     <option value="MOTO">Moto</option>
@@ -498,8 +512,15 @@ export default function GlobalBienes() {
                   <input type="number" min="0" style={estiloInput} placeholder="Ej: 1" value={editForm.cantidadActual} onChange={(e) => setEditForm(f => ({ ...f, cantidadActual: e.target.value }))} />
                 </div>
                 <div>
-                  <label style={estiloLabel}>ID Apartamento</label>
-                  <input type="text" style={estiloInput} placeholder="ID del apartamento asignado" value={editForm.idApartamento} onChange={(e) => setEditForm(f => ({ ...f, idApartamento: e.target.value }))} />
+                  <label style={estiloLabel}>Apartamento Asignado</label>
+                  <select style={selectEstilo} value={editForm.idApartamento} onChange={(e) => setEditForm(f => ({ ...f, idApartamento: e.target.value }))}>
+                    <option value="">Sin asignar</option>
+                    {apartamentos.map(a => (
+                      <option key={a.id} value={a.id}>
+                        N° {a.numero}{a.torreNombre ? ` - ${a.torreNombre}` : ''}{a.pisoNumero ? ` (Piso ${a.pisoNumero})` : ''}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label style={estiloLabel}>Estado</label>
@@ -562,7 +583,7 @@ export default function GlobalBienes() {
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "0.5rem" }}>
                 <span style={{ fontWeight: "600", color: "#64748b", fontSize: "0.8rem" }}>Apartamento</span>
-                <span style={{ fontWeight: "600", color: "#0f172a" }}>{detailItem.idApartamento ? `#${detailItem.idApartamento}` : 'No asignado'}</span>
+                <span style={{ fontWeight: "600", color: "#0f172a" }}>{getAptLabel(detailItem.idApartamento) || 'No asignado'}</span>
               </div>
             </div>
             <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", backgroundColor: "#f8fafc" }}>
