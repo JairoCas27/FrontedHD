@@ -494,7 +494,7 @@ export default function GlobalEstructura() {
                       <div style={{ width: "32px", height: "32px", borderRadius: "50%", backgroundColor: colorSuper, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6rem", fontWeight: "700" }}><FiUser size={16} /></div>
                       <div>
                         <p style={{ margin: 0, fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>{(() => { const o = aptDetail.owner || getOwnerInfo(aptDetail); return o ? (o.nombres + ' ' + (o.apellidos || '')).trim() : 'Propietario'; })()}</p>
-                        {(() => { const o = aptDetail.owner || getOwnerInfo(aptDetail); return o ? <span style={{ fontSize: "0.7rem", color: "#64748b" }}>{o.email && <span>{o.email}</span>}{o.email && o.telefono && <span> · </span>}{o.telefono && <span>{o.telefono}</span>}</span> : null; })()}
+                        {(() => { const o = aptDetail.owner || getOwnerInfo(aptDetail); if (!o) return null; const email = o.correo || o.email; const tel = o.telefono; return <span style={{ fontSize: "0.7rem", color: "#64748b" }}>{email && <span>{email}</span>}{email && tel && <span> · </span>}{tel && <span>{tel}</span>}</span>; })()}
                       </div>
                     </div>
                     {Array.isArray(aptDetail.inquilinos) && aptDetail.inquilinos.length > 0 && (
