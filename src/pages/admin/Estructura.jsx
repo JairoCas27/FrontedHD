@@ -1,14 +1,14 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { FiGitCommit, FiTrash2, FiFolder, FiX, FiInfo, FiPlus } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import { useAdminStructure } from '../../hooks/Admin/useAdminStructure'
 
 export default function Estructura() {
   const colorAdmin = "rgb(52,151,195)"
-  const { estructura, loading, insertarNodo, eliminarNodo, agregarDepartamento } = useAdminStructure()
+  const { estructura, loading, insertarNodo, eliminarNodo, agregarDepartamento, refrescar } = useAdminStructure()
 
   const [showModal, setShowModal] = useState(false)
-  const [showApartmentModal, setShowApartmentModal] = useState(false) // 🆕 Modal para departamentos
+  const [showApartmentModal, setShowApartmentModal] = useState(false)
   const [nuevoNodo, setNuevoNodo] = useState({ nombre: '', padreId: '' })
   const [nuevoDepartamento, setNuevoDepartamento] = useState({
     numero: '',
@@ -16,18 +16,26 @@ export default function Estructura() {
     idPiso: '',
     tieneEstacionamiento: false
   })
+  const [errorMessage, setErrorMessage] = useState('') // 🆕 Para mostrar errores
 
   const listaTorres = Array.isArray(estructura)
       ? estructura
       : (estructura?.torres || [])
 
-  // Obtener todos los pisos disponibles
+  // Obtener todos los pisos disponibles (se actualiza cuando cambia la estructura)
   const todosLosPisos = listaTorres.flatMap(torre =>
       (torre.pisos || []).map(piso => ({
         ...piso,
         torreNombre: torre.nombre
       }))
   )
+
+  // Forzar recarga cuando se abre el modal de departamento
+  useEffect(() => {
+    if (showApartmentModal) {
+      refrescar(); // Recargar estructura para tener los datos más recientes
+    }
+  }, [showApartmentModal, refrescar])
 
   const handleAddNode = async (e) => {
     e.preventDefault()
@@ -59,21 +67,25 @@ export default function Estructura() {
         numero: numeroPisoDetectado
       };
 
-      await insertarNodo(payload)
-      setShowModal(false)
-      setNuevoNodo({ nombre: '', padreId: '' })
+      await insertarNodo(payload);
+      setShowModal(false);
+      setNuevoNodo({ nombre: '', padreId: '' });
+
+      // Recargar después de crear torre/piso
+      await refrescar();
+
     } catch (error) {
       console.error("Error al insertar el nodo estructural:", error)
       alert("Hubo un problema al crear la sección en el servidor.")
     }
   }
 
-  // Manejador para agregar departamento
   const handleAddApartment = async (e) => {
     e.preventDefault()
+    setErrorMessage('') // Limpiar error anterior
 
     if (!nuevoDepartamento.numero || !nuevoDepartamento.idPiso) {
-      alert("Por favor completa todos los campos obligatorios")
+      setErrorMessage('Por favor completa todos los campos obligatorios')
       return
     }
 
@@ -86,9 +98,18 @@ export default function Estructura() {
         idPiso: '',
         tieneEstacionamiento: false
       })
+      await refrescar(); // Recargar para ver el nuevo departamento
     } catch (error) {
       console.error("Error al agregar departamento:", error)
-      alert("No se pudo crear el departamento. Verifica que el número no esté duplicado.")
+
+      // Mostrar mensaje de error más específico
+      if (error.message.includes('duplicate') || error.message.includes('unique')) {
+        setErrorMessage('El número de departamento ya existe en este piso. Por favor elige otro número.')
+      } else if (error.message.includes('Piso no encontrado')) {
+        setErrorMessage('El piso seleccionado no existe. Por favor recarga la página e intenta de nuevo.')
+      } else {
+        setErrorMessage(`Error al crear el departamento: ${error.message || 'Verifica los datos e intenta de nuevo.'}`)
+      }
     }
   }
 
@@ -97,6 +118,7 @@ export default function Estructura() {
 
     try {
       await eliminarNodo(id)
+      await refrescar(); // Recargar después de eliminar
     } catch (error) {
       console.error("Error al eliminar el nodo:", error)
       alert("No se pudo eliminar el nodo. Asegúrate de que no contenga subelementos activos.")
@@ -135,7 +157,6 @@ export default function Estructura() {
               onBotonClick={() => setShowModal(true)}
           />
 
-          {/* Botón para agregar departamento */}
           <button
               onClick={() => setShowApartmentModal(true)}
               style={{
@@ -244,7 +265,7 @@ export default function Estructura() {
             </div>
         )}
 
-        {/* Modal para Torres/Pisos (existente) */}
+        {/* Modal para Torres/Pisos */}
         {showModal && (
             <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" }}>
               <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "420px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.08)", border: "1px solid #e2e8f0", overflow: "hidden" }}>
@@ -358,6 +379,20 @@ export default function Estructura() {
                         Tiene derecho de estacionamiento
                       </label>
                     </div>
+
+                    {/* Mostrar mensaje de error */}
+                    {errorMessage && (
+                        <div style={{
+                          backgroundColor: "#fee2e2",
+                          border: "1px solid #fecaca",
+                          padding: "0.6rem 0.75rem",
+                          borderRadius: "0.375rem",
+                          color: "#dc2626",
+                          fontSize: "0.85rem"
+                        }}>
+                          {errorMessage}
+                        </div>
+                    )}
 
                     <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", padding: "0.6rem 0.75rem", borderRadius: "0.375rem" }}>
                       <FiInfo size={14} style={{ color: "#16a34a", flexShrink: 0 }} />

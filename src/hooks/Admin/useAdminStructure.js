@@ -10,8 +10,10 @@ export function useAdminStructure() {
       setLoading(true);
       const data = await getAdminStructure();
       setEstructura(data || []);
+      return data; // Retornar los datos para usarlos en otros lugares
     } catch (error) {
       console.error("Error cargando estructura:", error);
+      throw error;
     } finally {
       setLoading(false);
     }
@@ -20,7 +22,8 @@ export function useAdminStructure() {
   const insertarNodo = async (nodeData) => {
     try {
       await createAdminStructureNode(nodeData);
-      await cargarEstructura();
+      const dataActualizada = await cargarEstructura(); // Recargar y obtener datos
+      return dataActualizada; // Retornar los datos actualizados
     } catch (error) {
       console.error("Error al insertar nodo:", error);
       throw error;
@@ -37,30 +40,43 @@ export function useAdminStructure() {
     }
   };
 
-  // Nueva función para agregar departamentos
   const agregarDepartamento = async (apartmentData) => {
     try {
-      // Buscar la torre y el piso para obtener los nombres
-      const torreEncontrada = estructura.find(t =>
-          t.pisos?.some(p => p.id === parseInt(apartmentData.idPiso))
+      // Obtener la estructura actualizada
+      const estructuraActual = await cargarEstructura();
+      const listaTorres = Array.isArray(estructuraActual)
+          ? estructuraActual
+          : (estructuraActual?.torres || []);
+
+      // Buscar el piso por ID
+      const pisoEncontrado = listaTorres
+          .flatMap(t => t.pisos || [])
+          .find(p => p.id === parseInt(apartmentData.idPiso));
+
+      if (!pisoEncontrado) {
+        throw new Error('Piso no encontrado');
+      }
+
+      // Buscar la torre que contiene este piso
+      const torreEncontrada = listaTorres.find(t =>
+          (t.pisos || []).some(p => p.id === parseInt(apartmentData.idPiso))
       );
 
-      const pisoEncontrado = torreEncontrada?.pisos?.find(p =>
-          p.id === parseInt(apartmentData.idPiso)
-      );
-
+      // El payload debe enviar el NÚMERO del piso, no el ID
       const payload = {
         tipo: "APARTAMENTO",
         nombre: `Apartamento ${apartmentData.numero}`,
-        nombreTorre: torreEncontrada?.nombre || apartmentData.nombreTorre,
+        nombreTorre: torreEncontrada?.nombre || apartmentData.nombreTorre || '',
         numero: parseInt(apartmentData.numero),
-        numeroPiso: pisoEncontrado?.numero || parseInt(apartmentData.numeroPiso),
+        numeroPiso: pisoEncontrado.numero,
         numeroApartamento: parseInt(apartmentData.numero),
         metraje: parseFloat(apartmentData.metraje) || 0
       };
 
+      console.log('Enviando payload:', payload); // Debug
+
       await createApartment(payload);
-      await cargarEstructura();
+      await cargarEstructura(); // Recargar después de crear
     } catch (error) {
       console.error("Error al agregar departamento:", error);
       throw error;
@@ -76,7 +92,7 @@ export function useAdminStructure() {
     loading,
     insertarNodo,
     eliminarNodo,
-    agregarDepartamento, // Exportar nueva función
+    agregarDepartamento,
     refrescar: cargarEstructura
   };
 }
