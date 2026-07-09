@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react'
 import { FiFolder, FiGrid, FiHome, FiMapPin, FiChevronDown, FiChevronRight, FiPlus, FiTrash2, FiLayers, FiX, FiAlertCircle, FiEdit3, FiUser, FiUsers } from "react-icons/fi"
 import { toast } from 'react-toastify'
 import EncabezadoTabla from '../../components/EncabezadoTabla'
-import { getCondominiums, getAdminStructure, createAdminStructureNode, updateAdminStructureNode, deleteAdminStructureNode, getAllUsers, extractItems } from '../../services/api'
+import { getCondominiums, getAdminStructure, createAdminStructureNode, deleteAdminStructureNode, getAllUsers, extractItems } from '../../services/api'
 
 const colorSuper = "rgb(124,58,237)"
 
@@ -373,7 +373,7 @@ export default function GlobalEstructura() {
                                                   {ocupado ? (
                                                     <span style={{ fontSize: "0.65rem", color: "#64748b", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.2rem" }}
                                                       onClick={() => setAptDetail({ ...apt, torreNombre: torre.nombre, pisoNumero: piso.numero, owner })}>
-                                                      <FiUser size={10} /> {apt.nombrePropietario || 'Ver'}
+                                                      <FiUser size={10} /> {owner ? (owner.nombres + ' ' + (owner.apellidos || '')).trim() : 'Ver'}
                                                     </span>
                                                   ) : (
                                                     <span style={{ fontSize: "0.65rem", color: "#94a3b8", fontStyle: "italic" }}>Sin propietario</span>
