@@ -99,7 +99,7 @@ export default function GlobalConfiguracion() {
         maxVehiculosPorDepto: Number(form.maxVehiculosPorDepto),
         maxInquilinosPorDepto: Number(form.maxInquilinosPorDepto)
       }, condoSeleccionado)
-      setToast({ type: 'success', message: 'Configuración guardada exitosamente.' })
+      setToast({ type: 'success', message: 'Configuracion guardada exitosamente.' })
     } catch (err) {
       setToast({ type: 'error', message: `Error al guardar: ${err.message}` })
     } finally {
@@ -151,10 +151,7 @@ export default function GlobalConfiguracion() {
         </div>
       )}
 
-      <div style={{ marginBottom: "2rem" }}>
-        <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>Configuraci&oacute;n Global</h1>
-        <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>L&iacute;mites operacionales y reglas de negocio por condominio</p>
-      </div>
+      <EncabezadoTabla titulo="Configuracion Global" subtitulo="Limites operacionales y reglas de negocio por condominio" />
 
       <div style={{ backgroundColor: "#ffffff", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", marginBottom: "2rem", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
         <div style={{ width: "100%", maxWidth: "280px" }}>
@@ -168,13 +165,13 @@ export default function GlobalConfiguracion() {
       {!condoSeleccionado ? (
         <div style={{ textAlign: "center", padding: "4rem", color: "#94a3b8", fontWeight: "600" }}>
           <FiSettings size={48} style={{ marginBottom: "1rem", opacity: 0.4 }} />
-          <p>Selecciona un condominio para gestionar su configuraci&oacute;n</p>
+          <p>Selecciona un condominio para gestionar su configuracion</p>
         </div>
       ) : configLoading ? (
         <div style={{ textAlign: "center", padding: "4rem", color: "#94a3b8", fontWeight: "600" }}>
           <FiLoader size={36} style={{ marginBottom: "1rem", opacity: 0.4, animation: "spin 1s linear infinite" }} />
           <style>{`@keyframes spin { to { transform: rotate(360deg) } }`}</style>
-          <p>Cargando configuraci&oacute;n...</p>
+          <p>Cargando configuracion...</p>
         </div>
       ) : configData ? (
         <>
@@ -196,7 +193,7 @@ export default function GlobalConfiguracion() {
                   <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.5rem 0.75rem", backgroundColor: "#f8fafc", borderRadius: "0.5rem" }}>
                     <FiTruck size={14} color="#94a3b8" />
                     <div style={{ flex: 1, fontSize: "0.8rem", color: "#64748b", fontWeight: "600" }}>Control vehicular</div>
-                    <span style={{ fontSize: "0.75rem", color: "#94a3b8", fontWeight: "700" }}>{form.maxVehiculosPorDepto} veh&iacute;culos/depto</span>
+                    <span style={{ fontSize: "0.75rem", color: "#94a3b8", fontWeight: "700" }}>{form.maxVehiculosPorDepto} vehículos/depto</span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.5rem 0.75rem", backgroundColor: "#f8fafc", borderRadius: "0.5rem" }}>
                     <FiSettings size={14} color="#94a3b8" />
@@ -205,7 +202,7 @@ export default function GlobalConfiguracion() {
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", padding: "0.5rem 0.75rem", backgroundColor: "#f8fafc", borderRadius: "0.5rem" }}>
                     <FiClock size={14} color="#94a3b8" />
-                    <div style={{ flex: 1, fontSize: "0.8rem", color: "#64748b", fontWeight: "600" }}>Pr&eacute;stamos y multas</div>
+                    <div style={{ flex: 1, fontSize: "0.8rem", color: "#64748b", fontWeight: "600" }}>Préstamos y multas</div>
                     <span style={{ fontSize: "0.75rem", color: "#94a3b8", fontWeight: "700" }}>{form.maxTiempoPrestamoMin} min, ${form.penalizacionPorMin}/min</span>
                   </div>
                 </div>
@@ -216,12 +213,12 @@ export default function GlobalConfiguracion() {
           <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem", marginBottom: "2rem" }}>
             <div style={{ background: "#ffffff", borderRadius: "1rem", border: "1px solid #e2e8f0", padding: "1.5rem", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.01)" }}>
               <h3 style={{ margin: "0 0 1rem", fontSize: "1rem", fontWeight: "700", color: "#0f172a", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <FiTruck size={16} color={colorSuper} /> Veh&iacute;culos
+                <FiTruck size={16} color={colorSuper} /> Vehículos
               </h3>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                {renderField("M&aacute;ximo autos", "maxAutos")}
-                {renderField("M&aacute;ximo motos", "maxMotos")}
-                {renderField("M&aacute;ximo veh&iacute;culos por departamento", "maxVehiculosPorDepto")}
+                {renderField("Máximo autos", "maxAutos")}
+                {renderField("Máximo motos", "maxMotos")}
+                {renderField("Máximo vehículos por departamento", "maxVehiculosPorDepto")}
               </div>
             </div>
 
@@ -230,7 +227,7 @@ export default function GlobalConfiguracion() {
                 <FiSettings size={16} color={colorSuper} /> Estacionamientos
               </h3>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                {renderField("M&aacute;ximo estacionamientos por departamento", "maxEstacionamientosPorDepto")}
+                {renderField("Máximo estacionamientos por departamento", "maxEstacionamientosPorDepto")}
               </div>
             </div>
 
@@ -239,17 +236,17 @@ export default function GlobalConfiguracion() {
                 <FiTruck size={16} color={colorSuper} /> Carritos
               </h3>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                {renderField("M&aacute;ximo carritos por departamento", "maxCarritosPorDepto")}
+                {renderField("Máximo carritos por departamento", "maxCarritosPorDepto")}
               </div>
             </div>
 
             <div style={{ background: "#ffffff", borderRadius: "1rem", border: "1px solid #e2e8f0", padding: "1.5rem", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.01)" }}>
               <h3 style={{ margin: "0 0 1rem", fontSize: "1rem", fontWeight: "700", color: "#0f172a", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <FiClock size={16} color={colorSuper} /> Pr&eacute;stamos
+                <FiClock size={16} color={colorSuper} /> Préstamos
               </h3>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                {renderField("Tiempo m&aacute;ximo de pr&eacute;stamo (minutos)", "maxTiempoPrestamoMin")}
-                {renderField("Penalizaci&oacute;n por minuto", "penalizacionPorMin", "0.01")}
+                {renderField("Tiempo máximo de préstamo (minutos)", "maxTiempoPrestamoMin")}
+                {renderField("Penalización por minuto", "penalizacionPorMin", "0.01")}
               </div>
             </div>
 
@@ -258,7 +255,7 @@ export default function GlobalConfiguracion() {
                 <FiHome size={16} color={colorSuper} /> Inquilinos
               </h3>
               <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                {renderField("M&aacute;ximo inquilinos por departamento", "maxInquilinosPorDepto")}
+                {renderField("Máximo inquilinos por departamento", "maxInquilinosPorDepto")}
               </div>
             </div>
           </div>
@@ -276,14 +273,14 @@ export default function GlobalConfiguracion() {
               }}
             >
               {saving ? <FiLoader size={18} style={{ animation: "spin 1s linear infinite" }} /> : <FiSave size={18} />}
-              {saving ? 'Guardando...' : 'Guardar configuraci&oacute;n'}
+              {saving ? 'Guardando...' : 'Guardar configuracion'}
             </button>
           </div>
         </>
       ) : (
         <div style={{ textAlign: "center", padding: "4rem", color: "#94a3b8", fontWeight: "600" }}>
           <FiAlertCircle size={36} style={{ marginBottom: "1rem", opacity: 0.4 }} />
-          <p>No se pudo cargar la configuraci&oacute;n de este condominio.</p>
+          <p>No se pudo cargar la configuracion de este condominio.</p>
         </div>
       )}
     </div>
