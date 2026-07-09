@@ -148,7 +148,12 @@ export default function GlobalBienes() {
         mostrarToast(nuevoEstado === 'DISPONIBLE' ? 'Disponible' : 'En Préstamo', 'info')
       } else {
         const nuevoDisponible = !item.disponible
-        await updateAdminAssetStatus(item.id, { tipo: 'ESTACIONAMIENTO', disponible: nuevoDisponible }, condoSeleccionado)
+        await updateAdminAssetStatus(item.id, {
+          tipo: 'ESTACIONAMIENTO',
+          disponible: nuevoDisponible,
+          tipoVehiculo: item.tipoVehiculo || null,
+          capacidadMaxima: item.capacidadMaxima ?? null,
+        }, condoSeleccionado)
         mostrarToast(nuevoDisponible ? 'Disponible' : 'Ocupado', 'info')
       }
       cargarActivos(condoSeleccionado)
@@ -164,6 +169,27 @@ export default function GlobalBienes() {
       idApartamento: item.idApartamento || ''
     })
     setEditItem(item)
+  }
+
+  const openEditCarrito = (item) => {
+    setEditForm({ estado: item.estado || 'DISPONIBLE' })
+    setEditItem(item)
+  }
+
+  const handleEditCarritoSave = async (e) => {
+    e.preventDefault()
+    if (!editItem) return
+    setSaving(true)
+    try {
+      await updateAdminAssetStatus(editItem.id, { tipo: 'CARRITO', estado: editForm.estado }, condoSeleccionado)
+      mostrarToast('Carrito actualizado con éxito', 'info')
+      setEditItem(null)
+      cargarActivos(condoSeleccionado)
+    } catch (err) {
+      mostrarToast('Error al actualizar: ' + err.message, 'error')
+    } finally {
+      setSaving(false)
+    }
   }
 
   const handleEditSave = async (e) => {
@@ -393,7 +419,6 @@ export default function GlobalBienes() {
                   <thead>
                     <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: "700", fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
                       <th style={{ padding: "1rem 1.5rem" }}>Código</th>
-                      <th style={{ padding: "1rem" }}>Número</th>
                       <th style={{ padding: "1rem" }}>Estado</th>
                       <th style={{ padding: "1rem 1.5rem", textAlign: "right" }}>Acciones</th>
                     </tr>
@@ -409,7 +434,6 @@ export default function GlobalBienes() {
                             <span style={{ fontWeight: "700", color: "#0f172a", fontFamily: "monospace" }}>{car.codigo || '—'}</span>
                           </div>
                         </td>
-                        <td style={{ padding: "1rem", fontWeight: "600", color: "#64748b" }}>{car.numero ? `N° ${car.numero}` : '—'}</td>
                         <td style={{ padding: "1rem" }}>
                           <label className="toggle-switch">
                             <input type="checkbox" checked={car.estado === 'EN_USO'} onChange={() => handleToggle(car)} />
@@ -422,13 +446,14 @@ export default function GlobalBienes() {
                         <td style={tdRight}>
                           <div style={{ display: "flex", gap: "0.35rem", justifyContent: "flex-end" }}>
                             <button onClick={() => openDetail(car)} style={btnAction("rgba(59,130,246,0.1)", "#3b82f6")} title="Ver detalles"><FiEye size={13} /></button>
+                            <button onClick={() => openEditCarrito(car)} style={btnAction("rgba(124,58,237,0.1)", colorSuper)} title="Editar"><FiEdit2 size={13} /></button>
                           </div>
                         </td>
                       </tr>
                     ))}
                     {carritos.length === 0 && (
                       <tr>
-                        <td colSpan={4} style={{ padding: "2rem", textAlign: "center", color: "#94a3b8", fontStyle: "italic" }}>No hay carritos registrados.</td>
+                        <td colSpan={3} style={{ padding: "2rem", textAlign: "center", color: "#94a3b8", fontStyle: "italic" }}>No hay carritos registrados.</td>
                       </tr>
                     )}
                   </tbody>
@@ -474,7 +499,7 @@ export default function GlobalBienes() {
         </div>
       )}
 
-      {editItem && (
+      {editItem && editItem.tipo === 'ESTACIONAMIENTO' && (
         <div style={modalOverlay}>
           <div style={modalBox}>
             <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -509,6 +534,39 @@ export default function GlobalBienes() {
                 </div>
               </div>
 
+              <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: "0.75rem", backgroundColor: "#f8fafc" }}>
+                <button type="button" onClick={() => setEditItem(null)} style={{ backgroundColor: "#ffffff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Cancelar</button>
+                <button type="submit" disabled={saving} style={{ backgroundColor: colorSuper, border: "none", color: "#ffffff", padding: "0.5rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer", opacity: saving ? 0.6 : 1 }}>
+                  {saving ? 'Guardando...' : 'Guardar Cambios'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {editItem && editItem.tipo === 'CARRITO' && (
+        <div style={modalOverlay}>
+          <div style={modalBox}>
+            <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: "800", color: "#1e293b" }}>Editar Carrito {editItem.codigo}</h3>
+              <button onClick={() => setEditItem(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={18} /></button>
+            </div>
+            <form onSubmit={handleEditCarritoSave}>
+              <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+                <div>
+                  <label style={estiloLabel}>Código</label>
+                  <input type="text" style={estiloInput} value={editItem.codigo || ''} disabled />
+                </div>
+                <div>
+                  <label style={estiloLabel}>Estado</label>
+                  <select style={selectEstilo} value={editForm.estado} onChange={(e) => setEditForm(f => ({ ...f, estado: e.target.value }))}>
+                    <option value="DISPONIBLE">Disponible</option>
+                    <option value="EN_USO">En Préstamo</option>
+                    <option value="MANTENIMIENTO">Mantenimiento</option>
+                  </select>
+                </div>
+              </div>
               <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: "0.75rem", backgroundColor: "#f8fafc" }}>
                 <button type="button" onClick={() => setEditItem(null)} style={{ backgroundColor: "#ffffff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Cancelar</button>
                 <button type="submit" disabled={saving} style={{ backgroundColor: colorSuper, border: "none", color: "#ffffff", padding: "0.5rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer", opacity: saving ? 0.6 : 1 }}>
