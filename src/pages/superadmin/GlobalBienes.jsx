@@ -127,8 +127,8 @@ export default function GlobalBienes() {
     try {
       const tipo = showModal
       const payload = tipo === 'ESTACIONAMIENTO'
-        ? { tipo, codigo: codigoForm || null, numero: Number(numeroForm) }
-        : { tipo, codigo: codigoForm, numero: numeroForm ? Number(numeroForm) : null }
+        ? { tipo, numero: numeroForm ? Number(numeroForm) : 1 }
+        : { tipo, codigo: codigoForm || `CARR-${Date.now()}` }
       await createAdminAsset(payload, condoSeleccionado)
       mostrarToast(`${tipo === 'ESTACIONAMIENTO' ? 'Estacionamiento' : 'Carrito'} registrado con éxito`)
       setShowModal(null)
@@ -142,13 +142,15 @@ export default function GlobalBienes() {
 
   const handleToggle = async (item) => {
     try {
-      const nuevoDisponible = !item.disponible
-      await updateAdminAssetStatus(item.id, {
-        tipo: item.tipo,
-        ...(item.tipo === 'CARRITO' ? { estado: nuevoDisponible ? 'DISPONIBLE' : 'EN_USO' } : {}),
-        ...(item.tipo === 'ESTACIONAMIENTO' ? { disponible: nuevoDisponible } : {}),
-      }, condoSeleccionado)
-      mostrarToast(nuevoDisponible ? 'Disponible' : (item.tipo === 'CARRITO' ? 'En Préstamo' : 'Ocupado'), 'info')
+      if (item.tipo === 'CARRITO') {
+        const nuevoEstado = item.estado === 'DISPONIBLE' ? 'EN_USO' : 'DISPONIBLE'
+        await updateAdminAssetStatus(item.id, { tipo: 'CARRITO', estado: nuevoEstado }, condoSeleccionado)
+        mostrarToast(nuevoEstado === 'DISPONIBLE' ? 'Disponible' : 'En Préstamo', 'info')
+      } else {
+        const nuevoDisponible = !item.disponible
+        await updateAdminAssetStatus(item.id, { tipo: 'ESTACIONAMIENTO', disponible: nuevoDisponible }, condoSeleccionado)
+        mostrarToast(nuevoDisponible ? 'Disponible' : 'Ocupado', 'info')
+      }
       cargarActivos(condoSeleccionado)
     } catch (err) {
       mostrarToast('Error al actualizar estado: ' + err.message, 'error')
@@ -318,7 +320,7 @@ export default function GlobalBienes() {
                 <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
                   <thead>
                     <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: "700", fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
-                      <th style={{ padding: "1rem 1.5rem" }}>Código</th>
+                      <th style={{ padding: "1rem 1.5rem" }}>N°</th>
                       <th style={{ padding: "1rem" }}>Tipo Vehículo</th>
                       <th style={{ padding: "1rem" }}>Capacidad</th>
                       <th style={{ padding: "1rem" }}>Ocupación</th>
@@ -330,7 +332,7 @@ export default function GlobalBienes() {
                   <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
                     {estacionamientos.map((est) => (
                       <tr key={est.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                        <td style={{ padding: "1rem 1.5rem", fontWeight: "600", color: "#0f172a", fontFamily: "monospace" }}>{est.codigo || '—'}</td>
+                        <td style={{ padding: "1rem 1.5rem", fontWeight: "600", color: "#0f172a", fontFamily: "monospace" }}>{est.numero ? `N° ${est.numero}` : '—'}</td>
                         <td style={tdCenter}>
                           {est.tipoVehiculo ? (
                             <span style={{
@@ -410,11 +412,11 @@ export default function GlobalBienes() {
                         <td style={{ padding: "1rem", fontWeight: "600", color: "#64748b" }}>{car.numero ? `N° ${car.numero}` : '—'}</td>
                         <td style={{ padding: "1rem" }}>
                           <label className="toggle-switch">
-                            <input type="checkbox" checked={!car.disponible} onChange={() => handleToggle(car)} />
-                            <span className="toggle-slider" style={{ backgroundColor: car.disponible ? "#10b981" : "#f59e0b" }}></span>
+                            <input type="checkbox" checked={car.estado === 'EN_USO'} onChange={() => handleToggle(car)} />
+                            <span className="toggle-slider" style={{ backgroundColor: car.estado === 'DISPONIBLE' ? "#10b981" : "#f59e0b" }}></span>
                           </label>
-                          <span style={{ fontSize: "0.7rem", fontWeight: "600", marginLeft: "0.4rem", color: car.disponible ? "#10b981" : "#f59e0b" }}>
-                            {car.disponible ? 'Disponible' : 'Préstamo'}
+                          <span style={{ fontSize: "0.7rem", fontWeight: "600", marginLeft: "0.4rem", color: car.estado === 'DISPONIBLE' ? "#10b981" : "#f59e0b" }}>
+                            {car.estado === 'DISPONIBLE' ? 'Disponible' : 'En Préstamo'}
                           </span>
                         </td>
                         <td style={tdRight}>
@@ -449,14 +451,18 @@ export default function GlobalBienes() {
 
             <form onSubmit={handleCreateAsset}>
               <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-                <div>
-                  <label style={estiloLabel}>Código</label>
-                  <input type="text" style={estiloInput} placeholder="Ej: EST-001" value={codigoForm} onChange={(e) => setCodigoForm(e.target.value)} required />
-                </div>
-                <div>
-                  <label style={estiloLabel}>Número</label>
-                  <input type="number" min="1" style={estiloInput} placeholder="Ej: 15" value={numeroForm} onChange={(e) => setNumeroForm(e.target.value)} />
-                </div>
+                {showModal === 'CARRITO' && (
+                  <div>
+                    <label style={estiloLabel}>Código</label>
+                    <input type="text" style={estiloInput} placeholder="Ej: CARR-001" value={codigoForm} onChange={(e) => setCodigoForm(e.target.value)} />
+                  </div>
+                )}
+                {showModal === 'ESTACIONAMIENTO' && (
+                  <div>
+                    <label style={estiloLabel}>Número</label>
+                    <input type="number" min="1" style={estiloInput} placeholder="Ej: 15" value={numeroForm} onChange={(e) => setNumeroForm(e.target.value)} />
+                  </div>
+                )}
               </div>
 
               <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: "0.75rem", backgroundColor: "#f8fafc" }}>
@@ -539,11 +545,11 @@ export default function GlobalBienes() {
               <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "0.5rem" }}>
                 <span style={{ fontWeight: "600", color: "#64748b", fontSize: "0.8rem" }}>Estado</span>
                 <span style={{
-                  backgroundColor: detailItem.disponible ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
-                  color: detailItem.disponible ? "#10b981" : "#ef4444",
+                  backgroundColor: detailItem.tipo === 'CARRITO' ? (detailItem.estado === 'DISPONIBLE' ? "rgba(16,185,129,0.1)" : "rgba(245,158,11,0.1)") : (detailItem.disponible ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)"),
+                  color: detailItem.tipo === 'CARRITO' ? (detailItem.estado === 'DISPONIBLE' ? "#10b981" : "#f59e0b") : (detailItem.disponible ? "#10b981" : "#ef4444"),
                   padding: "0.25rem 0.6rem", borderRadius: "0.4rem", fontSize: "0.72rem", fontWeight: "700", display: "inline-block"
                 }}>
-                  {detailItem.disponible ? 'Disponible' : detailItem.tipo === 'CARRITO' ? 'En Préstamo' : 'Ocupado'}
+                  {detailItem.tipo === 'CARRITO' ? (detailItem.estado === 'DISPONIBLE' ? 'Disponible' : 'En Préstamo') : (detailItem.disponible ? 'Disponible' : 'Ocupado')}
                 </span>
               </div>
               {detailItem.idApartamento && (
