@@ -470,3 +470,11 @@ export async function returnAssetLoan(id) {
     method: 'PUT',
   });
 }
+
+// Agregar esta función después de createAdminStructureNode
+export async function createApartment(data) {
+  return safeFetch('/api/admin/structure/nodes', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
