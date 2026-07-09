@@ -140,22 +140,11 @@ export default function GlobalBienes() {
     }
   }
 
-  const handleToggle = async (item) => {
+  const handleCarritoStateChange = async (item, nuevoEstado) => {
+    if (nuevoEstado === item.estado) return
     try {
-      if (item.tipo === 'CARRITO') {
-        const nuevoEstado = item.estado === 'DISPONIBLE' ? 'EN_USO' : 'DISPONIBLE'
-        await updateAdminAssetStatus(item.id, { tipo: 'CARRITO', estado: nuevoEstado }, condoSeleccionado)
-        mostrarToast(nuevoEstado === 'DISPONIBLE' ? 'Disponible' : 'En Préstamo', 'info')
-      } else {
-        const nuevoDisponible = !item.disponible
-        await updateAdminAssetStatus(item.id, {
-          tipo: 'ESTACIONAMIENTO',
-          disponible: nuevoDisponible,
-          tipoVehiculo: item.tipoVehiculo || null,
-          capacidadMaxima: item.capacidadMaxima ?? null,
-        }, condoSeleccionado)
-        mostrarToast(nuevoDisponible ? 'Disponible' : 'Ocupado', 'info')
-      }
+      await updateAdminAssetStatus(item.id, { tipo: 'CARRITO', estado: nuevoEstado }, condoSeleccionado)
+      mostrarToast(`Estado cambiado a ${nuevoEstado === 'DISPONIBLE' ? 'Disponible' : nuevoEstado === 'EN_USO' ? 'En Préstamo' : 'Mantenimiento'}`, 'info')
       cargarActivos(condoSeleccionado)
     } catch (err) {
       mostrarToast('Error al actualizar estado: ' + err.message, 'error')
@@ -172,7 +161,7 @@ export default function GlobalBienes() {
   }
 
   const openEditCarrito = (item) => {
-    setEditForm({ estado: item.estado || 'DISPONIBLE' })
+    setEditForm({ estado: item.estado || 'DISPONIBLE', codigo: item.codigo || '' })
     setEditItem(item)
   }
 
@@ -373,11 +362,9 @@ export default function GlobalBienes() {
                         <td style={{ padding: "1rem", fontWeight: "600", color: "#64748b" }}>{est.capacidadMaxima ?? '—'}</td>
                         <td style={{ padding: "1rem", fontWeight: "600", color: "#64748b" }}>{est.cantidadActual ?? 0} / {est.capacidadMaxima ?? '—'}</td>
                         <td style={tdCenter}>
-                          <label className="toggle-switch">
-                            <input type="checkbox" checked={!est.disponible} onChange={() => handleToggle(est)} />
-                            <span className="toggle-slider" style={{ backgroundColor: est.disponible ? "#10b981" : "#ef4444" }}></span>
-                          </label>
-                          <span style={{ fontSize: "0.7rem", fontWeight: "600", marginLeft: "0.4rem", color: est.disponible ? "#10b981" : "#ef4444" }}>
+                          <span style={{ fontSize: "0.72rem", fontWeight: "700", padding: "0.25rem 0.6rem", borderRadius: "0.4rem", display: "inline-block",
+                            backgroundColor: est.disponible ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
+                            color: est.disponible ? "#10b981" : "#ef4444" }}>
                             {est.disponible ? 'Disponible' : 'Ocupado'}
                           </span>
                         </td>
@@ -435,13 +422,14 @@ export default function GlobalBienes() {
                           </div>
                         </td>
                         <td style={{ padding: "1rem" }}>
-                          <label className="toggle-switch">
-                            <input type="checkbox" checked={car.estado === 'EN_USO'} onChange={() => handleToggle(car)} />
-                            <span className="toggle-slider" style={{ backgroundColor: car.estado === 'DISPONIBLE' ? "#10b981" : "#f59e0b" }}></span>
-                          </label>
-                          <span style={{ fontSize: "0.7rem", fontWeight: "600", marginLeft: "0.4rem", color: car.estado === 'DISPONIBLE' ? "#10b981" : "#f59e0b" }}>
-                            {car.estado === 'DISPONIBLE' ? 'Disponible' : 'En Préstamo'}
-                          </span>
+                          <select value={car.estado || 'DISPONIBLE'} onChange={(e) => handleCarritoStateChange(car, e.target.value)}
+                            style={{ fontSize: "0.72rem", fontWeight: "700", padding: "0.25rem 0.6rem", borderRadius: "0.4rem", border: "none", cursor: "pointer", outline: "none", appearance: "none", WebkitAppearance: "none", MozAppearance: "none", backgroundImage: "url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' fill='%2364748b'%3E%3Cpath d='M5 7L1 2h8z'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 0.4rem center", paddingRight: "1.2rem",
+                            backgroundColor: car.estado === 'DISPONIBLE' ? "rgba(16,185,129,0.1)" : car.estado === 'EN_USO' ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)",
+                            color: car.estado === 'DISPONIBLE' ? "#10b981" : car.estado === 'EN_USO' ? "#f59e0b" : "#ef4444" }}>
+                            <option value="DISPONIBLE" style={{ color: "#10b981", backgroundColor: "#fff" }}>Disponible</option>
+                            <option value="EN_USO" style={{ color: "#f59e0b", backgroundColor: "#fff" }}>En Préstamo</option>
+                            <option value="MANTENIMIENTO" style={{ color: "#ef4444", backgroundColor: "#fff" }}>Mantenimiento</option>
+                          </select>
                         </td>
                         <td style={tdRight}>
                           <div style={{ display: "flex", gap: "0.35rem", justifyContent: "flex-end" }}>
@@ -556,7 +544,7 @@ export default function GlobalBienes() {
               <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
                 <div>
                   <label style={estiloLabel}>Código</label>
-                  <input type="text" style={estiloInput} value={editItem.codigo || ''} disabled />
+                  <input type="text" style={estiloInput} placeholder="Código del carrito" value={editForm.codigo} onChange={(e) => setEditForm(f => ({ ...f, codigo: e.target.value }))} />
                 </div>
                 <div>
                   <label style={estiloLabel}>Estado</label>
@@ -587,7 +575,7 @@ export default function GlobalBienes() {
             </div>
             <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "0.85rem" }}>
               {[
-                ['Número', `N° ${detailItem.numero}`],
+                ...(detailItem.tipo === 'ESTACIONAMIENTO' ? [['Número', `N° ${detailItem.numero}`]] : []),
                 ['Código', detailItem.codigo || '—'],
                 ...(detailItem.tipo === 'CARRITO' ? [] : [
                   ['Tipo Vehículo', detailItem.tipoVehiculo || 'Sin asignar'],
@@ -603,12 +591,12 @@ export default function GlobalBienes() {
               <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid #f1f5f9", paddingBottom: "0.5rem" }}>
                 <span style={{ fontWeight: "600", color: "#64748b", fontSize: "0.8rem" }}>Estado</span>
                 <span style={{
-                  backgroundColor: detailItem.tipo === 'CARRITO' ? (detailItem.estado === 'DISPONIBLE' ? "rgba(16,185,129,0.1)" : "rgba(245,158,11,0.1)") : (detailItem.disponible ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)"),
-                  color: detailItem.tipo === 'CARRITO' ? (detailItem.estado === 'DISPONIBLE' ? "#10b981" : "#f59e0b") : (detailItem.disponible ? "#10b981" : "#ef4444"),
-                  padding: "0.25rem 0.6rem", borderRadius: "0.4rem", fontSize: "0.72rem", fontWeight: "700", display: "inline-block"
-                }}>
-                  {detailItem.tipo === 'CARRITO' ? (detailItem.estado === 'DISPONIBLE' ? 'Disponible' : 'En Préstamo') : (detailItem.disponible ? 'Disponible' : 'Ocupado')}
-                </span>
+                    backgroundColor: detailItem.tipo === 'CARRITO' ? (detailItem.estado === 'DISPONIBLE' ? "rgba(16,185,129,0.1)" : detailItem.estado === 'EN_USO' ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)") : (detailItem.disponible ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)"),
+                    color: detailItem.tipo === 'CARRITO' ? (detailItem.estado === 'DISPONIBLE' ? "#10b981" : detailItem.estado === 'EN_USO' ? "#f59e0b" : "#ef4444") : (detailItem.disponible ? "#10b981" : "#ef4444"),
+                    padding: "0.25rem 0.6rem", borderRadius: "0.4rem", fontSize: "0.72rem", fontWeight: "700", display: "inline-block"
+                  }}>
+                    {detailItem.tipo === 'CARRITO' ? (detailItem.estado === 'DISPONIBLE' ? 'Disponible' : detailItem.estado === 'EN_USO' ? 'En Préstamo' : 'Mantenimiento') : (detailItem.disponible ? 'Disponible' : 'Ocupado')}
+                  </span>
               </div>
               {detailItem.idApartamento && (
                 <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "0.5rem" }}>
