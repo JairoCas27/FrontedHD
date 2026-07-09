@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { FiPackage, FiHome, FiMapPin, FiTruck, FiPlus, FiX, FiInfo, FiEye, FiEdit2, FiTrash2 } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
-import { getCondominiums, getAdminAssets, createAdminAsset, updateAdminAssetStatus, updateAdminAsset, assignAssetApartment, getAdminApartments, deleteAdminAsset, extractItems } from '../../services/api'
+import { getCondominiums, getAdminAssets, createAdminAsset, updateAdminAssetStatus, assignAssetApartment, getAdminApartments, extractItems } from '../../services/api'
 
 const colorSuper = "rgb(124,58,237)"
 
@@ -80,7 +80,6 @@ export default function GlobalBienes() {
   const [detailItem, setDetailItem] = useState(null)
   const [editForm, setEditForm] = useState({})
   const [saving, setSaving] = useState(false)
-  const [confirmDelete, setConfirmDelete] = useState(null)
 
   const mostrarToast = (mensaje, tipo = 'success') => {
     setToast({ visible: true, mensaje, tipo })
@@ -144,20 +143,12 @@ export default function GlobalBienes() {
   const handleToggle = async (item) => {
     try {
       const nuevoDisponible = !item.disponible
-      let estadoLabel
-      if (item.tipo === 'CARRITO') {
-        estadoLabel = nuevoDisponible ? 'Disponible' : 'En Préstamo'
-      } else if (item.tipo === 'ESTACIONAMIENTO') {
-        estadoLabel = nuevoDisponible ? 'Disponible' : 'Ocupado'
-      } else {
-        estadoLabel = nuevoDisponible ? 'Disponible' : 'No Disponible'
-      }
       await updateAdminAssetStatus(item.id, {
         tipo: item.tipo,
-        estado: nuevoDisponible ? 'DISPONIBLE' : 'NO_DISPONIBLE',
-        disponible: nuevoDisponible
+        ...(item.tipo === 'CARRITO' ? { estado: nuevoDisponible ? 'DISPONIBLE' : 'EN_USO' } : {}),
+        ...(item.tipo === 'ESTACIONAMIENTO' ? { disponible: nuevoDisponible } : {}),
       }, condoSeleccionado)
-      mostrarToast(estadoLabel, 'info')
+      mostrarToast(nuevoDisponible ? 'Disponible' : (item.tipo === 'CARRITO' ? 'En Préstamo' : 'Ocupado'), 'info')
       cargarActivos(condoSeleccionado)
     } catch (err) {
       mostrarToast('Error al actualizar estado: ' + err.message, 'error')
@@ -178,12 +169,16 @@ export default function GlobalBienes() {
     if (!editItem) return
     setSaving(true)
     try {
-      await updateAdminAsset(editItem.id, {
+      const statusPayload = {
+        tipo: 'ESTACIONAMIENTO',
         tipoVehiculo: editForm.tipoVehiculo || null,
-        capacidadMaxima: editForm.capacidadMaxima ? Number(editForm.capacidadMaxima) : null
-      }, condoSeleccionado)
-      if (editForm.idApartamento && String(editForm.idApartamento) !== String(editItem.idApartamento)) {
-        await assignAssetApartment(editItem.id, Number(editForm.idApartamento), condoSeleccionado)
+        capacidadMaxima: editForm.capacidadMaxima ? Number(editForm.capacidadMaxima) : null,
+      }
+      await updateAdminAssetStatus(editItem.id, statusPayload, condoSeleccionado)
+      const nuevoApt = editForm.idApartamento ? Number(editForm.idApartamento) : null
+      const viejoApt = editItem.idApartamento
+      if (String(nuevoApt || '') !== String(viejoApt || '')) {
+        await assignAssetApartment(editItem.id, nuevoApt, condoSeleccionado)
       }
       mostrarToast('Estacionamiento actualizado con éxito')
       setEditItem(null)
@@ -192,17 +187,6 @@ export default function GlobalBienes() {
       mostrarToast('Error al actualizar: ' + err.message, 'error')
     } finally {
       setSaving(false)
-    }
-  }
-
-  const handleDelete = async (item) => {
-    setConfirmDelete(null)
-    try {
-      await deleteAdminAsset(item.id, condoSeleccionado)
-      mostrarToast(`${item.tipo === 'CARRITO' ? 'Carrito' : 'Estacionamiento'} eliminado con éxito`)
-      cargarActivos(condoSeleccionado)
-    } catch (err) {
-      mostrarToast('Error al eliminar: ' + err.message, 'error')
     }
   }
 
@@ -374,7 +358,6 @@ export default function GlobalBienes() {
                           <div style={{ display: "flex", gap: "0.35rem", justifyContent: "flex-end" }}>
                             <button onClick={() => openDetail(est)} style={btnAction("rgba(59,130,246,0.1)", "#3b82f6")} title="Ver detalles"><FiEye size={13} /></button>
                             <button onClick={() => openEdit(est)} style={btnAction("rgba(124,58,237,0.1)", colorSuper)} title="Editar"><FiEdit2 size={13} /></button>
-                            <button onClick={() => setConfirmDelete(est)} style={btnAction("rgba(239,68,68,0.1)", "#ef4444")} title="Eliminar"><FiTrash2 size={13} /></button>
                           </div>
                         </td>
                       </tr>
@@ -437,7 +420,6 @@ export default function GlobalBienes() {
                         <td style={tdRight}>
                           <div style={{ display: "flex", gap: "0.35rem", justifyContent: "flex-end" }}>
                             <button onClick={() => openDetail(car)} style={btnAction("rgba(59,130,246,0.1)", "#3b82f6")} title="Ver detalles"><FiEye size={13} /></button>
-                            <button onClick={() => setConfirmDelete(car)} style={btnAction("rgba(239,68,68,0.1)", "#ef4444")} title="Eliminar"><FiTrash2 size={13} /></button>
                           </div>
                         </td>
                       </tr>
@@ -578,23 +560,7 @@ export default function GlobalBienes() {
         </div>
       )}
 
-      {confirmDelete && (
-        <div style={modalOverlay}>
-          <div style={{ ...modalBox, maxWidth: "400px" }}>
-            <div style={{ padding: "1.5rem", textAlign: "center" }}>
-              <FiTrash2 size={36} color="#ef4444" style={{ marginBottom: "0.75rem" }} />
-              <h3 style={{ margin: "0 0 0.5rem", fontSize: "1.05rem", fontWeight: "800", color: "#1e293b" }}>Confirmar Eliminación</h3>
-              <p style={{ fontSize: "0.85rem", color: "#64748b", margin: 0 }}>
-                ¿Estás seguro de eliminar {confirmDelete.tipo === 'CARRITO' ? 'el carrito' : 'el estacionamiento'} <strong>{confirmDelete.codigo || `N° ${confirmDelete.numero}`}</strong>?
-              </p>
-            </div>
-            <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: "0.75rem", backgroundColor: "#f8fafc" }}>
-              <button onClick={() => setConfirmDelete(null)} style={{ backgroundColor: "#ffffff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Cancelar</button>
-              <button onClick={() => handleDelete(confirmDelete)} style={{ backgroundColor: "#ef4444", border: "none", color: "#ffffff", padding: "0.5rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Eliminar</button>
-            </div>
-          </div>
-        </div>
-      )}
+      
     </div>
   )
 }
