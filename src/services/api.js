@@ -312,8 +312,9 @@ export async function assignAssetApartment(assetId, idApartamento, condominioId)
   });
 }
 
-export async function deleteAdminAsset(id, condominioId) {
+export async function deleteAdminAsset(id, condominioId, type) {
   const params = new URLSearchParams();
+  if (type) params.append('type', type);
   if (condominioId) params.append('condominioId', condominioId);
   return safeFetch(`/api/admin/assets/${id}?${params.toString()}`, { method: 'DELETE' });
 }

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react'
 import { FiPackage, FiHome, FiMapPin, FiTruck, FiPlus, FiX, FiInfo, FiEye, FiEdit2, FiTrash2 } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
-import { getCondominiums, getAdminAssets, createAdminAsset, updateAdminAssetStatus, assignAssetApartment, getAdminApartments, extractItems } from '../../services/api'
+import { getCondominiums, getAdminAssets, createAdminAsset, updateAdminAssetStatus, assignAssetApartment, getAdminApartments, deleteAdminAsset, extractItems } from '../../services/api'
 
 const colorSuper = "rgb(124,58,237)"
 
@@ -80,6 +80,7 @@ export default function GlobalBienes() {
   const [detailItem, setDetailItem] = useState(null)
   const [editForm, setEditForm] = useState({})
   const [saving, setSaving] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(null)
 
   const mostrarToast = (mensaje, tipo = 'success') => {
     setToast({ visible: true, mensaje, tipo })
@@ -148,6 +149,28 @@ export default function GlobalBienes() {
       cargarActivos(condoSeleccionado)
     } catch (err) {
       mostrarToast('Error al actualizar estado: ' + err.message, 'error')
+    }
+  }
+
+  const handleToggleDisponible = async (item) => {
+    try {
+      await updateAdminAssetStatus(item.id, { tipo: 'ESTACIONAMIENTO', disponible: !item.disponible }, condoSeleccionado)
+      mostrarToast(`Estacionamiento ${!item.disponible ? 'disponible' : 'ocupado'}`, 'info')
+      cargarActivos(condoSeleccionado)
+    } catch (err) {
+      mostrarToast('Error al cambiar disponibilidad: ' + err.message, 'error')
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!confirmDelete) return
+    try {
+      await deleteAdminAsset(confirmDelete.id, condoSeleccionado, confirmDelete.tipo)
+      mostrarToast(`${confirmDelete.tipo === 'CARRITO' ? 'Carrito' : 'Estacionamiento'} eliminado con éxito`)
+      setConfirmDelete(null)
+      cargarActivos(condoSeleccionado)
+    } catch (err) {
+      mostrarToast('Error al eliminar: ' + err.message, 'error')
     }
   }
 
@@ -362,17 +385,17 @@ export default function GlobalBienes() {
                         <td style={{ padding: "1rem", fontWeight: "600", color: "#64748b" }}>{est.capacidadMaxima ?? '—'}</td>
                         <td style={{ padding: "1rem", fontWeight: "600", color: "#64748b" }}>{est.cantidadActual ?? 0} / {est.capacidadMaxima ?? '—'}</td>
                         <td style={tdCenter}>
-                          <span style={{ fontSize: "0.72rem", fontWeight: "700", padding: "0.25rem 0.6rem", borderRadius: "0.4rem", display: "inline-block",
-                            backgroundColor: est.disponible ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
-                            color: est.disponible ? "#10b981" : "#ef4444" }}>
-                            {est.disponible ? 'Disponible' : 'Ocupado'}
-                          </span>
+                          <label className="toggle-switch">
+                            <input type="checkbox" checked={!!est.disponible} onChange={() => handleToggleDisponible(est)} />
+                            <span className="toggle-slider" style={{ backgroundColor: est.disponible ? "#10b981" : "#cbd5e1" }} />
+                          </label>
                         </td>
                         <td style={{ padding: "1rem", fontSize: "0.8rem", color: "#64748b" }}>{getAptLabel(est.idApartamento) || '—'}</td>
                         <td style={tdRight}>
                           <div style={{ display: "flex", gap: "0.35rem", justifyContent: "flex-end" }}>
                             <button onClick={() => openDetail(est)} style={btnAction("rgba(59,130,246,0.1)", "#3b82f6")} title="Ver detalles"><FiEye size={13} /></button>
                             <button onClick={() => openEdit(est)} style={btnAction("rgba(124,58,237,0.1)", colorSuper)} title="Editar"><FiEdit2 size={13} /></button>
+                            <button onClick={() => setConfirmDelete({ id: est.id, tipo: 'ESTACIONAMIENTO' })} style={btnAction("rgba(239,68,68,0.1)", "#ef4444")} title="Eliminar"><FiTrash2 size={13} /></button>
                           </div>
                         </td>
                       </tr>
@@ -435,6 +458,7 @@ export default function GlobalBienes() {
                           <div style={{ display: "flex", gap: "0.35rem", justifyContent: "flex-end" }}>
                             <button onClick={() => openDetail(car)} style={btnAction("rgba(59,130,246,0.1)", "#3b82f6")} title="Ver detalles"><FiEye size={13} /></button>
                             <button onClick={() => openEditCarrito(car)} style={btnAction("rgba(124,58,237,0.1)", colorSuper)} title="Editar"><FiEdit2 size={13} /></button>
+                            <button onClick={() => setConfirmDelete({ id: car.id, tipo: 'CARRITO' })} style={btnAction("rgba(239,68,68,0.1)", "#ef4444")} title="Eliminar"><FiTrash2 size={13} /></button>
                           </div>
                         </td>
                       </tr>
@@ -607,6 +631,24 @@ export default function GlobalBienes() {
             </div>
             <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", backgroundColor: "#f8fafc" }}>
               <button onClick={() => setDetailItem(null)} style={{ backgroundColor: "#ffffff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmDelete && (
+        <div style={modalOverlay}>
+          <div style={{ ...modalBox, maxWidth: "400px" }}>
+            <div style={{ padding: "1.5rem", textAlign: "center" }}>
+              <FiInfo size={36} color="#ef4444" style={{ marginBottom: "0.75rem" }} />
+              <h3 style={{ margin: "0 0 0.5rem", fontSize: "1rem", fontWeight: "800", color: "#1e293b" }}>Confirmar Eliminación</h3>
+              <p style={{ fontSize: "0.85rem", color: "#64748b", margin: 0 }}>
+                ¿Eliminar {confirmDelete.tipo === 'CARRITO' ? 'carrito' : 'estacionamiento'} #{confirmDelete.id}?
+              </p>
+            </div>
+            <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: "0.75rem", backgroundColor: "#f8fafc" }}>
+              <button onClick={() => setConfirmDelete(null)} style={{ backgroundColor: "#ffffff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Cancelar</button>
+              <button onClick={handleDelete} style={{ backgroundColor: "#ef4444", border: "none", color: "#ffffff", padding: "0.5rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Eliminar</button>
             </div>
           </div>
         </div>
