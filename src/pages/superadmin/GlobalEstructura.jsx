@@ -434,22 +434,6 @@ export default function GlobalEstructura() {
             </div>
           )}
 
-          {/* Edit Floor */}
-          {showEditFloorModal && (
-            <div style={modalOverlay} onClick={() => { if (!savingEditFloor) { setShowEditFloorModal(false); setEditFloorTarget(null) } }}>
-              <div style={modalBox} onClick={e => e.stopPropagation()}>
-                <button onClick={() => { setShowEditFloorModal(false); setEditFloorTarget(null) }} style={{ position: "absolute", top: "1rem", right: "1rem", background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={20} /></button>
-                <h3 style={{ margin: "0 0 0.25rem", fontSize: "1.1rem", fontWeight: "700", color: "#0f172a" }}>Editar Piso</h3>
-                <p style={{ margin: "0 0 1.25rem", fontSize: "0.85rem", color: "#64748b" }}>Torre: <strong>{editFloorTarget?.nombreTorre || ''}</strong></p>
-                <input type="number" min="1" placeholder="Número piso" value={editFloorNum} onChange={e => setEditFloorNum(e.target.value)} style={estiloInput} autoFocus />
-                <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem", justifyContent: "flex-end" }}>
-                  <button onClick={() => { setShowEditFloorModal(false); setEditFloorTarget(null) }} disabled={savingEditFloor} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
-                  <button onClick={handleEditFloor} disabled={savingEditFloor} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: colorSuper, color: "#fff", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>{savingEditFloor ? 'Guardando...' : 'Guardar'}</button>
-                </div>
-              </div>
-            </div>
-          )}
-
           {/* Add Apartment */}
           {showAddAptModal && (
             <div style={modalOverlay} onClick={() => { if (!creatingApt) { setShowAddAptModal(false); setAddAptContext(null) } }}>
@@ -471,27 +455,6 @@ export default function GlobalEstructura() {
                 <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem", justifyContent: "flex-end" }}>
                   <button onClick={() => { setShowAddAptModal(false); setAddAptContext(null) }} disabled={creatingApt} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
                   <button onClick={handleAddApt} disabled={creatingApt} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: colorSuper, color: "#fff", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>{creatingApt ? 'Creando...' : 'Crear'}</button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Edit Apartment */}
-          {showEditAptModal && (
-            <div style={modalOverlay} onClick={() => { if (!savingEditApt) { setShowEditAptModal(false); setEditAptTarget(null) } }}>
-              <div style={modalBox} onClick={e => e.stopPropagation()}>
-                <button onClick={() => { setShowEditAptModal(false); setEditAptTarget(null) }} style={{ position: "absolute", top: "1rem", right: "1rem", background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={20} /></button>
-                <h3 style={{ margin: "0 0 1.25rem", fontSize: "1.1rem", fontWeight: "700", color: "#0f172a" }}>Editar Apartamento</h3>
-                <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                  <input type="text" placeholder="Número" value={editAptNumero} onChange={e => setEditAptNumero(e.target.value)} style={estiloInput} autoFocus />
-                  <input type="number" placeholder="Metraje m² (opcional)" value={editAptMetraje} onChange={e => setEditAptMetraje(e.target.value)} style={estiloInput} />
-                  <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", color: "#334155", fontWeight: "600", cursor: "pointer" }}>
-                    <input type="checkbox" checked={editAptParking} onChange={e => setEditAptParking(e.target.checked)} /> Derecho estacionamiento
-                  </label>
-                </div>
-                <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem", justifyContent: "flex-end" }}>
-                  <button onClick={() => { setShowEditAptModal(false); setEditAptTarget(null) }} disabled={savingEditApt} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
-                  <button onClick={handleEditApt} disabled={savingEditApt} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: colorSuper, color: "#fff", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>{savingEditApt ? 'Guardando...' : 'Guardar'}</button>
                 </div>
               </div>
             </div>
