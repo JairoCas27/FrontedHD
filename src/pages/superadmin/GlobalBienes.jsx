@@ -385,10 +385,11 @@ export default function GlobalBienes() {
                         <td style={{ padding: "1rem", fontWeight: "600", color: "#64748b" }}>{est.capacidadMaxima ?? '—'}</td>
                         <td style={{ padding: "1rem", fontWeight: "600", color: "#64748b" }}>{est.cantidadActual ?? 0} / {est.capacidadMaxima ?? '—'}</td>
                         <td style={tdCenter}>
-                          <label className="toggle-switch">
-                            <input type="checkbox" checked={!!est.disponible} onChange={() => handleToggleDisponible(est)} />
-                            <span className="toggle-slider" style={{ backgroundColor: est.disponible ? "#10b981" : "#cbd5e1" }} />
-                          </label>
+                          <span style={{ fontSize: "0.72rem", fontWeight: "700", padding: "0.25rem 0.6rem", borderRadius: "0.4rem", display: "inline-block",
+                            backgroundColor: est.disponible ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
+                            color: est.disponible ? "#10b981" : "#ef4444" }}>
+                            {est.disponible ? 'Disponible' : 'Ocupado'}
+                          </span>
                         </td>
                         <td style={{ padding: "1rem", fontSize: "0.8rem", color: "#64748b" }}>{getAptLabel(est.idApartamento) || '—'}</td>
                         <td style={tdRight}>
