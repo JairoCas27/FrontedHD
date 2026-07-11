@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react'
+﻿import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { FiGrid, FiHome, FiTruck, FiPlus, FiX, FiEye, FiTrash2, FiCheck, FiAlertCircle, FiTool, FiUsers, FiRefreshCw, FiPrinter, FiLogIn, FiLogOut, FiSearch, FiCalendar, FiNavigation2, FiClock, FiSettings, FiSave, FiEdit3, FiUser, FiUserPlus, FiChevronUp, FiChevronDown, FiFileText } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import {
@@ -133,10 +133,10 @@ export default function GlobalBienes() {
         </button>
         {pages.map((p, i) =>
           p === '...' ? <span key={`e${i}`} style={{ fontSize: "0.7rem", color: "#94a3b8" }}>...</span> :
-          <button key={p} onClick={() => setPage(p)}
-            style={{ padding: "0.3rem 0.6rem", borderRadius: "0.4rem", border: "none", backgroundColor: p === page ? colorSuper : "#f1f5f9", color: p === page ? "#fff" : "#64748b", fontSize: "0.7rem", fontWeight: 700, cursor: "pointer", minWidth: "28px" }}>
-            {p}
-          </button>
+            <button key={p} onClick={() => setPage(p)}
+              style={{ padding: "0.3rem 0.6rem", borderRadius: "0.4rem", border: "none", backgroundColor: p === page ? colorSuper : "#f1f5f9", color: p === page ? "#fff" : "#64748b", fontSize: "0.7rem", fontWeight: 700, cursor: "pointer", minWidth: "28px" }}>
+              {p}
+            </button>
         )}
         <button onClick={() => setPage(Math.min(total, page + 1))} disabled={page >= total}
           style={{ padding: "0.3rem 0.6rem", borderRadius: "0.4rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: page >= total ? "#cbd5e1" : "#475569", fontSize: "0.7rem", fontWeight: 600, cursor: page >= total ? "not-allowed" : "pointer" }}>
@@ -153,7 +153,7 @@ export default function GlobalBienes() {
   }
 
   useEffect(() => {
-    getCondominiums().then(d => setCondominios(extractItems(d))).catch(() => {})
+    getCondominiums().then(d => setCondominios(extractItems(d))).catch(() => { })
       .finally(() => setLoading(false))
   }, [])
 
@@ -779,86 +779,86 @@ export default function GlobalBienes() {
                     {saving ? 'Asignando...' : <><FiHome size={14} /> Asignar Departamento</>}
                   </button>
                 </form>
-              <div style={{ padding: "1.25rem" }}>
-                {parking.length === 0 ? (
-                  <div style={{ textAlign: "center", padding: "2rem", color: "#94a3b8", fontSize: "0.85rem" }}>No hay estacionamientos registrados</div>
-                ) : (
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem" }}>
-                    {parking.map(p => {
-                      const vehiclesInSpot = vehicles.filter(v => String(v.idEstacionamiento) === String(p.id))
-                      const pct = p.capacidadMaxima > 0 ? ((p.cantidadActual || 0) / p.capacidadMaxima) * 100 : 0
-                      return (
-                        <div key={p.id} style={{
-                          ...styles.card,                           border: `2px solid ${vehiclesInSpot.length === 0 ? "#10b981" : "#ef4444"}`,
-                          transition: "all 0.15s"
-                        }}>
-                          <div style={{ padding: "0.75rem" }}>
-                            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.3rem" }}>
-                              <div style={{ fontSize: "0.6rem", fontWeight: 700, color: vehiclesInSpot.length === 0 ? "#10b981" : "#ef4444", textTransform: "uppercase" }}>
-                                {vehiclesInSpot.length === 0 ? 'Disponible' : 'Ocupado'} · {p.tipoVehiculo || 'MIXTO'}
-                              </div>
-                              <div style={{ fontSize: "1rem", fontWeight: 800, color: "#0f172a" }}>#{p.numero || p.id}</div>
-                            </div>
-                            <div style={{ fontSize: "0.65rem", color: "#94a3b8", marginBottom: "0.3rem" }}>
-                              {p.cantidadActual ?? 0}/{p.capacidadMaxima || '∞'} vehículos
-                            </div>
-                            <ParkingMatrix spot={p} occupiedCount={vehiclesInSpot.length} />
-                            <div style={{ marginTop: "0.3rem" }}>
-                              <div style={{ width: "100%", height: "4px", backgroundColor: "#f1f5f9", borderRadius: "2px", overflow: "hidden" }}>
-                                <div style={{ width: `${Math.min(pct, 100)}%`, height: "100%", backgroundColor: pct >= 80 ? "#ef4444" : pct > 0 ? "#f59e0b" : "#10b981", borderRadius: "2px", transition: "width 0.3s" }} />
-                              </div>
-                            </div>
-                            {p.idApartamento && <div style={{ fontSize: "0.6rem", color: colorSuper, fontWeight: 600, marginTop: "0.3rem" }}>{aptLabel(p.idApartamento)}</div>}
-                          </div>
-
-                          {/* Vehicles occupying this spot */}
-                          {vehiclesInSpot.length > 0 && (
-                            <div style={{ borderTop: "1px solid #e2e8f0", backgroundColor: "#f8fafc", padding: "0.5rem 0.75rem" }}>
-                              <div style={{ fontSize: "0.6rem", fontWeight: 700, color: "#64748b", marginBottom: "0.3rem" }}>Vehículos:</div>
-                              {vehiclesInSpot.map(v => (
-                                <div key={v.id} style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.7rem", color: "#334155", marginBottom: "0.2rem" }}>
-                                  <span style={{
-                                    display: "inline-block", width: 8, height: 8, borderRadius: "50%",
-                                    backgroundColor: colorSwatch(v.color), border: "1px solid #e2e8f0"
-                                  }} />
-                                  <span style={{ fontWeight: 700, fontFamily: "monospace" }}>{v.placa}</span>
-                                  <span style={{ color: "#64748b" }}>{v.marca} {v.modelo}</span>
-                                  <button onClick={(e) => { e.stopPropagation(); handleUnassignVehicle(v) }}
-                                    style={{ marginLeft: "auto", background: "rgba(239,68,68,0.1)", border: "none", color: "#ef4444", cursor: "pointer", borderRadius: "0.3rem", padding: "0.1rem 0.35rem", fontSize: "0.6rem", fontWeight: 700, lineHeight: 1.2 }}>
-                                    <FiX size={10} />
-                                  </button>
+                <div style={{ padding: "1.25rem" }}>
+                  {parking.length === 0 ? (
+                    <div style={{ textAlign: "center", padding: "2rem", color: "#94a3b8", fontSize: "0.85rem" }}>No hay estacionamientos registrados</div>
+                  ) : (
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem" }}>
+                      {parking.map(p => {
+                        const vehiclesInSpot = vehicles.filter(v => String(v.idEstacionamiento) === String(p.id))
+                        const pct = p.capacidadMaxima > 0 ? ((p.cantidadActual || 0) / p.capacidadMaxima) * 100 : 0
+                        return (
+                          <div key={p.id} style={{
+                            ...styles.card, border: `2px solid ${vehiclesInSpot.length === 0 ? "#10b981" : "#ef4444"}`,
+                            transition: "all 0.15s"
+                          }}>
+                            <div style={{ padding: "0.75rem" }}>
+                              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.3rem" }}>
+                                <div style={{ fontSize: "0.6rem", fontWeight: 700, color: vehiclesInSpot.length === 0 ? "#10b981" : "#ef4444", textTransform: "uppercase" }}>
+                                  {vehiclesInSpot.length === 0 ? 'Disponible' : 'Ocupado'} · {p.tipoVehiculo || 'MIXTO'}
                                 </div>
-                              ))}
+                                <div style={{ fontSize: "1rem", fontWeight: 800, color: "#0f172a" }}>#{p.numero || p.id}</div>
+                              </div>
+                              <div style={{ fontSize: "0.65rem", color: "#94a3b8", marginBottom: "0.3rem" }}>
+                                {p.cantidadActual ?? 0}/{p.capacidadMaxima || '∞'} vehículos
+                              </div>
+                              <ParkingMatrix spot={p} occupiedCount={vehiclesInSpot.length} />
+                              <div style={{ marginTop: "0.3rem" }}>
+                                <div style={{ width: "100%", height: "4px", backgroundColor: "#f1f5f9", borderRadius: "2px", overflow: "hidden" }}>
+                                  <div style={{ width: `${Math.min(pct, 100)}%`, height: "100%", backgroundColor: pct >= 80 ? "#ef4444" : pct > 0 ? "#f59e0b" : "#10b981", borderRadius: "2px", transition: "width 0.3s" }} />
+                                </div>
+                              </div>
+                              {p.idApartamento && <div style={{ fontSize: "0.6rem", color: colorSuper, fontWeight: 600, marginTop: "0.3rem" }}>{aptLabel(p.idApartamento)}</div>}
                             </div>
-                          )}
-                          
-                          <div style={{ display: "flex", borderTop: "1px solid #f1f5f9" }}>
-                            <button onClick={(e) => { e.stopPropagation(); setConfigForm({ id: p.id, tipoVehiculo: p.tipoVehiculo || 'AUTO', capacidadMaxima: p.capacidadMaxima || 2 }); setShowModal('config') }}
-                              style={{ flex: 1, padding: "0.4rem", background: "none", border: "none", cursor: "pointer", color: "#3b82f6", fontSize: "0.65rem", borderRight: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.2rem" }}>
-                              <FiTool size={11} /> Config
-                            </button>
-                            <button onClick={(e) => { e.stopPropagation(); setDetailItem(p) }}
-                              style={{ flex: 1, padding: "0.4rem", background: "none", border: "none", cursor: "pointer", color: colorSuper, fontSize: "0.65rem", borderRight: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.2rem" }}>
-                              <FiEye size={11} /> Ver
-                            </button>
-                            {vehiclesInSpot.length < (p.capacidadMaxima ?? Infinity) && (
-                              <button onClick={(e) => { e.stopPropagation(); setAssignVehicleForm({ idEstacionamiento: p.id, idVehiculo: '' }); setShowModal('pickVehicle') }}
-                                style={{ flex: 1, padding: "0.4rem", background: "none", border: "none", cursor: "pointer", color: "#10b981", fontSize: "0.65rem", borderRight: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.2rem" }}>
-                                <FiUserPlus size={11} />
-                              </button>
+
+                            {/* Vehicles occupying this spot */}
+                            {vehiclesInSpot.length > 0 && (
+                              <div style={{ borderTop: "1px solid #e2e8f0", backgroundColor: "#f8fafc", padding: "0.5rem 0.75rem" }}>
+                                <div style={{ fontSize: "0.6rem", fontWeight: 700, color: "#64748b", marginBottom: "0.3rem" }}>Vehículos:</div>
+                                {vehiclesInSpot.map(v => (
+                                  <div key={v.id} style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.7rem", color: "#334155", marginBottom: "0.2rem" }}>
+                                    <span style={{
+                                      display: "inline-block", width: 8, height: 8, borderRadius: "50%",
+                                      backgroundColor: colorSwatch(v.color), border: "1px solid #e2e8f0"
+                                    }} />
+                                    <span style={{ fontWeight: 700, fontFamily: "monospace" }}>{v.placa}</span>
+                                    <span style={{ color: "#64748b" }}>{v.marca} {v.modelo}</span>
+                                    <button onClick={(e) => { e.stopPropagation(); handleUnassignVehicle(v) }}
+                                      style={{ marginLeft: "auto", background: "rgba(239,68,68,0.1)", border: "none", color: "#ef4444", cursor: "pointer", borderRadius: "0.3rem", padding: "0.1rem 0.35rem", fontSize: "0.6rem", fontWeight: 700, lineHeight: 1.2 }}>
+                                      <FiX size={10} />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
                             )}
-                            <button onClick={(e) => { e.stopPropagation(); setConfirmDelete({ id: p.id, tipo: 'ESTACIONAMIENTO' }) }}
-                              style={{ flex: 1, padding: "0.4rem", background: "none", border: "none", cursor: "pointer", color: "#ef4444", fontSize: "0.65rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.2rem" }}>
-                              <FiTrash2 size={11} />
-                            </button>
+
+                            <div style={{ display: "flex", borderTop: "1px solid #f1f5f9" }}>
+                              <button onClick={(e) => { e.stopPropagation(); setConfigForm({ id: p.id, tipoVehiculo: p.tipoVehiculo || 'AUTO', capacidadMaxima: p.capacidadMaxima || 2 }); setShowModal('config') }}
+                                style={{ flex: 1, padding: "0.4rem", background: "none", border: "none", cursor: "pointer", color: "#3b82f6", fontSize: "0.65rem", borderRight: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.2rem" }}>
+                                <FiTool size={11} /> Config
+                              </button>
+                              <button onClick={(e) => { e.stopPropagation(); setDetailItem(p) }}
+                                style={{ flex: 1, padding: "0.4rem", background: "none", border: "none", cursor: "pointer", color: colorSuper, fontSize: "0.65rem", borderRight: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.2rem" }}>
+                                <FiEye size={11} /> Ver
+                              </button>
+                              {vehiclesInSpot.length < (p.capacidadMaxima ?? Infinity) && (
+                                <button onClick={(e) => { e.stopPropagation(); setAssignVehicleForm({ idEstacionamiento: p.id, idVehiculo: '' }); setShowModal('pickVehicle') }}
+                                  style={{ flex: 1, padding: "0.4rem", background: "none", border: "none", cursor: "pointer", color: "#10b981", fontSize: "0.65rem", borderRight: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.2rem" }}>
+                                  <FiUserPlus size={11} />
+                                </button>
+                              )}
+                              <button onClick={(e) => { e.stopPropagation(); setConfirmDelete({ id: p.id, tipo: 'ESTACIONAMIENTO' }) }}
+                                style={{ flex: 1, padding: "0.4rem", background: "none", border: "none", cursor: "pointer", color: "#ef4444", fontSize: "0.65rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.2rem" }}>
+                                <FiTrash2 size={11} />
+                              </button>
+                            </div>
                           </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                )}
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
               </div>
-            </div>
             </div>
           )}
 
@@ -866,151 +866,151 @@ export default function GlobalBienes() {
           {activeTab === 'gestion' && (
             <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
-              <div style={styles.card}>
-                <div style={{ ...styles.cardHeader, cursor: "pointer" }} onClick={() => setEntryOpen(!entryOpen)}>
-                  <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "#0f172a", display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                    <FiLogIn size={14} color="#10b981" /> Registrar Entrada
-                  </span>
-                  <span style={{ color: entryOpen ? "#10b981" : "#94a3b8", fontWeight: 700, fontSize: "0.8rem", transition: "transform 0.2s", transform: entryOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
-                    {entryOpen ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
-                  </span>
-                </div>
-                {entryOpen && (
-                <form onSubmit={handleRegisterEntry} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.5rem" }}>
-                    <select style={{ ...styles.select, fontSize: "0.7rem" }} value={entryFilters.torre} onChange={e => setEntryFilters(f => ({ ...f, torre: e.target.value, piso: '', aptId: '' }))}>
-                      <option value="">Torre</option>
-                      {towers.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                    <select style={{ ...styles.select, fontSize: "0.7rem" }} value={entryFilters.piso} onChange={e => setEntryFilters(f => ({ ...f, piso: e.target.value, aptId: '' }))}>
-                      <option value="">Piso</option>
-                      {floors.map(f => <option key={f} value={f}>Piso {f}</option>)}
-                    </select>
-                    <select style={{ ...styles.select, fontSize: "0.7rem" }} value={entryFilters.aptId} onChange={e => {
-                      setEntryFilters(f => ({ ...f, aptId: e.target.value }))
-                      const apt = apartments.find(a => String(a.id) === e.target.value)
-                      if (apt) {
-                        if (apt.nombrePropietario) {
-                          setEntryForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: apt.nombrePropietario }))
-                        }
-                      } else {
-                        setEntryForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: '' }))
-                      }
-                    }}>
-                      <option value="">Departamento</option>
-                      {filteredApts.map(a => <option key={a.id} value={a.id}>N° {a.numero}</option>)}
-                    </select>
+                <div style={styles.card}>
+                  <div style={{ ...styles.cardHeader, cursor: "pointer" }} onClick={() => setEntryOpen(!entryOpen)}>
+                    <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "#0f172a", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                      <FiLogIn size={14} color="#10b981" /> Registrar Entrada
+                    </span>
+                    <span style={{ color: entryOpen ? "#10b981" : "#94a3b8", fontWeight: 700, fontSize: "0.8rem", transition: "transform 0.2s", transform: entryOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
+                      {entryOpen ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
+                    </span>
                   </div>
-                  {entryFilters.aptId && (() => {
-                    const apt = apartments.find(a => String(a.id) === entryFilters.aptId)
-                    if (!apt) return null
-                    const occupants = []
-                    if (apt.nombrePropietario) occupants.push({ label: `${apt.nombrePropietario} (Dueño)`, nombre: apt.nombrePropietario, tipo: 'PROPIETARIO', dni: '' })
-                    if (apt.inquilinos) apt.inquilinos.forEach(inq => occupants.push({ label: `${inq.nombres} ${inq.apellidos} (Inquilino)`, nombre: `${inq.nombres} ${inq.apellidos}`, tipo: 'INQUILINO', dni: inq.numeroDocumento }))
-                    return occupants.length > 0 ? (
-                      <select style={styles.select} value={entryForm.datosInquilino} onChange={e => {
-                        const sel = occupants.find(o => o.nombre === e.target.value)
-                        if (sel) setEntryForm(f => ({ ...f, ocupante: sel.tipo, datosInquilino: sel.nombre }))
-                      }}>
-                        <option value="">Seleccionar ocupante de N° {apt.numero}</option>
-                        {occupants.map(o => <option key={o.nombre} value={o.nombre}>{o.label}{o.dni ? ` — DNI: ${o.dni}` : ''}</option>)}
-                      </select>
-                    ) : (
-                      <div style={{ fontSize: "0.75rem", color: "#94a3b8", textAlign: "center", padding: "0.5rem" }}>Sin ocupantes registrados en N° {apt.numero}</div>
-                    )
-                  })()}
-                  <select style={styles.select} value={entryForm.placa} onChange={e => {
-                    const v = vehicles.find(x => x.placa === e.target.value)
-                    const owner = vehicleOwnerMap[v?.id]
-                    if (owner && !entryFilters.aptId) {
-                      setEntryForm(f => ({ ...f, placa: e.target.value, ocupante: owner.tipo, datosInquilino: owner.nombre }))
-                    } else {
-                      setEntryForm(f => ({ ...f, placa: e.target.value }))
-                    }
-                  }} required>
-                    <option value="">Seleccionar vehículo</option>
-                    {vehicles.filter(v => !v.idEstacionamiento).map(v => {
-                      const owner = vehicleOwnerMap[v.id]
-                      return <option key={v.id} value={v.placa}>{v.placa} — {v.marca} {v.modelo} ({v.tipo}){owner ? ` — ${owner.nombre}` : ''}</option>
-                    })}
-                  </select>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
-                    <select style={styles.select} value={entryForm.metodo} onChange={e => setEntryForm(f => ({ ...f, metodo: e.target.value }))}>
-                      <option value="OCR">OCR</option>
-                      <option value="MANUAL">Manual</option>
-                    </select>
-                    <select style={styles.select} value={entryForm.ocupante} onChange={e => setEntryForm(f => ({ ...f, ocupante: e.target.value }))}>
-                      <option value="PROPIETARIO">Propietario</option>
-                      <option value="INQUILINO">Inquilino</option>
-                    </select>
-                  </div>
-                  {entryForm.ocupante === 'INQUILINO' && (
-                    <input style={styles.input} placeholder="Nombre del inquilino" value={entryForm.datosInquilino} onChange={e => setEntryForm(f => ({ ...f, datosInquilino: e.target.value }))} />
-                  )}
-                  <select style={styles.select} value={entryForm.idEstacionamiento} onChange={e => setEntryForm(f => ({ ...f, idEstacionamiento: e.target.value }))}>
-                    <option value="">Estacionamiento (auto)</option>
-                    {parking.filter(p => (p.cantidadActual || 0) < p.capacidadMaxima).map(p => (
-                      <option key={p.id} value={p.id}>#{p.numero} ({p.tipoVehiculo}) — {p.cantidadActual || 0}/{p.capacidadMaxima}</option>
-                    ))}
-                  </select>
-                  {vehicles.length === 0 && <div style={{ fontSize: "0.75rem", color: "#ef4444" }}>No hay vehículos registrados en el sistema</div>}
-                  <button type="submit" disabled={saving || vehicles.length === 0} style={{ ...styles.btnSuccess, width: "100%", justifyContent: "center", padding: "0.6rem" }}>
-                    {saving ? 'Registrando...' : <><FiLogIn size={14} /> Registrar Entrada</>}
-                  </button>
-                </form>
-                )}
-              </div>
-
-              <div style={styles.card}>
-                <div style={{ ...styles.cardHeader, cursor: "pointer" }} onClick={() => setExitOpen(!exitOpen)}>
-                  <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "#0f172a", display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                    <FiLogOut size={14} color="#ef4444" /> Registrar Salida
-                  </span>
-                  <span style={{ color: exitOpen ? "#ef4444" : "#94a3b8", fontWeight: 700, fontSize: "0.8rem", transition: "transform 0.2s", transform: exitOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
-                    {exitOpen ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
-                  </span>
-                </div>
-                {exitOpen && (
-                <form onSubmit={handleRegisterExit} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                  <select style={styles.select} value={exitForm.idLogAcceso} onChange={e => setExitForm(f => ({ ...f, idLogAcceso: e.target.value }))} required>
-                    <option value="">Seleccionar vehículo dentro</option>
-                    {stats.activeEntries.map(l => (
-                      <option key={l.id} value={l.id}>
-                        {l.placa} — {l.ocupante} — Entrada: {formatDate(l.fechaEntrada)}
-                      </option>
-                    ))}
-                  </select>
-                  {(() => {
-                    const sel = stats.activeEntries.find(l => String(l.id) === exitForm.idLogAcceso)
-                    return sel ? (
-                      <div style={{ fontSize: "0.75rem", backgroundColor: "#fef2f2", padding: "0.75rem", borderRadius: "0.5rem", color: "#991b1b" }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.25rem" }}>
-                          <span><strong>Vehículo:</strong> {sel.placa}</span>
-                          <span><strong>Método:</strong> {sel.metodo}</span>
-                        </div>
-                        <div style={{ display: "flex", justifyContent: "space-between" }}>
-                          <span><strong>Ocupante:</strong> {sel.ocupante}</span>
-                          <span><strong>Entrada:</strong> {formatDate(sel.fechaEntrada)}</span>
-                        </div>
-                        <div style={{ marginTop: "0.25rem", fontSize: "0.65rem", color: "#dc2626" }}>
-                          <FiClock size={11} style={{ marginRight: "0.25rem" }} />
-                          Tiempo transcurrido: {sel.fechaEntrada ? (() => {
-                            const diff = Date.now() - new Date(sel.fechaEntrada).getTime()
-                            const h = Math.floor(diff / 3600000)
-                            const m = Math.floor((diff % 3600000) / 60000)
-                            return `${h}h ${m}m`
-                          })() : '—'}
-                        </div>
+                  {entryOpen && (
+                    <form onSubmit={handleRegisterEntry} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.5rem" }}>
+                        <select style={{ ...styles.select, fontSize: "0.7rem" }} value={entryFilters.torre} onChange={e => setEntryFilters(f => ({ ...f, torre: e.target.value, piso: '', aptId: '' }))}>
+                          <option value="">Torre</option>
+                          {towers.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                        <select style={{ ...styles.select, fontSize: "0.7rem" }} value={entryFilters.piso} onChange={e => setEntryFilters(f => ({ ...f, piso: e.target.value, aptId: '' }))}>
+                          <option value="">Piso</option>
+                          {floors.map(f => <option key={f} value={f}>Piso {f}</option>)}
+                        </select>
+                        <select style={{ ...styles.select, fontSize: "0.7rem" }} value={entryFilters.aptId} onChange={e => {
+                          setEntryFilters(f => ({ ...f, aptId: e.target.value }))
+                          const apt = apartments.find(a => String(a.id) === e.target.value)
+                          if (apt) {
+                            if (apt.nombrePropietario) {
+                              setEntryForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: apt.nombrePropietario }))
+                            }
+                          } else {
+                            setEntryForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: '' }))
+                          }
+                        }}>
+                          <option value="">Departamento</option>
+                          {filteredApts.map(a => <option key={a.id} value={a.id}>N° {a.numero}</option>)}
+                        </select>
                       </div>
-                    ) : null
-                  })()}
-                  {stats.activeEntries.length === 0 && <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>No hay vehículos dentro</div>}
-                  <button type="submit" disabled={saving || stats.activeEntries.length === 0} style={{ ...styles.btnDanger, width: "100%", justifyContent: "center", padding: "0.6rem" }}>
-                    {saving ? 'Registrando...' : <><FiLogOut size={14} /> Registrar Salida — {new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}</>}
-                  </button>
-                </form>
-                )}
-              </div>
+                      {entryFilters.aptId && (() => {
+                        const apt = apartments.find(a => String(a.id) === entryFilters.aptId)
+                        if (!apt) return null
+                        const occupants = []
+                        if (apt.nombrePropietario) occupants.push({ label: `${apt.nombrePropietario} (Dueño)`, nombre: apt.nombrePropietario, tipo: 'PROPIETARIO', dni: '' })
+                        if (apt.inquilinos) apt.inquilinos.forEach(inq => occupants.push({ label: `${inq.nombres} ${inq.apellidos} (Inquilino)`, nombre: `${inq.nombres} ${inq.apellidos}`, tipo: 'INQUILINO', dni: inq.numeroDocumento }))
+                        return occupants.length > 0 ? (
+                          <select style={styles.select} value={entryForm.datosInquilino} onChange={e => {
+                            const sel = occupants.find(o => o.nombre === e.target.value)
+                            if (sel) setEntryForm(f => ({ ...f, ocupante: sel.tipo, datosInquilino: sel.nombre }))
+                          }}>
+                            <option value="">Seleccionar ocupante de N° {apt.numero}</option>
+                            {occupants.map(o => <option key={o.nombre} value={o.nombre}>{o.label}{o.dni ? ` — DNI: ${o.dni}` : ''}</option>)}
+                          </select>
+                        ) : (
+                          <div style={{ fontSize: "0.75rem", color: "#94a3b8", textAlign: "center", padding: "0.5rem" }}>Sin ocupantes registrados en N° {apt.numero}</div>
+                        )
+                      })()}
+                      <select style={styles.select} value={entryForm.placa} onChange={e => {
+                        const v = vehicles.find(x => x.placa === e.target.value)
+                        const owner = vehicleOwnerMap[v?.id]
+                        if (owner && !entryFilters.aptId) {
+                          setEntryForm(f => ({ ...f, placa: e.target.value, ocupante: owner.tipo, datosInquilino: owner.nombre }))
+                        } else {
+                          setEntryForm(f => ({ ...f, placa: e.target.value }))
+                        }
+                      }} required>
+                        <option value="">Seleccionar vehículo</option>
+                        {vehicles.filter(v => !v.idEstacionamiento).map(v => {
+                          const owner = vehicleOwnerMap[v.id]
+                          return <option key={v.id} value={v.placa}>{v.placa} — {v.marca} {v.modelo} ({v.tipo}){owner ? ` — ${owner.nombre}` : ''}</option>
+                        })}
+                      </select>
+                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                        <select style={styles.select} value={entryForm.metodo} onChange={e => setEntryForm(f => ({ ...f, metodo: e.target.value }))}>
+                          <option value="OCR">OCR</option>
+                          <option value="MANUAL">Manual</option>
+                        </select>
+                        <select style={styles.select} value={entryForm.ocupante} onChange={e => setEntryForm(f => ({ ...f, ocupante: e.target.value }))}>
+                          <option value="PROPIETARIO">Propietario</option>
+                          <option value="INQUILINO">Inquilino</option>
+                        </select>
+                      </div>
+                      {entryForm.ocupante === 'INQUILINO' && (
+                        <input style={styles.input} placeholder="Nombre del inquilino" value={entryForm.datosInquilino} onChange={e => setEntryForm(f => ({ ...f, datosInquilino: e.target.value }))} />
+                      )}
+                      <select style={styles.select} value={entryForm.idEstacionamiento} onChange={e => setEntryForm(f => ({ ...f, idEstacionamiento: e.target.value }))}>
+                        <option value="">Estacionamiento (auto)</option>
+                        {parking.filter(p => (p.cantidadActual || 0) < p.capacidadMaxima).map(p => (
+                          <option key={p.id} value={p.id}>#{p.numero} ({p.tipoVehiculo}) — {p.cantidadActual || 0}/{p.capacidadMaxima}</option>
+                        ))}
+                      </select>
+                      {vehicles.length === 0 && <div style={{ fontSize: "0.75rem", color: "#ef4444" }}>No hay vehículos registrados en el sistema</div>}
+                      <button type="submit" disabled={saving || vehicles.length === 0} style={{ ...styles.btnSuccess, width: "100%", justifyContent: "center", padding: "0.6rem" }}>
+                        {saving ? 'Registrando...' : <><FiLogIn size={14} /> Registrar Entrada</>}
+                      </button>
+                    </form>
+                  )}
+                </div>
+
+                <div style={styles.card}>
+                  <div style={{ ...styles.cardHeader, cursor: "pointer" }} onClick={() => setExitOpen(!exitOpen)}>
+                    <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "#0f172a", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                      <FiLogOut size={14} color="#ef4444" /> Registrar Salida
+                    </span>
+                    <span style={{ color: exitOpen ? "#ef4444" : "#94a3b8", fontWeight: 700, fontSize: "0.8rem", transition: "transform 0.2s", transform: exitOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
+                      {exitOpen ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
+                    </span>
+                  </div>
+                  {exitOpen && (
+                    <form onSubmit={handleRegisterExit} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                      <select style={styles.select} value={exitForm.idLogAcceso} onChange={e => setExitForm(f => ({ ...f, idLogAcceso: e.target.value }))} required>
+                        <option value="">Seleccionar vehículo dentro</option>
+                        {stats.activeEntries.map(l => (
+                          <option key={l.id} value={l.id}>
+                            {l.placa} — {l.ocupante} — Entrada: {formatDate(l.fechaEntrada)}
+                          </option>
+                        ))}
+                      </select>
+                      {(() => {
+                        const sel = stats.activeEntries.find(l => String(l.id) === exitForm.idLogAcceso)
+                        return sel ? (
+                          <div style={{ fontSize: "0.75rem", backgroundColor: "#fef2f2", padding: "0.75rem", borderRadius: "0.5rem", color: "#991b1b" }}>
+                            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.25rem" }}>
+                              <span><strong>Vehículo:</strong> {sel.placa}</span>
+                              <span><strong>Método:</strong> {sel.metodo}</span>
+                            </div>
+                            <div style={{ display: "flex", justifyContent: "space-between" }}>
+                              <span><strong>Ocupante:</strong> {sel.ocupante}</span>
+                              <span><strong>Entrada:</strong> {formatDate(sel.fechaEntrada)}</span>
+                            </div>
+                            <div style={{ marginTop: "0.25rem", fontSize: "0.65rem", color: "#dc2626" }}>
+                              <FiClock size={11} style={{ marginRight: "0.25rem" }} />
+                              Tiempo transcurrido: {sel.fechaEntrada ? (() => {
+                                const diff = Date.now() - new Date(sel.fechaEntrada).getTime()
+                                const h = Math.floor(diff / 3600000)
+                                const m = Math.floor((diff % 3600000) / 60000)
+                                return `${h}h ${m}m`
+                              })() : '—'}
+                            </div>
+                          </div>
+                        ) : null
+                      })()}
+                      {stats.activeEntries.length === 0 && <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>No hay vehículos dentro</div>}
+                      <button type="submit" disabled={saving || stats.activeEntries.length === 0} style={{ ...styles.btnDanger, width: "100%", justifyContent: "center", padding: "0.6rem" }}>
+                        {saving ? 'Registrando...' : <><FiLogOut size={14} /> Registrar Salida — {new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}</>}
+                      </button>
+                    </form>
+                  )}
+                </div>
               </div>
 
               <div style={styles.card}>
@@ -1037,63 +1037,63 @@ export default function GlobalBienes() {
                   )
                   const paged = paginate(filtered, logPage)
                   return (<>
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
-                    <thead>
-                      <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: 700, fontSize: "0.65rem", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
-                        <th style={{ padding: "0.75rem 1rem" }}>#</th>
-                        <th style={{ padding: "0.75rem" }}>Ticket</th>
-                        <th style={{ padding: "0.75rem" }}>Placa</th>
-                        <th style={{ padding: "0.75rem" }}>Vehículo</th>
-                        <th style={{ padding: "0.75rem" }}>Estacionamiento</th>
-                        <th style={{ padding: "0.75rem" }}>Ocupante</th>
-                        <th style={{ padding: "0.75rem" }}>Nombre</th>
-                        <th style={{ padding: "0.75rem" }}>Entrada</th>
-                        <th style={{ padding: "0.75rem" }}>Salida</th>
-                        <th style={{ padding: "0.75rem" }}>Método</th>
-                        <th style={{ padding: "0.75rem" }}>Condominio</th>
-                        <th style={{ padding: "0.75rem 1rem", textAlign: "right" }}>Ticket</th>
-                      </tr>
-                    </thead>
-                    <tbody style={{ color: "#334155" }}>
-                      {paged.map((l, idx) => {
-                        const veh = vehicles.find(v => String(v.id) === String(l.idVehiculo))
-                        const spot = parking.find(p => String(p.id) === String(l.idEstacionamiento))
-                        const apt = spot ? apartments.find(a => String(a.id) === String(spot.idApartamento)) : null
-                        return (
-                          <tr key={l.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                            <td style={{ padding: "0.75rem 1rem", color: "#94a3b8", fontSize: "0.7rem" }}>{(logPage - 1) * PER_PAGE + idx + 1}</td>
-                            <td style={{ padding: "0.75rem", fontWeight: 700, fontFamily: "monospace", fontSize: "0.75rem", color: colorSuper }}>TKT-{l.id}</td>
-                            <td style={{ padding: "0.75rem", fontWeight: 700, color: "#0f172a", fontFamily: "monospace" }}>{l.placa}</td>
-                            <td style={{ padding: "0.75rem", fontSize: "0.78rem" }}>{veh ? `${veh.marca} ${veh.modelo} (${veh.color})` : '—'}</td>
-                            <td style={{ padding: "0.75rem", fontSize: "0.78rem" }}>#{spot?.numero || '—'}{apt ? ` — N°${apt.numero}` : ''}</td>
-                            <td style={{ padding: "0.75rem" }}>
-                              <span style={styles.badge(
-                                l.ocupante === 'PROPIETARIO' ? "rgba(16,185,129,0.1)" : l.ocupante === 'INQUILINO' ? "rgba(245,158,11,0.1)" : "rgba(59,130,246,0.1)",
-                                l.ocupante === 'PROPIETARIO' ? "#10b981" : l.ocupante === 'INQUILINO' ? "#f59e0b" : "#3b82f6"
-                              )}>{l.ocupante || '—'}</span>
-                            </td>
-                            <td style={{ padding: "0.75rem", fontSize: "0.78rem" }}>{l.datosInquilino || '—'}</td>
-                            <td style={{ padding: "0.75rem", fontSize: "0.75rem", color: "#64748b" }}>{formatDate(l.fechaEntrada)}</td>
-                            <td style={{ padding: "0.75rem", fontSize: "0.75rem", color: l.fechaSalida ? "#64748b" : "#10b981", fontWeight: l.fechaSalida ? 400 : 600 }}>
-                              {l.fechaSalida ? formatDate(l.fechaSalida) : <span style={{ color: "#10b981" }}>Dentro</span>}
-                            </td>
-                            <td style={{ padding: "0.75rem", fontSize: "0.7rem", color: "#64748b" }}>{l.metodo || '—'}</td>
-                            <td style={{ padding: "0.75rem", fontSize: "0.7rem", color: "#64748b" }}>{condo?.nombre || '—'}</td>
-                            <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
-                              <button onClick={() => openTicket(l)} style={{ background: "none", border: "none", cursor: "pointer", color: colorSuper }} title="Ver ticket">
-                                <FiEye size={15} />
-                              </button>
-                            </td>
+                    <div style={{ overflowX: "auto" }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+                        <thead>
+                          <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: 700, fontSize: "0.65rem", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
+                            <th style={{ padding: "0.75rem 1rem" }}>#</th>
+                            <th style={{ padding: "0.75rem" }}>Ticket</th>
+                            <th style={{ padding: "0.75rem" }}>Placa</th>
+                            <th style={{ padding: "0.75rem" }}>Vehículo</th>
+                            <th style={{ padding: "0.75rem" }}>Estacionamiento</th>
+                            <th style={{ padding: "0.75rem" }}>Ocupante</th>
+                            <th style={{ padding: "0.75rem" }}>Nombre</th>
+                            <th style={{ padding: "0.75rem" }}>Entrada</th>
+                            <th style={{ padding: "0.75rem" }}>Salida</th>
+                            <th style={{ padding: "0.75rem" }}>Método</th>
+                            <th style={{ padding: "0.75rem" }}>Condominio</th>
+                            <th style={{ padding: "0.75rem 1rem", textAlign: "right" }}>Ticket</th>
                           </tr>
-                        )
-                      })}
-                      {filtered.length === 0 && <tr><td colSpan={12} style={{ padding: "2rem", textAlign: "center", color: "#94a3b8" }}>Sin registros</td></tr>}
-                    </tbody>
-                  </table>
-                </div>
-                <Pagination arr={filtered} page={logPage} setPage={setLogPage} />
-                </>)
+                        </thead>
+                        <tbody style={{ color: "#334155" }}>
+                          {paged.map((l, idx) => {
+                            const veh = vehicles.find(v => String(v.id) === String(l.idVehiculo))
+                            const spot = parking.find(p => String(p.id) === String(l.idEstacionamiento))
+                            const apt = spot ? apartments.find(a => String(a.id) === String(spot.idApartamento)) : null
+                            return (
+                              <tr key={l.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                                <td style={{ padding: "0.75rem 1rem", color: "#94a3b8", fontSize: "0.7rem" }}>{(logPage - 1) * PER_PAGE + idx + 1}</td>
+                                <td style={{ padding: "0.75rem", fontWeight: 700, fontFamily: "monospace", fontSize: "0.75rem", color: colorSuper }}>TKT-{l.id}</td>
+                                <td style={{ padding: "0.75rem", fontWeight: 700, color: "#0f172a", fontFamily: "monospace" }}>{l.placa}</td>
+                                <td style={{ padding: "0.75rem", fontSize: "0.78rem" }}>{veh ? `${veh.marca} ${veh.modelo} (${veh.color})` : '—'}</td>
+                                <td style={{ padding: "0.75rem", fontSize: "0.78rem" }}>#{spot?.numero || '—'}{apt ? ` — N°${apt.numero}` : ''}</td>
+                                <td style={{ padding: "0.75rem" }}>
+                                  <span style={styles.badge(
+                                    l.ocupante === 'PROPIETARIO' ? "rgba(16,185,129,0.1)" : l.ocupante === 'INQUILINO' ? "rgba(245,158,11,0.1)" : "rgba(59,130,246,0.1)",
+                                    l.ocupante === 'PROPIETARIO' ? "#10b981" : l.ocupante === 'INQUILINO' ? "#f59e0b" : "#3b82f6"
+                                  )}>{l.ocupante || '—'}</span>
+                                </td>
+                                <td style={{ padding: "0.75rem", fontSize: "0.78rem" }}>{l.datosInquilino || '—'}</td>
+                                <td style={{ padding: "0.75rem", fontSize: "0.75rem", color: "#64748b" }}>{formatDate(l.fechaEntrada)}</td>
+                                <td style={{ padding: "0.75rem", fontSize: "0.75rem", color: l.fechaSalida ? "#64748b" : "#10b981", fontWeight: l.fechaSalida ? 400 : 600 }}>
+                                  {l.fechaSalida ? formatDate(l.fechaSalida) : <span style={{ color: "#10b981" }}>Dentro</span>}
+                                </td>
+                                <td style={{ padding: "0.75rem", fontSize: "0.7rem", color: "#64748b" }}>{l.metodo || '—'}</td>
+                                <td style={{ padding: "0.75rem", fontSize: "0.7rem", color: "#64748b" }}>{condo?.nombre || '—'}</td>
+                                <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
+                                  <button onClick={() => openTicket(l)} style={{ background: "none", border: "none", cursor: "pointer", color: colorSuper }} title="Ver ticket">
+                                    <FiEye size={15} />
+                                  </button>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                          {filtered.length === 0 && <tr><td colSpan={12} style={{ padding: "2rem", textAlign: "center", color: "#94a3b8" }}>Sin registros</td></tr>}
+                        </tbody>
+                      </table>
+                    </div>
+                    <Pagination arr={filtered} page={logPage} setPage={setLogPage} />
+                  </>)
                 })()}
               </div>
             </div>
@@ -1112,124 +1112,124 @@ export default function GlobalBienes() {
                   </span>
                 </div>
                 {reserveOpen && (
-                <form onSubmit={async (e) => {
-                  e.preventDefault()
-                  if (!reserveForm.placa) return showToast('Selecciona un vehículo', 'error')
-                  if (!reserveForm.idEstacionamiento) return showToast('Selecciona un estacionamiento', 'error')
-                  setSaving(true)
-                  try {
-                    const selected = vehicles.find(v => v.placa === reserveForm.placa)
-                    const owner = vehicleOwnerMap[selected?.id]
-                    const result = await registerVehicleEntry({
-                      placa: reserveForm.placa, metodo: reserveForm.metodo,
-                      ocupante: reserveForm.ocupante,
-                      datosInquilino: reserveForm.ocupante === 'INQUILINO' ? (reserveForm.datosInquilino || owner?.nombre || '') : null,
-                      idEstacionamiento: parseInt(reserveForm.idEstacionamiento)
-                    }, condoId)
-                    if (result?.id) setReservations(prev => {
-                      const filtered = prev.filter(r => r.id !== result.id)
-                      return [...filtered, { id: result.id, horas: reserveForm.horas }]
-                    })
-                    showToast(`Reservado por ${reserveForm.horas}h`)
-                    setReserveForm({ placa: '', metodo: 'MANUAL', ocupante: 'PROPIETARIO', datosInquilino: '', idEstacionamiento: '', horas: 1 })
-                    setReserveFilters({ torre: '', piso: '', aptId: '' })
-                    loadData(condoId)
-                  } catch (e) { showToast('Error: ' + e.message, 'error') }
-                  finally { setSaving(false) }
-                }} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                  <div style={{ fontSize: "0.7rem", color: "#64748b" }}>Asigna un estacionamiento a un vehículo por tiempo limitado. Se registrará la entrada y se liberará automáticamente al vencer.</div>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.5rem" }}>
-                    <select style={{ ...styles.select, fontSize: "0.7rem" }} value={reserveFilters.torre} onChange={e => setReserveFilters(f => ({ ...f, torre: e.target.value, piso: '', aptId: '' }))}>
-                      <option value="">Torre</option>
-                      {towers.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                    <select style={{ ...styles.select, fontSize: "0.7rem" }} value={reserveFilters.piso} onChange={e => setReserveFilters(f => ({ ...f, piso: e.target.value, aptId: '' }))}>
-                      <option value="">Piso</option>
-                      {floors.map(f => <option key={f} value={f}>Piso {f}</option>)}
-                    </select>
-                    <select style={{ ...styles.select, fontSize: "0.7rem" }} value={reserveFilters.aptId} onChange={e => {
-                      setReserveFilters(f => ({ ...f, aptId: e.target.value }))
-                      const apt = apartments.find(a => String(a.id) === e.target.value)
-                      if (apt) {
-                        if (apt.nombrePropietario) {
-                          setReserveForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: apt.nombrePropietario }))
-                        }
-                      } else {
-                        setReserveForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: '' }))
-                      }
-                    }}>
-                      <option value="">Departamento</option>
-                      {apartments.filter(a =>
-                        (!reserveFilters.torre || a.torreNombre === reserveFilters.torre) &&
-                        (!reserveFilters.piso || String(a.pisoNumero) === reserveFilters.piso)
-                      ).map(a => <option key={a.id} value={a.id}>N° {a.numero}</option>)}
-                    </select>
-                  </div>
-                  {reserveFilters.aptId && (() => {
-                    const apt = apartments.find(a => String(a.id) === reserveFilters.aptId)
-                    if (!apt) return null
-                    const occupants = []
-                    if (apt.nombrePropietario) occupants.push({ label: `${apt.nombrePropietario} (Dueño)`, nombre: apt.nombrePropietario, tipo: 'PROPIETARIO', dni: '' })
-                    if (apt.inquilinos) apt.inquilinos.forEach(inq => occupants.push({ label: `${inq.nombres} ${inq.apellidos} (Inquilino)`, nombre: `${inq.nombres} ${inq.apellidos}`, tipo: 'INQUILINO', dni: inq.numeroDocumento }))
-                    return occupants.length > 0 ? (
-                      <select style={styles.select} value={reserveForm.datosInquilino} onChange={e => {
-                        const sel = occupants.find(o => o.nombre === e.target.value)
-                        if (sel) setReserveForm(f => ({ ...f, ocupante: sel.tipo, datosInquilino: sel.nombre }))
-                      }}>
-                        <option value="">Seleccionar ocupante de N° {apt.numero}</option>
-                        {occupants.map(o => <option key={o.nombre} value={o.nombre}>{o.label}{o.dni ? ` — DNI: ${o.dni}` : ''}</option>)}
+                  <form onSubmit={async (e) => {
+                    e.preventDefault()
+                    if (!reserveForm.placa) return showToast('Selecciona un vehículo', 'error')
+                    if (!reserveForm.idEstacionamiento) return showToast('Selecciona un estacionamiento', 'error')
+                    setSaving(true)
+                    try {
+                      const selected = vehicles.find(v => v.placa === reserveForm.placa)
+                      const owner = vehicleOwnerMap[selected?.id]
+                      const result = await registerVehicleEntry({
+                        placa: reserveForm.placa, metodo: reserveForm.metodo,
+                        ocupante: reserveForm.ocupante,
+                        datosInquilino: reserveForm.ocupante === 'INQUILINO' ? (reserveForm.datosInquilino || owner?.nombre || '') : null,
+                        idEstacionamiento: parseInt(reserveForm.idEstacionamiento)
+                      }, condoId)
+                      if (result?.id) setReservations(prev => {
+                        const filtered = prev.filter(r => r.id !== result.id)
+                        return [...filtered, { id: result.id, horas: reserveForm.horas }]
+                      })
+                      showToast(`Reservado por ${reserveForm.horas}h`)
+                      setReserveForm({ placa: '', metodo: 'MANUAL', ocupante: 'PROPIETARIO', datosInquilino: '', idEstacionamiento: '', horas: 1 })
+                      setReserveFilters({ torre: '', piso: '', aptId: '' })
+                      loadData(condoId)
+                    } catch (e) { showToast('Error: ' + e.message, 'error') }
+                    finally { setSaving(false) }
+                  }} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                    <div style={{ fontSize: "0.7rem", color: "#64748b" }}>Asigna un estacionamiento a un vehículo por tiempo limitado. Se registrará la entrada y se liberará automáticamente al vencer.</div>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.5rem" }}>
+                      <select style={{ ...styles.select, fontSize: "0.7rem" }} value={reserveFilters.torre} onChange={e => setReserveFilters(f => ({ ...f, torre: e.target.value, piso: '', aptId: '' }))}>
+                        <option value="">Torre</option>
+                        {towers.map(t => <option key={t} value={t}>{t}</option>)}
                       </select>
-                    ) : (
-                      <div style={{ fontSize: "0.75rem", color: "#94a3b8", textAlign: "center", padding: "0.5rem" }}>Sin ocupantes registrados en N° {apt.numero}</div>
-                    )
-                  })()}
-                  <select style={styles.select} value={reserveForm.placa} onChange={e => {
-                    const v = vehicles.find(x => x.placa === e.target.value)
-                    const owner = vehicleOwnerMap[v?.id]
-                    if (owner && !reserveFilters.aptId) {
-                      setReserveForm(f => ({ ...f, placa: e.target.value, ocupante: owner.tipo, datosInquilino: owner.nombre }))
-                    } else {
-                      setReserveForm(f => ({ ...f, placa: e.target.value }))
-                    }
-                  }} required>
-                    <option value="">Seleccionar vehículo</option>
-                    {vehicles.filter(v => !v.idEstacionamiento).map(v => {
-                      const owner = vehicleOwnerMap[v.id]
-                      return <option key={v.id} value={v.placa}>{v.placa} — {v.marca} {v.modelo} ({v.tipo}){owner ? ` — ${owner.nombre}` : ''}</option>
-                    })}
-                  </select>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
-                    <select style={styles.select} value={reserveForm.metodo} onChange={e => setReserveForm(f => ({ ...f, metodo: e.target.value }))}>
-                      <option value="OCR">OCR</option>
-                      <option value="MANUAL">Manual</option>
+                      <select style={{ ...styles.select, fontSize: "0.7rem" }} value={reserveFilters.piso} onChange={e => setReserveFilters(f => ({ ...f, piso: e.target.value, aptId: '' }))}>
+                        <option value="">Piso</option>
+                        {floors.map(f => <option key={f} value={f}>Piso {f}</option>)}
+                      </select>
+                      <select style={{ ...styles.select, fontSize: "0.7rem" }} value={reserveFilters.aptId} onChange={e => {
+                        setReserveFilters(f => ({ ...f, aptId: e.target.value }))
+                        const apt = apartments.find(a => String(a.id) === e.target.value)
+                        if (apt) {
+                          if (apt.nombrePropietario) {
+                            setReserveForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: apt.nombrePropietario }))
+                          }
+                        } else {
+                          setReserveForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: '' }))
+                        }
+                      }}>
+                        <option value="">Departamento</option>
+                        {apartments.filter(a =>
+                          (!reserveFilters.torre || a.torreNombre === reserveFilters.torre) &&
+                          (!reserveFilters.piso || String(a.pisoNumero) === reserveFilters.piso)
+                        ).map(a => <option key={a.id} value={a.id}>N° {a.numero}</option>)}
+                      </select>
+                    </div>
+                    {reserveFilters.aptId && (() => {
+                      const apt = apartments.find(a => String(a.id) === reserveFilters.aptId)
+                      if (!apt) return null
+                      const occupants = []
+                      if (apt.nombrePropietario) occupants.push({ label: `${apt.nombrePropietario} (Dueño)`, nombre: apt.nombrePropietario, tipo: 'PROPIETARIO', dni: '' })
+                      if (apt.inquilinos) apt.inquilinos.forEach(inq => occupants.push({ label: `${inq.nombres} ${inq.apellidos} (Inquilino)`, nombre: `${inq.nombres} ${inq.apellidos}`, tipo: 'INQUILINO', dni: inq.numeroDocumento }))
+                      return occupants.length > 0 ? (
+                        <select style={styles.select} value={reserveForm.datosInquilino} onChange={e => {
+                          const sel = occupants.find(o => o.nombre === e.target.value)
+                          if (sel) setReserveForm(f => ({ ...f, ocupante: sel.tipo, datosInquilino: sel.nombre }))
+                        }}>
+                          <option value="">Seleccionar ocupante de N° {apt.numero}</option>
+                          {occupants.map(o => <option key={o.nombre} value={o.nombre}>{o.label}{o.dni ? ` — DNI: ${o.dni}` : ''}</option>)}
+                        </select>
+                      ) : (
+                        <div style={{ fontSize: "0.75rem", color: "#94a3b8", textAlign: "center", padding: "0.5rem" }}>Sin ocupantes registrados en N° {apt.numero}</div>
+                      )
+                    })()}
+                    <select style={styles.select} value={reserveForm.placa} onChange={e => {
+                      const v = vehicles.find(x => x.placa === e.target.value)
+                      const owner = vehicleOwnerMap[v?.id]
+                      if (owner && !reserveFilters.aptId) {
+                        setReserveForm(f => ({ ...f, placa: e.target.value, ocupante: owner.tipo, datosInquilino: owner.nombre }))
+                      } else {
+                        setReserveForm(f => ({ ...f, placa: e.target.value }))
+                      }
+                    }} required>
+                      <option value="">Seleccionar vehículo</option>
+                      {vehicles.filter(v => !v.idEstacionamiento).map(v => {
+                        const owner = vehicleOwnerMap[v.id]
+                        return <option key={v.id} value={v.placa}>{v.placa} — {v.marca} {v.modelo} ({v.tipo}){owner ? ` — ${owner.nombre}` : ''}</option>
+                      })}
                     </select>
-                    <select style={styles.select} value={reserveForm.ocupante} onChange={e => setReserveForm(f => ({ ...f, ocupante: e.target.value }))}>
-                      <option value="PROPIETARIO">Propietario</option>
-                      <option value="INQUILINO">Inquilino</option>
-                    </select>
-                  </div>
-                  {reserveForm.ocupante === 'INQUILINO' && (
-                    <input style={styles.input} placeholder="Nombre del inquilino" value={reserveForm.datosInquilino} onChange={e => setReserveForm(f => ({ ...f, datosInquilino: e.target.value }))} />
-                  )}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
-                    <select style={styles.select} value={reserveForm.idEstacionamiento} onChange={e => setReserveForm(f => ({ ...f, idEstacionamiento: e.target.value }))} required>
-                      <option value="">Estacionamiento</option>
-                      {parking.filter(p => (p.cantidadActual || 0) < (p.capacidadMaxima ?? 1)).map(p => (
-                        <option key={p.id} value={p.id}>#{p.numero || p.id} — {p.tipoVehiculo || 'Mixto'} ({(p.capacidadMaxima || 1) - (p.cantidadActual || 0)} libres)</option>
-                      ))}
-                    </select>
-                    <select style={styles.select} value={reserveForm.horas} onChange={e => setReserveForm(f => ({ ...f, horas: Number(e.target.value) }))}>
-                      {[1, 2, 3, 4, 6, 8, 12, 24].map(h => <option key={h} value={h}>{h}h</option>)}
-                    </select>
-                  </div>
-                  <div style={{ fontSize: "0.7rem", color: "#94a3b8" }}>
-                    <FiClock size={11} style={{ marginRight: "0.25rem" }} />
-                    Expira aprox. {new Date(Date.now() + reserveForm.horas * 3600000).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}
-                  </div>
-                  <button type="submit" disabled={saving || vehicles.length === 0} style={{ ...styles.btnWarning, width: "100%", justifyContent: "center", padding: "0.6rem" }}>
-                    {saving ? '...' : <><FiClock size={14} /> Reservar por {reserveForm.horas}h</>}
-                  </button>
-                </form>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                      <select style={styles.select} value={reserveForm.metodo} onChange={e => setReserveForm(f => ({ ...f, metodo: e.target.value }))}>
+                        <option value="OCR">OCR</option>
+                        <option value="MANUAL">Manual</option>
+                      </select>
+                      <select style={styles.select} value={reserveForm.ocupante} onChange={e => setReserveForm(f => ({ ...f, ocupante: e.target.value }))}>
+                        <option value="PROPIETARIO">Propietario</option>
+                        <option value="INQUILINO">Inquilino</option>
+                      </select>
+                    </div>
+                    {reserveForm.ocupante === 'INQUILINO' && (
+                      <input style={styles.input} placeholder="Nombre del inquilino" value={reserveForm.datosInquilino} onChange={e => setReserveForm(f => ({ ...f, datosInquilino: e.target.value }))} />
+                    )}
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                      <select style={styles.select} value={reserveForm.idEstacionamiento} onChange={e => setReserveForm(f => ({ ...f, idEstacionamiento: e.target.value }))} required>
+                        <option value="">Estacionamiento</option>
+                        {parking.filter(p => (p.cantidadActual || 0) < (p.capacidadMaxima ?? 1)).map(p => (
+                          <option key={p.id} value={p.id}>#{p.numero || p.id} — {p.tipoVehiculo || 'Mixto'} ({(p.capacidadMaxima || 1) - (p.cantidadActual || 0)} libres)</option>
+                        ))}
+                      </select>
+                      <select style={styles.select} value={reserveForm.horas} onChange={e => setReserveForm(f => ({ ...f, horas: Number(e.target.value) }))}>
+                        {[1, 2, 3, 4, 6, 8, 12, 24].map(h => <option key={h} value={h}>{h}h</option>)}
+                      </select>
+                    </div>
+                    <div style={{ fontSize: "0.7rem", color: "#94a3b8" }}>
+                      <FiClock size={11} style={{ marginRight: "0.25rem" }} />
+                      Expira aprox. {new Date(Date.now() + reserveForm.horas * 3600000).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                    <button type="submit" disabled={saving || vehicles.length === 0} style={{ ...styles.btnWarning, width: "100%", justifyContent: "center", padding: "0.6rem" }}>
+                      {saving ? '...' : <><FiClock size={14} /> Reservar por {reserveForm.horas}h</>}
+                    </button>
+                  </form>
                 )}
               </div>
 
@@ -1253,61 +1253,61 @@ export default function GlobalBienes() {
                   )
                   const paged = paginate(reservasFiltradas, reservaPage)
                   return (<>
-                  <div style={{ overflowX: "auto" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
-                      <thead>
-                        <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: 700, fontSize: "0.65rem", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
-                          <th style={{ padding: "0.75rem 1rem" }}>Ticket</th>
-                          <th style={{ padding: "0.75rem" }}>Placa</th>
-                          <th style={{ padding: "0.75rem" }}>Vehículo</th>
-                          <th style={{ padding: "0.75rem" }}>Estacionamiento</th>
-                          <th style={{ padding: "0.75rem" }}>Ocupante</th>
-                          <th style={{ padding: "0.75rem" }}>Duración</th>
-                          <th style={{ padding: "0.75rem" }}>Entrada</th>
-                          <th style={{ padding: "0.75rem" }}>Expira</th>
-                          <th style={{ padding: "0.75rem" }}>Salida</th>
-                          <th style={{ padding: "0.75rem" }}>Método</th>
-                          <th style={{ padding: "0.75rem" }}>Ticket</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {paged.map(l => {
-                          const veh = vehicles.find(v => String(v.id) === String(l.idVehiculo))
-                          const spot = parking.find(p => String(p.id) === String(l.idEstacionamiento))
-                          const apt = spot ? apartments.find(a => String(a.id) === String(spot.idApartamento)) : null
-                          const res = reservations.find(r => r.id === l.id)
-                          const horas = res?.horas || 1
-                          const expira = l.fechaEntrada ? new Date(new Date(l.fechaEntrada).getTime() + horas * 3600000) : null
-                          return (
-                            <tr key={l.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                              <td style={{ padding: "0.6rem 1rem", fontWeight: 700, fontFamily: "monospace", fontSize: "0.75rem" }}>TKT-{l.id}</td>
-                              <td style={{ padding: "0.6rem", fontWeight: 700, fontFamily: "monospace" }}>{l.placa}</td>
-                              <td style={{ padding: "0.6rem" }}>{veh ? `${veh.marca} ${veh.modelo}` : '—'}</td>
-                              <td style={{ padding: "0.6rem" }}>#{spot?.numero || '—'}{apt ? ` (N° ${apt.numero})` : ''}</td>
-                              <td style={{ padding: "0.6rem" }}>{l.ocupante || '—'}</td>
-                              <td style={{ padding: "0.6rem", fontWeight: 700, color: "#f59e0b" }}>{horas}h</td>
-                              <td style={{ padding: "0.6rem", fontSize: "0.75rem" }}>{formatDate(l.fechaEntrada)}</td>
-                              <td style={{ padding: "0.6rem", fontSize: "0.75rem" }}>
-                                {l.fechaSalida ? '—' : expira ? (
-                                  <span style={Date.now() > expira.getTime() ? { color: '#ef4444', fontWeight: 600 } : { color: '#10b981', fontWeight: 600 }}>
-                                    {formatDate(expira.toISOString())}{Date.now() > expira.getTime() ? ' (Vencido)' : ''}
-                                  </span>
-                                ) : '—'}
-                              </td>
-                              <td style={{ padding: "0.6rem", fontSize: "0.75rem" }}>{l.fechaSalida ? formatDate(l.fechaSalida) : <span style={{ color: "#f59e0b", fontWeight: 600 }}>En curso</span>}</td>
-                              <td style={{ padding: "0.6rem" }}>{l.metodo || '—'}</td>
-                              <td style={{ padding: "0.6rem" }}>
-                                <button onClick={() => openTicket(l)} style={{ background: "none", border: "none", cursor: "pointer", color: colorSuper, fontSize: "0.7rem", fontWeight: 600 }}>
-                                  Ver
-                                </button>
-                              </td>
-                            </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                  <Pagination arr={reservasFiltradas} page={reservaPage} setPage={setReservaPage} />
+                    <div style={{ overflowX: "auto" }}>
+                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+                        <thead>
+                          <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: 700, fontSize: "0.65rem", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
+                            <th style={{ padding: "0.75rem 1rem" }}>Ticket</th>
+                            <th style={{ padding: "0.75rem" }}>Placa</th>
+                            <th style={{ padding: "0.75rem" }}>Vehículo</th>
+                            <th style={{ padding: "0.75rem" }}>Estacionamiento</th>
+                            <th style={{ padding: "0.75rem" }}>Ocupante</th>
+                            <th style={{ padding: "0.75rem" }}>Duración</th>
+                            <th style={{ padding: "0.75rem" }}>Entrada</th>
+                            <th style={{ padding: "0.75rem" }}>Expira</th>
+                            <th style={{ padding: "0.75rem" }}>Salida</th>
+                            <th style={{ padding: "0.75rem" }}>Método</th>
+                            <th style={{ padding: "0.75rem" }}>Ticket</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {paged.map(l => {
+                            const veh = vehicles.find(v => String(v.id) === String(l.idVehiculo))
+                            const spot = parking.find(p => String(p.id) === String(l.idEstacionamiento))
+                            const apt = spot ? apartments.find(a => String(a.id) === String(spot.idApartamento)) : null
+                            const res = reservations.find(r => r.id === l.id)
+                            const horas = res?.horas || 1
+                            const expira = l.fechaEntrada ? new Date(new Date(l.fechaEntrada).getTime() + horas * 3600000) : null
+                            return (
+                              <tr key={l.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                                <td style={{ padding: "0.6rem 1rem", fontWeight: 700, fontFamily: "monospace", fontSize: "0.75rem" }}>TKT-{l.id}</td>
+                                <td style={{ padding: "0.6rem", fontWeight: 700, fontFamily: "monospace" }}>{l.placa}</td>
+                                <td style={{ padding: "0.6rem" }}>{veh ? `${veh.marca} ${veh.modelo}` : '—'}</td>
+                                <td style={{ padding: "0.6rem" }}>#{spot?.numero || '—'}{apt ? ` (N° ${apt.numero})` : ''}</td>
+                                <td style={{ padding: "0.6rem" }}>{l.ocupante || '—'}</td>
+                                <td style={{ padding: "0.6rem", fontWeight: 700, color: "#f59e0b" }}>{horas}h</td>
+                                <td style={{ padding: "0.6rem", fontSize: "0.75rem" }}>{formatDate(l.fechaEntrada)}</td>
+                                <td style={{ padding: "0.6rem", fontSize: "0.75rem" }}>
+                                  {l.fechaSalida ? '—' : expira ? (
+                                    <span style={Date.now() > expira.getTime() ? { color: '#ef4444', fontWeight: 600 } : { color: '#10b981', fontWeight: 600 }}>
+                                      {formatDate(expira.toISOString())}{Date.now() > expira.getTime() ? ' (Vencido)' : ''}
+                                    </span>
+                                  ) : '—'}
+                                </td>
+                                <td style={{ padding: "0.6rem", fontSize: "0.75rem" }}>{l.fechaSalida ? formatDate(l.fechaSalida) : <span style={{ color: "#f59e0b", fontWeight: 600 }}>En curso</span>}</td>
+                                <td style={{ padding: "0.6rem" }}>{l.metodo || '—'}</td>
+                                <td style={{ padding: "0.6rem" }}>
+                                  <button onClick={() => openTicket(l)} style={{ background: "none", border: "none", cursor: "pointer", color: colorSuper, fontSize: "0.7rem", fontWeight: 600 }}>
+                                    Ver
+                                  </button>
+                                </td>
+                              </tr>
+                            )
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                    <Pagination arr={reservasFiltradas} page={reservaPage} setPage={setReservaPage} />
                   </>)
                 })()}
               </div>
@@ -1346,52 +1346,52 @@ export default function GlobalBienes() {
                 )
                 const paged = paginate(filtered, vehiclePage)
                 return (<>
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
-                    <thead>
-                      <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: 700, fontSize: "0.65rem", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
-                        <th style={{ padding: "0.75rem 1rem" }}>Placa</th>
-                        <th style={{ padding: "0.75rem" }}>Marca</th>
-                        <th style={{ padding: "0.75rem" }}>Modelo</th>
-                        <th style={{ padding: "0.75rem" }}>Color</th>
-                        <th style={{ padding: "0.75rem" }}>Tipo</th>
-                        <th style={{ padding: "0.75rem" }}>Estacionamiento</th>
-                        <th style={{ padding: "0.75rem 1rem", textAlign: "right" }}>Acción</th>
-                      </tr>
-                    </thead>
-                    <tbody style={{ color: "#334155" }}>
-                      {paged.map(v => {
-                        const spot = parking.find(p => String(p.id) === String(v.idEstacionamiento))
-                        return (
-                          <tr key={v.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                            <td style={{ padding: "0.75rem 1rem", fontWeight: 700, color: "#0f172a", fontFamily: "monospace" }}>{v.placa}</td>
-                            <td style={{ padding: "0.75rem" }}>{v.marca}</td>
-                            <td style={{ padding: "0.75rem" }}>{v.modelo}</td>
-                            <td style={{ padding: "0.75rem" }}>
-                              <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
-                                <span style={{ display: "inline-block", width: 14, height: 14, borderRadius: "50%", backgroundColor: colorSwatch(v.color), border: "1px solid #e2e8f0", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }} />
-                                {v.color}
-                              </span>
-                            </td>
-                            <td style={{ padding: "0.75rem" }}>
-                              <span style={styles.badge(v.tipo === 'AUTO' ? "rgba(124,58,237,0.1)" : "rgba(139,92,246,0.1)", v.tipo === 'AUTO' ? colorSuper : "#8b5cf6")}>{v.tipo}</span>
-                            </td>
-                            <td style={{ padding: "0.75rem", color: "#64748b" }}>{spot ? `#${spot.numero || spot.id}` : '—'}</td>
-                            <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
-                              <div style={{ display: "flex", gap: "0.3rem", justifyContent: "flex-end" }}>
-                                <button onClick={() => handleDeleteVehicle(v.id)}
-                                  style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "none", padding: "0.3rem 0.55rem", borderRadius: "0.4rem", fontSize: "0.7rem", fontWeight: 700, cursor: "pointer" }}>
-                                  <FiTrash2 size={13} />
-                                </button>
-                              </div>
-                            </td>
-                          </tr>
-                        )
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-                <Pagination arr={filtered} page={vehiclePage} setPage={setVehiclePage} />
+                  <div style={{ overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+                      <thead>
+                        <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: 700, fontSize: "0.65rem", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
+                          <th style={{ padding: "0.75rem 1rem" }}>Placa</th>
+                          <th style={{ padding: "0.75rem" }}>Marca</th>
+                          <th style={{ padding: "0.75rem" }}>Modelo</th>
+                          <th style={{ padding: "0.75rem" }}>Color</th>
+                          <th style={{ padding: "0.75rem" }}>Tipo</th>
+                          <th style={{ padding: "0.75rem" }}>Estacionamiento</th>
+                          <th style={{ padding: "0.75rem 1rem", textAlign: "right" }}>Acción</th>
+                        </tr>
+                      </thead>
+                      <tbody style={{ color: "#334155" }}>
+                        {paged.map(v => {
+                          const spot = parking.find(p => String(p.id) === String(v.idEstacionamiento))
+                          return (
+                            <tr key={v.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                              <td style={{ padding: "0.75rem 1rem", fontWeight: 700, color: "#0f172a", fontFamily: "monospace" }}>{v.placa}</td>
+                              <td style={{ padding: "0.75rem" }}>{v.marca}</td>
+                              <td style={{ padding: "0.75rem" }}>{v.modelo}</td>
+                              <td style={{ padding: "0.75rem" }}>
+                                <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                                  <span style={{ display: "inline-block", width: 14, height: 14, borderRadius: "50%", backgroundColor: colorSwatch(v.color), border: "1px solid #e2e8f0", boxShadow: "0 1px 2px rgba(0,0,0,0.05)" }} />
+                                  {v.color}
+                                </span>
+                              </td>
+                              <td style={{ padding: "0.75rem" }}>
+                                <span style={styles.badge(v.tipo === 'AUTO' ? "rgba(124,58,237,0.1)" : "rgba(139,92,246,0.1)", v.tipo === 'AUTO' ? colorSuper : "#8b5cf6")}>{v.tipo}</span>
+                              </td>
+                              <td style={{ padding: "0.75rem", color: "#64748b" }}>{spot ? `#${spot.numero || spot.id}` : '—'}</td>
+                              <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
+                                <div style={{ display: "flex", gap: "0.3rem", justifyContent: "flex-end" }}>
+                                  <button onClick={() => handleDeleteVehicle(v.id)}
+                                    style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "none", padding: "0.3rem 0.55rem", borderRadius: "0.4rem", fontSize: "0.7rem", fontWeight: 700, cursor: "pointer" }}>
+                                    <FiTrash2 size={13} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          )
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                  <Pagination arr={filtered} page={vehiclePage} setPage={setVehiclePage} />
                 </>)
               })()}
             </div>
@@ -1399,165 +1399,165 @@ export default function GlobalBienes() {
 
           {/* ===== CARRITOS ===== */}
           {activeTab === 'carritos' && (<>
+            <div style={styles.card}>
+              <div style={styles.cardHeader}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <FiTruck size={16} color={colorSuper} />
+                  <span style={{ fontWeight: 800, fontSize: "0.9rem", color: "#0f172a" }}>Carritos</span>
+                  <span style={{ fontSize: "0.7rem", color: "#94a3b8" }}>({stats.totalCarts})</span>
+                </div>
+                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+                  <div style={{ position: "relative" }}>
+                    <FiSearch size={13} style={{ position: "absolute", left: "0.5rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
+                    <input type="text" placeholder="Buscar carrito..." value={cartSearch} onChange={e => { setCartSearch(e.target.value); setCartPage(1) }}
+                      style={{ ...styles.input, padding: "0.35rem 0.5rem 0.35rem 1.6rem", fontSize: "0.75rem", width: "160px" }} />
+                  </div>
+                  <button onClick={() => setShowModal('createCart')} style={styles.btnPrimary}><FiPlus size={14} /> Agregar</button>
+                </div>
+              </div>
+              {(() => {
+                const filtered = carts.filter(c =>
+                  !cartSearch || c.codigo?.toLowerCase().includes(cartSearch.toLowerCase()) ||
+                  c.estado?.toLowerCase().includes(cartSearch.toLowerCase()) ||
+                  String(c.id).includes(cartSearch)
+                )
+                const paged = paginate(filtered, cartPage)
+                return (<>
+                  <div style={{ overflowX: "auto" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
+                      <thead>
+                        <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: 700, fontSize: "0.65rem", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
+                          <th style={{ padding: "0.75rem 1rem" }}>Código</th>
+                          <th style={{ padding: "0.75rem" }}>Estado</th>
+                          <th style={{ padding: "0.75rem 1rem", textAlign: "right" }}>Acción</th>
+                        </tr>
+                      </thead>
+                      <tbody style={{ color: "#334155" }}>
+                        {paged.map(c => (
+                          <tr key={c.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                            <td style={{ padding: "0.75rem 1rem", fontWeight: 700, color: "#0f172a", fontFamily: "monospace" }}>{c.codigo || `#${c.id}`}</td>
+                            <td style={{ padding: "0.75rem" }}>
+                              <select value={c.estado || 'DISPONIBLE'} onChange={e => handleCartState(c, e.target.value)}
+                                style={{ fontSize: "0.7rem", fontWeight: 700, padding: "0.25rem 0.5rem", borderRadius: "0.4rem", border: "none", cursor: "pointer", outline: "none", backgroundColor: states[c.estado]?.bg || states.DISPONIBLE.bg, color: states[c.estado]?.color || states.DISPONIBLE.color }}>
+                                <option value="DISPONIBLE">Disponible</option>
+                                <option value="EN_USO">En uso</option>
+                                <option value="MANTENIMIENTO">Mantenimiento</option>
+                              </select>
+                            </td>
+                            <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
+                              <div style={{ display: "flex", gap: "0.3rem", justifyContent: "flex-end" }}>
+                                <button onClick={() => setDetailItem(c)} style={{ background: "rgba(59,130,246,0.1)", color: "#3b82f6", border: "none", padding: "0.3rem 0.55rem", borderRadius: "0.4rem", fontSize: "0.7rem", fontWeight: 700, cursor: "pointer" }}><FiEye size={13} /></button>
+                                <button onClick={() => setConfirmDelete({ id: c.id, tipo: 'CARRITO' })} style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "none", padding: "0.3rem 0.55rem", borderRadius: "0.4rem", fontSize: "0.7rem", fontWeight: 700, cursor: "pointer" }}><FiTrash2 size={13} /></button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                        {filtered.length === 0 && <tr><td colSpan={3} style={{ padding: "2rem", textAlign: "center", color: "#94a3b8" }}>Sin carritos</td></tr>}
+                      </tbody>
+                    </table>
+                  </div>
+                  <Pagination arr={filtered} page={cartPage} setPage={setCartPage} />
+                </>)
+              })()}
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               <div style={styles.card}>
                 <div style={styles.cardHeader}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <FiTruck size={16} color={colorSuper} />
-                    <span style={{ fontWeight: 800, fontSize: "0.9rem", color: "#0f172a" }}>Carritos</span>
-                    <span style={{ fontSize: "0.7rem", color: "#94a3b8" }}>({stats.totalCarts})</span>
-                  </div>
-                  <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
-                    <div style={{ position: "relative" }}>
-                      <FiSearch size={13} style={{ position: "absolute", left: "0.5rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
-                      <input type="text" placeholder="Buscar carrito..." value={cartSearch} onChange={e => { setCartSearch(e.target.value); setCartPage(1) }}
-                        style={{ ...styles.input, padding: "0.35rem 0.5rem 0.35rem 1.6rem", fontSize: "0.75rem", width: "160px" }} />
-                    </div>
-                    <button onClick={() => setShowModal('createCart')} style={styles.btnPrimary}><FiPlus size={14} /> Agregar</button>
-                  </div>
+                  <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "#0f172a" }}>Préstamo de Carrito</span>
                 </div>
-                {(() => {
-                  const filtered = carts.filter(c =>
-                    !cartSearch || c.codigo?.toLowerCase().includes(cartSearch.toLowerCase()) ||
-                    c.estado?.toLowerCase().includes(cartSearch.toLowerCase()) ||
-                    String(c.id).includes(cartSearch)
-                  )
-                  const paged = paginate(filtered, cartPage)
-                  return (<>
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
-                    <thead>
-                      <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: 700, fontSize: "0.65rem", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
-                        <th style={{ padding: "0.75rem 1rem" }}>Código</th>
-                        <th style={{ padding: "0.75rem" }}>Estado</th>
-                        <th style={{ padding: "0.75rem 1rem", textAlign: "right" }}>Acción</th>
-                      </tr>
-                    </thead>
-                    <tbody style={{ color: "#334155" }}>
-                      {paged.map(c => (
-                        <tr key={c.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                          <td style={{ padding: "0.75rem 1rem", fontWeight: 700, color: "#0f172a", fontFamily: "monospace" }}>{c.codigo || `#${c.id}`}</td>
-                          <td style={{ padding: "0.75rem" }}>
-                            <select value={c.estado || 'DISPONIBLE'} onChange={e => handleCartState(c, e.target.value)}
-                              style={{ fontSize: "0.7rem", fontWeight: 700, padding: "0.25rem 0.5rem", borderRadius: "0.4rem", border: "none", cursor: "pointer", outline: "none", backgroundColor: states[c.estado]?.bg || states.DISPONIBLE.bg, color: states[c.estado]?.color || states.DISPONIBLE.color }}>
-                              <option value="DISPONIBLE">Disponible</option>
-                              <option value="EN_USO">En uso</option>
-                              <option value="MANTENIMIENTO">Mantenimiento</option>
-                            </select>
-                          </td>
-                          <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
-                            <div style={{ display: "flex", gap: "0.3rem", justifyContent: "flex-end" }}>
-                              <button onClick={() => setDetailItem(c)} style={{ background: "rgba(59,130,246,0.1)", color: "#3b82f6", border: "none", padding: "0.3rem 0.55rem", borderRadius: "0.4rem", fontSize: "0.7rem", fontWeight: 700, cursor: "pointer" }}><FiEye size={13} /></button>
-                              <button onClick={() => setConfirmDelete({ id: c.id, tipo: 'CARRITO' })} style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "none", padding: "0.3rem 0.55rem", borderRadius: "0.4rem", fontSize: "0.7rem", fontWeight: 700, cursor: "pointer" }}><FiTrash2 size={13} /></button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                      {filtered.length === 0 && <tr><td colSpan={3} style={{ padding: "2rem", textAlign: "center", color: "#94a3b8" }}>Sin carritos</td></tr>}
-                    </tbody>
-                  </table>
-                </div>
-                <Pagination arr={filtered} page={cartPage} setPage={setCartPage} />
-                </>)
-                })()}
-              </div>
-
-              <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-                  <div style={styles.card}>
-                    <div style={styles.cardHeader}>
-                      <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "#0f172a" }}>Préstamo de Carrito</span>
-                    </div>
-                    <form onSubmit={handleCartLoan} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                      <select style={styles.select} value={cartLoanForm.codigoCarrito} onChange={e => setCartLoanForm(f => ({ ...f, codigoCarrito: e.target.value }))} required>
-                        <option value="">Seleccionar carrito</option>
-                        {carts.filter(c => c.estado === 'DISPONIBLE' && c.codigo).map(c => (
-                          <option key={c.id} value={c.codigo}>{c.codigo}</option>
-                        ))}
+                <form onSubmit={handleCartLoan} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                  <select style={styles.select} value={cartLoanForm.codigoCarrito} onChange={e => setCartLoanForm(f => ({ ...f, codigoCarrito: e.target.value }))} required>
+                    <option value="">Seleccionar carrito</option>
+                    {carts.filter(c => c.estado === 'DISPONIBLE' && c.codigo).map(c => (
+                      <option key={c.id} value={c.codigo}>{c.codigo}</option>
+                    ))}
+                  </select>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.5rem" }}>
+                    <select style={{ ...styles.select, fontSize: "0.7rem" }} value={cartFilters.torre} onChange={e => setCartFilters(f => ({ ...f, torre: e.target.value, piso: '', aptId: '' }))}>
+                      <option value="">Torre</option>
+                      {towers.map(t => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                    <select style={{ ...styles.select, fontSize: "0.7rem" }} value={cartFilters.piso} onChange={e => setCartFilters(f => ({ ...f, piso: e.target.value, aptId: '' }))}>
+                      <option value="">Piso</option>
+                      {[...new Set(apartments.filter(a => !cartFilters.torre || a.torreNombre === cartFilters.torre).map(a => a.pisoNumero).filter(Boolean))].map(f => <option key={f} value={f}>Piso {f}</option>)}
+                    </select>
+                    <select style={{ ...styles.select, fontSize: "0.7rem" }} value={cartFilters.aptId} onChange={e => {
+                      setCartFilters(f => ({ ...f, aptId: e.target.value }))
+                      const apt = apartments.find(a => String(a.id) === e.target.value)
+                      if (apt) {
+                        setCartLoanForm(f => ({
+                          ...f, idApartamento: e.target.value,
+                          numeroApartamento: apt.numero,
+                          idPropietario: apt.idPropietario || '',
+                          nombreSolicitante: apt.nombrePropietario || '',
+                          solicitante: 'PROPIETARIO',
+                          dniSolicitante: ''
+                        }))
+                      }
+                    }}>
+                      <option value="">Departamento</option>
+                      {apartments.filter(a =>
+                        (!cartFilters.torre || a.torreNombre === cartFilters.torre) &&
+                        (!cartFilters.piso || String(a.pisoNumero) === cartFilters.piso)
+                      ).map(a => <option key={a.id} value={a.id}>N° {a.numero}</option>)}
+                    </select>
+                  </div>
+                  {cartFilters.aptId && (() => {
+                    const apt = apartments.find(a => String(a.id) === cartFilters.aptId)
+                    if (!apt) return null
+                    const occupants = []
+                    if (apt.nombrePropietario) occupants.push({ label: `${apt.nombrePropietario} (Dueño)`, nombre: apt.nombrePropietario, tipo: 'PROPIETARIO', id: apt.idPropietario, dni: '' })
+                    if (apt.inquilinos) apt.inquilinos.forEach(inq => occupants.push({ label: `${inq.nombres} ${inq.apellidos} (Inquilino)`, nombre: `${inq.nombres} ${inq.apellidos}`, tipo: 'INQUILINO', id: inq.id, dni: inq.numeroDocumento }))
+                    return occupants.length > 0 ? (
+                      <select style={styles.select} value={`${cartLoanForm.solicitante}|${cartLoanForm.nombreSolicitante}`} onChange={e => {
+                        const sel = occupants.find(o => `${o.tipo}|${o.nombre}` === e.target.value)
+                        if (sel) setCartLoanForm(f => ({
+                          ...f,
+                          solicitante: sel.tipo,
+                          nombreSolicitante: sel.nombre,
+                          dniSolicitante: sel.dni || '',
+                          idPropietario: sel.tipo === 'PROPIETARIO' ? (sel.id || '') : '',
+                          idInquilino: sel.tipo === 'INQUILINO' ? (sel.id || '') : ''
+                        }))
+                      }}>
+                        <option value="">Seleccionar ocupante de N° {apt.numero}</option>
+                        {occupants.map(o => <option key={o.nombre} value={`${o.tipo}|${o.nombre}`}>{o.label}{o.dni ? ` — DNI: ${o.dni}` : ''}</option>)}
                       </select>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.5rem" }}>
-                        <select style={{ ...styles.select, fontSize: "0.7rem" }} value={cartFilters.torre} onChange={e => setCartFilters(f => ({ ...f, torre: e.target.value, piso: '', aptId: '' }))}>
-                          <option value="">Torre</option>
-                          {towers.map(t => <option key={t} value={t}>{t}</option>)}
-                        </select>
-                        <select style={{ ...styles.select, fontSize: "0.7rem" }} value={cartFilters.piso} onChange={e => setCartFilters(f => ({ ...f, piso: e.target.value, aptId: '' }))}>
-                          <option value="">Piso</option>
-                          {[...new Set(apartments.filter(a => !cartFilters.torre || a.torreNombre === cartFilters.torre).map(a => a.pisoNumero).filter(Boolean))].map(f => <option key={f} value={f}>Piso {f}</option>)}
-                        </select>
-                        <select style={{ ...styles.select, fontSize: "0.7rem" }} value={cartFilters.aptId} onChange={e => {
-                          setCartFilters(f => ({ ...f, aptId: e.target.value }))
-                          const apt = apartments.find(a => String(a.id) === e.target.value)
-                          if (apt) {
-                            setCartLoanForm(f => ({
-                              ...f, idApartamento: e.target.value,
-                              numeroApartamento: apt.numero,
-                              idPropietario: apt.idPropietario || '',
-                              nombreSolicitante: apt.nombrePropietario || '',
-                              solicitante: 'PROPIETARIO',
-                              dniSolicitante: ''
-                            }))
-                          }
-                        }}>
-                          <option value="">Departamento</option>
-                          {apartments.filter(a =>
-                            (!cartFilters.torre || a.torreNombre === cartFilters.torre) &&
-                            (!cartFilters.piso || String(a.pisoNumero) === cartFilters.piso)
-                          ).map(a => <option key={a.id} value={a.id}>N° {a.numero}</option>)}
-                        </select>
-                      </div>
-                      {cartFilters.aptId && (() => {
-                        const apt = apartments.find(a => String(a.id) === cartFilters.aptId)
-                        if (!apt) return null
-                        const occupants = []
-                        if (apt.nombrePropietario) occupants.push({ label: `${apt.nombrePropietario} (Dueño)`, nombre: apt.nombrePropietario, tipo: 'PROPIETARIO', id: apt.idPropietario, dni: '' })
-                        if (apt.inquilinos) apt.inquilinos.forEach(inq => occupants.push({ label: `${inq.nombres} ${inq.apellidos} (Inquilino)`, nombre: `${inq.nombres} ${inq.apellidos}`, tipo: 'INQUILINO', id: inq.id, dni: inq.numeroDocumento }))
-                        return occupants.length > 0 ? (
-                          <select style={styles.select} value={`${cartLoanForm.solicitante}|${cartLoanForm.nombreSolicitante}`} onChange={e => {
-                            const sel = occupants.find(o => `${o.tipo}|${o.nombre}` === e.target.value)
-                            if (sel) setCartLoanForm(f => ({
-                              ...f,
-                              solicitante: sel.tipo,
-                              nombreSolicitante: sel.nombre,
-                              dniSolicitante: sel.dni || '',
-                              idPropietario: sel.tipo === 'PROPIETARIO' ? (sel.id || '') : '',
-                              idInquilino: sel.tipo === 'INQUILINO' ? (sel.id || '') : ''
-                            }))
-                          }}>
-                            <option value="">Seleccionar ocupante de N° {apt.numero}</option>
-                            {occupants.map(o => <option key={o.nombre} value={`${o.tipo}|${o.nombre}`}>{o.label}{o.dni ? ` — DNI: ${o.dni}` : ''}</option>)}
-                          </select>
-                        ) : (
-                          <div style={{ fontSize: "0.75rem", color: "#94a3b8", textAlign: "center", padding: "0.5rem" }}>Sin ocupantes registrados en N° {apt.numero}</div>
-                        )
-                      })()}
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
-                        <input style={styles.input} placeholder="Nombre del solicitante" value={cartLoanForm.nombreSolicitante} onChange={e => setCartLoanForm(f => ({ ...f, nombreSolicitante: e.target.value }))} required />
-                        <input style={styles.input} placeholder="DNI" value={cartLoanForm.dniSolicitante} onChange={e => setCartLoanForm(f => ({ ...f, dniSolicitante: e.target.value }))} required />
-                      </div>
-                      {carts.filter(c => c.estado === 'DISPONIBLE').length === 0 && <div style={{ fontSize: "0.75rem", color: "#ef4444" }}>No hay carritos disponibles</div>}
-                      <button type="submit" disabled={saving || carts.filter(c => c.estado === 'DISPONIBLE').length === 0} style={{ ...styles.btnSuccess, width: "100%", justifyContent: "center", padding: "0.6rem" }}>
-                        {saving ? '...' : 'Prestar Carrito'}
-                      </button>
-                    </form>
+                    ) : (
+                      <div style={{ fontSize: "0.75rem", color: "#94a3b8", textAlign: "center", padding: "0.5rem" }}>Sin ocupantes registrados en N° {apt.numero}</div>
+                    )
+                  })()}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                    <input style={styles.input} placeholder="Nombre del solicitante" value={cartLoanForm.nombreSolicitante} onChange={e => setCartLoanForm(f => ({ ...f, nombreSolicitante: e.target.value }))} required />
+                    <input style={styles.input} placeholder="DNI" value={cartLoanForm.dniSolicitante} onChange={e => setCartLoanForm(f => ({ ...f, dniSolicitante: e.target.value }))} required />
                   </div>
-
-                {activeLoans.length > 0 && (
-                  <div style={styles.card}>
-                    <div style={styles.cardHeader}>
-                      <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "#0f172a" }}>Préstamos Activos ({activeLoans.length})</span>
-                    </div>
-                    <div style={{ maxHeight: "200px", overflowY: "auto" }}>
-                      {activeLoans.map(loan => (
-                        <div key={loan.id} style={{ padding: "0.6rem 1rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <div>
-                            <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#0f172a" }}>{loan.nombreSolicitante}</div>
-                            <div style={{ fontSize: "0.65rem", color: "#94a3b8" }}>{loan.codigoCarrito} · {loan.dniSolicitante}</div>
-                          </div>
-                          <button onClick={() => handleReturnCart(loan.id)} style={styles.btnSuccess}>Devolver</button>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                  {carts.filter(c => c.estado === 'DISPONIBLE').length === 0 && <div style={{ fontSize: "0.75rem", color: "#ef4444" }}>No hay carritos disponibles</div>}
+                  <button type="submit" disabled={saving || carts.filter(c => c.estado === 'DISPONIBLE').length === 0} style={{ ...styles.btnSuccess, width: "100%", justifyContent: "center", padding: "0.6rem" }}>
+                    {saving ? '...' : 'Prestar Carrito'}
+                  </button>
+                </form>
               </div>
+
+              {activeLoans.length > 0 && (
+                <div style={styles.card}>
+                  <div style={styles.cardHeader}>
+                    <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "#0f172a" }}>Préstamos Activos ({activeLoans.length})</span>
+                  </div>
+                  <div style={{ maxHeight: "200px", overflowY: "auto" }}>
+                    {activeLoans.map(loan => (
+                      <div key={loan.id} style={{ padding: "0.6rem 1rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div>
+                          <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#0f172a" }}>{loan.nombreSolicitante}</div>
+                          <div style={{ fontSize: "0.65rem", color: "#94a3b8" }}>{loan.codigoCarrito} · {loan.dniSolicitante}</div>
+                        </div>
+                        <button onClick={() => handleReturnCart(loan.id)} style={styles.btnSuccess}>Devolver</button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
             {allCartLoans.length > 0 && (
               <div style={{ marginTop: "1.5rem" }}>
@@ -1580,45 +1580,45 @@ export default function GlobalBienes() {
                     )
                     const paged = paginate(filtered, loanPage)
                     return (<>
-                  <div style={{ overflowX: "auto" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.72rem" }}>
-                      <thead>
-                        <tr style={{ backgroundColor: "#f8fafc", borderBottom: "2px solid #e2e8f0" }}>
-                          <th style={thStyle}>#</th>
-                          <th style={thStyle}>Carrito</th>
-                          <th style={thStyle}>Solicitante</th>
-                          <th style={thStyle}>Tipo</th>
-                          <th style={thStyle}>Departamento</th>
-                          <th style={thStyle}>Torre</th>
-                          <th style={thStyle}>Piso</th>
-                          <th style={thStyle}>Préstamo</th>
-                          <th style={thStyle}>Devolución</th>
-                          <th style={thStyle}>Estado</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {paged.map((loan, i) => {
-                          const apt = apartments.find(a => String(a.id) === String(loan.idApartamento))
-                          return (
-                            <tr key={loan.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                              <td style={tdStyle}>{(loanPage - 1) * PER_PAGE + i + 1}</td>
-                              <td style={tdStyle}><strong>{loan.codigoCarrito || '—'}</strong></td>
-                              <td style={tdStyle}>{loan.nombreSolicitante}<br /><span style={{ color: "#94a3b8" }}>{loan.dniSolicitante}</span></td>
-                              <td style={tdStyle}>{loan.solicitante === 'PROPIETARIO' ? <span style={styles.badge("#e0e7ff","#4338ca")}>Dueño</span> : <span style={styles.badge("#fef3c7","#d97706")}>Inquilino</span>}</td>
-                              <td style={tdStyle}>N° {apt?.numero || '—'}</td>
-                              <td style={tdStyle}>{apt?.torreNombre || '—'}</td>
-                              <td style={tdStyle}>{apt?.pisoNumero != null ? `Piso ${apt.pisoNumero}` : '—'}</td>
-                              <td style={tdStyle}>{fmtDate(loan.fechaPrestamo)}</td>
-                              <td style={tdStyle}>{loan.fechaDevolucion ? fmtDate(loan.fechaDevolucion) : '—'}</td>
-                              <td style={tdStyle}>{loan.fechaDevolucion ? <span style={styles.badge("#dcfce7","#16a34a")}>Devuelto</span> : <span style={styles.badge("#fef3c7","#d97706")}>Activo</span>}</td>
+                      <div style={{ overflowX: "auto" }}>
+                        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.72rem" }}>
+                          <thead>
+                            <tr style={{ backgroundColor: "#f8fafc", borderBottom: "2px solid #e2e8f0" }}>
+                              <th style={thStyle}>#</th>
+                              <th style={thStyle}>Carrito</th>
+                              <th style={thStyle}>Solicitante</th>
+                              <th style={thStyle}>Tipo</th>
+                              <th style={thStyle}>Departamento</th>
+                              <th style={thStyle}>Torre</th>
+                              <th style={thStyle}>Piso</th>
+                              <th style={thStyle}>Préstamo</th>
+                              <th style={thStyle}>Devolución</th>
+                              <th style={thStyle}>Estado</th>
                             </tr>
-                          )
-                        })}
-                      </tbody>
-                    </table>
-                  </div>
-                  <Pagination arr={filtered} page={loanPage} setPage={setLoanPage} />
-                  </>)
+                          </thead>
+                          <tbody>
+                            {paged.map((loan, i) => {
+                              const apt = apartments.find(a => String(a.id) === String(loan.idApartamento))
+                              return (
+                                <tr key={loan.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                                  <td style={tdStyle}>{(loanPage - 1) * PER_PAGE + i + 1}</td>
+                                  <td style={tdStyle}><strong>{loan.codigoCarrito || '—'}</strong></td>
+                                  <td style={tdStyle}>{loan.nombreSolicitante}<br /><span style={{ color: "#94a3b8" }}>{loan.dniSolicitante}</span></td>
+                                  <td style={tdStyle}>{loan.solicitante === 'PROPIETARIO' ? <span style={styles.badge("#e0e7ff", "#4338ca")}>Dueño</span> : <span style={styles.badge("#fef3c7", "#d97706")}>Inquilino</span>}</td>
+                                  <td style={tdStyle}>N° {apt?.numero || '—'}</td>
+                                  <td style={tdStyle}>{apt?.torreNombre || '—'}</td>
+                                  <td style={tdStyle}>{apt?.pisoNumero != null ? `Piso ${apt.pisoNumero}` : '—'}</td>
+                                  <td style={tdStyle}>{fmtDate(loan.fechaPrestamo)}</td>
+                                  <td style={tdStyle}>{loan.fechaDevolucion ? fmtDate(loan.fechaDevolucion) : '—'}</td>
+                                  <td style={tdStyle}>{loan.fechaDevolucion ? <span style={styles.badge("#dcfce7", "#16a34a")}>Devuelto</span> : <span style={styles.badge("#fef3c7", "#d97706")}>Activo</span>}</td>
+                                </tr>
+                              )
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                      <Pagination arr={filtered} page={loanPage} setPage={setLoanPage} />
+                    </>)
                   })()}
                 </div>
               </div>
@@ -1713,10 +1713,10 @@ export default function GlobalBienes() {
                 )}
               </div>
               <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: "0.75rem", backgroundColor: "#f8fafc" }}>
-                <button type="button" onClick={() => setShowModal(null)} style={{ backgroundColor: "#fff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>Cancelar</button>
                 <button type="submit" disabled={saving} style={{ backgroundColor: colorSuper, border: "none", color: "#fff", padding: "0.5rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", opacity: saving ? 0.6 : 1 }}>
                   {saving ? 'Guardando...' : 'Guardar'}
                 </button>
+                <button type="button" onClick={() => setShowModal(null)} style={{ backgroundColor: "#fff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>Cancelar</button>
               </div>
             </form>
           </div>
@@ -1773,10 +1773,10 @@ export default function GlobalBienes() {
                 </div>
               </div>
               <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: "0.75rem", backgroundColor: "#f8fafc" }}>
-                <button type="button" onClick={() => setShowModal(null)} style={{ backgroundColor: "#fff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>Cancelar</button>
                 <button type="submit" disabled={saving} style={{ backgroundColor: colorSuper, border: "none", color: "#fff", padding: "0.5rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", opacity: saving ? 0.6 : 1 }}>
                   {saving ? 'Guardando...' : <><FiSave size={14} /> Guardar</>}
                 </button>
+                <button type="button" onClick={() => setShowModal(null)} style={{ backgroundColor: "#fff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>Cancelar</button>
               </div>
             </form>
           </div>
@@ -1809,10 +1809,10 @@ export default function GlobalBienes() {
                 </div>
               </div>
               <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: "0.75rem", backgroundColor: "#f8fafc" }}>
-                <button type="button" onClick={() => setShowModal(null)} style={{ backgroundColor: "#fff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>Cancelar</button>
                 <button type="submit" disabled={saving} style={{ backgroundColor: colorSuper, border: "none", color: "#fff", padding: "0.5rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", opacity: saving ? 0.6 : 1 }}>
                   {saving ? 'Guardando...' : <><FiSave size={14} /> Guardar</>}
                 </button>
+                <button type="button" onClick={() => setShowModal(null)} style={{ backgroundColor: "#fff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>Cancelar</button>
               </div>
             </form>
           </div>
@@ -1975,8 +1975,8 @@ export default function GlobalBienes() {
               <h3 style={{ margin: "0 0 0.5rem", fontSize: "1rem", fontWeight: 800, color: "#1e293b" }}>Confirmar eliminación</h3>
               <p style={{ fontSize: "0.85rem", color: "#64748b", margin: 0 }}>¿Eliminar {confirmDelete.tipo === 'CARRITO' ? 'carrito' : 'estacionamiento'} #{confirmDelete.id}?</p>
               <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center", marginTop: "1.25rem" }}>
-                <button onClick={() => setConfirmDelete(null)} style={{ backgroundColor: "#fff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>Cancelar</button>
                 <button onClick={handleDelete} style={{ backgroundColor: "#ef4444", border: "none", color: "#fff", padding: "0.5rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>Eliminar</button>
+                <button onClick={() => setConfirmDelete(null)} style={{ backgroundColor: "#fff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>Cancelar</button>
               </div>
             </div>
           </div>

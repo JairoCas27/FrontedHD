@@ -415,8 +415,8 @@ export default function GlobalEstructura() {
                 <h3 style={{ margin: "0 0 1.5rem", fontSize: "1.1rem", fontWeight: "700", color: "#0f172a" }}>Agregar Torre</h3>
                 <input type="text" placeholder="Nombre" value={towerName} onChange={e => setTowerName(e.target.value)} style={estiloInput} autoFocus />
                 <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem", justifyContent: "flex-end" }}>
-                  <button onClick={() => { setShowAddTowerModal(false); setTowerName('') }} disabled={creatingTower} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
                   <button onClick={handleAddTower} disabled={creatingTower} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: colorSuper, color: "#fff", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>{creatingTower ? 'Creando...' : 'Crear'}</button>
+                  <button onClick={() => { setShowAddTowerModal(false); setTowerName('') }} disabled={creatingTower} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
                 </div>
               </div>
             </div>
@@ -431,8 +431,8 @@ export default function GlobalEstructura() {
                 <p style={{ margin: "0 0 1.25rem", fontSize: "0.85rem", color: "#64748b" }}>Torre: <strong>{selectedTowerForFloor.nombre}</strong></p>
                 <input type="number" min="1" placeholder="Número" value={floorNumber} onChange={e => setFloorNumber(e.target.value)} style={estiloInput} autoFocus />
                 <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem", justifyContent: "flex-end" }}>
-                  <button onClick={() => { setShowAddFloorModal(false); setFloorNumber(''); setSelectedTowerForFloor(null) }} disabled={creatingFloor} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
                   <button onClick={handleAddFloor} disabled={creatingFloor} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: colorSuper, color: "#fff", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>{creatingFloor ? 'Creando...' : 'Crear'}</button>
+                  <button onClick={() => { setShowAddFloorModal(false); setFloorNumber(''); setSelectedTowerForFloor(null) }} disabled={creatingFloor} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
                 </div>
               </div>
             </div>
@@ -457,8 +457,8 @@ export default function GlobalEstructura() {
                   </label>
                 </div>
                 <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem", justifyContent: "flex-end" }}>
-                  <button onClick={() => { setShowAddAptModal(false); setAddAptContext(null) }} disabled={creatingApt} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
                   <button onClick={handleAddApt} disabled={creatingApt} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: colorSuper, color: "#fff", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>{creatingApt ? 'Creando...' : 'Crear'}</button>
+                  <button onClick={() => { setShowAddAptModal(false); setAddAptContext(null) }} disabled={creatingApt} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
                 </div>
               </div>
             </div>
@@ -472,8 +472,8 @@ export default function GlobalEstructura() {
                 <h3 style={{ margin: "0 0 0.5rem", fontSize: "1rem", fontWeight: "700", color: "#0f172a" }}>¿Eliminar apartamento?</h3>
                 <p style={{ color: "#64748b", fontSize: "0.85rem", margin: "0 0 1.5rem" }}>Apartamento <strong>{confirmDeleteApt.numero}</strong>. Esta acción no se puede deshacer.</p>
                 <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center" }}>
-                  <button onClick={() => setConfirmDeleteApt(null)} disabled={deletingId === ('apt-' + confirmDeleteApt.id)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
                   <button onClick={handleDeleteApt} disabled={deletingId === ('apt-' + confirmDeleteApt.id)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: "#ef4444", color: "#fff", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>{deletingId === ('apt-' + confirmDeleteApt.id) ? 'Eliminando...' : 'Eliminar'}</button>
+                  <button onClick={() => setConfirmDeleteApt(null)} disabled={deletingId === ('apt-' + confirmDeleteApt.id)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
                 </div>
               </div>
             </div>

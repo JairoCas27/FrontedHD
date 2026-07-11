@@ -73,8 +73,8 @@ export default function GlobalDepartamentos() {
   useEffect(() => {
     setLoading(true)
     Promise.all([
-      getCondominiums().then(d => setCondominios(extractItems(d))).catch(() => {}),
-      getAllUsers().then(d => setAllUsers(extractItems(d))).catch(() => {})
+      getCondominiums().then(d => setCondominios(extractItems(d))).catch(() => { }),
+      getAllUsers().then(d => setAllUsers(extractItems(d))).catch(() => { })
     ]).finally(() => setLoading(false))
   }, [])
 
@@ -202,13 +202,13 @@ export default function GlobalDepartamentos() {
     if (!createAptForm.pisoNumero) { toast.warning('Selecciona un piso'); return }
     setCreatingApt(true)
     try {
-        await createAdminStructureNode({
-          tipo: 'APARTAMENTO',
-          nombreTorre: createAptForm.torreNombre,
-          numeroPiso: Number(createAptForm.pisoNumero),
-          numeroApartamento: Number(createAptForm.numero.trim()),
-          metraje: createAptForm.metraje ? Number(createAptForm.metraje) : 50.0,
-        }, condoSeleccionado)
+      await createAdminStructureNode({
+        tipo: 'APARTAMENTO',
+        nombreTorre: createAptForm.torreNombre,
+        numeroPiso: Number(createAptForm.pisoNumero),
+        numeroApartamento: Number(createAptForm.numero.trim()),
+        metraje: createAptForm.metraje ? Number(createAptForm.metraje) : 50.0,
+      }, condoSeleccionado)
       toast.success('Departamento creado correctamente')
       setShowCreateApt(false)
       setCreateAptForm({ numero: '', metraje: '', torreNombre: '', pisoNumero: '', derechoEstacionamiento: false })
@@ -411,30 +411,30 @@ export default function GlobalDepartamentos() {
                   Departamentos de {condoActual?.nombre} <span style={{ color: "#94a3b8", fontWeight: "600" }}>({filteredApts.length})</span>
                 </span>
                 <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
-                <button onClick={() => setShowCreateApt(true)}
-                  style={{ backgroundColor: colorSuper, color: "#ffffff", border: "none", padding: "0.4rem 0.85rem", borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                  <FiPlus size={14} /> Nuevo Depto
-                </button>
-                {condoSeleccionado && (
-                  <button onClick={() => setShowOwnersModal(true)}
-                    style={{ backgroundColor: "rgba(16,185,129,0.1)", color: "#10b981", border: "none", padding: "0.4rem 0.85rem", borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                    <FiUser size={14} /> Ver propietarios
+                  <button onClick={() => setShowCreateApt(true)}
+                    style={{ backgroundColor: colorSuper, color: "#ffffff", border: "none", padding: "0.4rem 0.85rem", borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                    <FiPlus size={14} /> Nuevo Depto
                   </button>
-                )}
-                {condoSeleccionado && (
-                  <button onClick={() => navigate('/superadmin/usuarios?tab=propietarios')}
-                    style={{ backgroundColor: "rgba(59,130,246,0.1)", color: "#3b82f6", border: "none", padding: "0.4rem 0.85rem", borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                    <FiUserPlus size={14} /> Agregar propietario
-                  </button>
-                )}
-                <div className="global-search-wrap" style={{ width: "220px", maxWidth: "220px", position: "relative" }}>
-                  <FiSearch size={14} style={{ position: "absolute", left: "0.65rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
-                  <input type="text" placeholder="Buscar departamento..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)}
-                    style={{ ...estiloInput, paddingLeft: "2rem", paddingTop: "0.45rem", paddingBottom: "0.45rem", fontSize: "0.8rem" }} />
+                  {condoSeleccionado && (
+                    <button onClick={() => setShowOwnersModal(true)}
+                      style={{ backgroundColor: "rgba(16,185,129,0.1)", color: "#10b981", border: "none", padding: "0.4rem 0.85rem", borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                      <FiUser size={14} /> Ver propietarios
+                    </button>
+                  )}
+                  {condoSeleccionado && (
+                    <button onClick={() => navigate('/superadmin/usuarios?tab=propietarios')}
+                      style={{ backgroundColor: "rgba(59,130,246,0.1)", color: "#3b82f6", border: "none", padding: "0.4rem 0.85rem", borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                      <FiUserPlus size={14} /> Agregar propietario
+                    </button>
+                  )}
+                  <div className="global-search-wrap" style={{ width: "220px", maxWidth: "220px", position: "relative" }}>
+                    <FiSearch size={14} style={{ position: "absolute", left: "0.65rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
+                    <input type="text" placeholder="Buscar departamento..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)}
+                      style={{ ...estiloInput, paddingLeft: "2rem", paddingTop: "0.45rem", paddingBottom: "0.45rem", fontSize: "0.8rem" }} />
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
             {filteredApts.length === 0 ? (
               <div style={{ padding: "2.5rem", textAlign: "center", color: "#94a3b8", fontStyle: "italic", fontWeight: "600" }}>
                 No se encontraron coincidencias.
@@ -748,10 +748,6 @@ export default function GlobalDepartamentos() {
                 </p>
               )}
               <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
-                <button onClick={() => setModalAssign(null)}
-                  style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>
-                  Cancelar
-                </button>
                 <button onClick={handleAssignOwner} disabled={assigning || !assignUserId}
                   style={{
                     padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none",
@@ -760,6 +756,10 @@ export default function GlobalDepartamentos() {
                     display: "flex", alignItems: "center", gap: "0.4rem"
                   }}>
                   {assigning ? 'Asignando...' : <><FiCheck size={16} /> Asignar</>}
+                </button>
+                <button onClick={() => setModalAssign(null)}
+                  style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>
+                  Cancelar
                 </button>
               </div>
             </div>
@@ -813,10 +813,6 @@ export default function GlobalDepartamentos() {
                 </div>
               </div>
               <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
-<button onClick={() => { setModalTenant(null); setEditingTenantIdx(null); setTenantForm({ nombres: '', apellidos: '', tipoDocumento: 'DNI', numeroDocumento: '' }) }}
-                  style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>
-                  Cancelar
-                </button>
                 <button onClick={handleAddTenant} disabled={addingTenant || !tenantForm.nombres.trim()}
                   style={{
                     padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none",
@@ -825,6 +821,10 @@ export default function GlobalDepartamentos() {
                     display: "flex", alignItems: "center", gap: "0.4rem"
                   }}>
                   {addingTenant ? 'Guardando...' : <><FiCheck size={16} /> {editingTenantIdx !== null ? 'Guardar' : 'Agregar'}</>}
+                </button>
+                <button onClick={() => { setModalTenant(null); setEditingTenantIdx(null); setTenantForm({ nombres: '', apellidos: '', tipoDocumento: 'DNI', numeroDocumento: '' }) }}
+                  style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>
+                  Cancelar
                 </button>
               </div>
             </div>
@@ -865,10 +865,6 @@ export default function GlobalDepartamentos() {
                 </p>
               )}
               <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
-                <button onClick={() => setModalParking(null)}
-                  style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>
-                  Cancelar
-                </button>
                 <button onClick={handleAssignParking} disabled={assigningParking || !selectedParkingId}
                   style={{
                     padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none",
@@ -877,6 +873,10 @@ export default function GlobalDepartamentos() {
                     display: "flex", alignItems: "center", gap: "0.4rem"
                   }}>
                   {assigningParking ? 'Asignando...' : <><FiCheck size={16} /> Asignar</>}
+                </button>
+                <button onClick={() => setModalParking(null)}
+                  style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>
+                  Cancelar
                 </button>
               </div>
             </div>
@@ -926,13 +926,13 @@ export default function GlobalDepartamentos() {
               <h3 style={{ margin: "0 0 0.5rem", fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>¿Eliminar inquilino?</h3>
               <p style={{ color: "#64748b", fontSize: "0.85rem" }}>Esta acción no se puede deshacer.</p>
               <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", justifyContent: "center" }}>
-                <button onClick={() => setConfirmRemoveTenantIdx(null)}
-                  style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>
-                  Cancelar
-                </button>
                 <button onClick={() => handleRemoveTenant(confirmRemoveTenantIdx)}
                   style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: "#ef4444", color: "#fff", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>
                   Eliminar
+                </button>
+                <button onClick={() => setConfirmRemoveTenantIdx(null)}
+                  style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>
+                  Cancelar
                 </button>
               </div>
             </div>
@@ -942,7 +942,7 @@ export default function GlobalDepartamentos() {
 
       {/* Create Apartment Modal */}
       {showCreateApt && (
-        <div style={modalOverlay} onClick={() => { if (!creatingApt) { setShowCreateApt(false); setCreateAptForm({ numero: '', metraje: '', torreNombre: '', pisoNumero: '', derechoEstacionamiento: false }) }}}>
+        <div style={modalOverlay} onClick={() => { if (!creatingApt) { setShowCreateApt(false); setCreateAptForm({ numero: '', metraje: '', torreNombre: '', pisoNumero: '', derechoEstacionamiento: false }) } }}>
           <div style={{ ...modalContent, maxWidth: "480px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>Nuevo Departamento</h3>
@@ -981,12 +981,12 @@ export default function GlobalDepartamentos() {
                 </label>
               </div>
               <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
-                <button onClick={() => { setShowCreateApt(false); setCreateAptForm({ numero: '', metraje: '', torreNombre: '', pisoNumero: '', derechoEstacionamiento: false }) }}
-                  style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
                 <button onClick={handleCreateApt} disabled={creatingApt || !createAptForm.numero.trim() || !createAptForm.torreNombre || !createAptForm.pisoNumero}
                   style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: (creatingApt || !createAptForm.numero.trim() || !createAptForm.torreNombre || !createAptForm.pisoNumero) ? "#cbd5e1" : colorSuper, color: "#fff", fontWeight: "600", cursor: (creatingApt || !createAptForm.numero.trim() || !createAptForm.torreNombre || !createAptForm.pisoNumero) ? "not-allowed" : "pointer", fontSize: "0.85rem" }}>
                   {creatingApt ? 'Creando...' : 'Crear'}
                 </button>
+                <button onClick={() => { setShowCreateApt(false); setCreateAptForm({ numero: '', metraje: '', torreNombre: '', pisoNumero: '', derechoEstacionamiento: false }) }}
+                  style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
               </div>
             </div>
           </div>
@@ -1052,12 +1052,12 @@ export default function GlobalDepartamentos() {
                 ¿Eliminar el departamento <strong>{confirmDeleteApt.numero}</strong>? Esta acción no se puede deshacer.
               </p>
               <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", justifyContent: "center" }}>
-                <button onClick={() => setConfirmDeleteApt(null)}
-                  style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
                 <button onClick={handleDeleteApt} disabled={deletingAptId === confirmDeleteApt.id}
                   style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: "#ef4444", color: "#fff", fontWeight: "600", cursor: deletingAptId === confirmDeleteApt.id ? "not-allowed" : "pointer", fontSize: "0.85rem" }}>
                   {deletingAptId === confirmDeleteApt.id ? 'Eliminando...' : 'Eliminar'}
                 </button>
+                <button onClick={() => setConfirmDeleteApt(null)}
+                  style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
               </div>
             </div>
           </div>

@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { FiSearch, FiLock, FiTrash2, FiEye, FiPlus, FiX, FiArrowUp, FiArrowDown, FiEdit2, FiCheck, FiAlertTriangle } from 'react-icons/fi'
+import DataList from '../../components/common/DataList'
 import {
   getAllUsers,
   patchUserStatus,
@@ -798,25 +799,25 @@ export default function UsuariosGlobales() {
                 </div>
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                <select value={filters.rol} onChange={(e) => setFilters({ ...filters, rol: e.target.value })}
+                <DataList value={filters.rol} onChange={(e) => setFilters({ ...filters, rol: e.target.value })}
                   style={{ ...estiloInput, width: "auto", minWidth: "150px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
                   <option value="">Todos los roles</option>
                   <option value="ADMINISTRADOR_CONDOMINIO">Administrador</option>
                   <option value="AGENTE_SEGURIDAD">Agente Seguridad</option>
                   <option value="PROPIETARIO">Propietario</option>
-                </select>
-                <select value={filters.estado} onChange={(e) => setFilters({ ...filters, estado: e.target.value })}
+                </DataList>
+                <DataList value={filters.estado} onChange={(e) => setFilters({ ...filters, estado: e.target.value })}
                   style={{ ...estiloInput, width: "auto", minWidth: "120px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
                   <option value="">Todos los estados</option>
                   <option value="activo">Activo</option>
                   <option value="inactivo">Inactivo</option>
-                </select>
-                <select value={filters.condominio} onChange={(e) => setFilters({ ...filters, condominio: e.target.value })}
+                </DataList>
+                <DataList value={filters.condominio} onChange={(e) => setFilters({ ...filters, condominio: e.target.value })}
                   style={{ ...estiloInput, width: "auto", minWidth: "180px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
                   <option value="">Todos los condominios</option>
                   {condominios.map(c => (<option key={c.id} value={c.id}>{c.nombre}{occupiedCondos.has(c.id) ? ' (ocupado)' : ''}</option>))}
-                </select>
-                <select value={`${sortField}-${sortOrder}`} onChange={(e) => { const [field, order] = e.target.value.split('-'); setSortField(field); setSortOrder(order) }}
+                </DataList>
+                <DataList value={`${sortField}-${sortOrder}`} onChange={(e) => { const [field, order] = e.target.value.split('-'); setSortField(field); setSortOrder(order) }}
                   style={{ ...estiloInput, width: "auto", minWidth: "170px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
                   <option value="nombre-asc">Nombre A-Z</option>
                   <option value="nombre-desc">Nombre Z-A</option>
@@ -826,7 +827,7 @@ export default function UsuariosGlobales() {
                   <option value="rol-desc">Rol Z-A</option>
                   <option value="estado-asc">Estado (Activo primero)</option>
                   <option value="estado-desc">Estado (Inactivo primero)</option>
-                </select>
+                </DataList>
                 {(filters.search || filters.rol || filters.estado || filters.condominio) && (
                   <button onClick={() => setFilters({ search: '', rol: '', estado: '', condominio: '' })}
                     style={{ ...btnStyle, backgroundColor: "#f1f5f9", color: "#64748b", fontSize: "0.7rem" }}>
@@ -842,72 +843,72 @@ export default function UsuariosGlobales() {
               </div>
             ) : (
               <>
-              <div className="global-table-wrap" style={{ overflowX: "auto", minHeight: "320px" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
-                  <thead>
-                    <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: "700", fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
-                      <th style={{ padding: "0.75rem 1rem", cursor: "pointer" }} onClick={() => toggleSort(sortField, setSortField, setSortOrder, sortOrder, 'nombre')}>
-                        Nombre {getSortIcon('nombre', sortField, sortOrder)}
-                      </th>
-                      <th style={{ padding: "0.75rem 0.5rem", cursor: "pointer" }} onClick={() => toggleSort(sortField, setSortField, setSortOrder, sortOrder, 'correo')}>
-                        Correo {getSortIcon('correo', sortField, sortOrder)}
-                      </th>
-                      <th style={{ padding: "0.75rem 0.5rem" }}>Teléfono</th>
-                      <th style={{ padding: "0.75rem 0.5rem", cursor: "pointer" }} onClick={() => toggleSort(sortField, setSortField, setSortOrder, sortOrder, 'rol')}>
-                        Rol {getSortIcon('rol', sortField, sortOrder)}
-                      </th>
-                      <th style={{ padding: "0.75rem 0.5rem" }}>Condominio</th>
-                      <th style={{ padding: "0.75rem 0.5rem", cursor: "pointer", textAlign: "center" }} onClick={() => toggleSort(sortField, setSortField, setSortOrder, sortOrder, 'estado')}>
-                        Estado {getSortIcon('estado', sortField, sortOrder)}
-                      </th>
-                      <th style={{ padding: "0.75rem 1rem", textAlign: "right" }}>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
-                    {paginatedTodos.map((u, i) => {
-                      const rolBadge = getRolBadge(u.rol)
-                      return (
-                        <tr key={u.id} style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: i % 2 === 0 ? "#ffffff" : "#fafafa" }}>
-                          <td style={{ padding: "0.75rem 1rem", fontWeight: "700", color: "#0f172a" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                              {renderInitials(u.nombres, u.apellidos)}
-                              <span>{u.nombres} {u.apellidos}</span>
-                            </div>
-                          </td>
-                          <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>{u.correo}</td>
-                          <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>{u.telefono || '—'}</td>
-                          <td style={{ padding: "0.75rem 0.5rem" }}>
-                            <span style={{ fontSize: "0.65rem", fontWeight: "700", padding: "0.2rem 0.55rem", borderRadius: "0.375rem", backgroundColor: rolBadge.bg, color: rolBadge.color, whiteSpace: "nowrap" }}>
-                              {rolBadge.label}
-                            </span>
-                          </td>
-                          <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>
-                            {u.nombreCondominio || <span style={{ fontStyle: "italic", color: "#cbd5e1" }}>Sin asignar</span>}
-                          </td>
-                          <td style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}>
-                            <ToggleSwitch checked={u.activo} onChange={() => setConfirmAction({ type: 'status', user: u })} />
-                          </td>
-                          <td style={{ padding: "0.75rem 1rem", whiteSpace: "nowrap", textAlign: "right" }}>
-                            <button style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper, marginRight: "0.25rem" }}
-                              onClick={() => { setDetailItem(u); setShowDetail(true) }} title="Ver detalle">
-                              <FiEye size={14} />
-                            </button>
-                            <button style={{ ...btnStyle, backgroundColor: "rgba(245,158,11,0.15)", color: "#d97706", marginRight: "0.25rem" }}
-                              onClick={() => { setSelectedUser(u); setShowPasswordModal(true) }} title="Forzar cambio de contraseña">
-                              <FiLock size={14} />
-                            </button>
-                            <button style={{ ...btnStyle, backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444" }}
-                              onClick={() => setConfirmAction({ type: 'delete', user: u })} title="Eliminar usuario">
-                              <FiTrash2 size={14} />
-                            </button>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </div>
-              {renderPagination(todosPage, todosTotalPages, setTodosPage)}
+                <div className="global-table-wrap" style={{ overflowX: "auto", minHeight: "320px" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+                    <thead>
+                      <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: "700", fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
+                        <th style={{ padding: "0.75rem 1rem", cursor: "pointer" }} onClick={() => toggleSort(sortField, setSortField, setSortOrder, sortOrder, 'nombre')}>
+                          Nombre {getSortIcon('nombre', sortField, sortOrder)}
+                        </th>
+                        <th style={{ padding: "0.75rem 0.5rem", cursor: "pointer" }} onClick={() => toggleSort(sortField, setSortField, setSortOrder, sortOrder, 'correo')}>
+                          Correo {getSortIcon('correo', sortField, sortOrder)}
+                        </th>
+                        <th style={{ padding: "0.75rem 0.5rem" }}>Teléfono</th>
+                        <th style={{ padding: "0.75rem 0.5rem", cursor: "pointer" }} onClick={() => toggleSort(sortField, setSortField, setSortOrder, sortOrder, 'rol')}>
+                          Rol {getSortIcon('rol', sortField, sortOrder)}
+                        </th>
+                        <th style={{ padding: "0.75rem 0.5rem" }}>Condominio</th>
+                        <th style={{ padding: "0.75rem 0.5rem", cursor: "pointer", textAlign: "center" }} onClick={() => toggleSort(sortField, setSortField, setSortOrder, sortOrder, 'estado')}>
+                          Estado {getSortIcon('estado', sortField, sortOrder)}
+                        </th>
+                        <th style={{ padding: "0.75rem 1rem", textAlign: "right" }}>Acciones</th>
+                      </tr>
+                    </thead>
+                    <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
+                      {paginatedTodos.map((u, i) => {
+                        const rolBadge = getRolBadge(u.rol)
+                        return (
+                          <tr key={u.id} style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: i % 2 === 0 ? "#ffffff" : "#fafafa" }}>
+                            <td style={{ padding: "0.75rem 1rem", fontWeight: "700", color: "#0f172a" }}>
+                              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                {renderInitials(u.nombres, u.apellidos)}
+                                <span>{u.nombres} {u.apellidos}</span>
+                              </div>
+                            </td>
+                            <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>{u.correo}</td>
+                            <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>{u.telefono || '—'}</td>
+                            <td style={{ padding: "0.75rem 0.5rem" }}>
+                              <span style={{ fontSize: "0.65rem", fontWeight: "700", padding: "0.2rem 0.55rem", borderRadius: "0.375rem", backgroundColor: rolBadge.bg, color: rolBadge.color, whiteSpace: "nowrap" }}>
+                                {rolBadge.label}
+                              </span>
+                            </td>
+                            <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>
+                              {u.nombreCondominio || <span style={{ fontStyle: "italic", color: "#cbd5e1" }}>Sin asignar</span>}
+                            </td>
+                            <td style={{ padding: "0.75rem 0.5rem", textAlign: "center" }}>
+                              <ToggleSwitch checked={u.activo} onChange={() => setConfirmAction({ type: 'status', user: u })} />
+                            </td>
+                            <td style={{ padding: "0.75rem 1rem", whiteSpace: "nowrap", textAlign: "right" }}>
+                              <button style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper, marginRight: "0.25rem" }}
+                                onClick={() => { setDetailItem(u); setShowDetail(true) }} title="Ver detalle">
+                                <FiEye size={14} />
+                              </button>
+                              <button style={{ ...btnStyle, backgroundColor: "rgba(245,158,11,0.15)", color: "#d97706", marginRight: "0.25rem" }}
+                                onClick={() => { setSelectedUser(u); setShowPasswordModal(true) }} title="Forzar cambio de contraseña">
+                                <FiLock size={14} />
+                              </button>
+                              <button style={{ ...btnStyle, backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444" }}
+                                onClick={() => setConfirmAction({ type: 'delete', user: u })} title="Eliminar usuario">
+                                <FiTrash2 size={14} />
+                              </button>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+                {renderPagination(todosPage, todosTotalPages, setTodosPage)}
               </>
             )}
           </div>
@@ -964,17 +965,17 @@ export default function UsuariosGlobales() {
                     </div>
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Asignar condominio</label>
-                      <select value={form.idCondominio} onChange={(e) => setForm({ ...form, idCondominio: e.target.value })} style={estiloInput}>
+                      <DataList value={form.idCondominio} onChange={(e) => setForm({ ...form, idCondominio: e.target.value })} style={estiloInput}>
                         <option value="">Sin asignar</option>
                         {condominioOptions.map(c => (<option key={c.id} value={c.id} disabled={c.disabled}>{c.label}</option>))}
-                      </select>
+                      </DataList>
                     </div>
                   </div>
                   <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
-                    <button type="button" onClick={() => setShowModal(false)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
                     <button type="submit" disabled={submitting} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: submitting ? "#cbd5e1" : colorSuper, color: "#fff", fontWeight: "600", cursor: submitting ? "not-allowed" : "pointer", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
                       {submitting ? 'Creando...' : 'Crear Administrador'}
                     </button>
+                    <button type="button" onClick={() => setShowModal(false)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
                   </div>
                 </form>
               </div>
@@ -999,11 +1000,11 @@ export default function UsuariosGlobales() {
                   </div>
                 </div>
                 <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
-                  <button onClick={() => { setShowPasswordModal(false); setNewPassword(''); setPasswordError('') }} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
                   <button onClick={() => handleForcePassword(selectedUser?.id)} disabled={!!passwordError || !newPassword || newPassword.length < 6}
                     style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: (!!passwordError || !newPassword || newPassword.length < 6) ? "#cbd5e1" : colorSuper, color: "#fff", fontWeight: "600", cursor: (!!passwordError || !newPassword || newPassword.length < 6) ? "not-allowed" : "pointer", fontSize: "0.85rem" }}>
                     Guardar
                   </button>
+                  <button onClick={() => { setShowPasswordModal(false); setNewPassword(''); setPasswordError('') }} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
                 </div>
               </div>
             </div>
@@ -1033,18 +1034,18 @@ export default function UsuariosGlobales() {
                 </div>
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                <select value={adminCondoFilter} onChange={(e) => setAdminCondoFilter(e.target.value)}
+                <DataList value={adminCondoFilter} onChange={(e) => setAdminCondoFilter(e.target.value)}
                   style={{ ...estiloInput, width: "auto", minWidth: "180px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
                   <option value="">Todos los condominios</option>
                   {condominios.map(c => (<option key={c.id} value={c.id}>{c.nombre}{!c.activo ? ' (inactivo)' : ''}</option>))}
-                </select>
-                <select value={`${adminSortField}-${adminSortOrder}`} onChange={(e) => { const [f, o] = e.target.value.split('-'); setAdminSortField(f); setAdminSortOrder(o) }}
+                </DataList>
+                <DataList value={`${adminSortField}-${adminSortOrder}`} onChange={(e) => { const [f, o] = e.target.value.split('-'); setAdminSortField(f); setAdminSortOrder(o) }}
                   style={{ ...estiloInput, width: "auto", minWidth: "160px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
                   <option value="nombre-asc">Nombre A-Z</option>
                   <option value="nombre-desc">Nombre Z-A</option>
                   <option value="correo-asc">Correo A-Z</option>
                   <option value="correo-desc">Correo Z-A</option>
-                </select>
+                </DataList>
                 {(adminSearch || adminCondoFilter) && (
                   <button onClick={() => { setAdminSearch(''); setAdminCondoFilter('') }}
                     style={{ ...btnStyle, backgroundColor: "#f1f5f9", color: "#64748b", fontSize: "0.7rem" }}>
@@ -1060,55 +1061,55 @@ export default function UsuariosGlobales() {
               </div>
             ) : (
               <>
-              <div className="global-table-wrap" style={{ overflowX: "auto", minHeight: "320px" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
-                  <thead>
-                    <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: "700", fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
-                      <th style={{ padding: "0.75rem 1rem", cursor: "pointer" }} onClick={() => toggleSort(adminSortField, setAdminSortField, setAdminSortOrder, adminSortOrder, 'nombre')}>
-                        Nombre {getSortIcon('nombre', adminSortField, adminSortOrder)}
-                      </th>
-                      <th style={{ padding: "0.75rem 0.5rem", cursor: "pointer" }} onClick={() => toggleSort(adminSortField, setAdminSortField, setAdminSortOrder, adminSortOrder, 'correo')}>
-                        Correo {getSortIcon('correo', adminSortField, adminSortOrder)}
-                      </th>
-                      <th style={{ padding: "0.75rem 0.5rem" }}>Teléfono</th>
-                      <th style={{ padding: "0.75rem 0.5rem" }}>Condominio</th>
-                      <th style={{ padding: "0.75rem 1rem", textAlign: "right" }}>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
-                    {paginatedAdmins.map((a, i) => (
-                      <tr key={a.id} style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: i % 2 === 0 ? "#ffffff" : "#fafafa" }}>
-                        <td style={{ padding: "0.75rem 1rem", fontWeight: "700", color: "#0f172a" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                            {renderInitials(a.nombres, a.apellidos)}
-                            <span>{a.nombres} {a.apellidos}</span>
-                          </div>
-                        </td>
-                        <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>{a.correo}</td>
-                        <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>{a.telefono || '—'}</td>
-                        <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>
-                          {a.nombreCondominio || <span style={{ fontStyle: "italic", color: "#cbd5e1" }}>Sin asignar</span>}
-                        </td>
-                        <td style={{ padding: "0.75rem 1rem", whiteSpace: "nowrap", textAlign: "right" }}>
-                          <button style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper, marginRight: "0.25rem" }}
-                            onClick={() => { setAdminDetailItem(a); setAdminShowDetail(true) }} title="Ver detalle">
-                            <FiEye size={14} />
-                          </button>
-                          <button style={{ ...btnStyle, backgroundColor: "rgba(245,158,11,0.15)", color: "#d97706", marginRight: "0.25rem" }}
-                            onClick={() => { setAdminEditing(a); setAdminForm({ nombres: a.nombres, apellidos: a.apellidos, correo: a.correo, telefono: a.telefono || '', contrasena: '', idCondominio: a.idCondominio?.toString() || '' }); setAdminShowModal(true) }} title="Editar">
-                            <FiEdit2 size={14} />
-                          </button>
-                          <button style={{ ...btnStyle, backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444" }}
-                            onClick={() => setAdminConfirmDelete(a)} title="Eliminar">
-                            <FiTrash2 size={14} />
-                          </button>
-                        </td>
+                <div className="global-table-wrap" style={{ overflowX: "auto", minHeight: "320px" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+                    <thead>
+                      <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: "700", fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
+                        <th style={{ padding: "0.75rem 1rem", cursor: "pointer" }} onClick={() => toggleSort(adminSortField, setAdminSortField, setAdminSortOrder, adminSortOrder, 'nombre')}>
+                          Nombre {getSortIcon('nombre', adminSortField, adminSortOrder)}
+                        </th>
+                        <th style={{ padding: "0.75rem 0.5rem", cursor: "pointer" }} onClick={() => toggleSort(adminSortField, setAdminSortField, setAdminSortOrder, adminSortOrder, 'correo')}>
+                          Correo {getSortIcon('correo', adminSortField, adminSortOrder)}
+                        </th>
+                        <th style={{ padding: "0.75rem 0.5rem" }}>Teléfono</th>
+                        <th style={{ padding: "0.75rem 0.5rem" }}>Condominio</th>
+                        <th style={{ padding: "0.75rem 1rem", textAlign: "right" }}>Acciones</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {renderPagination(adminPage, adminTotalPages, setAdminPage)}
+                    </thead>
+                    <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
+                      {paginatedAdmins.map((a, i) => (
+                        <tr key={a.id} style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: i % 2 === 0 ? "#ffffff" : "#fafafa" }}>
+                          <td style={{ padding: "0.75rem 1rem", fontWeight: "700", color: "#0f172a" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                              {renderInitials(a.nombres, a.apellidos)}
+                              <span>{a.nombres} {a.apellidos}</span>
+                            </div>
+                          </td>
+                          <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>{a.correo}</td>
+                          <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>{a.telefono || '—'}</td>
+                          <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>
+                            {a.nombreCondominio || <span style={{ fontStyle: "italic", color: "#cbd5e1" }}>Sin asignar</span>}
+                          </td>
+                          <td style={{ padding: "0.75rem 1rem", whiteSpace: "nowrap", textAlign: "right" }}>
+                            <button style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper, marginRight: "0.25rem" }}
+                              onClick={() => { setAdminDetailItem(a); setAdminShowDetail(true) }} title="Ver detalle">
+                              <FiEye size={14} />
+                            </button>
+                            <button style={{ ...btnStyle, backgroundColor: "rgba(245,158,11,0.15)", color: "#d97706", marginRight: "0.25rem" }}
+                              onClick={() => { setAdminEditing(a); setAdminForm({ nombres: a.nombres, apellidos: a.apellidos, correo: a.correo, telefono: a.telefono || '', contrasena: '', idCondominio: a.idCondominio?.toString() || '' }); setAdminShowModal(true) }} title="Editar">
+                              <FiEdit2 size={14} />
+                            </button>
+                            <button style={{ ...btnStyle, backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444" }}
+                              onClick={() => setAdminConfirmDelete(a)} title="Eliminar">
+                              <FiTrash2 size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {renderPagination(adminPage, adminTotalPages, setAdminPage)}
               </>
             )}
           </div>
@@ -1158,10 +1159,10 @@ export default function UsuariosGlobales() {
                     )}
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Asignar condominio</label>
-                      <select value={adminForm.idCondominio} onChange={(e) => setAdminForm({ ...adminForm, idCondominio: e.target.value })} style={estiloInput}>
+                      <DataList value={adminForm.idCondominio} onChange={(e) => setAdminForm({ ...adminForm, idCondominio: e.target.value })} style={estiloInput}>
                         <option value="">Sin asignar</option>
                         {adminGetCondoOptions().map(c => (<option key={c.id} value={c.id} disabled={c.disabled}>{c.label}</option>))}
-                      </select>
+                      </DataList>
                       {adminEditing && adminForm.idCondominio && condominios.find(c => c.id === parseInt(adminForm.idCondominio, 10))?.activo === false && (
                         <small style={{ color: "#d97706", display: "flex", alignItems: "center", gap: "0.25rem", marginTop: "0.3rem", fontWeight: "600", fontSize: "0.7rem" }}>
                           <FiAlertTriangle size={12} /> Este condominio está inactivo
@@ -1170,10 +1171,10 @@ export default function UsuariosGlobales() {
                     </div>
                   </div>
                   <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
-                    <button type="button" onClick={() => setAdminShowModal(false)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
                     <button type="submit" disabled={adminSubmitting} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: adminSubmitting ? "#cbd5e1" : colorSuper, color: "#fff", fontWeight: "600", cursor: adminSubmitting ? "not-allowed" : "pointer", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
                       {adminSubmitting ? 'Guardando...' : <><FiCheck size={16} /> Guardar</>}
                     </button>
+                    <button type="button" onClick={() => setAdminShowModal(false)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
                   </div>
                 </form>
               </div>
@@ -1204,18 +1205,18 @@ export default function UsuariosGlobales() {
                 </div>
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                <select value={agentCondoFilter} onChange={(e) => setAgentCondoFilter(e.target.value)}
+                <DataList value={agentCondoFilter} onChange={(e) => setAgentCondoFilter(e.target.value)}
                   style={{ ...estiloInput, width: "auto", minWidth: "180px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
                   <option value="">Todos los condominios</option>
                   {condominios.map(c => (<option key={c.id} value={c.id}>{c.nombre}</option>))}
-                </select>
-                <select value={`${agentSortField}-${agentSortOrder}`} onChange={(e) => { const [f, o] = e.target.value.split('-'); setAgentSortField(f); setAgentSortOrder(o) }}
+                </DataList>
+                <DataList value={`${agentSortField}-${agentSortOrder}`} onChange={(e) => { const [f, o] = e.target.value.split('-'); setAgentSortField(f); setAgentSortOrder(o) }}
                   style={{ ...estiloInput, width: "auto", minWidth: "160px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
                   <option value="nombre-asc">Nombre A-Z</option>
                   <option value="nombre-desc">Nombre Z-A</option>
                   <option value="correo-asc">Correo A-Z</option>
                   <option value="correo-desc">Correo Z-A</option>
-                </select>
+                </DataList>
                 {(agentSearch || agentCondoFilter) && (
                   <button onClick={() => { setAgentSearch(''); setAgentCondoFilter('') }}
                     style={{ ...btnStyle, backgroundColor: "#f1f5f9", color: "#64748b", fontSize: "0.7rem" }}>
@@ -1231,55 +1232,55 @@ export default function UsuariosGlobales() {
               </div>
             ) : (
               <>
-              <div className="global-table-wrap" style={{ overflowX: "auto", minHeight: "320px" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
-                  <thead>
-                    <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: "700", fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
-                      <th style={{ padding: "0.75rem 1rem", cursor: "pointer" }} onClick={() => toggleSort(agentSortField, setAgentSortField, setAgentSortOrder, agentSortOrder, 'nombre')}>
-                        Nombre {getSortIcon('nombre', agentSortField, agentSortOrder)}
-                      </th>
-                      <th style={{ padding: "0.75rem 0.5rem", cursor: "pointer" }} onClick={() => toggleSort(agentSortField, setAgentSortField, setAgentSortOrder, agentSortOrder, 'correo')}>
-                        Correo {getSortIcon('correo', agentSortField, agentSortOrder)}
-                      </th>
-                      <th style={{ padding: "0.75rem 0.5rem" }}>Teléfono</th>
-                      <th style={{ padding: "0.75rem 0.5rem" }}>Condominio</th>
-                      <th style={{ padding: "0.75rem 1rem", textAlign: "right" }}>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
-                    {paginatedAgents.map((u, i) => (
-                      <tr key={u.id} style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: i % 2 === 0 ? "#ffffff" : "#fafafa" }}>
-                        <td style={{ padding: "0.75rem 1rem", fontWeight: "700", color: "#0f172a" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                            {renderInitials(u.nombres, u.apellidos)}
-                            <span>{u.nombres} {u.apellidos}</span>
-                          </div>
-                        </td>
-                        <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>{u.correo}</td>
-                        <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>{u.telefono || '—'}</td>
-                        <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>
-                          {u.nombreCondominio || <span style={{ fontStyle: "italic", color: "#cbd5e1" }}>Sin asignar</span>}
-                        </td>
-                        <td style={{ padding: "0.75rem 1rem", whiteSpace: "nowrap", textAlign: "right" }}>
-                          <button style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper, marginRight: "0.25rem" }}
-                            onClick={() => { setAgentDetailItem(u); setAgentShowDetail(true) }} title="Ver detalle">
-                            <FiEye size={14} />
-                          </button>
-                          <button style={{ ...btnStyle, backgroundColor: "rgba(245,158,11,0.15)", color: "#d97706", marginRight: "0.25rem" }}
-                            onClick={() => { setAgentEditing(u); setAgentEditForm({ nombres: u.nombres, apellidos: u.apellidos, telefono: u.telefono || '', idCondominio: u.idCondominio?.toString() || '' }); setAgentShowEdit(true) }} title="Editar">
-                            <FiEdit2 size={14} />
-                          </button>
-                          <button style={{ ...btnStyle, backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444" }}
-                            onClick={() => setAgentConfirmDelete(u)} title="Eliminar">
-                            <FiTrash2 size={14} />
-                          </button>
-                        </td>
+                <div className="global-table-wrap" style={{ overflowX: "auto", minHeight: "320px" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+                    <thead>
+                      <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: "700", fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
+                        <th style={{ padding: "0.75rem 1rem", cursor: "pointer" }} onClick={() => toggleSort(agentSortField, setAgentSortField, setAgentSortOrder, agentSortOrder, 'nombre')}>
+                          Nombre {getSortIcon('nombre', agentSortField, agentSortOrder)}
+                        </th>
+                        <th style={{ padding: "0.75rem 0.5rem", cursor: "pointer" }} onClick={() => toggleSort(agentSortField, setAgentSortField, setAgentSortOrder, agentSortOrder, 'correo')}>
+                          Correo {getSortIcon('correo', agentSortField, agentSortOrder)}
+                        </th>
+                        <th style={{ padding: "0.75rem 0.5rem" }}>Teléfono</th>
+                        <th style={{ padding: "0.75rem 0.5rem" }}>Condominio</th>
+                        <th style={{ padding: "0.75rem 1rem", textAlign: "right" }}>Acciones</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {renderPagination(agentPage, agentTotalPages, setAgentPage)}
+                    </thead>
+                    <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
+                      {paginatedAgents.map((u, i) => (
+                        <tr key={u.id} style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: i % 2 === 0 ? "#ffffff" : "#fafafa" }}>
+                          <td style={{ padding: "0.75rem 1rem", fontWeight: "700", color: "#0f172a" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                              {renderInitials(u.nombres, u.apellidos)}
+                              <span>{u.nombres} {u.apellidos}</span>
+                            </div>
+                          </td>
+                          <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>{u.correo}</td>
+                          <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>{u.telefono || '—'}</td>
+                          <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>
+                            {u.nombreCondominio || <span style={{ fontStyle: "italic", color: "#cbd5e1" }}>Sin asignar</span>}
+                          </td>
+                          <td style={{ padding: "0.75rem 1rem", whiteSpace: "nowrap", textAlign: "right" }}>
+                            <button style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper, marginRight: "0.25rem" }}
+                              onClick={() => { setAgentDetailItem(u); setAgentShowDetail(true) }} title="Ver detalle">
+                              <FiEye size={14} />
+                            </button>
+                            <button style={{ ...btnStyle, backgroundColor: "rgba(245,158,11,0.15)", color: "#d97706", marginRight: "0.25rem" }}
+                              onClick={() => { setAgentEditing(u); setAgentEditForm({ nombres: u.nombres, apellidos: u.apellidos, telefono: u.telefono || '', idCondominio: u.idCondominio?.toString() || '' }); setAgentShowEdit(true) }} title="Editar">
+                              <FiEdit2 size={14} />
+                            </button>
+                            <button style={{ ...btnStyle, backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444" }}
+                              onClick={() => setAgentConfirmDelete(u)} title="Eliminar">
+                              <FiTrash2 size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {renderPagination(agentPage, agentTotalPages, setAgentPage)}
               </>
             )}
           </div>
@@ -1327,17 +1328,17 @@ export default function UsuariosGlobales() {
                     </div>
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Condominio</label>
-                      <select value={agentCreateForm.idCondominio} onChange={(e) => setAgentCreateForm({ ...agentCreateForm, idCondominio: e.target.value })} required style={estiloInput}>
+                      <DataList value={agentCreateForm.idCondominio} onChange={(e) => setAgentCreateForm({ ...agentCreateForm, idCondominio: e.target.value })} required style={estiloInput}>
                         <option value="">Seleccione un condominio</option>
                         {condominios.map(c => (<option key={c.id} value={c.id}>{c.nombre}</option>))}
-                      </select>
+                      </DataList>
                     </div>
                   </div>
                   <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
-                    <button type="button" onClick={() => setAgentShowCreate(false)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
                     <button type="submit" disabled={agentSubmitting} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: agentSubmitting ? "#cbd5e1" : colorSuper, color: "#fff", fontWeight: "600", cursor: agentSubmitting ? "not-allowed" : "pointer", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
                       {agentSubmitting ? 'Creando...' : <><FiCheck size={16} /> Crear Agente</>}
                     </button>
+                    <button type="button" onClick={() => setAgentShowCreate(false)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
                   </div>
                 </form>
               </div>
@@ -1367,17 +1368,17 @@ export default function UsuariosGlobales() {
                     </div>
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Condominio</label>
-                      <select value={agentEditForm.idCondominio} onChange={(e) => setAgentEditForm({ ...agentEditForm, idCondominio: e.target.value })} style={estiloInput}>
+                      <DataList value={agentEditForm.idCondominio} onChange={(e) => setAgentEditForm({ ...agentEditForm, idCondominio: e.target.value })} style={estiloInput}>
                         <option value="">Sin condominio</option>
                         {condominios.map(c => (<option key={c.id} value={c.id}>{c.nombre}</option>))}
-                      </select>
+                      </DataList>
                     </div>
                   </div>
                   <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
-                    <button type="button" onClick={() => setAgentShowEdit(false)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
                     <button type="submit" disabled={agentSubmitting} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: agentSubmitting ? "#cbd5e1" : colorSuper, color: "#fff", fontWeight: "600", cursor: agentSubmitting ? "not-allowed" : "pointer", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
                       {agentSubmitting ? 'Guardando...' : <><FiCheck size={16} /> Guardar cambios</>}
                     </button>
+                    <button type="button" onClick={() => setAgentShowEdit(false)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
                   </div>
                 </form>
               </div>
@@ -1408,18 +1409,18 @@ export default function UsuariosGlobales() {
                 </div>
               </div>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                <select value={ownerCondoFilter} onChange={(e) => setOwnerCondoFilter(e.target.value)}
+                <DataList value={ownerCondoFilter} onChange={(e) => setOwnerCondoFilter(e.target.value)}
                   style={{ ...estiloInput, width: "auto", minWidth: "180px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
                   <option value="">Todos los condominios</option>
                   {condominios.map(c => (<option key={c.id} value={c.id}>{c.nombre}</option>))}
-                </select>
-                <select value={`${ownerSortField}-${ownerSortOrder}`} onChange={(e) => { const [f, o] = e.target.value.split('-'); setOwnerSortField(f); setOwnerSortOrder(o) }}
+                </DataList>
+                <DataList value={`${ownerSortField}-${ownerSortOrder}`} onChange={(e) => { const [f, o] = e.target.value.split('-'); setOwnerSortField(f); setOwnerSortOrder(o) }}
                   style={{ ...estiloInput, width: "auto", minWidth: "160px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
                   <option value="nombre-asc">Nombre A-Z</option>
                   <option value="nombre-desc">Nombre Z-A</option>
                   <option value="correo-asc">Correo A-Z</option>
                   <option value="correo-desc">Correo Z-A</option>
-                </select>
+                </DataList>
                 {(ownerSearch || ownerCondoFilter) && (
                   <button onClick={() => { setOwnerSearch(''); setOwnerCondoFilter('') }}
                     style={{ ...btnStyle, backgroundColor: "#f1f5f9", color: "#64748b", fontSize: "0.7rem" }}>
@@ -1435,55 +1436,55 @@ export default function UsuariosGlobales() {
               </div>
             ) : (
               <>
-              <div className="global-table-wrap" style={{ overflowX: "auto", minHeight: "320px" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
-                  <thead>
-                    <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: "700", fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
-                      <th style={{ padding: "0.75rem 1rem", cursor: "pointer" }} onClick={() => toggleSort(ownerSortField, setOwnerSortField, setOwnerSortOrder, ownerSortOrder, 'nombre')}>
-                        Nombre {getSortIcon('nombre', ownerSortField, ownerSortOrder)}
-                      </th>
-                      <th style={{ padding: "0.75rem 0.5rem", cursor: "pointer" }} onClick={() => toggleSort(ownerSortField, setOwnerSortField, setOwnerSortOrder, ownerSortOrder, 'correo')}>
-                        Correo {getSortIcon('correo', ownerSortField, ownerSortOrder)}
-                      </th>
-                      <th style={{ padding: "0.75rem 0.5rem" }}>Teléfono</th>
-                      <th style={{ padding: "0.75rem 0.5rem" }}>Condominio</th>
-                      <th style={{ padding: "0.75rem 1rem", textAlign: "right" }}>Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
-                    {paginatedOwners.map((u, i) => (
-                      <tr key={u.id} style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: i % 2 === 0 ? "#ffffff" : "#fafafa" }}>
-                        <td style={{ padding: "0.75rem 1rem", fontWeight: "700", color: "#0f172a" }}>
-                          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                            {renderInitials(u.nombres, u.apellidos)}
-                            <span>{u.nombres} {u.apellidos}</span>
-                          </div>
-                        </td>
-                        <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>{u.correo}</td>
-                        <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>{u.telefono || '—'}</td>
-                        <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>
-                          {u.nombreCondominio || <span style={{ fontStyle: "italic", color: "#cbd5e1" }}>Sin asignar</span>}
-                        </td>
-                        <td style={{ padding: "0.75rem 1rem", whiteSpace: "nowrap", textAlign: "right" }}>
-                          <button style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper, marginRight: "0.25rem" }}
-                            onClick={() => { setOwnerDetailItem(u); setOwnerShowDetail(true) }} title="Ver detalle">
-                            <FiEye size={14} />
-                          </button>
-                          <button style={{ ...btnStyle, backgroundColor: "rgba(245,158,11,0.15)", color: "#d97706", marginRight: "0.25rem" }}
-                            onClick={() => { setOwnerEditing(u); setOwnerEditForm({ nombres: u.nombres, apellidos: u.apellidos, telefono: u.telefono || '', idCondominio: u.idCondominio?.toString() || '' }); setOwnerShowEdit(true) }} title="Editar">
-                            <FiEdit2 size={14} />
-                          </button>
-                          <button style={{ ...btnStyle, backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444" }}
-                            onClick={() => setOwnerConfirmDelete(u)} title="Eliminar">
-                            <FiTrash2 size={14} />
-                          </button>
-                        </td>
+                <div className="global-table-wrap" style={{ overflowX: "auto", minHeight: "320px" }}>
+                  <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+                    <thead>
+                      <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: "700", fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
+                        <th style={{ padding: "0.75rem 1rem", cursor: "pointer" }} onClick={() => toggleSort(ownerSortField, setOwnerSortField, setOwnerSortOrder, ownerSortOrder, 'nombre')}>
+                          Nombre {getSortIcon('nombre', ownerSortField, ownerSortOrder)}
+                        </th>
+                        <th style={{ padding: "0.75rem 0.5rem", cursor: "pointer" }} onClick={() => toggleSort(ownerSortField, setOwnerSortField, setOwnerSortOrder, ownerSortOrder, 'correo')}>
+                          Correo {getSortIcon('correo', ownerSortField, ownerSortOrder)}
+                        </th>
+                        <th style={{ padding: "0.75rem 0.5rem" }}>Teléfono</th>
+                        <th style={{ padding: "0.75rem 0.5rem" }}>Condominio</th>
+                        <th style={{ padding: "0.75rem 1rem", textAlign: "right" }}>Acciones</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              {renderPagination(ownerPage, ownerTotalPages, setOwnerPage)}
+                    </thead>
+                    <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
+                      {paginatedOwners.map((u, i) => (
+                        <tr key={u.id} style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: i % 2 === 0 ? "#ffffff" : "#fafafa" }}>
+                          <td style={{ padding: "0.75rem 1rem", fontWeight: "700", color: "#0f172a" }}>
+                            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                              {renderInitials(u.nombres, u.apellidos)}
+                              <span>{u.nombres} {u.apellidos}</span>
+                            </div>
+                          </td>
+                          <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>{u.correo}</td>
+                          <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>{u.telefono || '—'}</td>
+                          <td style={{ padding: "0.75rem 0.5rem", color: "#64748b", fontSize: "0.8rem" }}>
+                            {u.nombreCondominio || <span style={{ fontStyle: "italic", color: "#cbd5e1" }}>Sin asignar</span>}
+                          </td>
+                          <td style={{ padding: "0.75rem 1rem", whiteSpace: "nowrap", textAlign: "right" }}>
+                            <button style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper, marginRight: "0.25rem" }}
+                              onClick={() => { setOwnerDetailItem(u); setOwnerShowDetail(true) }} title="Ver detalle">
+                              <FiEye size={14} />
+                            </button>
+                            <button style={{ ...btnStyle, backgroundColor: "rgba(245,158,11,0.15)", color: "#d97706", marginRight: "0.25rem" }}
+                              onClick={() => { setOwnerEditing(u); setOwnerEditForm({ nombres: u.nombres, apellidos: u.apellidos, telefono: u.telefono || '', idCondominio: u.idCondominio?.toString() || '' }); setOwnerShowEdit(true) }} title="Editar">
+                              <FiEdit2 size={14} />
+                            </button>
+                            <button style={{ ...btnStyle, backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444" }}
+                              onClick={() => setOwnerConfirmDelete(u)} title="Eliminar">
+                              <FiTrash2 size={14} />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {renderPagination(ownerPage, ownerTotalPages, setOwnerPage)}
               </>
             )}
           </div>
@@ -1531,17 +1532,17 @@ export default function UsuariosGlobales() {
                     </div>
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Condominio</label>
-                      <select value={ownerCreateForm.idCondominio} onChange={(e) => setOwnerCreateForm({ ...ownerCreateForm, idCondominio: e.target.value })} required style={estiloInput}>
+                      <DataList value={ownerCreateForm.idCondominio} onChange={(e) => setOwnerCreateForm({ ...ownerCreateForm, idCondominio: e.target.value })} required style={estiloInput}>
                         <option value="">Seleccione un condominio</option>
                         {condominios.map(c => (<option key={c.id} value={c.id}>{c.nombre}</option>))}
-                      </select>
+                      </DataList>
                     </div>
                   </div>
                   <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
-                    <button type="button" onClick={() => setOwnerShowCreate(false)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
                     <button type="submit" disabled={ownerSubmitting} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: ownerSubmitting ? "#cbd5e1" : colorSuper, color: "#fff", fontWeight: "600", cursor: ownerSubmitting ? "not-allowed" : "pointer", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
                       {ownerSubmitting ? 'Creando...' : <><FiCheck size={16} /> Crear Propietario</>}
                     </button>
+                    <button type="button" onClick={() => setOwnerShowCreate(false)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
                   </div>
                 </form>
               </div>
@@ -1571,17 +1572,17 @@ export default function UsuariosGlobales() {
                     </div>
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Condominio</label>
-                      <select value={ownerEditForm.idCondominio} onChange={(e) => setOwnerEditForm({ ...ownerEditForm, idCondominio: e.target.value })} style={estiloInput}>
+                      <DataList value={ownerEditForm.idCondominio} onChange={(e) => setOwnerEditForm({ ...ownerEditForm, idCondominio: e.target.value })} style={estiloInput}>
                         <option value="">Sin condominio</option>
                         {condominios.map(c => (<option key={c.id} value={c.id}>{c.nombre}</option>))}
-                      </select>
+                      </DataList>
                     </div>
                   </div>
                   <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
-                    <button type="button" onClick={() => setOwnerShowEdit(false)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
                     <button type="submit" disabled={ownerSubmitting} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: ownerSubmitting ? "#cbd5e1" : colorSuper, color: "#fff", fontWeight: "600", cursor: ownerSubmitting ? "not-allowed" : "pointer", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
                       {ownerSubmitting ? 'Guardando...' : <><FiCheck size={16} /> Guardar cambios</>}
                     </button>
+                    <button type="button" onClick={() => setOwnerShowEdit(false)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
                   </div>
                 </form>
               </div>
