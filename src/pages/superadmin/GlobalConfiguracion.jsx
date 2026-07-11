@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { FiSettings, FiHome, FiMapPin, FiSave, FiTruck, FiClock, FiCheckCircle, FiAlertCircle, FiLoader } from "react-icons/fi"
+import { FiSettings, FiHome, FiMapPin, FiSave, FiTruck, FiClock, FiCheckCircle, FiAlertCircle, FiLoader, FiGrid, FiCheck, FiX } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import { getCondominiums, getAdminCondoConfig, updateAdminCondoConfig, extractItems } from '../../services/api'
 
@@ -28,9 +28,21 @@ const initialForm = {
   maxInquilinosPorDepto: 0
 };
 
+const coloresGradiente = [
+  ['#7c3aed', '#6d28d9'],
+  ['#ec4899', '#be185d'],
+  ['#3b82f6', '#1d4ed8'],
+  ['#10b981', '#047857'],
+  ['#f59e0b', '#b45309'],
+  ['#ef4444', '#b91c1c'],
+  ['#06b6d4', '#0891b2'],
+  ['#8b5cf6', '#6d28d9'],
+]
+
 export default function GlobalConfiguracion() {
   const [condominios, setCondominios] = useState([])
   const [condoSeleccionado, setCondoSeleccionado] = useState('')
+  const [showCardSelector, setShowCardSelector] = useState(false)
   const [loading, setLoading] = useState(true)
   const [configLoading, setConfigLoading] = useState(false)
   const [configData, setConfigData] = useState(null)
@@ -153,15 +165,291 @@ export default function GlobalConfiguracion() {
 
       <EncabezadoTabla titulo="Configuracion Global" subtitulo="Limites operacionales y reglas de negocio por condominio" />
 
-      <div style={{ backgroundColor: "#ffffff", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", marginBottom: "2rem", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
-        <div style={{ width: "100%", maxWidth: "280px" }}>
-          <select style={estiloInput} value={condoSeleccionado} onChange={(e) => setCondoSeleccionado(e.target.value)}>
-            <option value="">Seleccionar condominio</option>
-            {condominios.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-          </select>
-        </div>
-      </div>
+            <style>{`
+        @keyframes gradientShift {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+        @keyframes cardSelectedPop {
+          0% { transform: scale(0); opacity: 0; }
+          60% { transform: scale(1.2); opacity: 1; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+      `}</style>
 
+      {/* --- VISTA COMPACTA --- */}
+      {condoSeleccionado && !showCardSelector && (
+        <div style={{
+          background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)',
+          borderRadius: '1rem',
+          padding: '0.85rem 1.25rem',
+          marginBottom: '1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1rem',
+          border: '1px solid rgba(124,58,237,0.15)',
+          flexWrap: 'wrap'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{
+              backgroundColor: 'rgba(124,58,237,0.12)',
+              padding: '0.6rem',
+              borderRadius: '0.75rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <FiGrid size={20} color={colorSuper} />
+            </div>
+            <div>
+              <div style={{ fontSize: '0.95rem', fontWeight: '800', color: '#0f172a' }}>{condoActual?.nombre || 'Condominio'}</div>
+              <div style={{ fontSize: '0.75rem', color: '#6d28d9', fontWeight: '600' }}>
+                {condoActual?.direccion || ''} &mdash; {condominios.length} condominios
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowCardSelector(true)}
+            style={{
+              backgroundColor: 'rgba(124,58,237,0.1)',
+              color: colorSuper,
+              border: '1px solid rgba(124,58,237,0.2)',
+              padding: '0.5rem 1rem',
+              borderRadius: '0.65rem',
+              fontSize: '0.8rem',
+              fontWeight: '700',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              transition: 'all 0.2s ease',
+              whiteSpace: 'nowrap'
+            }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.2)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.1)'; e.currentTarget.style.transform = 'translateY(0)' }}
+          >
+            <FiGrid size={14} />
+            Seleccionar otro condominio
+          </button>
+        </div>
+      )}
+
+      {/* --- SELECTOR DE CONDOMINIOS (TARJETAS) --- */}
+      {(!condoSeleccionado || showCardSelector) && (
+        <div style={{ marginBottom: '1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1rem' }}>
+            <div style={{
+              backgroundColor: 'rgba(124,58,237,0.1)',
+              padding: '0.6rem',
+              borderRadius: '0.65rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <FiGrid size={20} color={colorSuper} />
+            </div>
+            <div>
+              <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: '800', color: '#0f172a' }}>
+                {condoSeleccionado ? 'Seleccionar otro condominio' : 'Selecciona un condominio'}
+              </h2>
+              <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>
+                {condominios.length} {condominios.length === 1 ? 'condominio disponible' : 'condominios disponibles'}
+              </span>
+            </div>
+          </div>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
+            gap: '1rem'
+          }}>
+            {condominios.map((c, idx) => {
+              const isSelected = String(c.id) === String(condoSeleccionado)
+              const [color1, color2] = coloresGradiente[idx % coloresGradiente.length]
+
+              return (
+                <button
+                  type="button"
+                  key={c.id}
+                  onClick={() => { setCondoSeleccionado(String(c.id)); setShowCardSelector(false) }}
+                  style={{
+                    background: isSelected
+                      ? `linear-gradient(145deg, #ffffff, ${color1}04)`
+                      : '#ffffff',
+                    border: isSelected
+                      ? `2px solid ${color1}`
+                      : '1.5px solid #e8ecf1',
+                    borderRadius: '1.25rem',
+                    boxShadow: isSelected
+                      ? `0 0 0 4px ${color1}15, 0 8px 32px ${color1}20, 0 2px 8px rgba(0,0,0,0.04)`
+                      : '0 2px 8px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.02)',
+                    cursor: 'pointer',
+                    display: 'block',
+                    fontFamily: 'inherit',
+                    fontSize: 'inherit',
+                    lineHeight: 'inherit',
+                    overflow: 'hidden',
+                    padding: 0,
+                    position: 'relative',
+                    textAlign: 'left',
+                    transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                    transform: isSelected ? 'scale(1.03) translateY(-2px)' : 'scale(1) translateY(0)',
+                    width: '100%',
+                    opacity: condoSeleccionado && !isSelected ? 0.55 : 1,
+                    filter: condoSeleccionado && !isSelected ? 'grayscale(0.3) saturate(0.7)' : 'none',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected && !condoSeleccionado) {
+                      e.currentTarget.style.transform = 'scale(1.03) translateY(-3px)'
+                      e.currentTarget.style.boxShadow = `0 12px 40px ${color1}15, 0 4px 12px rgba(0,0,0,0.06)`
+                      e.currentTarget.style.borderColor = color1
+                    } else if (!isSelected) {
+                      e.currentTarget.style.transform = 'scale(1.02) translateY(-2px)'
+                      e.currentTarget.style.boxShadow = `0 8px 25px ${color1}10, 0 4px 10px rgba(0,0,0,0.04)`
+                      e.currentTarget.style.borderColor = '#cbd5e1'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.transform = 'scale(1) translateY(0)'
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.02)'
+                      e.currentTarget.style.borderColor = '#e8ecf1'
+                    }
+                  }}
+                >
+                  {/* Barra decorativa superior con gradiente */}
+                  <div style={{
+                    height: '6px',
+                    background: `linear-gradient(90deg, ${color1}, ${color2}, ${color1})`,
+                    backgroundSize: '200% 100%',
+                    borderRadius: '1.25rem 1.25rem 0 0',
+                  }} />
+
+                  <div style={{ padding: '1.25rem 1.25rem 1.15rem' }}>
+                    {/* Icono */}
+                    <div style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '1rem',
+                      background: `linear-gradient(135deg, ${color1}18, ${color2}08)`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: '0.85rem',
+                      transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      border: `1px solid ${color1}22`,
+                    }}>
+                      <FiHome size={24} color={color1} />
+                    </div>
+
+                    {/* Nombre */}
+                    <h3 style={{
+                      margin: 0,
+                      fontSize: '1rem',
+                      fontWeight: '800',
+                      color: '#0f172a',
+                      lineHeight: 1.35,
+                      marginBottom: '0.3rem',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      letterSpacing: '-0.01em',
+                    }}>
+                      {c.nombre}
+                    </h3>
+
+                    {/* Dirección */}
+                    {c.direccion && (
+                      <p style={{
+                        margin: 0,
+                        fontSize: '0.72rem',
+                        color: '#94a3b8',
+                        fontWeight: '500',
+                        marginBottom: '0.85rem',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}>
+                        {c.direccion}
+                      </p>
+                    )}
+
+                    {/* Separador sutil */}
+                    <div style={{
+                      height: '1px',
+                      background: `linear-gradient(90deg, ${color1}22, transparent)`,
+                      marginBottom: '0.75rem',
+                    }} />
+
+                    {/* Footer badges */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      flexWrap: 'wrap',
+                    }}>
+                      {c.nombreCiudad && (
+                        <span style={{
+                          fontSize: '0.6rem',
+                          fontWeight: '700',
+                          color: '#475569',
+                          backgroundColor: '#f1f4f9',
+                          padding: '0.2rem 0.55rem',
+                          borderRadius: '999px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                          border: '1px solid #e8ecf1',
+                        }}>
+                          <FiMapPin size={8} color="#94a3b8" /> {c.nombreCiudad}
+                        </span>
+                      )}
+                      <span style={{
+                        fontSize: '0.6rem',
+                        fontWeight: '700',
+                        padding: '0.2rem 0.55rem',
+                        borderRadius: '999px',
+                        backgroundColor: c.activo !== false ? '#ecfdf5' : '#fef2f2',
+                        color: c.activo !== false ? '#059669' : '#dc2626',
+                        border: `1px solid ${c.activo !== false ? '#a7f3d0' : '#fecaca'}`,
+                      }}>
+                        {c.activo !== false ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </div>
+
+                    {/* Indicador de seleccionado */}
+                    {isSelected && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '0.75rem',
+                        right: '0.75rem',
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: '50%',
+                        background: `linear-gradient(135deg, ${color1}, ${color2})`,
+                        color: '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.65rem',
+                        fontWeight: '700',
+                        boxShadow: `0 3px 10px ${color1}40, 0 0 0 4px ${color1}15`,
+                      }}>
+                        <FiCheck size={15} />
+                      </div>
+                    )}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
       {!condoSeleccionado ? (
         <div style={{ textAlign: "center", padding: "4rem", color: "#94a3b8", fontWeight: "600" }}>
           <FiSettings size={48} style={{ marginBottom: "1rem", opacity: 0.4 }} />
