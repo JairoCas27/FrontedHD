@@ -1,5 +1,6 @@
-﻿import React, { useState, useEffect, useMemo } from 'react'
-import { FiHome, FiUser, FiUsers, FiGrid, FiSearch, FiMail, FiPhone, FiX, FiCheck, FiEye, FiUserPlus, FiAlertTriangle, FiRefreshCw, FiEdit3, FiTrash2, FiPlus } from "react-icons/fi"
+﻿import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
+import { useSearchParams } from 'react-router-dom'
+import { FiHome, FiUser, FiUsers, FiGrid, FiSearch, FiMail, FiPhone, FiX, FiCheck, FiEye, FiUserPlus, FiAlertTriangle, FiRefreshCw, FiEdit3, FiTrash2, FiPlus, FiChevronDown, FiChevronRight } from "react-icons/fi"
 import { toast } from 'react-toastify'
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import { getCondominiums, getAdminApartments, assignApartmentOwner, getAllUsers, getAdminAssets, assignAssetApartment, updateApartmentOccupants, createAdminStructureNode, deleteAdminStructureNode, extractItems } from '../../services/api'
@@ -61,6 +62,14 @@ export default function GlobalDepartamentos() {
   const [creatingApt, setCreatingApt] = useState(false)
   const [confirmDeleteApt, setConfirmDeleteApt] = useState(null)
   const [deletingAptId, setDeletingAptId] = useState(null)
+  const [highlightedAptId, setHighlightedAptId] = useState(null)
+  const [expandedTorres, setExpandedTorres] = useState({})
+  const aptRefs = useRef({})
+  const [searchParams] = useSearchParams()
+
+  const toggleTorre = (torre) => {
+    setExpandedTorres(prev => ({ ...prev, [torre]: !prev[torre] }))
+  }
 
   useEffect(() => {
     setLoading(true)
@@ -69,6 +78,17 @@ export default function GlobalDepartamentos() {
       getAllUsers().then(d => setAllUsers(extractItems(d))).catch(() => {})
     ]).finally(() => setLoading(false))
   }, [])
+
+  useEffect(() => {
+    const idCondo = searchParams.get('idCondominio')
+    const idApt = searchParams.get('idApartamento')
+    if (idCondo) {
+      setCondoSeleccionado(idCondo)
+    }
+    if (idApt) {
+      setHighlightedAptId(Number(idApt))
+    }
+  }, [searchParams])
 
   useEffect(() => {
     if (!condoSeleccionado) {
@@ -86,6 +106,19 @@ export default function GlobalDepartamentos() {
         .catch(() => setParkingAssets([])),
     ]).finally(() => setLoadingApts(false))
   }, [condoSeleccionado])
+
+  useEffect(() => {
+    if (highlightedAptId && apartments.length > 0) {
+      const apt = apartments.find(a => Number(a.id) === Number(highlightedAptId))
+      if (apt && apt.torreNombre) {
+        setExpandedTorres(prev => ({ ...prev, [apt.torreNombre]: true }))
+        setTimeout(() => {
+          const el = aptRefs.current[highlightedAptId]
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }, 300)
+      }
+    }
+  }, [apartments, highlightedAptId])
 
   const condoActual = condominios.find(c => String(c.id) === String(condoSeleccionado))
 
@@ -399,7 +432,7 @@ export default function GlobalDepartamentos() {
                 </div>
               </div>
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", padding: "0 1.5rem 1rem" }}>
                 <select value={filtroTorre} onChange={(e) => setFiltroTorre(e.target.value)}
                   style={{ ...estiloInput, width: "auto", minWidth: "120px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
                   <option value="">Todas las torres</option>
@@ -429,92 +462,142 @@ export default function GlobalDepartamentos() {
                 No se encontraron coincidencias.
               </div>
             ) : (
-              <div className="global-table-wrap" style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
-                  <thead>
-                    <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: "700", fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
-                      <th style={{ padding: "0.75rem 1rem" }}>N&deg; Depto</th>
-                      <th style={{ padding: "0.75rem 1rem" }}>Torre</th>
-                      <th style={{ padding: "0.75rem 1rem" }}>Piso</th>
-                      <th style={{ padding: "0.75rem 1rem" }}>Propietario</th>
-                      <th style={{ padding: "0.75rem 1rem" }}>Contacto</th>
-                      <th style={{ padding: "0.75rem 1rem" }}>Inquilinos</th>
-                      <th style={{ padding: "0.75rem 1rem" }}>Estacionamiento</th>
-                      <th style={{ padding: "0.75rem 1rem" }}>Estado</th>
-                      <th style={{ padding: "0.75rem 1rem" }}>Acci&oacute;n</th>
-                    </tr>
-                  </thead>
-                  <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
-                    {filteredApts.map((apt, i) => {
-                      const contacto = getContacto(apt)
-                      const tienePropietario = apt.idPropietario != null
-                      const parking = getAssignedParking(apt)
-                      return (
-                        <tr key={apt.id} style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: i % 2 === 0 ? "#ffffff" : "#fafafa" }}>
-                          <td style={{ padding: "0.75rem 1rem", fontWeight: "700", color: "#0f172a" }}>{apt.numero}</td>
-                          <td style={{ padding: "0.75rem 1rem", color: "#64748b" }}>{apt.torreNombre || <span style={{ fontStyle: "italic", color: "#cbd5e1" }}>---</span>}</td>
-                          <td style={{ padding: "0.75rem 1rem", color: "#64748b" }}>{apt.pisoNumero || <span style={{ fontStyle: "italic", color: "#cbd5e1" }}>---</span>}</td>
-                          <td style={{ padding: "0.75rem 1rem" }}>
-                            {tienePropietario ? (
-                              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                                <div style={{ width: "28px", height: "28px", borderRadius: "50%", backgroundColor: colorSuper, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.6rem", fontWeight: "700", flexShrink: 0 }}>
-                                  {(apt.nombrePropietario || '??').split(' ').map(s => s[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()}
-                                </div>
-                                <span style={{ fontWeight: "600", fontSize: "0.8rem", color: "#0f172a" }}>{apt.nombrePropietario}</span>
-                              </div>
-                            ) : (
-                              <span style={{ fontStyle: "italic", color: "#cbd5e1", fontSize: "0.8rem", fontWeight: "600" }}>Sin asignar</span>
-                            )}
-                          </td>
-                          <td style={{ padding: "0.75rem 1rem", fontSize: "0.75rem", color: "#64748b" }}>
-                            {contacto ? (
-                              <>
-                                {contacto.email && <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", marginBottom: "0.15rem" }}><FiMail size={11} /> {contacto.email}</div>}
-                                {contacto.telefono && <div style={{ display: "flex", alignItems: "center", gap: "0.3rem" }}><FiPhone size={11} /> {contacto.telefono}</div>}
-                                {!contacto.email && !contacto.telefono && <span style={{ color: "#cbd5e1", fontStyle: "italic" }}>---</span>}
-                              </>
-                            ) : (
-                              <span style={{ color: "#cbd5e1", fontStyle: "italic" }}>---</span>
-                            )}
-                          </td>
-                          <td style={{ padding: "0.75rem 1rem" }}>
-                            <div style={{ display: "flex", alignItems: "center", gap: "0.35rem", color: "#64748b", fontWeight: "600" }}>
-                              <FiUsers size={13} />
-                              <span>{Array.isArray(apt.inquilinos) ? apt.inquilinos.length : 0}</span>
-                            </div>
-                          </td>
-                          <td style={{ padding: "0.75rem 1rem", fontSize: "0.8rem", color: "#64748b" }}>
-                            {parking ? (
-                              <span style={{ fontWeight: "600", color: "#0f172a" }}>N┬░ {parking.numero}</span>
-                            ) : (
-                              <span style={{ fontStyle: "italic", color: "#cbd5e1", fontSize: "0.75rem" }}>No asignado</span>
-                            )}
-                          </td>
-                          <td style={{ padding: "0.75rem 1rem" }}>
-                            <span style={{
-                              fontSize: "0.65rem", fontWeight: "700", padding: "0.2rem 0.55rem", borderRadius: "0.375rem",
-                              backgroundColor: tienePropietario ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
-                              color: tienePropietario ? "#10b981" : "#ef4444",
-                              whiteSpace: "nowrap"
-                            }}>
-                              {tienePropietario ? 'Ocupado' : 'Disponible'}
-                            </span>
-                          </td>
-                          <td style={{ padding: "0.75rem 1rem", whiteSpace: "nowrap" }}>
-                            <button style={{ ...btnStyle, backgroundColor: colorSuper, color: "#fff", marginRight: "0.35rem" }}
-                              onClick={() => openDetail(apt)}>
-                              <FiEye size={14} /> Detalle
-                            </button>
-                            <button onClick={() => setConfirmDeleteApt(apt)}
-                              style={{ ...btnStyle, backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444" }}>
-                              <FiTrash2 size={14} />
-                            </button>
-                          </td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
+              <div>
+                {(() => {
+                  const agrupadas = {}
+                  filteredApts.forEach(a => {
+                    const t = a.torreNombre || 'Sin torre'
+                    if (!agrupadas[t]) agrupadas[t] = {}
+                    const p = a.pisoNumero || '0'
+                    if (!agrupadas[t][p]) agrupadas[t][p] = []
+                    agrupadas[t][p].push(a)
+                  })
+                  const torresOrdenadas = Object.keys(agrupadas).sort()
+                  return torresOrdenadas.map(torre => {
+                    const pisosOrdenados = Object.keys(agrupadas[torre]).sort((a, b) => Number(a) - Number(b))
+                    const totalTorre = Object.values(agrupadas[torre]).flat().length
+                    const occupedTorre = Object.values(agrupadas[torre]).flat().filter(a => a.idPropietario != null).length
+                    const expanded = expandedTorres[torre] !== false
+                    return (
+                      <div key={torre}>
+                        <div onClick={() => toggleTorre(torre)}
+                          style={{ padding: "0.6rem 1.25rem", backgroundColor: "#f8fafc", borderBottom: "1px solid #e2e8f0", borderTop: "1px solid #e2e8f0", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.6rem", userSelect: "none" }}>
+                          {expanded ? <FiChevronDown size={15} color={colorSuper} /> : <FiChevronRight size={15} color="#94a3b8" />}
+                          <span style={{ fontWeight: 800, fontSize: "0.8rem", color: "#0f172a", textTransform: "uppercase" }}>{torre}</span>
+                          <span style={{ fontSize: "0.7rem", color: "#94a3b8", fontWeight: 600 }}>{totalTorre} deptos</span>
+                          <span style={{ fontSize: "0.65rem", color: "#10b981", fontWeight: 700 }}>{occupedTorre} ocupados</span>
+                          <span style={{ fontSize: "0.65rem", color: "#94a3b8" }}>·</span>
+                          <span style={{ fontSize: "0.65rem", color: "#ef4444", fontWeight: 700 }}>{totalTorre - occupedTorre} libres</span>
+                        </div>
+                        {expanded && (
+                          <div style={{ overflowX: "auto" }}>
+                            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+                              <thead>
+                                <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: 700, fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
+                                  <th style={{ padding: "0.5rem 1rem" }}>N&deg; Depto</th>
+                                  <th style={{ padding: "0.5rem" }}>Piso</th>
+                                  <th style={{ padding: "0.5rem" }}>Propietario</th>
+                                  <th style={{ padding: "0.5rem" }}>Contacto</th>
+                                  <th style={{ padding: "0.5rem" }}>Inquilinos</th>
+                                  <th style={{ padding: "0.5rem" }}>Estacionamiento</th>
+                                  <th style={{ padding: "0.5rem" }}>Estado</th>
+                                  <th style={{ padding: "0.5rem 1rem", textAlign: "right" }}>Acci&oacute;n</th>
+                                </tr>
+                              </thead>
+                              <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
+                                {pisosOrdenados.map(piso => {
+                                  const aptsPiso = agrupadas[torre][piso]
+                                  return (
+                                    <React.Fragment key={piso}>
+                                      <tr style={{ backgroundColor: "#fafafa" }}>
+                                        <td colSpan={8} style={{ padding: "0.3rem 1rem", fontWeight: 700, color: "#64748b", fontSize: "0.7rem", textTransform: "uppercase", borderBottom: "1px solid #f1f5f9" }}>
+                                          <FiHome size={11} style={{ marginRight: "0.3rem", verticalAlign: "middle" }} /> Piso {piso} ({aptsPiso.length} deptos)
+                                        </td>
+                                      </tr>
+                                      {aptsPiso.map((apt, i) => {
+                                        const contacto = getContacto(apt)
+                                        const tienePropietario = apt.idPropietario != null
+                                        const parking = getAssignedParking(apt)
+                                        const isHighlighted = Number(apt.id) === Number(highlightedAptId)
+                                        return (
+                                          <tr key={apt.id} ref={el => { aptRefs.current[apt.id] = el }}
+                                            style={{
+                                              borderBottom: "1px solid #f1f5f9",
+                                              backgroundColor: isHighlighted ? "rgba(124,58,237,0.08)" : (i % 2 === 0 ? "#ffffff" : "#fafafa"),
+                                              transition: "background-color 0.5s",
+                                              outline: isHighlighted ? `2px solid ${colorSuper}` : 'none',
+                                              outlineOffset: '-1px'
+                                            }}>
+                                            <td style={{ padding: "0.5rem 1rem", fontWeight: "700", color: "#0f172a" }}>{apt.numero}</td>
+                                            <td style={{ padding: "0.5rem", color: "#64748b" }}>{apt.pisoNumero || '—'}</td>
+                                            <td style={{ padding: "0.5rem" }}>
+                                              {tienePropietario ? (
+                                                <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                                                  <div style={{ width: "24px", height: "24px", borderRadius: "50%", backgroundColor: colorSuper, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.5rem", fontWeight: "700", flexShrink: 0 }}>
+                                                    {(apt.nombrePropietario || '??').split(' ').map(s => s[0]).filter(Boolean).slice(0, 2).join('').toUpperCase()}
+                                                  </div>
+                                                  <span style={{ fontWeight: "600", fontSize: "0.78rem", color: "#0f172a" }}>{apt.nombrePropietario}</span>
+                                                </div>
+                                              ) : (
+                                                <span style={{ fontStyle: "italic", color: "#cbd5e1", fontSize: "0.78rem", fontWeight: "600" }}>Sin asignar</span>
+                                              )}
+                                            </td>
+                                            <td style={{ padding: "0.5rem", fontSize: "0.72rem", color: "#64748b" }}>
+                                              {contacto ? (
+                                                <>
+                                                  {contacto.email && <div style={{ display: "flex", alignItems: "center", gap: "0.25rem", marginBottom: "0.1rem" }}><FiMail size={10} /> {contacto.email}</div>}
+                                                  {contacto.telefono && <div style={{ display: "flex", alignItems: "center", gap: "0.25rem" }}><FiPhone size={10} /> {contacto.telefono}</div>}
+                                                  {!contacto.email && !contacto.telefono && <span style={{ color: "#cbd5e1", fontStyle: "italic" }}>—</span>}
+                                                </>
+                                              ) : <span style={{ color: "#cbd5e1", fontStyle: "italic" }}>—</span>}
+                                            </td>
+                                            <td style={{ padding: "0.5rem" }}>
+                                              <div style={{ display: "flex", alignItems: "center", gap: "0.3rem", color: "#64748b", fontWeight: "600", fontSize: "0.78rem" }}>
+                                                <FiUsers size={12} />
+                                                <span>{Array.isArray(apt.inquilinos) ? apt.inquilinos.length : 0}</span>
+                                              </div>
+                                            </td>
+                                            <td style={{ padding: "0.5rem", fontSize: "0.78rem", color: "#64748b" }}>
+                                              {parking ? (
+                                                <span style={{ fontWeight: "600", color: "#0f172a", fontSize: "0.75rem" }}>N° {parking.numero}</span>
+                                              ) : (
+                                                <span style={{ fontStyle: "italic", color: "#cbd5e1", fontSize: "0.72rem" }}>No asignado</span>
+                                              )}
+                                            </td>
+                                            <td style={{ padding: "0.5rem" }}>
+                                              <span style={{
+                                                fontSize: "0.6rem", fontWeight: "700", padding: "0.15rem 0.45rem", borderRadius: "0.3rem",
+                                                backgroundColor: tienePropietario ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
+                                                color: tienePropietario ? "#10b981" : "#ef4444",
+                                                whiteSpace: "nowrap"
+                                              }}>
+                                                {tienePropietario ? 'Ocupado' : 'Disponible'}
+                                              </span>
+                                            </td>
+                                            <td style={{ padding: "0.5rem 1rem", whiteSpace: "nowrap", textAlign: "right" }}>
+                                              <button style={{ ...btnStyle, backgroundColor: colorSuper, color: "#fff", padding: "0.3rem 0.6rem", fontSize: "0.7rem" }}
+                                                onClick={() => openDetail(apt)}>
+                                                <FiEye size={12} /> Detalle
+                                              </button>
+                                              <button onClick={() => setConfirmDeleteApt(apt)}
+                                                style={{ ...btnStyle, backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444", padding: "0.3rem 0.5rem", fontSize: "0.7rem", marginLeft: "0.3rem" }}>
+                                                <FiTrash2 size={12} />
+                                              </button>
+                                            </td>
+                                          </tr>
+                                        )
+                                      })}
+                                    </React.Fragment>
+                                  )
+                                })}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })
+                })()}
               </div>
             )}
           </div>
