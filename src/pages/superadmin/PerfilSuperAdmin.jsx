@@ -221,7 +221,7 @@ export default function PerfilSuperAdmin() {
               {initials}
             </span>
           </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
             <h1 style={{
               margin: 0, fontWeight: 800, fontSize: isMobile ? '20px' : '24px',
               color: colors.slate, letterSpacing: '-0.03em',
