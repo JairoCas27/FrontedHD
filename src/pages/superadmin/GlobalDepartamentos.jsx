@@ -1,6 +1,6 @@
 ﻿import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { FiHome, FiUser, FiUsers, FiGrid, FiSearch, FiMail, FiPhone, FiX, FiCheck, FiEye, FiUserPlus, FiAlertTriangle, FiRefreshCw, FiEdit3, FiTrash2, FiPlus, FiChevronDown, FiChevronRight } from "react-icons/fi"
+import { FiHome, FiUser, FiUsers, FiGrid, FiSearch, FiMail, FiPhone, FiX, FiCheck, FiEye, FiUserPlus, FiAlertTriangle, FiRefreshCw, FiEdit3, FiTrash2, FiPlus, FiChevronDown, FiChevronRight, FiMapPin } from "react-icons/fi"
 import { toast } from 'react-toastify'
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import { getCondominiums, getAdminApartments, assignApartmentOwner, getAllUsers, getAdminAssets, assignAssetApartment, updateApartmentOccupants, createAdminStructureNode, deleteAdminStructureNode, extractItems } from '../../services/api'
@@ -32,6 +32,17 @@ const modalContent = {
   maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 60px rgba(0,0,0,0.15)"
 }
 
+const coloresGradiente = [
+  ['#7c3aed', '#a78bfa'],
+  ['#0ea5e9', '#38bdf8'],
+  ['#f59e0b', '#fbbf24'],
+  ['#10b981', '#34d399'],
+  ['#ef4444', '#f87171'],
+  ['#ec4899', '#f472b6'],
+  ['#14b8a6', '#2dd4bf'],
+  ['#f97316', '#fb923c'],
+]
+
 export default function GlobalDepartamentos() {
   const [condominios, setCondominios] = useState([])
   const [apartments, setApartments] = useState([])
@@ -61,14 +72,20 @@ export default function GlobalDepartamentos() {
   const [deletingAptId, setDeletingAptId] = useState(null)
   const [highlightedAptId, setHighlightedAptId] = useState(null)
   const [expandedTorres, setExpandedTorres] = useState({})
+  const [expandedPisos, setExpandedPisos] = useState({})
   const aptRefs = useRef({})
   const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const [showOwnersModal, setShowOwnersModal] = useState(false)
+  const [showCardSelector, setShowCardSelector] = useState(true)
 
   const toggleTorre = (torre) => {
     setExpandedTorres(prev => ({ ...prev, [torre]: !prev[torre] }))
   }
+
+  const togglePiso = useCallback((pisoId) => {
+    setExpandedPisos(prev => ({ ...prev, [pisoId]: !prev[pisoId] }))
+  }, [])
 
   useEffect(() => {
     setLoading(true)
@@ -83,6 +100,7 @@ export default function GlobalDepartamentos() {
     const idApt = searchParams.get('idApartamento')
     if (idCondo) {
       setCondoSeleccionado(idCondo)
+      setShowCardSelector(false)
     }
     if (idApt) {
       setHighlightedAptId(Number(idApt))
@@ -104,13 +122,22 @@ export default function GlobalDepartamentos() {
         .then(d => setParkingAssets(extractItems(d)))
         .catch(() => setParkingAssets([])),
     ]).finally(() => setLoadingApts(false))
+    setBusqueda('')
+    setExpandedTorres({})
+    setExpandedPisos({})
   }, [condoSeleccionado])
+
+
 
   useEffect(() => {
     if (highlightedAptId && apartments.length > 0) {
       const apt = apartments.find(a => Number(a.id) === Number(highlightedAptId))
       if (apt && apt.torreNombre) {
         setExpandedTorres(prev => ({ ...prev, [apt.torreNombre]: true }))
+        if (apt.pisoNumero) {
+          const pisoKey = `${apt.torreNombre}-${apt.pisoNumero}`
+          setExpandedPisos(prev => ({ ...prev, [pisoKey]: true }))
+        }
         setTimeout(() => {
           const el = aptRefs.current[highlightedAptId]
           if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -132,18 +159,25 @@ export default function GlobalDepartamentos() {
   }, [apartments])
 
   const filteredApts = useMemo(() => {
-    let list = apartments
-    const q = busqueda.toLowerCase().trim()
-    if (q) {
-      list = list.filter(a => {
-        const nro = String(a.numero || '').toLowerCase()
-        const torre = (a.torreNombre || '').toLowerCase()
-        const piso = (a.pisoNumero || '').toLowerCase()
-        const prop = (a.nombrePropietario || '').toLowerCase()
-        return nro.includes(q) || torre.includes(q) || piso.includes(q) || prop.includes(q)
-      })
+    try {
+      if (!Array.isArray(apartments) || apartments.length === 0) return []
+      let list = apartments
+      const q = busqueda.toLowerCase().trim()
+      if (q) {
+        list = list.filter(a => {
+          if (!a) return false
+          const nro = String(a.numero ?? '').toLowerCase()
+          const torre = String(a.torreNombre ?? '').toLowerCase()
+          const piso = String(a.pisoNumero ?? '').toLowerCase()
+          const prop = String(a.nombrePropietario ?? '').toLowerCase()
+          return nro.includes(q) || torre.includes(q) || piso.includes(q) || prop.includes(q)
+        })
+      }
+      return list
+    } catch (e) {
+      console.warn('Error filtering apartments:', e)
+      return []
     }
-    return list
   }, [apartments, busqueda])
 
   const totalApts = apartments.length
@@ -342,22 +376,319 @@ export default function GlobalDepartamentos() {
   return (
     <div className="global-card-padding" style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
       <style>{globalResponsive}</style>
+      <style>{`
+        @keyframes gradientShift {
+          0%, 100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+        @keyframes cardSelectedPop {
+          0% { transform: scale(0); opacity: 0; }
+          60% { transform: scale(1.2); opacity: 0.8; }
+          100% { transform: scale(1); opacity: 1; }
+        }
+      `}</style>
       <EncabezadoTabla titulo="Departamentos Global" subtitulo="Vista general de unidades inmobiliarias en todos los condominios" />
 
-      <div style={{ backgroundColor: "#ffffff", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", marginBottom: "2rem", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
-        <div style={{ width: "100%", maxWidth: "280px" }}>
-          <select style={estiloInput} value={condoSeleccionado} onChange={(e) => { setCondoSeleccionado(e.target.value); setBusqueda('') }}>
-            <option value="">Seleccionar condominio</option>
-            {condominios.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-          </select>
+      {/* --- COMPACT VIEW cuando ya hay un condominio seleccionado --- */}
+      {condoSeleccionado && !showCardSelector && (
+        <div style={{
+          marginBottom: "2rem",
+          backgroundColor: "#ffffff",
+          borderRadius: "1rem",
+          border: "1px solid #e2e8f0",
+          padding: "1rem 1.5rem",
+          boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          flexWrap: "wrap",
+          gap: "0.75rem"
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            <div style={{
+              width: "44px",
+              height: "44px",
+              borderRadius: "0.75rem",
+              background: `linear-gradient(135deg, ${colorSuper}22, ${colorSuper}11)`,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              border: `1px solid ${colorSuper}33`,
+            }}>
+              <FiHome size={22} color={colorSuper} />
+            </div>
+            <div>
+              <h2 style={{ margin: 0, fontSize: "1rem", fontWeight: "800", color: "#0f172a" }}>
+                {condoActual?.nombre || 'Condominio'}
+              </h2>
+              <span style={{ fontSize: "0.75rem", color: "#64748b", fontWeight: "600" }}>
+                {condoActual?.direccion && <>{condoActual.direccion} · </>}
+                {totalApts} departamentos
+              </span>
+            </div>
+          </div>
+          <button
+            onClick={() => setShowCardSelector(true)}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "0.4rem",
+              padding: "0.5rem 1rem",
+              borderRadius: "0.5rem",
+              border: `1px solid ${colorSuper}`,
+              backgroundColor: "#ffffff",
+              color: colorSuper,
+              fontWeight: "700",
+              fontSize: "0.8rem",
+              cursor: "pointer",
+              transition: "all 0.2s",
+              fontFamily: "inherit",
+              whiteSpace: "nowrap",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = `rgba(124,58,237,0.08)`
+              e.currentTarget.style.boxShadow = `0 2px 8px rgba(124,58,237,0.15)`
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "#ffffff"
+              e.currentTarget.style.boxShadow = "none"
+            }}
+          >
+            <FiGrid size={15} />
+            Seleccionar otro condominio
+          </button>
         </div>
-      </div>
+      )}
+
+      {/* --- CARDS GRID visible cuando no hay selección o se presiona 'Seleccionar otro condominio' --- */}
+      {(!condoSeleccionado || showCardSelector) && (
+        <div style={{ marginBottom: "2rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1.25rem" }}>
+            <div style={{
+              backgroundColor: "rgba(124,58,237,0.1)",
+              padding: "0.65rem",
+              borderRadius: "0.75rem",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center"
+            }}>
+              <FiGrid size={22} color={colorSuper} />
+            </div>
+            <div>
+              <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: "800", color: "#0f172a" }}>
+                {condoSeleccionado ? 'Condominio seleccionado' : 'Selecciona un condominio'}
+              </h2>
+              <span style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: "600" }}>
+                {condominios.length} {condominios.length === 1 ? 'condominio disponible' : 'condominios disponibles'}
+                {condoSeleccionado && ` · Haz clic en otro para cambiar`}
+              </span>
+            </div>
+          </div>
+
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+            gap: "1rem"
+          }}>
+            {condominios.map((c, idx) => {
+              const isSelected = String(c.id) === String(condoSeleccionado)
+              const [color1, color2] = coloresGradiente[idx % coloresGradiente.length]
+
+              return (
+                <button
+                  type="button"
+                  key={c.id}
+                  onClick={() => { setCondoSeleccionado(String(c.id)); setBusqueda(''); setShowCardSelector(false) }}
+                  id={`condo-card-${c.id}`}
+                  style={{
+                    background: isSelected
+                      ? `linear-gradient(145deg, #ffffff, ${color1}04)`
+                      : '#ffffff',
+                    border: isSelected
+                      ? `2px solid ${color1}`
+                      : '1.5px solid #e8ecf1',
+                    borderRadius: '1.25rem',
+                    boxShadow: isSelected
+                      ? `0 0 0 4px ${color1}15, 0 8px 32px ${color1}20, 0 2px 8px rgba(0,0,0,0.04)`
+                      : '0 2px 8px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.02)',
+                    cursor: 'pointer',
+                    display: 'block',
+                    fontFamily: 'inherit',
+                    fontSize: 'inherit',
+                    lineHeight: 'inherit',
+                    overflow: 'hidden',
+                    padding: 0,
+                    position: 'relative',
+                    textAlign: 'left',
+                    transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                    transform: isSelected ? 'scale(1.03) translateY(-2px)' : 'scale(1) translateY(0)',
+                    width: '100%',
+                    opacity: condoSeleccionado && !isSelected ? 0.55 : 1,
+                    filter: condoSeleccionado && !isSelected ? 'grayscale(0.3) saturate(0.7)' : 'none',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected && !condoSeleccionado) {
+                      e.currentTarget.style.transform = 'scale(1.03) translateY(-3px)'
+                      e.currentTarget.style.boxShadow = `0 12px 40px ${color1}15, 0 4px 12px rgba(0,0,0,0.06)`
+                      e.currentTarget.style.borderColor = color1
+                    } else if (!isSelected) {
+                      e.currentTarget.style.transform = 'scale(1.02) translateY(-2px)'
+                      e.currentTarget.style.boxShadow = `0 8px 25px ${color1}10, 0 4px 10px rgba(0,0,0,0.04)`
+                      e.currentTarget.style.borderColor = '#cbd5e1'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.transform = 'scale(1) translateY(0)'
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.02)'
+                      e.currentTarget.style.borderColor = '#e8ecf1'
+                    }
+                  }}
+                >
+                  {/* Barra decorativa superior con gradiente - más estilizada */}
+                  <div style={{
+                    height: '6px',
+                    background: `linear-gradient(90deg, ${color1}, ${color2}, ${color1})`,
+                    backgroundSize: '200% 100%',
+                    animation: isSelected ? 'gradientShift 3s ease infinite' : 'none',
+                    borderRadius: '1.25rem 1.25rem 0 0',
+                  }} />
+
+                  <div style={{ padding: '1.25rem 1.25rem 1.15rem' }}>
+                    {/* Icono con glow */}
+                    <div style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '1rem',
+                      background: `linear-gradient(135deg, ${color1}18, ${color2}08)`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: '0.85rem',
+                      transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      border: `1px solid ${color1}22`,
+                      boxShadow: isSelected ? `0 4px 12px ${color1}25, inset 0 1px 0 ${color1}11` : 'none',
+                    }}>
+                      <FiHome size={24} color={color1} style={{ filter: isSelected ? `drop-shadow(0 2px 4px ${color1}40)` : 'none' }} />
+                    </div>
+
+                    {/* Nombre con mejor tipografía */}
+                    <h3 style={{
+                      margin: 0,
+                      fontSize: '1rem',
+                      fontWeight: '800',
+                      color: '#0f172a',
+                      lineHeight: 1.35,
+                      marginBottom: '0.3rem',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      letterSpacing: '-0.01em',
+                    }}>
+                      {c.nombre}
+                    </h3>
+
+                    {/* Dirección */}
+                    {c.direccion && (
+                      <p style={{
+                        margin: 0,
+                        fontSize: '0.72rem',
+                        color: '#94a3b8',
+                        fontWeight: '500',
+                        marginBottom: '0.85rem',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}>
+                        {c.direccion}
+                      </p>
+                    )}
+
+                    {/* Separador sutil */}
+                    <div style={{
+                      height: '1px',
+                      background: `linear-gradient(90deg, ${color1}22, transparent)`,
+                      marginBottom: '0.75rem',
+                    }} />
+
+                    {/* Footer con badges mejorados */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      flexWrap: 'wrap',
+                    }}>
+                      {c.nombreCiudad && (
+                        <span style={{
+                          fontSize: '0.6rem',
+                          fontWeight: '700',
+                          color: '#475569',
+                          backgroundColor: '#f1f4f9',
+                          padding: '0.2rem 0.55rem',
+                          borderRadius: '999px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.25rem',
+                          border: '1px solid #e8ecf1',
+                          letterSpacing: '0.01em',
+                        }}>
+                          <FiMapPin size={8} color="#94a3b8" /> {c.nombreCiudad}
+                        </span>
+                      )}
+                      <span style={{
+                        fontSize: '0.6rem',
+                        fontWeight: '700',
+                        padding: '0.2rem 0.55rem',
+                        borderRadius: '999px',
+                        backgroundColor: c.activo !== false ? '#ecfdf5' : '#fef2f2',
+                        color: c.activo !== false ? '#059669' : '#dc2626',
+                        border: `1px solid ${c.activo !== false ? '#a7f3d0' : '#fecaca'}`,
+                        letterSpacing: '0.01em',
+                      }}>
+                        {c.activo !== false ? 'Activo' : 'Inactivo'}
+                      </span>
+                    </div>
+
+                    {/* Indicador de seleccionado animado */}
+                    {isSelected && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '0.75rem',
+                        right: '0.75rem',
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: '50%',
+                        background: `linear-gradient(135deg, ${color1}, ${color2})`,
+                        color: '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.65rem',
+                        fontWeight: '700',
+                        boxShadow: `0 3px 10px ${color1}40, 0 0 0 4px ${color1}15`,
+                        animation: 'cardSelectedPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      }}>
+                        <FiCheck size={15} />
+                      </div>
+                    )}
+                  </div>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {!condoSeleccionado ? (
-        <div style={{ textAlign: "center", padding: "4rem", color: "#94a3b8", fontWeight: "600" }}>
-          <FiGrid size={48} style={{ marginBottom: "1rem", opacity: 0.4 }} />
-          <p>Selecciona un condominio para ver sus departamentos</p>
+        <div style={{
+          textAlign: "center", padding: "4rem", color: "#94a3b8", fontWeight: "600"
+        }}>
+          <FiGrid size={48} style={{ marginBottom: "1rem", opacity: 0.3 }} />
+          <p style={{ fontSize: "1rem", margin: "0 0 0.3rem" }}>Selecciona un condominio para ver sus departamentos</p>
         </div>
+
       ) : loadingApts ? (
         <div style={{ textAlign: "center", padding: "4rem", color: "#94a3b8", fontWeight: "600" }}>
           <FiRefreshCw size={32} style={{ marginBottom: "1rem", opacity: 0.4, animation: "spin 1s linear infinite" }} />
@@ -455,7 +786,7 @@ export default function GlobalDepartamentos() {
                     const pisosOrdenados = Object.keys(agrupadas[torre]).sort((a, b) => Number(a) - Number(b))
                     const totalTorre = Object.values(agrupadas[torre]).flat().length
                     const occupedTorre = Object.values(agrupadas[torre]).flat().filter(a => a.idPropietario != null).length
-                    const expanded = expandedTorres[torre] === true
+                    const expanded = busqueda.trim() || expandedTorres[torre] === true
                     return (
                       <div key={torre}>
                         <div onClick={() => toggleTorre(torre)}
@@ -485,14 +816,22 @@ export default function GlobalDepartamentos() {
                               <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
                                 {pisosOrdenados.map(piso => {
                                   const aptsPiso = agrupadas[torre][piso]
+                                  const pisoKey = `${torre}-${piso}`
+                                  const isPisoExpanded = busqueda.trim() || expandedPisos[pisoKey] === true
                                   return (
                                     <React.Fragment key={piso}>
-                                      <tr style={{ backgroundColor: "#fafafa" }}>
-                                        <td colSpan={8} style={{ padding: "0.3rem 1rem", fontWeight: 700, color: "#64748b", fontSize: "0.7rem", textTransform: "uppercase", borderBottom: "1px solid #f1f5f9" }}>
-                                          <FiHome size={11} style={{ marginRight: "0.3rem", verticalAlign: "middle" }} /> Piso {piso} ({aptsPiso.length} deptos)
+                                      <tr
+                                        onClick={() => togglePiso(pisoKey)}
+                                        style={{ backgroundColor: "#f1f5f9", cursor: "pointer", userSelect: "none" }}
+                                      >
+                                        <td colSpan={8} style={{ padding: "0.3rem 1rem", fontWeight: 700, color: "#475569", fontSize: "0.7rem", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
+                                          <span style={{ display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+                                            {isPisoExpanded ? <FiChevronDown size={12} color={colorSuper} /> : <FiChevronRight size={12} color="#94a3b8" />}
+                                            <FiHome size={11} /> Piso {piso} ({aptsPiso.length} deptos)
+                                          </span>
                                         </td>
                                       </tr>
-                                      {aptsPiso.map((apt, i) => {
+                                      {isPisoExpanded && aptsPiso.map((apt, i) => {
                                         const contacto = getContacto(apt)
                                         const tienePropietario = apt.idPropietario != null
                                         const parking = getAssignedParking(apt)
