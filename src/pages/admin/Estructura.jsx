@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react'
-import { FiGitCommit, FiTrash2, FiFolder, FiX, FiInfo, FiPlus } from "react-icons/fi"
+import { FiGitCommit, FiTrash2, FiFolder, FiX, FiInfo, FiPlus, FiLoader, FiAlertCircle } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import { useAdminStructure } from '../../hooks/Admin/useAdminStructure'
 
 export default function Estructura() {
   const colorAdmin = "rgb(52,151,195)"
-  const { estructura, loading, insertarNodo, eliminarNodo, agregarDepartamento, refrescar } = useAdminStructure()
+  const { estructura, loading, insertarNodo, eliminarNodo, agregarDepartamento, refrescar, error } = useAdminStructure()
 
   const [showModal, setShowModal] = useState(false)
   const [showApartmentModal, setShowApartmentModal] = useState(false)
@@ -16,30 +16,50 @@ export default function Estructura() {
     idPiso: '',
     tieneEstacionamiento: false
   })
-  const [errorMessage, setErrorMessage] = useState('') // 🆕 Para mostrar errores
+  const [errorMessage, setErrorMessage] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [departamentosExistentes, setDepartamentosExistentes] = useState([])
 
   const listaTorres = Array.isArray(estructura)
       ? estructura
       : (estructura?.torres || [])
 
-  // Obtener todos los pisos disponibles (se actualiza cuando cambia la estructura)
+  // Obtener todos los pisos disponibles
   const todosLosPisos = listaTorres.flatMap(torre =>
       (torre.pisos || []).map(piso => ({
         ...piso,
-        torreNombre: torre.nombre
+        torreNombre: torre.nombre,
+        torreId: torre.id,
+        apartamentos: piso.apartamentos || []
       }))
   )
 
-  // Forzar recarga cuando se abre el modal de departamento
+  // Actualizar departamentos existentes cuando cambia el piso seleccionado
+  useEffect(() => {
+    if (nuevoDepartamento.idPiso) {
+      const pisoSeleccionado = todosLosPisos.find(p => p.id === parseInt(nuevoDepartamento.idPiso));
+      if (pisoSeleccionado) {
+        setDepartamentosExistentes(pisoSeleccionado.apartamentos || []);
+      }
+    } else {
+      setDepartamentosExistentes([]);
+    }
+  }, [nuevoDepartamento.idPiso, todosLosPisos]);
+
+  // Forzar recarga cuando se abre el modal
   useEffect(() => {
     if (showApartmentModal) {
-      refrescar(); // Recargar estructura para tener los datos más recientes
+      refrescar();
     }
   }, [showApartmentModal, refrescar])
 
   const handleAddNode = async (e) => {
     e.preventDefault()
     if (!nuevoNodo.nombre.trim()) return
+
+    setIsSubmitting(true)
+    setErrorMessage('')
 
     try {
       let nombreTorreSeleccionada = null;
@@ -70,27 +90,51 @@ export default function Estructura() {
       await insertarNodo(payload);
       setShowModal(false);
       setNuevoNodo({ nombre: '', padreId: '' });
+      setSuccessMessage(`${payload.tipo} creada correctamente`);
 
-      // Recargar después de crear torre/piso
-      await refrescar();
+      setTimeout(() => setSuccessMessage(''), 3000);
 
     } catch (error) {
       console.error("Error al insertar el nodo estructural:", error)
-      alert("Hubo un problema al crear la sección en el servidor.")
+      setErrorMessage(`${error.message || 'Hubo un problema al crear la sección.'}`)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleAddApartment = async (e) => {
     e.preventDefault()
-    setErrorMessage('') // Limpiar error anterior
+    if (isSubmitting) return;
+
+    setIsSubmitting(true)
+    setErrorMessage('')
+    setSuccessMessage('')
 
     if (!nuevoDepartamento.numero || !nuevoDepartamento.idPiso) {
       setErrorMessage('Por favor completa todos los campos obligatorios')
+      setIsSubmitting(false)
       return
     }
 
+    // Validación local de duplicados
+    const numeroExistente = departamentosExistentes.some(
+        d => d.numero === parseInt(nuevoDepartamento.numero)
+    );
+
+    if (numeroExistente) {
+      setErrorMessage(`El departamento ${nuevoDepartamento.numero} ya existe en este piso.`);
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
+      console.log('Creando departamento:', nuevoDepartamento);
+
+      await new Promise(resolve => setTimeout(resolve, 200));
+
       await agregarDepartamento(nuevoDepartamento)
+
+      setSuccessMessage(`Departamento ${nuevoDepartamento.numero} creado exitosamente`)
       setShowApartmentModal(false)
       setNuevoDepartamento({
         numero: '',
@@ -98,30 +142,39 @@ export default function Estructura() {
         idPiso: '',
         tieneEstacionamiento: false
       })
-      await refrescar(); // Recargar para ver el nuevo departamento
+
+      setTimeout(() => setSuccessMessage(''), 3000)
+
     } catch (error) {
       console.error("Error al agregar departamento:", error)
 
-      // Mostrar mensaje de error más específico
       if (error.message.includes('duplicate') || error.message.includes('unique')) {
-        setErrorMessage('El número de departamento ya existe en este piso. Por favor elige otro número.')
+        setErrorMessage(`El número de departamento ${nuevoDepartamento.numero} ya existe en este piso.`)
       } else if (error.message.includes('Piso no encontrado')) {
-        setErrorMessage('El piso seleccionado no existe. Por favor recarga la página e intenta de nuevo.')
+        setErrorMessage('El piso seleccionado no existe. Por favor recarga la página.')
+      } else if (error.message.includes('ya existe')) {
+        setErrorMessage(error.message)
       } else {
-        setErrorMessage(`Error al crear el departamento: ${error.message || 'Verifica los datos e intenta de nuevo.'}`)
+        setErrorMessage(`${error.message || 'Error al crear el departamento. Verifica los datos.'}`)
       }
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
   const handleDeleteNode = async (id) => {
     if (!window.confirm("¿Seguro que deseas eliminar este nodo de la estructura arquitectónica?")) return
 
+    setIsSubmitting(true)
     try {
       await eliminarNodo(id)
-      await refrescar(); // Recargar después de eliminar
+      setSuccessMessage('Nodo eliminado correctamente')
+      setTimeout(() => setSuccessMessage(''), 3000)
     } catch (error) {
       console.error("Error al eliminar el nodo:", error)
-      alert("No se pudo eliminar el nodo. Asegúrate de que no contenga subelementos activos.")
+      setErrorMessage(`${error.message || 'No se pudo eliminar el nodo.'}`)
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -148,6 +201,39 @@ export default function Estructura() {
   return (
       <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
 
+        {/* Mensajes de éxito/error */}
+        {successMessage && (
+            <div style={{
+              backgroundColor: "#dcfce7",
+              border: "1px solid #86efac",
+              color: "#16a34a",
+              padding: "0.75rem 1rem",
+              borderRadius: "0.5rem",
+              marginBottom: "1rem",
+              fontWeight: "600"
+            }}>
+              {successMessage}
+            </div>
+        )}
+
+        {errorMessage && (
+            <div style={{
+              backgroundColor: "#fee2e2",
+              border: "1px solid #fecaca",
+              color: "#dc2626",
+              padding: "0.75rem 1rem",
+              borderRadius: "0.5rem",
+              marginBottom: "1rem",
+              fontWeight: "600",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.5rem"
+            }}>
+              <FiAlertCircle />
+              {errorMessage}
+            </div>
+        )}
+
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
           <EncabezadoTabla
               titulo="Estructura del Condominio"
@@ -159,6 +245,7 @@ export default function Estructura() {
 
           <button
               onClick={() => setShowApartmentModal(true)}
+              disabled={isSubmitting}
               style={{
                 backgroundColor: colorAdmin,
                 color: "white",
@@ -170,12 +257,13 @@ export default function Estructura() {
                 display: "flex",
                 alignItems: "center",
                 gap: "0.5rem",
-                cursor: "pointer",
+                cursor: isSubmitting ? "not-allowed" : "pointer",
                 boxShadow: "0 2px 4px rgba(52,151,195,0.2)",
-                whiteSpace: "nowrap"
+                whiteSpace: "nowrap",
+                opacity: isSubmitting ? 0.6 : 1
               }}
           >
-            <FiPlus size={18} />
+            {isSubmitting ? <FiLoader size={18} className="spinner" /> : <FiPlus size={18} />}
             Agregar Departamento
           </button>
         </div>
@@ -201,6 +289,7 @@ export default function Estructura() {
                           onClick={() => handleDeleteNode(torre.id)}
                           style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: "0.25rem" }}
                           title="Eliminar Torre"
+                          disabled={isSubmitting}
                       >
                         <FiTrash2 size={16} />
                       </button>
@@ -213,11 +302,15 @@ export default function Estructura() {
                               <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontWeight: "700", color: "#334155", fontSize: "0.9rem" }}>
                                 <FiGitCommit style={{ color: "#94a3b8" }} />
                                 <span>{piso.nombre || `Piso ${piso.numero}`}</span>
+                                <span style={{ fontSize: "0.7rem", backgroundColor: "#e2e8f0", padding: "0.1rem 0.4rem", borderRadius: "0.25rem", color: "#475569" }}>
+                          {piso.apartamentos?.length || 0} dptos
+                        </span>
                               </div>
                               <button
                                   onClick={() => handleDeleteNode(piso.id)}
                                   style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer" }}
                                   title="Eliminar Nivel"
+                                  disabled={isSubmitting}
                               >
                                 <FiTrash2 size={14} />
                               </button>
@@ -242,6 +335,10 @@ export default function Estructura() {
                                         {dpto.metraje && (
                                             <span style={{ fontWeight: "400", color: "#94a3b8" }}>
                                 ({dpto.metraje}m²)
+                              </span>
+                                        )}
+                                        {dpto.derechoEstacionamiento && (
+                                            <span style={{ color: "#22c55e", fontSize: "0.6rem" }}>
                               </span>
                                         )}
                           </span>
@@ -271,14 +368,25 @@ export default function Estructura() {
               <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "420px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.08)", border: "1px solid #e2e8f0", overflow: "hidden" }}>
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: "800", color: "#1e293b" }}>Agregar Nuevo Nodo Estructural</h3>
-                  <button onClick={() => setShowModal(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={18} /></button>
+                  <button
+                      onClick={() => setShowModal(false)}
+                      style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}
+                      disabled={isSubmitting}
+                  >
+                    <FiX size={18} />
+                  </button>
                 </div>
 
                 <form onSubmit={handleAddNode}>
                   <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
                     <div>
                       <label style={estiloLabel}>Ubicación Jerárquica (Padre)</label>
-                      <select style={estiloInput} value={nuevoNodo.padreId} onChange={(e) => setNuevoNodo({ ...nuevoNodo, padreId: e.target.value })}>
+                      <select
+                          style={estiloInput}
+                          value={nuevoNodo.padreId}
+                          onChange={(e) => setNuevoNodo({ ...nuevoNodo, padreId: e.target.value })}
+                          disabled={isSubmitting}
+                      >
                         <option value="">[Raíz] Crear Nueva Torre Principal</option>
                         {listaTorres.map(t => (
                             <option key={t.id} value={t.id}>Subnivel dentro de: {t.nombre}</option>
@@ -288,7 +396,15 @@ export default function Estructura() {
 
                     <div>
                       <label style={estiloLabel}>Nombre del Nodo</label>
-                      <input type="text" style={estiloInput} placeholder="Ej: Torre C o Piso 3" value={nuevoNodo.nombre} onChange={(e) => setNuevoNodo({ ...nuevoNodo, nombre: e.target.value })} required />
+                      <input
+                          type="text"
+                          style={estiloInput}
+                          placeholder="Ej: Torre C o Piso 3"
+                          value={nuevoNodo.nombre}
+                          onChange={(e) => setNuevoNodo({ ...nuevoNodo, nombre: e.target.value })}
+                          required
+                          disabled={isSubmitting}
+                      />
 
                       <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", padding: "0.6rem 0.75rem", borderRadius: "0.375rem", marginTop: "0.6rem" }}>
                         <FiInfo size={14} style={{ color: "#16a34a", flexShrink: 0 }} />
@@ -302,8 +418,45 @@ export default function Estructura() {
                   </div>
 
                   <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: "0.75rem", backgroundColor: "#f8fafc" }}>
-                    <button type="button" onClick={() => setShowModal(false)} style={{ backgroundColor: "#ffffff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Cancelar</button>
-                    <button type="submit" style={{ backgroundColor: colorAdmin, border: "none", color: "#ffffff", padding: "0.5rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Insertar Nodo</button>
+                    <button
+                        type="button"
+                        onClick={() => setShowModal(false)}
+                        style={{
+                          backgroundColor: "#ffffff",
+                          border: "1px solid #cbd5e1",
+                          color: "#475569",
+                          padding: "0.5rem 1rem",
+                          borderRadius: "0.5rem",
+                          fontSize: "0.85rem",
+                          fontWeight: "600",
+                          cursor: "pointer",
+                          opacity: isSubmitting ? 0.5 : 1
+                        }}
+                        disabled={isSubmitting}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                        type="submit"
+                        style={{
+                          backgroundColor: colorAdmin,
+                          border: "none",
+                          color: "#ffffff",
+                          padding: "0.5rem 1.25rem",
+                          borderRadius: "0.5rem",
+                          fontSize: "0.85rem",
+                          fontWeight: "600",
+                          cursor: isSubmitting ? "not-allowed" : "pointer",
+                          opacity: isSubmitting ? 0.6 : 1,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem"
+                        }}
+                        disabled={isSubmitting}
+                    >
+                      {isSubmitting && <FiLoader size={16} style={{ animation: "spin 1s linear infinite" }} />}
+                      Insertar Nodo
+                    </button>
                   </div>
                 </form>
 
@@ -317,8 +470,17 @@ export default function Estructura() {
               <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "480px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.08)", border: "1px solid #e2e8f0", overflow: "hidden" }}>
 
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: "800", color: "#1e293b" }}>Agregar Nuevo Departamento</h3>
-                  <button onClick={() => setShowApartmentModal(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={18} /></button>
+                  <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: "800", color: "#1e293b" }}>
+                    Agregar Nuevo Departamento
+                    {isSubmitting && <FiLoader size={16} style={{ marginLeft: "0.5rem", animation: "spin 1s linear infinite" }} />}
+                  </h3>
+                  <button
+                      onClick={() => setShowApartmentModal(false)}
+                      style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}
+                      disabled={isSubmitting}
+                  >
+                    <FiX size={18} />
+                  </button>
                 </div>
 
                 <form onSubmit={handleAddApartment}>
@@ -334,6 +496,7 @@ export default function Estructura() {
                           onChange={(e) => setNuevoDepartamento({ ...nuevoDepartamento, numero: e.target.value })}
                           required
                           min="1"
+                          disabled={isSubmitting}
                       />
                     </div>
 
@@ -347,6 +510,7 @@ export default function Estructura() {
                           onChange={(e) => setNuevoDepartamento({ ...nuevoDepartamento, metraje: e.target.value })}
                           step="0.1"
                           min="0"
+                          disabled={isSubmitting}
                       />
                     </div>
 
@@ -357,14 +521,23 @@ export default function Estructura() {
                           value={nuevoDepartamento.idPiso}
                           onChange={(e) => setNuevoDepartamento({ ...nuevoDepartamento, idPiso: e.target.value })}
                           required
+                          disabled={isSubmitting}
                       >
                         <option value="">Seleccionar Piso</option>
                         {todosLosPisos.map(piso => (
                             <option key={piso.id} value={piso.id}>
                               {piso.torreNombre} - {piso.nombre || `Piso ${piso.numero}`}
+                              {piso.apartamentos && piso.apartamentos.length > 0 &&
+                                  ` (${piso.apartamentos.length} departamentos)`
+                              }
                             </option>
                         ))}
                       </select>
+                      {todosLosPisos.length === 0 && (
+                          <div style={{ fontSize: "0.75rem", color: "#f59e0b", marginTop: "0.3rem" }}>
+                            No hay pisos disponibles. Crea una torre y un piso primero.
+                          </div>
+                      )}
                     </div>
 
                     <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
@@ -374,23 +547,23 @@ export default function Estructura() {
                           checked={nuevoDepartamento.tieneEstacionamiento}
                           onChange={(e) => setNuevoDepartamento({ ...nuevoDepartamento, tieneEstacionamiento: e.target.checked })}
                           style={{ width: "1rem", height: "1rem", cursor: "pointer" }}
+                          disabled={isSubmitting}
                       />
                       <label htmlFor="tieneEstacionamiento" style={{ fontSize: "0.9rem", fontWeight: "500", color: "#334155", cursor: "pointer" }}>
                         Tiene derecho de estacionamiento
                       </label>
                     </div>
 
-                    {/* Mostrar mensaje de error */}
-                    {errorMessage && (
+                    {/* Mostrar departamentos existentes en el piso */}
+                    {nuevoDepartamento.idPiso && departamentosExistentes.length > 0 && (
                         <div style={{
-                          backgroundColor: "#fee2e2",
-                          border: "1px solid #fecaca",
-                          padding: "0.6rem 0.75rem",
+                          backgroundColor: "#f1f5f9",
+                          padding: "0.5rem 0.75rem",
                           borderRadius: "0.375rem",
-                          color: "#dc2626",
-                          fontSize: "0.85rem"
+                          fontSize: "0.75rem",
+                          color: "#64748b"
                         }}>
-                          {errorMessage}
+                          Departamentos en este piso: {departamentosExistentes.map(d => d.numero).join(', ')}
                         </div>
                     )}
 
@@ -403,8 +576,43 @@ export default function Estructura() {
                   </div>
 
                   <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: "0.75rem", backgroundColor: "#f8fafc" }}>
-                    <button type="button" onClick={() => setShowApartmentModal(false)} style={{ backgroundColor: "#ffffff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Cancelar</button>
-                    <button type="submit" style={{ backgroundColor: colorAdmin, border: "none", color: "#ffffff", padding: "0.5rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>
+                    <button
+                        type="button"
+                        onClick={() => setShowApartmentModal(false)}
+                        style={{
+                          backgroundColor: "#ffffff",
+                          border: "1px solid #cbd5e1",
+                          color: "#475569",
+                          padding: "0.5rem 1rem",
+                          borderRadius: "0.5rem",
+                          fontSize: "0.85rem",
+                          fontWeight: "600",
+                          cursor: "pointer",
+                          opacity: isSubmitting ? 0.5 : 1
+                        }}
+                        disabled={isSubmitting}
+                    >
+                      Cancelar
+                    </button>
+                    <button
+                        type="submit"
+                        style={{
+                          backgroundColor: colorAdmin,
+                          border: "none",
+                          color: "#ffffff",
+                          padding: "0.5rem 1.25rem",
+                          borderRadius: "0.5rem",
+                          fontSize: "0.85rem",
+                          fontWeight: "600",
+                          cursor: isSubmitting ? "not-allowed" : "pointer",
+                          opacity: isSubmitting ? 0.6 : 1,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "0.5rem"
+                        }}
+                        disabled={isSubmitting}
+                    >
+                      {isSubmitting && <FiLoader size={16} style={{ animation: "spin 1s linear infinite" }} />}
                       Crear Departamento
                     </button>
                   </div>
@@ -414,6 +622,16 @@ export default function Estructura() {
             </div>
         )}
 
+        {/* Estilos para la animación */}
+        <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .spinner {
+          animation: spin 1s linear infinite;
+        }
+      `}</style>
       </div>
   )
 }
