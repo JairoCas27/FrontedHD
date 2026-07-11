@@ -61,11 +61,11 @@ export default function ConfirmModal({ open, title, description, onConfirm, onCa
           )}
         </div>
         <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-          <ActionButton variant="ghost" onClick={onCancel} disabled={loading}>
-            Cancelar
-          </ActionButton>
           <ActionButton variant={variant} onClick={onConfirm} disabled={loading}>
             {loading ? `${confirmLabel}...` : confirmLabel}
+          </ActionButton>
+          <ActionButton variant="ghost" onClick={onCancel} disabled={loading}>
+            Cancelar
           </ActionButton>
         </div>
       </div>

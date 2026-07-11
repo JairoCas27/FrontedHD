@@ -35,12 +35,9 @@ import Perfil from "./pages/admin/Perfil"
 
 import DashboardSuperAdmin from "./pages/superadmin/DashboardSuperAdmin"
 import Condominios from "./pages/superadmin/Condominios"
-import Administradores from "./pages/superadmin/Administradores"
 import UsuariosGlobales from "./pages/superadmin/UsuariosGlobales"
 import AuditoriaGlobal from "./pages/superadmin/AuditoriaGlobal"
 import ReportesGlobales from "./pages/superadmin/ReportesGlobales"
-import PropietariosGlobales from "./pages/superadmin/PropietariosGlobales"
-import AgentesSeguridad from "./pages/superadmin/AgentesSeguridad"
 import PerfilSuperAdmin from "./pages/superadmin/PerfilSuperAdmin"
 import GlobalDepartamentos from "./pages/superadmin/GlobalDepartamentos"
 import GlobalEstructura from "./pages/superadmin/GlobalEstructura"
@@ -99,12 +96,9 @@ function App() {
         <Route element={<AppLayout Sidebar={SidebarSuperAdmin} allowedRole="superadmin" />}>
           <Route path="/superadmin/dashboard" element={<DashboardSuperAdmin />} />
           <Route path="/superadmin/condominios" element={<Condominios />} />
-          <Route path="/superadmin/administradores" element={<Administradores />} />
           <Route path="/superadmin/usuarios" element={<UsuariosGlobales />} />
           <Route path="/superadmin/auditoria" element={<AuditoriaGlobal />} />
           <Route path="/superadmin/reportes" element={<ReportesGlobales />} />
-          <Route path="/superadmin/propietarios" element={<PropietariosGlobales />} />
-          <Route path="/superadmin/agentes" element={<AgentesSeguridad />} />
           <Route path="/superadmin/departamentos" element={<GlobalDepartamentos />} />
           <Route path="/superadmin/estructura" element={<GlobalEstructura />} />
           <Route path="/superadmin/bienes" element={<GlobalBienes />} />

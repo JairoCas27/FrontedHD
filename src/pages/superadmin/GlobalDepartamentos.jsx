@@ -1,5 +1,5 @@
 ﻿import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useSearchParams, useNavigate } from 'react-router-dom'
 import { FiHome, FiUser, FiUsers, FiGrid, FiSearch, FiMail, FiPhone, FiX, FiCheck, FiEye, FiUserPlus, FiAlertTriangle, FiRefreshCw, FiEdit3, FiTrash2, FiPlus, FiChevronDown, FiChevronRight } from "react-icons/fi"
 import { toast } from 'react-toastify'
 import EncabezadoTabla from '../../components/EncabezadoTabla'
@@ -41,9 +41,6 @@ export default function GlobalDepartamentos() {
   const [loading, setLoading] = useState(true)
   const [loadingApts, setLoadingApts] = useState(false)
   const [busqueda, setBusqueda] = useState('')
-  const [filtroTorre, setFiltroTorre] = useState('')
-  const [filtroPiso, setFiltroPiso] = useState('')
-  const [filtroEstado, setFiltroEstado] = useState('')
   const [modalAssign, setModalAssign] = useState(null)
   const [assignUserId, setAssignUserId] = useState('')
   const [assigning, setAssigning] = useState(false)
@@ -66,6 +63,8 @@ export default function GlobalDepartamentos() {
   const [expandedTorres, setExpandedTorres] = useState({})
   const aptRefs = useRef({})
   const [searchParams] = useSearchParams()
+  const navigate = useNavigate()
+  const [showOwnersModal, setShowOwnersModal] = useState(false)
 
   const toggleTorre = (torre) => {
     setExpandedTorres(prev => ({ ...prev, [torre]: !prev[torre] }))
@@ -144,12 +143,8 @@ export default function GlobalDepartamentos() {
         return nro.includes(q) || torre.includes(q) || piso.includes(q) || prop.includes(q)
       })
     }
-    if (filtroTorre) list = list.filter(a => a.torreNombre === filtroTorre)
-    if (filtroPiso) list = list.filter(a => a.pisoNumero === filtroPiso)
-    if (filtroEstado === 'ocupado') list = list.filter(a => a.idPropietario != null)
-    else if (filtroEstado === 'disponible') list = list.filter(a => a.idPropietario == null)
     return list
-  }, [apartments, busqueda, filtroTorre, filtroPiso, filtroEstado])
+  }, [apartments, busqueda])
 
   const totalApts = apartments.length
   const occupiedApts = apartments.filter(a => a.idPropietario != null)
@@ -195,19 +190,14 @@ export default function GlobalDepartamentos() {
       setModalAssign(null)
       setAssignUserId('')
     } catch (err) {
-      const msg = err.message.toLowerCase()
-      if (msg.includes('ya tiene') || msg.includes('already') || msg.includes('ocupado')) {
-        toast.warning('El departamento ya tiene un propietario. El backend no permite cambiarlo directamente. Desasigna primero desde el panel de administraci├│n del condominio.')
-      } else {
-        toast.error(`Error al asignar: ${err.message}`)
-      }
+      toast.error(`Error al asignar: ${err.message}`)
     } finally {
       setAssigning(false)
     }
   }
 
   async function handleCreateApt() {
-    if (!createAptForm.numero.trim()) { toast.warning('Ingresa el n├║mero del departamento'); return }
+    if (!createAptForm.numero.trim()) { toast.warning('Ingresa el número del departamento'); return }
     if (!createAptForm.torreNombre) { toast.warning('Selecciona una torre'); return }
     if (!createAptForm.pisoNumero) { toast.warning('Selecciona un piso'); return }
     setCreatingApt(true)
@@ -356,7 +346,7 @@ export default function GlobalDepartamentos() {
 
       <div style={{ backgroundColor: "#ffffff", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", marginBottom: "2rem", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
         <div style={{ width: "100%", maxWidth: "280px" }}>
-          <select style={estiloInput} value={condoSeleccionado} onChange={(e) => { setCondoSeleccionado(e.target.value); setBusqueda(''); setFiltroTorre(''); setFiltroPiso(''); setFiltroEstado('') }}>
+          <select style={estiloInput} value={condoSeleccionado} onChange={(e) => { setCondoSeleccionado(e.target.value); setBusqueda('') }}>
             <option value="">Seleccionar condominio</option>
             {condominios.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
           </select>
@@ -425,6 +415,18 @@ export default function GlobalDepartamentos() {
                   style={{ backgroundColor: colorSuper, color: "#ffffff", border: "none", padding: "0.4rem 0.85rem", borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" }}>
                   <FiPlus size={14} /> Nuevo Depto
                 </button>
+                {condoSeleccionado && (
+                  <button onClick={() => setShowOwnersModal(true)}
+                    style={{ backgroundColor: "rgba(16,185,129,0.1)", color: "#10b981", border: "none", padding: "0.4rem 0.85rem", borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                    <FiUser size={14} /> Ver propietarios
+                  </button>
+                )}
+                {condoSeleccionado && (
+                  <button onClick={() => navigate('/superadmin/usuarios?tab=propietarios')}
+                    style={{ backgroundColor: "rgba(59,130,246,0.1)", color: "#3b82f6", border: "none", padding: "0.4rem 0.85rem", borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                    <FiUserPlus size={14} /> Agregar propietario
+                  </button>
+                )}
                 <div className="global-search-wrap" style={{ width: "220px", maxWidth: "220px", position: "relative" }}>
                   <FiSearch size={14} style={{ position: "absolute", left: "0.65rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
                   <input type="text" placeholder="Buscar departamento..." value={busqueda} onChange={(e) => setBusqueda(e.target.value)}
@@ -432,31 +434,7 @@ export default function GlobalDepartamentos() {
                 </div>
               </div>
             </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", padding: "0 1.5rem 1rem" }}>
-                <select value={filtroTorre} onChange={(e) => setFiltroTorre(e.target.value)}
-                  style={{ ...estiloInput, width: "auto", minWidth: "120px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
-                  <option value="">Todas las torres</option>
-                  {torres.map(t => <option key={t} value={t}>{t}</option>)}
-                </select>
-                <select value={filtroPiso} onChange={(e) => setFiltroPiso(e.target.value)}
-                  style={{ ...estiloInput, width: "auto", minWidth: "100px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
-                  <option value="">Todos los pisos</option>
-                  {pisos.map(p => <option key={p} value={p}>Piso {p}</option>)}
-                </select>
-                <select value={filtroEstado} onChange={(e) => setFiltroEstado(e.target.value)}
-                  style={{ ...estiloInput, width: "auto", minWidth: "130px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
-                  <option value="">Todos los estados</option>
-                  <option value="ocupado">Ocupado</option>
-                  <option value="disponible">Disponible</option>
-                </select>
-                {(filtroTorre || filtroPiso || filtroEstado || busqueda) && (
-                  <button onClick={() => { setFiltroTorre(''); setFiltroPiso(''); setFiltroEstado(''); setBusqueda('') }}
-                    style={{ ...btnStyle, backgroundColor: "#f1f5f9", color: "#64748b", fontSize: "0.7rem" }}>
-                    <FiX size={12} /> Limpiar filtros
-                  </button>
-                )}
-              </div>
-            </div>
+          </div>
             {filteredApts.length === 0 ? (
               <div style={{ padding: "2.5rem", textAlign: "center", color: "#94a3b8", fontStyle: "italic", fontWeight: "600" }}>
                 No se encontraron coincidencias.
@@ -477,7 +455,7 @@ export default function GlobalDepartamentos() {
                     const pisosOrdenados = Object.keys(agrupadas[torre]).sort((a, b) => Number(a) - Number(b))
                     const totalTorre = Object.values(agrupadas[torre]).flat().length
                     const occupedTorre = Object.values(agrupadas[torre]).flat().filter(a => a.idPropietario != null).length
-                    const expanded = expandedTorres[torre] !== false
+                    const expanded = expandedTorres[torre] === true
                     return (
                       <div key={torre}>
                         <div onClick={() => toggleTorre(torre)}
@@ -494,14 +472,14 @@ export default function GlobalDepartamentos() {
                             <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
                               <thead>
                                 <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: 700, fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
-                                  <th style={{ padding: "0.5rem 1rem" }}>N&deg; Depto</th>
+                                  <th style={{ padding: "0.5rem 1rem" }}>N° Depto</th>
                                   <th style={{ padding: "0.5rem" }}>Piso</th>
                                   <th style={{ padding: "0.5rem" }}>Propietario</th>
                                   <th style={{ padding: "0.5rem" }}>Contacto</th>
                                   <th style={{ padding: "0.5rem" }}>Inquilinos</th>
                                   <th style={{ padding: "0.5rem" }}>Estacionamiento</th>
                                   <th style={{ padding: "0.5rem" }}>Estado</th>
-                                  <th style={{ padding: "0.5rem 1rem", textAlign: "right" }}>Acci&oacute;n</th>
+                                  <th style={{ padding: "0.5rem 1rem", textAlign: "right" }}>Acción</th>
                                 </tr>
                               </thead>
                               <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
@@ -629,7 +607,7 @@ export default function GlobalDepartamentos() {
                 </div>
                 <div>
                   <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.025em" }}>Metraje</span>
-                  <p style={{ margin: "0.2rem 0 0", fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>{modalDetail.metraje ? `${modalDetail.metraje} m┬▓` : '---'}</p>
+                  <p style={{ margin: "0.2rem 0 0", fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>{modalDetail.metraje ? `${modalDetail.metraje} m²` : '---'}</p>
                 </div>
               </div>
 
@@ -637,14 +615,10 @@ export default function GlobalDepartamentos() {
               <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "1rem", marginBottom: "1.5rem" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
                   <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.025em" }}>Propietario</span>
-                  {modalDetail.idPropietario ? (
-                    <span style={{ fontSize: "0.65rem", color: "#94a3b8", fontStyle: "italic" }}>No se puede cambiar</span>
-                  ) : (
-                    <button onClick={() => { setModalAssign(modalDetail); setAssignUserId('') }}
-                      style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper, fontSize: "0.7rem" }}>
-                      <FiEdit3 size={12} /> Asignar
-                    </button>
-                  )}
+                  <button onClick={() => { setModalAssign(modalDetail); setAssignUserId(modalDetail.idPropietario ? String(modalDetail.idPropietario) : '') }}
+                    style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper, fontSize: "0.7rem" }}>
+                    <FiEdit3 size={12} /> {modalDetail.idPropietario ? 'Cambiar' : 'Asignar'}
+                  </button>
                 </div>
                 {modalDetail.idPropietario ? (
                   <div style={{ display: "flex", alignItems: "center", gap: "0.65rem", marginTop: "0.2rem" }}>
@@ -683,7 +657,7 @@ export default function GlobalDepartamentos() {
                   const parking = getAssignedParking(modalDetail)
                   return parking ? (
                     <p style={{ margin: "0.2rem 0 0", fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>
-                      N┬░ {parking.numero}
+                      N° {parking.numero}
                     </p>
                   ) : (
                     <p style={{ margin: "0.2rem 0 0", fontStyle: "italic", color: "#94a3b8", fontSize: "0.9rem" }}>Sin estacionamiento asignado</p>
@@ -832,9 +806,9 @@ export default function GlobalDepartamentos() {
                     </select>
                   </div>
                   <div>
-                    <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>N&deg; Documento *</label>
+                    <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>N° Documento *</label>
                     <input type="text" value={tenantForm.numeroDocumento} onChange={(e) => setTenantForm({ ...tenantForm, numeroDocumento: e.target.value })}
-                      style={estiloInput} placeholder="N├║mero de documento" />
+                      style={estiloInput} placeholder="Número de documento" />
                   </div>
                 </div>
               </div>
@@ -881,7 +855,7 @@ export default function GlobalDepartamentos() {
                 <option value="">-- Seleccionar --</option>
                 {parkingDisponibles.map(p => (
                   <option key={p.id} value={p.id}>
-                    N┬░ {p.numero}{p.tipoVehiculo ? ` (${p.tipoVehiculo})` : ''}
+                    N° {p.numero}{p.tipoVehiculo ? ` (${p.tipoVehiculo})` : ''}
                   </option>
                 ))}
               </select>
@@ -935,7 +909,7 @@ export default function GlobalDepartamentos() {
                   <p style={{ margin: "0.2rem 0 0", fontWeight: "600", color: "#0f172a", fontSize: "0.85rem" }}>{tenantDetail.tipoDocumento || '-'}</p>
                 </div>
                 <div>
-                  <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>N┬░ Documento</span>
+                  <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>N° Documento</span>
                   <p style={{ margin: "0.2rem 0 0", fontWeight: "600", color: "#0f172a", fontSize: "0.85rem" }}>{tenantDetail.numeroDocumento || '-'}</p>
                 </div>
               </div>
@@ -949,8 +923,8 @@ export default function GlobalDepartamentos() {
           <div style={{ ...modalContent, maxWidth: "400px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", textAlign: "center" }}>
               <FiAlertTriangle size={40} style={{ color: "#ef4444", marginBottom: "1rem" }} />
-              <h3 style={{ margin: "0 0 0.5rem", fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>┬┐Eliminar inquilino?</h3>
-              <p style={{ color: "#64748b", fontSize: "0.85rem" }}>Esta acci├│n no se puede deshacer.</p>
+              <h3 style={{ margin: "0 0 0.5rem", fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>¿Eliminar inquilino?</h3>
+              <p style={{ color: "#64748b", fontSize: "0.85rem" }}>Esta acción no se puede deshacer.</p>
               <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", justifyContent: "center" }}>
                 <button onClick={() => setConfirmRemoveTenantIdx(null)}
                   style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>
@@ -995,11 +969,11 @@ export default function GlobalDepartamentos() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>N├║mero *</label>
+                  <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Número *</label>
                   <input type="text" style={estiloInput} placeholder="Ej: 101" value={createAptForm.numero} onChange={(e) => setCreateAptForm(f => ({ ...f, numero: e.target.value }))} />
                 </div>
                 <div>
-                  <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Metraje m┬▓</label>
+                  <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Metraje m²</label>
                   <input type="number" min="0" style={estiloInput} placeholder="Opcional" value={createAptForm.metraje} onChange={(e) => setCreateAptForm(f => ({ ...f, metraje: e.target.value }))} />
                 </div>
                 <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", color: "#334155", fontWeight: "600", cursor: "pointer" }}>
@@ -1019,6 +993,54 @@ export default function GlobalDepartamentos() {
         </div>
       )}
 
+      {/* Propietarios Modal */}
+      {showOwnersModal && (
+        <div style={modalOverlay} onClick={() => setShowOwnersModal(false)}>
+          <div style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
+            <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>
+                Propietarios de {condominios.find(c => c.id === Number(condoSeleccionado))?.nombre || ''}
+              </h3>
+              <button onClick={() => setShowOwnersModal(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}>
+                <FiX size={20} />
+              </button>
+            </div>
+            <div style={{ padding: "1.5rem", maxHeight: "60vh", overflowY: "auto" }}>
+              {(() => {
+                const owners = allUsers.filter(u => u.rol === 'PROPIETARIO' && u.idCondominio === Number(condoSeleccionado))
+                if (owners.length === 0) {
+                  return (
+                    <div style={{ textAlign: "center", padding: "2rem", color: "#94a3b8", fontStyle: "italic", fontWeight: "600" }}>
+                      No hay propietarios registrados en este condominio.
+                    </div>
+                  )
+                }
+                return owners.map((o, i) => (
+                  <div key={o.id} style={{ display: "flex", alignItems: "center", gap: "0.75rem", padding: "0.6rem 0", borderBottom: i < owners.length - 1 ? "1px solid #f1f5f9" : "none" }}>
+                    <div style={{ width: "36px", height: "36px", borderRadius: "50%", backgroundColor: colorSuper, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: "700", flexShrink: 0 }}>
+                      {((o.nombres || '??').charAt(0) + (o.apellidos || '').charAt(0)).toUpperCase()}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>{o.nombres} {o.apellidos}</div>
+                      <div style={{ fontSize: "0.78rem", color: "#64748b", display: "flex", alignItems: "center", gap: "0.35rem", marginTop: "0.15rem" }}>
+                        <FiMail size={12} /> {o.correo}
+                        {o.telefono && <><FiPhone size={12} /> {o.telefono}</>}
+                      </div>
+                    </div>
+                    <span style={{ fontSize: "0.65rem", fontWeight: "700", padding: "0.2rem 0.55rem", borderRadius: "0.375rem", backgroundColor: o.activo ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)", color: o.activo ? "#10b981" : "#ef4444", whiteSpace: "nowrap" }}>
+                      {o.activo ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </div>
+                ))
+              })()}
+            </div>
+            <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end" }}>
+              <button onClick={() => setShowOwnersModal(false)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cerrar</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Confirm Delete Department */}
       {confirmDeleteApt && (
         <div style={modalOverlay} onClick={() => setConfirmDeleteApt(null)}>
@@ -1027,7 +1049,7 @@ export default function GlobalDepartamentos() {
               <FiTrash2 size={40} color="#ef4444" style={{ marginBottom: "0.75rem" }} />
               <h3 style={{ margin: "0 0 0.5rem", fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>Eliminar Departamento</h3>
               <p style={{ color: "#64748b", fontSize: "0.85rem", margin: 0 }}>
-                ┬┐Eliminar el departamento <strong>{confirmDeleteApt.numero}</strong>? Esta acci├│n no se puede deshacer.
+                ¿Eliminar el departamento <strong>{confirmDeleteApt.numero}</strong>? Esta acción no se puede deshacer.
               </p>
               <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", justifyContent: "center" }}>
                 <button onClick={() => setConfirmDeleteApt(null)}

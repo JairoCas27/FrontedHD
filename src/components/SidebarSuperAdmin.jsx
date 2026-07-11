@@ -1,15 +1,12 @@
 import SidebarLayout from "./SidebarLayout";
-import { FiHome, FiGrid, FiUsers, FiUser, FiBarChart2, FiClock, FiShield, FiUserCheck, FiLayers, FiPackage, FiSettings, FiTruck } from "react-icons/fi";
+import { FiHome, FiGrid, FiUsers, FiUser, FiBarChart2, FiClock, FiLayers, FiPackage, FiSettings } from "react-icons/fi";
 import { useSidebarUser } from "../hooks/useSidebarUser";
 
 const menuItems = [
+  { section: "Principal" },
   { title: "Dashboard", icon: <FiHome size={20} />, path: "/superadmin/dashboard" },
-  { section: "Registros" },
-  { title: "Usuarios", icon: <FiUsers size={20} />, path: "/superadmin/usuarios" },
-  { title: "Administradores", icon: <FiUsers size={20} />, path: "/superadmin/administradores" },
-  { title: "Agentes Seguridad", icon: <FiShield size={20} />, path: "/superadmin/agentes" },
-  { title: "Propietarios", icon: <FiUserCheck size={20} />, path: "/superadmin/propietarios" },
   { section: "Gestión" },
+  { title: "Usuarios", icon: <FiUsers size={20} />, path: "/superadmin/usuarios" },
   { title: "Condominios", icon: <FiGrid size={20} />, path: "/superadmin/condominios" },
   { title: "Departamentos", icon: <FiLayers size={20} />, path: "/superadmin/departamentos" },
   { title: "Estructura", icon: <FiGrid size={20} />, path: "/superadmin/estructura" },
