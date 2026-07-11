@@ -4,15 +4,18 @@ import { getAdminStructure, createAdminStructureNode, deleteAdminStructureNode, 
 export function useAdminStructure() {
   const [estructura, setEstructura] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   const cargarEstructura = async () => {
     try {
       setLoading(true);
+      setError(null);
       const data = await getAdminStructure();
       setEstructura(data || []);
-      return data; // Retornar los datos para usarlos en otros lugares
+      return data;
     } catch (error) {
       console.error("Error cargando estructura:", error);
+      setError(error.message);
       throw error;
     } finally {
       setLoading(false);
@@ -21,64 +24,107 @@ export function useAdminStructure() {
 
   const insertarNodo = async (nodeData) => {
     try {
-      await createAdminStructureNode(nodeData);
-      const dataActualizada = await cargarEstructura(); // Recargar y obtener datos
-      return dataActualizada; // Retornar los datos actualizados
+      setError(null);
+      const response = await createAdminStructureNode(nodeData);
+
+      // Esperar un momento para que el backend procese
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      const dataActualizada = await cargarEstructura();
+      return dataActualizada;
     } catch (error) {
       console.error("Error al insertar nodo:", error);
+      setError(error.message);
       throw error;
     }
   };
 
   const eliminarNodo = async (id) => {
     try {
+      setError(null);
       await deleteAdminStructureNode(id);
+
+      // Esperar un momento para que el backend procese
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       await cargarEstructura();
     } catch (error) {
       console.error("Error al eliminar nodo:", error);
+      setError(error.message);
       throw error;
     }
   };
 
+  // Función mejorada con más validaciones y logs
   const agregarDepartamento = async (apartmentData) => {
     try {
+      setError(null);
+      console.log('Datos recibidos:', apartmentData);
+
+      // Validar datos
+      if (!apartmentData.numero || !apartmentData.idPiso) {
+        throw new Error('Faltan datos obligatorios: número y piso');
+      }
+
       // Obtener la estructura actualizada
       const estructuraActual = await cargarEstructura();
       const listaTorres = Array.isArray(estructuraActual)
           ? estructuraActual
           : (estructuraActual?.torres || []);
 
+      console.log('Estructura actual:', listaTorres);
+
       // Buscar el piso por ID
       const pisoEncontrado = listaTorres
-          .flatMap(t => t.pisos || [])
+          .flatMap(t => (t.pisos || []).map(p => ({ ...p, torre: t })))
           .find(p => p.id === parseInt(apartmentData.idPiso));
 
       if (!pisoEncontrado) {
-        throw new Error('Piso no encontrado');
+        console.error('Piso no encontrado con ID:', apartmentData.idPiso);
+        console.log('Pisos disponibles:', listaTorres.flatMap(t => t.pisos || []).map(p => ({ id: p.id, nombre: p.nombre })));
+        throw new Error('El piso seleccionado ya no existe. Por favor recarga la página.');
       }
 
-      // Buscar la torre que contiene este piso
-      const torreEncontrada = listaTorres.find(t =>
-          (t.pisos || []).some(p => p.id === parseInt(apartmentData.idPiso))
+      console.log('Piso encontrado:', pisoEncontrado);
+
+      // Verificar si el número ya existe en este piso
+      const apartamentosExistentes = pisoEncontrado.apartamentos || [];
+      const numeroDuplicado = apartamentosExistentes.some(
+          a => a.numero === parseInt(apartmentData.numero)
       );
 
-      // El payload debe enviar el NÚMERO del piso, no el ID
+      if (numeroDuplicado) {
+        throw new Error(`El departamento ${apartmentData.numero} ya existe en ${pisoEncontrado.torre.nombre} - ${pisoEncontrado.nombre || `Piso ${pisoEncontrado.numero}`}`);
+      }
+
+      // CORRECCIÓN: Enviar el payload correcto
       const payload = {
         tipo: "APARTAMENTO",
         nombre: `Apartamento ${apartmentData.numero}`,
-        nombreTorre: torreEncontrada?.nombre || apartmentData.nombreTorre || '',
+        nombreTorre: pisoEncontrado.torre.nombre,
         numero: parseInt(apartmentData.numero),
         numeroPiso: pisoEncontrado.numero,
         numeroApartamento: parseInt(apartmentData.numero),
-        metraje: parseFloat(apartmentData.metraje) || 0
+        metraje: parseFloat(apartmentData.metraje) || 0,
+        // Algunos backends esperan campo adicional
+        pisoId: parseInt(apartmentData.idPiso) // Por si acaso
       };
 
-      console.log('Enviando payload:', payload); // Debug
+      console.log('Enviando payload:', payload);
 
-      await createApartment(payload);
-      await cargarEstructura(); // Recargar después de crear
+      const response = await createApartment(payload);
+      console.log('Respuesta del servidor:', response);
+
+      // Esperar un momento para que el backend procese
+      await new Promise(resolve => setTimeout(resolve, 500));
+
+      // Recargar estructura
+      await cargarEstructura();
+
+      return response;
     } catch (error) {
-      console.error("Error al agregar departamento:", error);
+      console.error('Error al agregar departamento:', error);
+      setError(error.message);
       throw error;
     }
   };
@@ -90,6 +136,7 @@ export function useAdminStructure() {
   return {
     estructura,
     loading,
+    error,
     insertarNodo,
     eliminarNodo,
     agregarDepartamento,
