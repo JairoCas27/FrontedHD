@@ -141,6 +141,16 @@ export default function UsuariosGlobales() {
   const [ownerShowDetail, setOwnerShowDetail] = useState(false)
   const [ownerConfirmDelete, setOwnerConfirmDelete] = useState(null)
 
+  // ==================== HIGHLIGHT ====================
+  const [highlightedRowId, setHighlightedRowId] = useState(null)
+
+  useEffect(() => {
+    if (!loading && highlightedRowId !== null) {
+      const timer = setTimeout(() => setHighlightedRowId(null), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [loading, highlightedRowId])
+
   // ==================== PAGINATION ====================
   const [todosPage, setTodosPage] = useState(1)
   const [adminPage, setAdminPage] = useState(1)
@@ -148,7 +158,7 @@ export default function UsuariosGlobales() {
   const [ownerPage, setOwnerPage] = useState(1)
 
   // ==================== SHARED LOAD ====================
-  const loadData = async () => {
+  const loadData = async (highlightAfterLoad) => {
     setLoading(true)
     setError(null)
     try {
@@ -177,6 +187,9 @@ export default function UsuariosGlobales() {
       toast.error(`Error al cargar datos: ${err.message}`)
     } finally {
       setLoading(false)
+      if (highlightAfterLoad !== undefined) {
+        setHighlightedRowId(highlightAfterLoad)
+      }
     }
   }
 
@@ -241,6 +254,15 @@ export default function UsuariosGlobales() {
         toast.warning('La contraseña debe tener al menos 6 caracteres.')
         setSubmitting(false); return
       }
+      const phone = form.telefono.trim()
+      if (!phone || phone.length < 7 || phone.length > 16) {
+        toast.warning('El teléfono debe tener entre 7 y 16 dígitos.')
+        setSubmitting(false); return
+      }
+      if (!/^\+?[1-9]\d{6,14}$/.test(phone)) {
+        toast.warning('Formato de teléfono inválido. Ejemplo: +51999000111')
+        setSubmitting(false); return
+      }
       const selectedCondoId = form.idCondominio ? parseInt(form.idCondominio, 10) : null
       if (selectedCondoId && occupiedCondos.has(selectedCondoId)) {
         toast.error('Este condominio ya tiene un administrador asignado.')
@@ -257,7 +279,7 @@ export default function UsuariosGlobales() {
       toast.success('Administrador de condominio creado correctamente.')
       setShowModal(false)
       setForm({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', idCondominio: '' })
-      setTimeout(() => loadData(), 300)
+      setTimeout(() => loadData(created?.id), 300)
     } catch (err) {
       toast.error(`Error: ${err.message}`)
     } finally { setSubmitting(false) }
@@ -345,6 +367,7 @@ export default function UsuariosGlobales() {
   const handleAdminSubmit = async (e) => {
     e.preventDefault()
     setAdminSubmitting(true)
+    let createdAdminId
     try {
       if (adminEditing) {
         await updateAdministrator(adminEditing.id, {
@@ -364,14 +387,28 @@ export default function UsuariosGlobales() {
           }
         }
       } else {
-        await createAdministrator({
+        const phone = adminForm.telefono.trim()
+        if (!phone || phone.length < 7 || phone.length > 16) {
+          toast.warning('El teléfono debe tener entre 7 y 16 dígitos.')
+          setAdminSubmitting(false); return
+        }
+        if (!/^\+?[1-9]\d{6,14}$/.test(phone)) {
+          toast.warning('Formato de teléfono inválido. Ejemplo: +51999000111')
+          setAdminSubmitting(false); return
+        }
+        const created = await createAdministrator({
           nombres: adminForm.nombres.trim(), apellidos: adminForm.apellidos.trim(),
-          correo: adminForm.correo.trim(), telefono: adminForm.telefono.trim(),
+          correo: adminForm.correo.trim(), telefono: phone,
           contrasena: adminForm.contrasena.trim(),
         })
+        const newCondoId = adminForm.idCondominio ? parseInt(adminForm.idCondominio, 10) : null
+        if (newCondoId && created?.id) {
+          await assignAdministratorCondo(created.id, newCondoId)
+        }
+        createdAdminId = created?.id
       }
       setAdminShowModal(false)
-      setTimeout(() => loadData(), 300)
+      setTimeout(() => loadData(createdAdminId), 300)
     } catch (err) {
       toast.error(`Error: ${err.message}`)
     } finally { setAdminSubmitting(false) }
@@ -430,7 +467,7 @@ export default function UsuariosGlobales() {
       }
       const scId = agentCreateForm.idCondominio ? parseInt(agentCreateForm.idCondominio, 10) : null
       if (!scId) { toast.error('Debes seleccionar un condominio.'); setAgentSubmitting(false); return }
-      await createAdminUser({
+      const created = await createAdminUser({
         nombres: agentCreateForm.nombres.trim(), apellidos: agentCreateForm.apellidos.trim(),
         correo: agentCreateForm.correo.trim(), telefono: agentCreateForm.telefono.trim(),
         contrasena: agentCreateForm.contrasena.trim(), rol: 'AGENTE_SEGURIDAD',
@@ -438,7 +475,7 @@ export default function UsuariosGlobales() {
       toast.success('Agente de Seguridad creado correctamente.')
       setAgentShowCreate(false)
       setAgentCreateForm({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', idCondominio: '' })
-      setTimeout(() => loadData(), 300)
+      setTimeout(() => loadData(created?.id), 300)
     } catch (err) {
       toast.error(`Error: ${err.message}`)
     } finally { setAgentSubmitting(false) }
@@ -522,7 +559,7 @@ export default function UsuariosGlobales() {
       }
       const scId = ownerCreateForm.idCondominio ? parseInt(ownerCreateForm.idCondominio, 10) : null
       if (!scId) { toast.error('Debes seleccionar un condominio.'); setOwnerSubmitting(false); return }
-      await createAdminUser({
+      const created = await createAdminUser({
         nombres: ownerCreateForm.nombres.trim(), apellidos: ownerCreateForm.apellidos.trim(),
         correo: ownerCreateForm.correo.trim(), telefono: ownerCreateForm.telefono.trim(),
         contrasena: ownerCreateForm.contrasena.trim(), rol: 'PROPIETARIO',
@@ -530,7 +567,7 @@ export default function UsuariosGlobales() {
       toast.success('Propietario creado correctamente.')
       setOwnerShowCreate(false)
       setOwnerCreateForm({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', idCondominio: '' })
-      setTimeout(() => loadData(), 300)
+      setTimeout(() => loadData(created?.id), 300)
     } catch (err) {
       toast.error(`Error: ${err.message}`)
     } finally { setOwnerSubmitting(false) }
@@ -798,43 +835,7 @@ export default function UsuariosGlobales() {
                   </div>
                 </div>
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                <DataList value={filters.rol} onChange={(e) => setFilters({ ...filters, rol: e.target.value })}
-                  style={{ ...estiloInput, width: "auto", minWidth: "150px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
-                  <option value="">Todos los roles</option>
-                  <option value="ADMINISTRADOR_CONDOMINIO">Administrador</option>
-                  <option value="AGENTE_SEGURIDAD">Agente Seguridad</option>
-                  <option value="PROPIETARIO">Propietario</option>
-                </DataList>
-                <DataList value={filters.estado} onChange={(e) => setFilters({ ...filters, estado: e.target.value })}
-                  style={{ ...estiloInput, width: "auto", minWidth: "120px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
-                  <option value="">Todos los estados</option>
-                  <option value="activo">Activo</option>
-                  <option value="inactivo">Inactivo</option>
-                </DataList>
-                <DataList value={filters.condominio} onChange={(e) => setFilters({ ...filters, condominio: e.target.value })}
-                  style={{ ...estiloInput, width: "auto", minWidth: "180px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
-                  <option value="">Todos los condominios</option>
-                  {condominios.map(c => (<option key={c.id} value={c.id}>{c.nombre}{occupiedCondos.has(c.id) ? ' (ocupado)' : ''}</option>))}
-                </DataList>
-                <DataList value={`${sortField}-${sortOrder}`} onChange={(e) => { const [field, order] = e.target.value.split('-'); setSortField(field); setSortOrder(order) }}
-                  style={{ ...estiloInput, width: "auto", minWidth: "170px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
-                  <option value="nombre-asc">Nombre A-Z</option>
-                  <option value="nombre-desc">Nombre Z-A</option>
-                  <option value="correo-asc">Correo A-Z</option>
-                  <option value="correo-desc">Correo Z-A</option>
-                  <option value="rol-asc">Rol A-Z</option>
-                  <option value="rol-desc">Rol Z-A</option>
-                  <option value="estado-asc">Estado (Activo primero)</option>
-                  <option value="estado-desc">Estado (Inactivo primero)</option>
-                </DataList>
-                {(filters.search || filters.rol || filters.estado || filters.condominio) && (
-                  <button onClick={() => setFilters({ search: '', rol: '', estado: '', condominio: '' })}
-                    style={{ ...btnStyle, backgroundColor: "#f1f5f9", color: "#64748b", fontSize: "0.7rem" }}>
-                    <FiX size={12} /> Limpiar filtros
-                  </button>
-                )}
-              </div>
+
             </div>
             {filteredAndSorted.length === 0 ? (
               <div style={{ padding: "2.5rem", textAlign: "center", color: "#94a3b8", fontStyle: "italic", fontWeight: "600", minHeight: "320px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
@@ -867,8 +868,14 @@ export default function UsuariosGlobales() {
                     <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
                       {paginatedTodos.map((u, i) => {
                         const rolBadge = getRolBadge(u.rol)
+                        const isNew = u.id === highlightedRowId
                         return (
-                          <tr key={u.id} style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: i % 2 === 0 ? "#ffffff" : "#fafafa" }}>
+                          <tr key={u.id} style={{
+                            borderBottom: "1px solid #f1f5f9",
+                            backgroundColor: isNew ? 'rgba(124,58,237,0.08)' : (i % 2 === 0 ? '#ffffff' : '#fafafa'),
+                            borderLeft: isNew ? '3px solid #7c3aed' : '3px solid transparent',
+                            transition: 'all 0.3s ease',
+                          }}>
                             <td style={{ padding: "0.75rem 1rem", fontWeight: "700", color: "#0f172a" }}>
                               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                                 {renderInitials(u.nombres, u.apellidos)}
@@ -957,7 +964,7 @@ export default function UsuariosGlobales() {
                     </div>
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Teléfono</label>
-                      <input type="text" value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} style={estiloInput} placeholder="Teléfono (opcional)" />
+                      <input type="tel" value={form.telefono} onChange={(e) => setForm({ ...form, telefono: e.target.value })} required minLength={7} maxLength={16} pattern="\+?[1-9]\d{6,14}" title="Ingresa un número de teléfono válido (7-16 dígitos). Ejemplo: +51999000111" style={estiloInput} placeholder="Ej: +51999000111" />
                     </div>
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Contraseña</label>
@@ -1033,26 +1040,7 @@ export default function UsuariosGlobales() {
                   </div>
                 </div>
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                <DataList value={adminCondoFilter} onChange={(e) => setAdminCondoFilter(e.target.value)}
-                  style={{ ...estiloInput, width: "auto", minWidth: "180px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
-                  <option value="">Todos los condominios</option>
-                  {condominios.map(c => (<option key={c.id} value={c.id}>{c.nombre}{!c.activo ? ' (inactivo)' : ''}</option>))}
-                </DataList>
-                <DataList value={`${adminSortField}-${adminSortOrder}`} onChange={(e) => { const [f, o] = e.target.value.split('-'); setAdminSortField(f); setAdminSortOrder(o) }}
-                  style={{ ...estiloInput, width: "auto", minWidth: "160px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
-                  <option value="nombre-asc">Nombre A-Z</option>
-                  <option value="nombre-desc">Nombre Z-A</option>
-                  <option value="correo-asc">Correo A-Z</option>
-                  <option value="correo-desc">Correo Z-A</option>
-                </DataList>
-                {(adminSearch || adminCondoFilter) && (
-                  <button onClick={() => { setAdminSearch(''); setAdminCondoFilter('') }}
-                    style={{ ...btnStyle, backgroundColor: "#f1f5f9", color: "#64748b", fontSize: "0.7rem" }}>
-                    <FiX size={12} /> Limpiar filtros
-                  </button>
-                )}
-              </div>
+
             </div>
             {adminFiltered.length === 0 ? (
               <div style={{ padding: "2.5rem", textAlign: "center", color: "#94a3b8", fontStyle: "italic", fontWeight: "600", minHeight: "320px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
@@ -1077,8 +1065,15 @@ export default function UsuariosGlobales() {
                       </tr>
                     </thead>
                     <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
-                      {paginatedAdmins.map((a, i) => (
-                        <tr key={a.id} style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: i % 2 === 0 ? "#ffffff" : "#fafafa" }}>
+                      {paginatedAdmins.map((a, i) => {
+                        const isNew = a.id === highlightedRowId
+                        return (
+                        <tr key={a.id} style={{
+                          borderBottom: "1px solid #f1f5f9",
+                          backgroundColor: isNew ? 'rgba(124,58,237,0.08)' : (i % 2 === 0 ? '#ffffff' : '#fafafa'),
+                          borderLeft: isNew ? '3px solid #7c3aed' : '3px solid transparent',
+                          transition: 'all 0.3s ease',
+                        }}>
                           <td style={{ padding: "0.75rem 1rem", fontWeight: "700", color: "#0f172a" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                               {renderInitials(a.nombres, a.apellidos)}
@@ -1105,7 +1100,8 @@ export default function UsuariosGlobales() {
                             </button>
                           </td>
                         </tr>
-                      ))}
+                      )
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -1149,7 +1145,7 @@ export default function UsuariosGlobales() {
                     </div>
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Teléfono</label>
-                      <input type="text" value={adminForm.telefono} onChange={(e) => setAdminForm({ ...adminForm, telefono: e.target.value })} style={estiloInput} placeholder="Teléfono (opcional)" />
+                      <input type="tel" value={adminForm.telefono} onChange={(e) => setAdminForm({ ...adminForm, telefono: e.target.value })} required minLength={7} maxLength={16} pattern="\+?[1-9]\d{6,14}" title="Ingresa un número de teléfono válido (7-16 dígitos). Ejemplo: +51999000111" style={estiloInput} placeholder="Ej: +51999000111" />
                     </div>
                     {!adminEditing && (
                       <div style={{ marginBottom: "0.85rem" }}>
@@ -1204,26 +1200,7 @@ export default function UsuariosGlobales() {
                   </div>
                 </div>
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                <DataList value={agentCondoFilter} onChange={(e) => setAgentCondoFilter(e.target.value)}
-                  style={{ ...estiloInput, width: "auto", minWidth: "180px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
-                  <option value="">Todos los condominios</option>
-                  {condominios.map(c => (<option key={c.id} value={c.id}>{c.nombre}</option>))}
-                </DataList>
-                <DataList value={`${agentSortField}-${agentSortOrder}`} onChange={(e) => { const [f, o] = e.target.value.split('-'); setAgentSortField(f); setAgentSortOrder(o) }}
-                  style={{ ...estiloInput, width: "auto", minWidth: "160px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
-                  <option value="nombre-asc">Nombre A-Z</option>
-                  <option value="nombre-desc">Nombre Z-A</option>
-                  <option value="correo-asc">Correo A-Z</option>
-                  <option value="correo-desc">Correo Z-A</option>
-                </DataList>
-                {(agentSearch || agentCondoFilter) && (
-                  <button onClick={() => { setAgentSearch(''); setAgentCondoFilter('') }}
-                    style={{ ...btnStyle, backgroundColor: "#f1f5f9", color: "#64748b", fontSize: "0.7rem" }}>
-                    <FiX size={12} /> Limpiar filtros
-                  </button>
-                )}
-              </div>
+
             </div>
             {agentFiltered.length === 0 ? (
               <div style={{ padding: "2.5rem", textAlign: "center", color: "#94a3b8", fontStyle: "italic", fontWeight: "600", minHeight: "320px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
@@ -1248,8 +1225,15 @@ export default function UsuariosGlobales() {
                       </tr>
                     </thead>
                     <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
-                      {paginatedAgents.map((u, i) => (
-                        <tr key={u.id} style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: i % 2 === 0 ? "#ffffff" : "#fafafa" }}>
+                      {paginatedAgents.map((u, i) => {
+                        const isNew = u.id === highlightedRowId
+                        return (
+                        <tr key={u.id} style={{
+                          borderBottom: "1px solid #f1f5f9",
+                          backgroundColor: isNew ? 'rgba(124,58,237,0.08)' : (i % 2 === 0 ? '#ffffff' : '#fafafa'),
+                          borderLeft: isNew ? '3px solid #7c3aed' : '3px solid transparent',
+                          transition: 'all 0.3s ease',
+                        }}>
                           <td style={{ padding: "0.75rem 1rem", fontWeight: "700", color: "#0f172a" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                               {renderInitials(u.nombres, u.apellidos)}
@@ -1276,7 +1260,8 @@ export default function UsuariosGlobales() {
                             </button>
                           </td>
                         </tr>
-                      ))}
+                      )
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -1408,26 +1393,7 @@ export default function UsuariosGlobales() {
                   </div>
                 </div>
               </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                <DataList value={ownerCondoFilter} onChange={(e) => setOwnerCondoFilter(e.target.value)}
-                  style={{ ...estiloInput, width: "auto", minWidth: "180px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
-                  <option value="">Todos los condominios</option>
-                  {condominios.map(c => (<option key={c.id} value={c.id}>{c.nombre}</option>))}
-                </DataList>
-                <DataList value={`${ownerSortField}-${ownerSortOrder}`} onChange={(e) => { const [f, o] = e.target.value.split('-'); setOwnerSortField(f); setOwnerSortOrder(o) }}
-                  style={{ ...estiloInput, width: "auto", minWidth: "160px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
-                  <option value="nombre-asc">Nombre A-Z</option>
-                  <option value="nombre-desc">Nombre Z-A</option>
-                  <option value="correo-asc">Correo A-Z</option>
-                  <option value="correo-desc">Correo Z-A</option>
-                </DataList>
-                {(ownerSearch || ownerCondoFilter) && (
-                  <button onClick={() => { setOwnerSearch(''); setOwnerCondoFilter('') }}
-                    style={{ ...btnStyle, backgroundColor: "#f1f5f9", color: "#64748b", fontSize: "0.7rem" }}>
-                    <FiX size={12} /> Limpiar filtros
-                  </button>
-                )}
-              </div>
+
             </div>
             {ownerFiltered.length === 0 ? (
               <div style={{ padding: "2.5rem", textAlign: "center", color: "#94a3b8", fontStyle: "italic", fontWeight: "600", minHeight: "320px", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
@@ -1452,8 +1418,15 @@ export default function UsuariosGlobales() {
                       </tr>
                     </thead>
                     <tbody style={{ color: "#334155", fontSize: "0.875rem" }}>
-                      {paginatedOwners.map((u, i) => (
-                        <tr key={u.id} style={{ borderBottom: "1px solid #f1f5f9", backgroundColor: i % 2 === 0 ? "#ffffff" : "#fafafa" }}>
+                      {paginatedOwners.map((u, i) => {
+                        const isNew = u.id === highlightedRowId
+                        return (
+                        <tr key={u.id} style={{
+                          borderBottom: "1px solid #f1f5f9",
+                          backgroundColor: isNew ? 'rgba(124,58,237,0.08)' : (i % 2 === 0 ? '#ffffff' : '#fafafa'),
+                          borderLeft: isNew ? '3px solid #7c3aed' : '3px solid transparent',
+                          transition: 'all 0.3s ease',
+                        }}>
                           <td style={{ padding: "0.75rem 1rem", fontWeight: "700", color: "#0f172a" }}>
                             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                               {renderInitials(u.nombres, u.apellidos)}
@@ -1480,7 +1453,8 @@ export default function UsuariosGlobales() {
                             </button>
                           </td>
                         </tr>
-                      ))}
+                      )
+                      })}
                     </tbody>
                   </table>
                 </div>
