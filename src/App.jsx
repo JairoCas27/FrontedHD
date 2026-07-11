@@ -45,6 +45,7 @@ import PerfilSuperAdmin from "./pages/superadmin/PerfilSuperAdmin"
 import GlobalDepartamentos from "./pages/superadmin/GlobalDepartamentos"
 import GlobalEstructura from "./pages/superadmin/GlobalEstructura"
 import GlobalBienes from "./pages/superadmin/GlobalBienes"
+
 import GlobalConfiguracion from "./pages/superadmin/GlobalConfiguracion"
 
 import AccesosSeguridad from "./pages/seguridad/AccesosSeguridad"
@@ -107,6 +108,7 @@ function App() {
           <Route path="/superadmin/departamentos" element={<GlobalDepartamentos />} />
           <Route path="/superadmin/estructura" element={<GlobalEstructura />} />
           <Route path="/superadmin/bienes" element={<GlobalBienes />} />
+
           <Route path="/superadmin/configuracion" element={<GlobalConfiguracion />} />
           <Route path="/superadmin/perfil" element={<PerfilSuperAdmin />} />
         </Route>

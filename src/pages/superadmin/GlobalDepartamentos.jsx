@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react'
+﻿import React, { useState, useEffect, useMemo } from 'react'
 import { FiHome, FiUser, FiUsers, FiGrid, FiSearch, FiMail, FiPhone, FiX, FiCheck, FiEye, FiUserPlus, FiAlertTriangle, FiRefreshCw, FiEdit3, FiTrash2, FiPlus } from "react-icons/fi"
 import { toast } from 'react-toastify'
 import EncabezadoTabla from '../../components/EncabezadoTabla'
@@ -164,7 +164,7 @@ export default function GlobalDepartamentos() {
     } catch (err) {
       const msg = err.message.toLowerCase()
       if (msg.includes('ya tiene') || msg.includes('already') || msg.includes('ocupado')) {
-        toast.warning('El departamento ya tiene un propietario. El backend no permite cambiarlo directamente. Desasigna primero desde el panel de administración del condominio.')
+        toast.warning('El departamento ya tiene un propietario. El backend no permite cambiarlo directamente. Desasigna primero desde el panel de administraci├│n del condominio.')
       } else {
         toast.error(`Error al asignar: ${err.message}`)
       }
@@ -174,7 +174,7 @@ export default function GlobalDepartamentos() {
   }
 
   async function handleCreateApt() {
-    if (!createAptForm.numero.trim()) { toast.warning('Ingresa el número del departamento'); return }
+    if (!createAptForm.numero.trim()) { toast.warning('Ingresa el n├║mero del departamento'); return }
     if (!createAptForm.torreNombre) { toast.warning('Selecciona una torre'); return }
     if (!createAptForm.pisoNumero) { toast.warning('Selecciona un piso'); return }
     setCreatingApt(true)
@@ -485,7 +485,7 @@ export default function GlobalDepartamentos() {
                           </td>
                           <td style={{ padding: "0.75rem 1rem", fontSize: "0.8rem", color: "#64748b" }}>
                             {parking ? (
-                              <span style={{ fontWeight: "600", color: "#0f172a" }}>N° {parking.numero}</span>
+                              <span style={{ fontWeight: "600", color: "#0f172a" }}>N┬░ {parking.numero}</span>
                             ) : (
                               <span style={{ fontStyle: "italic", color: "#cbd5e1", fontSize: "0.75rem" }}>No asignado</span>
                             )}
@@ -546,7 +546,7 @@ export default function GlobalDepartamentos() {
                 </div>
                 <div>
                   <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.025em" }}>Metraje</span>
-                  <p style={{ margin: "0.2rem 0 0", fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>{modalDetail.metraje ? `${modalDetail.metraje} m²` : '---'}</p>
+                  <p style={{ margin: "0.2rem 0 0", fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>{modalDetail.metraje ? `${modalDetail.metraje} m┬▓` : '---'}</p>
                 </div>
               </div>
 
@@ -600,7 +600,7 @@ export default function GlobalDepartamentos() {
                   const parking = getAssignedParking(modalDetail)
                   return parking ? (
                     <p style={{ margin: "0.2rem 0 0", fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>
-                      N° {parking.numero}
+                      N┬░ {parking.numero}
                     </p>
                   ) : (
                     <p style={{ margin: "0.2rem 0 0", fontStyle: "italic", color: "#94a3b8", fontSize: "0.9rem" }}>Sin estacionamiento asignado</p>
@@ -751,7 +751,7 @@ export default function GlobalDepartamentos() {
                   <div>
                     <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>N&deg; Documento *</label>
                     <input type="text" value={tenantForm.numeroDocumento} onChange={(e) => setTenantForm({ ...tenantForm, numeroDocumento: e.target.value })}
-                      style={estiloInput} placeholder="Número de documento" />
+                      style={estiloInput} placeholder="N├║mero de documento" />
                   </div>
                 </div>
               </div>
@@ -798,7 +798,7 @@ export default function GlobalDepartamentos() {
                 <option value="">-- Seleccionar --</option>
                 {parkingDisponibles.map(p => (
                   <option key={p.id} value={p.id}>
-                    N° {p.numero}{p.tipoVehiculo ? ` (${p.tipoVehiculo})` : ''}
+                    N┬░ {p.numero}{p.tipoVehiculo ? ` (${p.tipoVehiculo})` : ''}
                   </option>
                 ))}
               </select>
@@ -852,7 +852,7 @@ export default function GlobalDepartamentos() {
                   <p style={{ margin: "0.2rem 0 0", fontWeight: "600", color: "#0f172a", fontSize: "0.85rem" }}>{tenantDetail.tipoDocumento || '-'}</p>
                 </div>
                 <div>
-                  <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>N° Documento</span>
+                  <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>N┬░ Documento</span>
                   <p style={{ margin: "0.2rem 0 0", fontWeight: "600", color: "#0f172a", fontSize: "0.85rem" }}>{tenantDetail.numeroDocumento || '-'}</p>
                 </div>
               </div>
@@ -866,8 +866,8 @@ export default function GlobalDepartamentos() {
           <div style={{ ...modalContent, maxWidth: "400px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", textAlign: "center" }}>
               <FiAlertTriangle size={40} style={{ color: "#ef4444", marginBottom: "1rem" }} />
-              <h3 style={{ margin: "0 0 0.5rem", fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>¿Eliminar inquilino?</h3>
-              <p style={{ color: "#64748b", fontSize: "0.85rem" }}>Esta acción no se puede deshacer.</p>
+              <h3 style={{ margin: "0 0 0.5rem", fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>┬┐Eliminar inquilino?</h3>
+              <p style={{ color: "#64748b", fontSize: "0.85rem" }}>Esta acci├│n no se puede deshacer.</p>
               <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", justifyContent: "center" }}>
                 <button onClick={() => setConfirmRemoveTenantIdx(null)}
                   style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>
@@ -912,11 +912,11 @@ export default function GlobalDepartamentos() {
                   </select>
                 </div>
                 <div>
-                  <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Número *</label>
+                  <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>N├║mero *</label>
                   <input type="text" style={estiloInput} placeholder="Ej: 101" value={createAptForm.numero} onChange={(e) => setCreateAptForm(f => ({ ...f, numero: e.target.value }))} />
                 </div>
                 <div>
-                  <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Metraje m²</label>
+                  <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Metraje m┬▓</label>
                   <input type="number" min="0" style={estiloInput} placeholder="Opcional" value={createAptForm.metraje} onChange={(e) => setCreateAptForm(f => ({ ...f, metraje: e.target.value }))} />
                 </div>
                 <label style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.85rem", color: "#334155", fontWeight: "600", cursor: "pointer" }}>
@@ -944,7 +944,7 @@ export default function GlobalDepartamentos() {
               <FiTrash2 size={40} color="#ef4444" style={{ marginBottom: "0.75rem" }} />
               <h3 style={{ margin: "0 0 0.5rem", fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>Eliminar Departamento</h3>
               <p style={{ color: "#64748b", fontSize: "0.85rem", margin: 0 }}>
-                ¿Eliminar el departamento <strong>{confirmDeleteApt.numero}</strong>? Esta acción no se puede deshacer.
+                ┬┐Eliminar el departamento <strong>{confirmDeleteApt.numero}</strong>? Esta acci├│n no se puede deshacer.
               </p>
               <div style={{ marginTop: "1.5rem", display: "flex", gap: "0.75rem", justifyContent: "center" }}>
                 <button onClick={() => setConfirmDeleteApt(null)}

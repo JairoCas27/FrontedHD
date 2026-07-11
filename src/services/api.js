@@ -296,6 +296,13 @@ export async function updateAdminAssetStatus(id, payload, condominioId) {
   });
 }
 
+export async function unassignVehicleFromSpot(vehiculoId, condominioId) {
+  const qs = `vehiculoId=${vehiculoId}` + (condominioId ? `&condominioId=${condominioId}` : '');
+  return safeFetch(`/api/admin/assets/unassign-vehicle?${qs}`, {
+    method: 'PUT',
+  });
+}
+
 export async function updateAdminAsset(id, data, condominioId) {
   const qs = condominioId ? `?condominioId=${condominioId}` : '';
   return safeFetch(`/api/admin/assets/${id}${qs}`, {
@@ -437,8 +444,9 @@ export async function getSecurityActiveLoans() {
   return safeFetch('/api/security/asset-loans/active-carts');
 }
 
-export async function getSecurityParkingSlots() {
-  return safeFetch('/api/security/parking-slots');
+export async function getSecurityParkingSlots(condominioId) {
+  const qs = condominioId ? `?condominioId=${condominioId}` : '';
+  return safeFetch(`/api/security/parking-slots${qs}`);
 }
 
 export async function verifyVehiclePlate(plate) {
@@ -478,4 +486,108 @@ export async function createApartment(data) {
     method: 'POST',
     body: JSON.stringify(data),
   });
+}
+
+// === PARKING MANAGEMENT (Super Admin) ===
+
+export async function getParkingSlots(condominioId) {
+  const qs = condominioId ? `?condominioId=${condominioId}` : '';
+  return safeFetch(`/api/security/parking-slots${qs}`);
+}
+
+export async function getAccessLogs(condominioId, params = {}) {
+  const qs = new URLSearchParams();
+  if (condominioId) qs.append('condominioId', condominioId);
+  if (params.type) qs.append('type', params.type);
+  if (params.page !== undefined) qs.append('page', params.page);
+  if (params.size) qs.append('size', params.size);
+  const query = qs.toString();
+  return safeFetch(`/api/admin/logs${query ? `?${query}` : ''}`);
+}
+
+export async function registerVehicleEntry(data, condominioId) {
+  const qs = condominioId ? `?condominioId=${condominioId}` : '';
+  const body = { ...data };
+  const cleaned = Object.fromEntries(Object.entries(body).filter(([_, v]) => v !== undefined));
+  return safeFetch(`/api/security/access-logs/entry${qs}`, {
+    method: 'POST',
+    body: JSON.stringify(cleaned),
+  });
+}
+
+export async function registerVehicleExit(data) {
+  return safeFetch('/api/security/access-logs/exit', {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getHomeownerParkingSpots(condominioId) {
+  const qs = condominioId ? `?condominioId=${condominioId}` : '';
+  return safeFetch(`/api/homeowner/parking-spots${qs}`);
+}
+
+export async function getHomeownerAllVehicles() {
+  return safeFetch('/api/homeowner/vehicles');
+}
+
+export async function getAdminAccessLogs(condominioId, params = {}) {
+  const qs = new URLSearchParams();
+  if (condominioId) qs.append('condominioId', condominioId);
+  qs.append('type', params.type || 'ACCESO');
+  if (params.page !== undefined) qs.append('page', params.page);
+  if (params.size) qs.append('size', params.size);
+  return safeFetch(`/api/admin/logs?${qs.toString()}`);
+}
+
+export async function getAdminVehicles(condominioId) {
+  const qs = condominioId ? `?condominioId=${condominioId}` : '';
+  return safeFetch(`/api/admin/vehicles${qs}`);
+}
+
+export async function getSecurityDashboard(condominioId) {
+  const qs = condominioId ? `?condominioId=${condominioId}` : '';
+  return safeFetch(`/api/security/dashboard/status${qs}`);
+}
+
+export async function getActiveCartLoans(condominioId) {
+  const qs = condominioId ? `?condominioId=${condominioId}` : '';
+  return safeFetch(`/api/security/asset-loans/active-carts${qs}`);
+}
+
+export async function registerCartLoan(data, condominioId) {
+  const qs = condominioId ? `?condominioId=${condominioId}` : '';
+  return safeFetch(`/api/security/asset-loans${qs}`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function getAllCartLoans(condominioId) {
+  const qs = condominioId ? `?condominioId=${condominioId}` : '';
+  return safeFetch(`/api/security/asset-loans/all${qs}`);
+}
+
+export async function returnCartLoan(id) {
+  return safeFetch(`/api/security/asset-loans/${id}/return`, { method: 'PUT' });
+}
+
+// === ADMIN VEHICLE MANAGEMENT (uses homeowner endpoints with SUPER_ADMIN role) ===
+
+export async function getAdminTenants(condominioId) {
+  const qs = condominioId ? `?condominioId=${condominioId}` : '';
+  return safeFetch(`/api/homeowner/tenants${qs}`);
+}
+
+export async function createAdminVehicle(data, condominioId) {
+  const qs = condominioId ? `?condominioId=${condominioId}` : '';
+  return safeFetch(`/api/homeowner/vehicles${qs}`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteAdminVehicle(id, condominioId) {
+  const qs = condominioId ? `?condominioId=${condominioId}` : '';
+  return safeFetch(`/api/homeowner/vehicles/${id}${qs}`, { method: 'DELETE' });
 }

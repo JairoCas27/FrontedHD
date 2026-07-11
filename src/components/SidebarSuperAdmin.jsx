@@ -1,5 +1,5 @@
 import SidebarLayout from "./SidebarLayout";
-import { FiHome, FiGrid, FiUsers, FiUser, FiBarChart2, FiClock, FiShield, FiUserCheck, FiLayers, FiPackage, FiSettings } from "react-icons/fi";
+import { FiHome, FiGrid, FiUsers, FiUser, FiBarChart2, FiClock, FiShield, FiUserCheck, FiLayers, FiPackage, FiSettings, FiTruck } from "react-icons/fi";
 import { useSidebarUser } from "../hooks/useSidebarUser";
 
 const menuItems = [

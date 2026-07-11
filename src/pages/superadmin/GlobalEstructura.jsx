@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { FiFolder, FiGrid, FiHome, FiMapPin, FiChevronDown, FiChevronRight, FiPlus, FiTrash2, FiLayers, FiX, FiAlertCircle, FiEdit3, FiUser, FiUsers } from "react-icons/fi"
 import { toast } from 'react-toastify'
 import EncabezadoTabla from '../../components/EncabezadoTabla'
@@ -31,6 +32,7 @@ const modalBox = {
 }
 
 export default function GlobalEstructura() {
+  const navigate = useNavigate()
   const [condominios, setCondominios] = useState([])
   const [condominioId, setCondominioId] = useState('')
   const [structure, setStructure] = useState(null)
@@ -379,6 +381,8 @@ export default function GlobalEstructura() {
                                                     <span style={{ fontSize: "0.65rem", color: "#94a3b8", fontStyle: "italic" }}>Sin propietario</span>
                                                   )}
                                                   <div style={{ marginLeft: "auto", display: "flex", gap: "0.2rem" }}>
+                                                    <button onClick={() => navigate('/superadmin/departamentos?idCondominio=' + condominioId + '&idApartamento=' + apt.id)}
+                                                      style={{ ...btnStyle, padding: "0.15rem 0.35rem", color: colorSuper, background: "transparent" }}><FiEdit3 size={10} /></button>
                                                     <button onClick={() => setConfirmDeleteApt(apt)}
                                                       style={{ ...btnStyle, padding: "0.15rem 0.35rem", color: "#ef4444", background: "transparent" }}><FiTrash2 size={10} /></button>
                                                   </div>
