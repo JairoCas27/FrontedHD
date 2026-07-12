@@ -252,70 +252,60 @@ export async function getAdminDashboardMetrics(condominioId) {
   return safeFetch(`/api/admin/dashboard/metrics${qs}`);
 }
 
-export async function getAdminApartments(condominioId, page = 0, size = 100) {
+export async function getAdminApartments(page = 0, size = 100) {
   const params = new URLSearchParams({ page, size });
-  if (condominioId) params.append('condominioId', condominioId);
   return safeFetch(`/api/admin/apartments?${params.toString()}`);
 }
 
-export async function assignApartmentOwner(id, idPropietario, condominioId) {
-  const qs = condominioId ? `?condominioId=${condominioId}` : '';
-  return safeFetch(`/api/admin/apartments/${id}/assign-owner${qs}`, {
+export async function assignApartmentOwner(id, idPropietario) {
+  return safeFetch(`/api/admin/apartments/${id}/assign-owner`, {
     method: 'PUT',
     body: JSON.stringify({ idPropietario: Number(idPropietario) }),
   });
 }
 
-export async function updateApartmentOccupants(id, occupantsData, condominioId) {
-  const qs = condominioId ? `?condominioId=${condominioId}` : '';
-  return safeFetch(`/api/admin/apartments/${id}/occupants${qs}`, {
+export async function updateApartmentOccupants(id, occupantsData) {
+  return safeFetch(`/api/admin/apartments/${id}/occupants`, {
     method: 'PUT',
     body: JSON.stringify(occupantsData),
   });
 }
 
-export async function getAdminAssets(condominioId, type, page = 0, size = 100) {
+export async function getAdminAssets(type, page = 0, size = 100) {
   const params = new URLSearchParams({ type, page, size });
-  if (condominioId) params.append('condominioId', condominioId);
   return safeFetch(`/api/admin/assets?${params.toString()}`);
 }
 
-export async function createAdminAsset(data, condominioId) {
-  const qs = condominioId ? `?condominioId=${condominioId}` : '';
-  return safeFetch(`/api/admin/assets${qs}`, {
+export async function createAdminAsset(data) {
+  return safeFetch(`/api/admin/assets`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
 }
 
-export async function updateAdminAssetStatus(id, payload, condominioId) {
-  const qs = condominioId ? `?condominioId=${condominioId}` : '';
-  return safeFetch(`/api/admin/assets/${id}/status${qs}`, {
+export async function updateAdminAssetStatus(id, payload) {
+  return safeFetch(`/api/admin/assets/${id}/status`, {
     method: 'PUT',
     body: JSON.stringify(payload),
   });
 }
 
-export async function updateAdminAsset(id, data, condominioId) {
-  const qs = condominioId ? `?condominioId=${condominioId}` : '';
-  return safeFetch(`/api/admin/assets/${id}${qs}`, {
+export async function updateAdminAsset(id, data) {
+  return safeFetch(`/api/admin/assets/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
 }
 
-export async function assignAssetApartment(assetId, idApartamento, condominioId) {
-  const qs = condominioId ? `?condominioId=${condominioId}` : '';
-  return safeFetch(`/api/admin/assets/${assetId}/assign-apartment${qs}`, {
+export async function assignAssetApartment(assetId, idApartamento) {
+  return safeFetch(`/api/admin/assets/${assetId}/assign-apartment`, {
     method: 'PUT',
     body: JSON.stringify({ idApartamento }),
   });
 }
 
-export async function deleteAdminAsset(id, condominioId) {
-  const params = new URLSearchParams();
-  if (condominioId) params.append('condominioId', condominioId);
-  return safeFetch(`/api/admin/assets/${id}?${params.toString()}`, { method: 'DELETE' });
+export async function deleteAdminAsset(id) {
+  return safeFetch(`/api/admin/assets/${id}`, { method: 'DELETE' });
 }
 
 export function extractItems(data) {
@@ -326,9 +316,8 @@ export function extractItems(data) {
   return [];
 }
 
-export async function getAdminUsers(condominioId, params = {}) {
+export async function getAdminUsers(params = {}) {
   const qs = new URLSearchParams();
-  if (condominioId) qs.append('condominioId', condominioId);
   if (params.search) qs.append('search', params.search);
   if (params.rol) qs.append('rol', params.rol);
   if (params.activo !== undefined) qs.append('activo', params.activo);
@@ -338,38 +327,33 @@ export async function getAdminUsers(condominioId, params = {}) {
   return safeFetch(`/api/admin/users${query ? `?${query}` : ''}`);
 }
 
-export async function createAdminUser(data, condominioId) {
-  const qs = condominioId ? `?condominioId=${condominioId}` : '';
-  return safeFetch(`/api/admin/users${qs}`, {
+export async function createAdminUser(data) {
+  return safeFetch(`/api/admin/users`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
 }
 
-export async function updateAdminUser(id, data, condominioId) {
-  const qs = condominioId ? `?condominioId=${condominioId}` : '';
-  return safeFetch(`/api/admin/users/${id}${qs}`, {
+export async function updateAdminUser(id, data) {
+  return safeFetch(`/api/admin/users/${id}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   });
 }
 
-export async function patchAdminUserStatus(id, activo, condominioId) {
-  const qs = condominioId ? `?condominioId=${condominioId}` : '';
-  return safeFetch(`/api/admin/users/${id}/status${qs}`, {
+export async function patchAdminUserStatus(id, activo) {
+  return safeFetch(`/api/admin/users/${id}/status`, {
     method: 'PATCH',
     body: JSON.stringify({ activo }),
   });
 }
 
-export async function getAdminStructure(condominioId) {
-  const qs = condominioId ? `?condominioId=${condominioId}` : '';
-  return safeFetch(`/api/admin/structure${qs}`);
+export async function getAdminStructure() {
+  return safeFetch(`/api/admin/structure`);
 }
 
-export async function createAdminStructureNode(data, condominioId) {
-  const qs = condominioId ? `?condominioId=${condominioId}` : '';
-  return safeFetch(`/api/admin/structure/nodes${qs}`, {
+export async function createAdminStructureNode(data) {
+  return safeFetch(`/api/admin/structure/nodes`, {
     method: 'POST',
     body: JSON.stringify(data),
   });
@@ -389,9 +373,8 @@ export async function deleteAdminStructureNode(id, type = 'TORRE', condominioId)
   return safeFetch(`/api/admin/structure/nodes/${id}?${params.toString()}`, { method: 'DELETE' });
 }
 
-export async function getAdminLogs(condominioId, params = {}) {
+export async function getAdminLogs(params = {}) {
   const qs = new URLSearchParams();
-  if (condominioId) qs.append('condominioId', condominioId);
   if (params.type) qs.append('type', params.type);
   if (params.userId) qs.append('userId', params.userId);
   if (params.fechaInicio) qs.append('fechaInicio', params.fechaInicio);
