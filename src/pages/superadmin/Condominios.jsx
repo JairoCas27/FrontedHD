@@ -15,6 +15,7 @@ import { toast } from 'react-toastify'
 import ToggleSwitch from '../../components/common/ToggleSwitch'
 import ConfirmModal from '../../components/common/ConfirmModal'
 import EncabezadoTabla from '../../components/EncabezadoTabla'
+import DataList from '../../components/common/DataList'
 
 const colorSuper = "rgb(124,58,237)"
 
@@ -64,8 +65,6 @@ export default function Condominios() {
 
   // Filtros
   const [searchTerm, setSearchTerm] = useState('')
-  const [ciudadFilter, setCiudadFilter] = useState('')
-  const [estadoFilter, setEstadoFilter] = useState('')
   const [sortOrder, setSortOrder] = useState('asc')
   const [sortField, setSortField] = useState('nombre')
 
@@ -123,14 +122,9 @@ export default function Condominios() {
     loadCatalogs()
   }, [])
 
-  const uniqueCities = [...new Set(condominios.map(c => c.nombreCiudad).filter(Boolean))]
-
   const filteredAndSorted = useMemo(() => {
     let result = condominios.filter(c => {
-      const matchNombre = c.nombre.toLowerCase().includes(searchTerm.toLowerCase())
-      const matchCiudad = ciudadFilter ? c.nombreCiudad === ciudadFilter : true
-      const matchEstado = estadoFilter !== '' ? (estadoFilter === 'activo' ? c.activo : !c.activo) : true
-      return matchNombre && matchCiudad && matchEstado
+      return c.nombre.toLowerCase().includes(searchTerm.toLowerCase())
     })
 
     result.sort((a, b) => {
@@ -157,7 +151,7 @@ export default function Condominios() {
       }
     })
     return result
-  }, [condominios, searchTerm, ciudadFilter, estadoFilter, sortField, sortOrder])
+  }, [condominios, searchTerm, sortField, sortOrder])
 
   const handlePaisChange = async (paisId) => {
     setForm({ ...form, idPais: paisId, idCiudad: '' })
@@ -280,40 +274,12 @@ export default function Condominios() {
               </div>
             </div>
           </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-            <select value={ciudadFilter} onChange={(e) => setCiudadFilter(e.target.value)}
-              style={{ ...estiloInput, width: "auto", minWidth: "140px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
-              <option value="">Todas las ciudades</option>
-              {uniqueCities.map(c => <option key={c} value={c}>{c}</option>)}
-            </select>
-            <select value={estadoFilter} onChange={(e) => setEstadoFilter(e.target.value)}
-              style={{ ...estiloInput, width: "auto", minWidth: "130px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
-              <option value="">Todos los estados</option>
-              <option value="activo">Activo</option>
-              <option value="inactivo">Inactivo</option>
-            </select>
-            <select value={`${sortField}-${sortOrder}`} onChange={(e) => {
-              const [field, order] = e.target.value.split('-')
-              setSortField(field)
-              setSortOrder(order)
-            }}
-              style={{ ...estiloInput, width: "auto", minWidth: "170px", padding: "0.35rem 0.5rem", fontSize: "0.8rem" }}>
-              <option value="nombre-asc">Nombre A-Z</option>
-              <option value="nombre-desc">Nombre Z-A</option>
-              <option value="ciudad-asc">Ciudad A-Z</option>
-              <option value="ciudad-desc">Ciudad Z-A</option>
-              <option value="estado-asc">Estado (Activo primero)</option>
-              <option value="estado-desc">Estado (Inactivo primero)</option>
-              <option value="administrador-asc">Administrador A-Z</option>
-              <option value="administrador-desc">Administrador Z-A</option>
-            </select>
-            {(searchTerm || ciudadFilter || estadoFilter) && (
-              <button onClick={() => { setSearchTerm(''); setCiudadFilter(''); setEstadoFilter('') }}
-                style={{ ...btnStyle, backgroundColor: "#f1f5f9", color: "#64748b", fontSize: "0.7rem" }}>
-                <FiX size={12} /> Limpiar filtros
-              </button>
-            )}
-          </div>
+          {searchTerm && (
+            <button onClick={() => setSearchTerm('')}
+              style={{ ...btnStyle, backgroundColor: "#f1f5f9", color: "#64748b", fontSize: "0.7rem" }}>
+              <FiX size={12} /> Limpiar filtros
+            </button>
+          )}
         </div>
 
         {filteredAndSorted.length === 0 ? (
@@ -494,18 +460,18 @@ export default function Condominios() {
                 </div>
                 <div style={{ marginBottom: "1rem" }}>
                   <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>País</label>
-                  <select value={form.idPais} onChange={(e) => handlePaisChange(e.target.value)} disabled={loadingCatalogs}
+                  <DataList value={paises.find(p => String(p.id) === String(form.idPais))?.nombre || ''} onChange={(e) => { const s = paises.find(p => p.nombre === e.target.value); if (s) handlePaisChange(s.id) }} disabled={loadingCatalogs}
                     style={estiloInput}>
-                    {paises.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
-                  </select>
+                    {paises.map(p => <option key={p.id} value={p.nombre} />)}
+                  </DataList>
                 </div>
                 <div style={{ marginBottom: "1rem" }}>
                   <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Ciudad</label>
-                  <select value={form.idCiudad} onChange={(e) => setForm({ ...form, idCiudad: e.target.value })} required disabled={!form.idPais || loadingCatalogs}
+                  <DataList value={ciudades.find(c => String(c.id) === String(form.idCiudad))?.nombre || ''} onChange={(e) => { const s = ciudades.find(c => c.nombre === e.target.value); if (s) setForm({ ...form, idCiudad: s.id }) }} required disabled={!form.idPais || loadingCatalogs}
                     style={estiloInput}>
                     <option value="">Seleccione ciudad</option>
-                    {ciudades.map(c => <option key={c.id} value={c.id}>{c.nombre}</option>)}
-                  </select>
+                    {ciudades.map(c => <option key={c.id} value={c.nombre} />)}
+                  </DataList>
                 </div>
               </div>
               <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", gap: "0.75rem", justifyContent: "flex-end" }}>
