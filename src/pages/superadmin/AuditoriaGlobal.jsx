@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { FiClock, FiRefreshCw, FiAlertCircle, FiCheckCircle, FiTruck, FiHome, FiGrid, FiCheck, FiMapPin } from 'react-icons/fi';
+import { useState, useEffect, useMemo } from 'react';
+import { FiClock, FiRefreshCw, FiAlertCircle, FiCheckCircle, FiTruck, FiHome, FiGrid, FiCheck, FiMapPin, FiSearch } from 'react-icons/fi';
 import {
   getCondominiums,
   getAdminLogs,
@@ -28,6 +28,17 @@ export default function AuditoriaGlobal() {
   const [condominios, setCondominios] = useState([]);
   const [condoSeleccionado, setCondoSeleccionado] = useState('');
   const [showCardSelector, setShowCardSelector] = useState(false);
+  const [condoSearch, setCondoSearch] = useState('');
+
+  const filteredCondominios = useMemo(() => {
+    if (!condoSearch) return condominios
+    const q = condoSearch.toLowerCase()
+    return condominios.filter(c =>
+      (c.nombre?.toLowerCase() || '').includes(q) ||
+      (c.direccion?.toLowerCase() || '').includes(q) ||
+      (c.ciudad?.toLowerCase() || '').includes(q)
+    )
+  }, [condominios, condoSearch])
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [logsLoading, setLogsLoading] = useState(false);
@@ -176,24 +187,50 @@ export default function AuditoriaGlobal() {
       {/* --- SELECTOR DE CONDOMINIOS (TARJETAS) --- */}
       {(!condoSeleccionado || showCardSelector) && (
         <div style={{ marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1rem' }}>
-            <div style={{
-              backgroundColor: 'rgba(124,58,237,0.1)',
-              padding: '0.6rem',
-              borderRadius: '0.65rem',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center'
-            }}>
-              <FiGrid size={20} color={colorSuper} />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div style={{
+                backgroundColor: 'rgba(124,58,237,0.1)',
+                padding: '0.6rem',
+                borderRadius: '0.65rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}>
+                <FiGrid size={20} color={colorSuper} />
+              </div>
+              <div>
+                <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: '800', color: '#0f172a' }}>
+                  {condoSeleccionado ? 'Seleccionar otro condominio' : 'Selecciona un condominio'}
+                </h2>
+                <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>
+                  {condoSearch
+                    ? `${filteredCondominios.length} de ${condominios.length} condominios`
+                    : `${condominios.length} ${condominios.length === 1 ? 'condominio disponible' : 'condominios disponibles'}`
+                  }
+                </span>
+              </div>
             </div>
-            <div>
-              <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: '800', color: '#0f172a' }}>
-                {condoSeleccionado ? 'Seleccionar otro condominio' : 'Selecciona un condominio'}
-              </h2>
-              <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>
-                {condominios.length} {condominios.length === 1 ? 'condominio disponible' : 'condominios disponibles'}
-              </span>
+
+            <div style={{ width: '260px', maxWidth: '100%', position: 'relative' }}>
+              <FiSearch size={14} style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              <input
+                type="text"
+                placeholder="Buscar condominio..."
+                value={condoSearch}
+                onChange={e => setCondoSearch(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem 0.5rem 0.5rem 2.2rem',
+                    borderRadius: '0.5rem',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '0.85rem',
+                    color: '#334155',
+                    backgroundColor: '#ffffff',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+              />
             </div>
           </div>
 
@@ -202,7 +239,7 @@ export default function AuditoriaGlobal() {
             gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
             gap: '1rem'
           }}>
-            {condominios.map((c, idx) => {
+            {filteredCondominios.map((c, idx) => {
               const isSelected = String(c.id) === String(condoSeleccionado)
               const [color1, color2] = coloresGradiente[idx % coloresGradiente.length]
 
@@ -383,6 +420,11 @@ export default function AuditoriaGlobal() {
                 </button>
               )
             })}
+            {filteredCondominios.length === 0 && (
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
+                <p style={{ fontWeight: 600, margin: 0 }}>Ningún condominio coincide con tu búsqueda</p>
+              </div>
+            )}
           </div>
         </div>
       )}

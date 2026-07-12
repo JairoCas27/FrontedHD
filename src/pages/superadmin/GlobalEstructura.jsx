@@ -1,6 +1,6 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { FiFolder, FiGrid, FiHome, FiMapPin, FiChevronDown, FiChevronRight, FiPlus, FiTrash2, FiLayers, FiX, FiAlertCircle, FiEdit3, FiUser, FiUsers, FiCheck } from "react-icons/fi"
+import { FiFolder, FiGrid, FiHome, FiMapPin, FiChevronDown, FiChevronRight, FiPlus, FiTrash2, FiLayers, FiX, FiAlertCircle, FiEdit3, FiUser, FiUsers, FiCheck, FiSearch } from "react-icons/fi"
 import { toast } from 'react-toastify'
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import { getCondominiums, getAdminStructure, createAdminStructureNode, deleteAdminStructureNode, getAllUsers, extractItems } from '../../services/api'
@@ -73,6 +73,17 @@ export default function GlobalEstructura() {
   const [deletingId, setDeletingId] = useState(null)
   const [aptDetail, setAptDetail] = useState(null)
   const [showCardSelector, setShowCardSelector] = useState(true)
+  const [condoSearch, setCondoSearch] = useState('')
+
+  const filteredCondominios = useMemo(() => {
+    if (!condoSearch) return condominios
+    const q = condoSearch.toLowerCase()
+    return condominios.filter(c =>
+      (c.nombre?.toLowerCase() || '').includes(q) ||
+      (c.direccion?.toLowerCase() || '').includes(q) ||
+      (c.ciudad?.toLowerCase() || '').includes(q)
+    )
+  }, [condominios, condoSearch])
 
   useEffect(() => {
     Promise.all([
@@ -238,11 +249,11 @@ export default function GlobalEstructura() {
 
       {/* --- COMPACT VIEW cuando ya hay un condominio seleccionado --- */}
       {condominioId && !showCardSelector && (
-        <div style={{ 
-          marginBottom: "2rem", 
-          backgroundColor: "#ffffff", 
-          borderRadius: "1rem", 
-          border: "1px solid #e2e8f0", 
+        <div style={{
+          marginBottom: "2rem",
+          backgroundColor: "#ffffff",
+          borderRadius: "1rem",
+          border: "1px solid #e2e8f0",
           padding: "1rem 1.5rem",
           boxShadow: "0 1px 3px rgba(0,0,0,0.02)",
           display: "flex",
@@ -310,24 +321,39 @@ export default function GlobalEstructura() {
       {/* --- CARDS GRID visible cuando no hay selección o se presiona 'Seleccionar otro condominio' --- */}
       {(!condominioId || showCardSelector) && (
         <div style={{ marginBottom: "2rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1.25rem" }}>
-            <div style={{
-              backgroundColor: "rgba(124,58,237,0.1)",
-              padding: "0.65rem",
-              borderRadius: "0.75rem",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
-            }}>
-              <FiGrid size={22} color={colorSuper} />
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem", marginBottom: "1.25rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <div style={{
+                backgroundColor: "rgba(124,58,237,0.1)",
+                padding: "0.65rem",
+                borderRadius: "0.75rem",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }}>
+                <FiGrid size={22} color={colorSuper} />
+              </div>
+              <div>
+                <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: "800", color: "#0f172a" }}>
+                  {condominioId ? 'Condominio seleccionado' : 'Selecciona un condominio'}
+                </h2>
+                <span style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: "600" }}>
+                  {condoSearch
+                    ? `${filteredCondominios.length} de ${condominios.length} condominios`
+                    : `${condominios.length} ${condominios.length === 1 ? 'condominio disponible' : 'condominios disponibles'}`
+                  }
+                </span>
+              </div>
             </div>
-            <div>
-              <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: "800", color: "#0f172a" }}>
-                {condominioId ? 'Condominio seleccionado' : 'Selecciona un condominio'}
-              </h2>
-              <span style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: "600" }}>
-                {condominios.length} {condominios.length === 1 ? 'condominio disponible' : 'condominios disponibles'}
-              </span>
+
+            <div style={{ width: "260px", maxWidth: "100%", position: "relative" }}>
+              <FiSearch size={14} style={{ position: "absolute", left: "0.8rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
+              <input
+                type="text"
+                placeholder="Buscar condominio..."
+                value={condoSearch}
+                onChange={e => setCondoSearch(e.target.value)}
+                style={{ ...estiloInput, paddingLeft: "2.2rem", paddingTop: "0.55rem", paddingBottom: "0.55rem", fontSize: "0.85rem" }} />
             </div>
           </div>
 
@@ -336,7 +362,7 @@ export default function GlobalEstructura() {
             gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
             gap: "1rem"
           }}>
-            {condominios.map((c, idx) => {
+            {filteredCondominios.map((c, idx) => {
               const isSelected = String(c.id) === String(condominioId)
               const [color1, color2] = coloresGradiente[idx % coloresGradiente.length]
 
@@ -517,6 +543,11 @@ export default function GlobalEstructura() {
                 </button>
               )
             })}
+            {filteredCondominios.length === 0 && (
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
+                <p style={{ fontWeight: 600, margin: 0 }}>Ningún condominio coincide con tu búsqueda</p>
+              </div>
+            )}
           </div>
         </div>
       )}
