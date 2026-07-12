@@ -587,6 +587,14 @@ export async function createAdminVehicle(data, condominioId) {
   });
 }
 
+export async function updateAdminVehicle(id, data, condominioId) {
+  const qs = condominioId ? `?condominioId=${condominioId}` : '';
+  return safeFetch(`/api/homeowner/vehicles/${id}${qs}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
 export async function deleteAdminVehicle(id, condominioId) {
   const qs = condominioId ? `?condominioId=${condominioId}` : '';
   return safeFetch(`/api/homeowner/vehicles/${id}${qs}`, { method: 'DELETE' });
