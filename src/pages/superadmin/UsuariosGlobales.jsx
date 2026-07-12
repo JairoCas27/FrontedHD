@@ -972,9 +972,9 @@ export default function UsuariosGlobales() {
                     </div>
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Asignar condominio</label>
-                      <DataList value={form.idCondominio} onChange={(e) => setForm({ ...form, idCondominio: e.target.value })} style={estiloInput}>
+                      <DataList value={condominios.find(c => String(c.id) === String(form.idCondominio))?.nombre || ''} onChange={(e) => { const s = condominios.find(c => c.nombre === e.target.value); if (s) setForm({ ...form, idCondominio: s.id }) }} style={estiloInput}>
                         <option value="">Sin asignar</option>
-                        {condominioOptions.map(c => (<option key={c.id} value={c.id} disabled={c.disabled}>{c.label}</option>))}
+                        {condominios.filter(c => !occupiedCondos.has(c.id)).map(c => (<option key={c.id} value={c.nombre} />))}
                       </DataList>
                     </div>
                   </div>
@@ -1155,9 +1155,9 @@ export default function UsuariosGlobales() {
                     )}
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Asignar condominio</label>
-                      <DataList value={adminForm.idCondominio} onChange={(e) => setAdminForm({ ...adminForm, idCondominio: e.target.value })} style={estiloInput}>
+                      <DataList value={condominios.find(c => String(c.id) === String(adminForm.idCondominio))?.nombre || ''} onChange={(e) => { const s = condominios.find(c => c.nombre === e.target.value); if (s) setAdminForm({ ...adminForm, idCondominio: s.id }) }} style={estiloInput}>
                         <option value="">Sin asignar</option>
-                        {adminGetCondoOptions().map(c => (<option key={c.id} value={c.id} disabled={c.disabled}>{c.label}</option>))}
+                        {condominios.filter(c => !occupiedCondos.has(c.id) || (adminEditing && adminEditing.idCondominio === c.id)).map(c => (<option key={c.id} value={c.nombre} />))}
                       </DataList>
                       {adminEditing && adminForm.idCondominio && condominios.find(c => c.id === parseInt(adminForm.idCondominio, 10))?.activo === false && (
                         <small style={{ color: "#d97706", display: "flex", alignItems: "center", gap: "0.25rem", marginTop: "0.3rem", fontWeight: "600", fontSize: "0.7rem" }}>
@@ -1313,9 +1313,9 @@ export default function UsuariosGlobales() {
                     </div>
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Condominio</label>
-                      <DataList value={agentCreateForm.idCondominio} onChange={(e) => setAgentCreateForm({ ...agentCreateForm, idCondominio: e.target.value })} required style={estiloInput}>
+                      <DataList value={condominios.find(c => String(c.id) === String(agentCreateForm.idCondominio))?.nombre || ''} onChange={(e) => { const s = condominios.find(c => c.nombre === e.target.value); if (s) setAgentCreateForm({ ...agentCreateForm, idCondominio: s.id }) }} required style={estiloInput}>
                         <option value="">Seleccione un condominio</option>
-                        {condominios.map(c => (<option key={c.id} value={c.id}>{c.nombre}</option>))}
+                        {condominios.map(c => (<option key={c.id} value={c.nombre} />))}
                       </DataList>
                     </div>
                   </div>
@@ -1353,9 +1353,9 @@ export default function UsuariosGlobales() {
                     </div>
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Condominio</label>
-                      <DataList value={agentEditForm.idCondominio} onChange={(e) => setAgentEditForm({ ...agentEditForm, idCondominio: e.target.value })} style={estiloInput}>
+                      <DataList value={condominios.find(c => String(c.id) === String(agentEditForm.idCondominio))?.nombre || ''} onChange={(e) => { const s = condominios.find(c => c.nombre === e.target.value); if (s) setAgentEditForm({ ...agentEditForm, idCondominio: s.id }) }} style={estiloInput}>
                         <option value="">Sin condominio</option>
-                        {condominios.map(c => (<option key={c.id} value={c.id}>{c.nombre}</option>))}
+                        {condominios.map(c => (<option key={c.id} value={c.nombre} />))}
                       </DataList>
                     </div>
                   </div>
@@ -1506,9 +1506,9 @@ export default function UsuariosGlobales() {
                     </div>
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Condominio</label>
-                      <DataList value={ownerCreateForm.idCondominio} onChange={(e) => setOwnerCreateForm({ ...ownerCreateForm, idCondominio: e.target.value })} required style={estiloInput}>
+                      <DataList value={condominios.find(c => String(c.id) === String(ownerCreateForm.idCondominio))?.nombre || ''} onChange={(e) => { const s = condominios.find(c => c.nombre === e.target.value); if (s) setOwnerCreateForm({ ...ownerCreateForm, idCondominio: s.id }) }} required style={estiloInput}>
                         <option value="">Seleccione un condominio</option>
-                        {condominios.map(c => (<option key={c.id} value={c.id}>{c.nombre}</option>))}
+                        {condominios.map(c => (<option key={c.id} value={c.nombre} />))}
                       </DataList>
                     </div>
                   </div>
@@ -1546,9 +1546,9 @@ export default function UsuariosGlobales() {
                     </div>
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Condominio</label>
-                      <DataList value={ownerEditForm.idCondominio} onChange={(e) => setOwnerEditForm({ ...ownerEditForm, idCondominio: e.target.value })} style={estiloInput}>
+                      <DataList value={condominios.find(c => String(c.id) === String(ownerEditForm.idCondominio))?.nombre || ''} onChange={(e) => { const s = condominios.find(c => c.nombre === e.target.value); if (s) setOwnerEditForm({ ...ownerEditForm, idCondominio: s.id }) }} style={estiloInput}>
                         <option value="">Sin condominio</option>
-                        {condominios.map(c => (<option key={c.id} value={c.id}>{c.nombre}</option>))}
+                        {condominios.map(c => (<option key={c.id} value={c.nombre} />))}
                       </DataList>
                     </div>
                   </div>
