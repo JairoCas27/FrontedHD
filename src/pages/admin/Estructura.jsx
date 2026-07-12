@@ -234,7 +234,7 @@ export default function Estructura() {
             </div>
         )}
 
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem", gap: '1rem' }}>
           <EncabezadoTabla
               titulo="Estructura del Condominio"
               subtitulo="Organigrama de nodos físicos para la segmentación de bloques, sectores y niveles residenciales"
@@ -243,29 +243,6 @@ export default function Estructura() {
               onBotonClick={() => setShowModal(true)}
           />
 
-          <button
-              onClick={() => setShowApartmentModal(true)}
-              disabled={isSubmitting}
-              style={{
-                backgroundColor: colorAdmin,
-                color: "white",
-                border: "none",
-                padding: "0.65rem 1.5rem",
-                borderRadius: "0.5rem",
-                fontWeight: "600",
-                fontSize: "0.9rem",
-                display: "flex",
-                alignItems: "center",
-                gap: "0.5rem",
-                cursor: isSubmitting ? "not-allowed" : "pointer",
-                boxShadow: "0 2px 4px rgba(52,151,195,0.2)",
-                whiteSpace: "nowrap",
-                opacity: isSubmitting ? 0.6 : 1
-              }}
-          >
-            {isSubmitting ? <FiLoader size={18} className="spinner" /> : <FiPlus size={18} />}
-            Agregar Departamento
-          </button>
         </div>
 
         {loading ? (
@@ -306,14 +283,38 @@ export default function Estructura() {
                           {piso.apartamentos?.length || 0} dptos
                         </span>
                               </div>
-                              <button
-                                  onClick={() => handleDeleteNode(piso.id)}
-                                  style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer" }}
-                                  title="Eliminar Nivel"
-                                  disabled={isSubmitting}
-                              >
-                                <FiTrash2 size={14} />
-                              </button>
+
+                              <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                                <button
+                                    onClick={() => {
+                                      setNuevoDepartamento({ ...nuevoDepartamento, idPiso: piso.id });
+                                      setShowApartmentModal(true);
+                                    }}
+                                    style={{
+                                      backgroundColor: colorAdmin,
+                                      color: "white",
+                                      border: "none",
+                                      padding: "0.4rem 0.8rem",
+                                      borderRadius: "0.4rem",
+                                      cursor: "pointer",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: "5px"
+                                    }}
+                                >
+                                  <FiPlus size={14} />
+                                  Agregar Dpto
+                                </button>
+
+                                <button
+                                    onClick={() => handleDeleteNode(piso.id)}
+                                    style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer" }}
+                                    title="Eliminar Nivel"
+                                    disabled={isSubmitting}
+                                >
+                                  <FiTrash2 size={14} />
+                                </button>
+                              </div>
                             </div>
 
                             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", paddingLeft: "1rem" }}>
