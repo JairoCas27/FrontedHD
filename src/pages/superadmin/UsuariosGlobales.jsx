@@ -106,6 +106,7 @@ export default function UsuariosGlobales() {
   const [adminShowModal, setAdminShowModal] = useState(false)
   const [adminEditing, setAdminEditing] = useState(null)
   const [adminForm, setAdminForm] = useState({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', idCondominio: '' })
+  const [adminCondoText, setAdminCondoText] = useState('')
   const [adminSubmitting, setAdminSubmitting] = useState(false)
   const [adminDetailItem, setAdminDetailItem] = useState(null)
   const [adminShowDetail, setAdminShowDetail] = useState(false)
@@ -121,6 +122,7 @@ export default function UsuariosGlobales() {
   const [agentEditing, setAgentEditing] = useState(null)
   const [agentCreateForm, setAgentCreateForm] = useState({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', idCondominio: '' })
   const [agentEditForm, setAgentEditForm] = useState({ nombres: '', apellidos: '', telefono: '', idCondominio: '' })
+  const [agentEditCondoText, setAgentEditCondoText] = useState('')
   const [agentSubmitting, setAgentSubmitting] = useState(false)
   const [agentDetailItem, setAgentDetailItem] = useState(null)
   const [agentShowDetail, setAgentShowDetail] = useState(false)
@@ -136,6 +138,7 @@ export default function UsuariosGlobales() {
   const [ownerEditing, setOwnerEditing] = useState(null)
   const [ownerCreateForm, setOwnerCreateForm] = useState({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', idCondominio: '' })
   const [ownerEditForm, setOwnerEditForm] = useState({ nombres: '', apellidos: '', telefono: '', idCondominio: '' })
+  const [ownerEditCondoText, setOwnerEditCondoText] = useState('')
   const [ownerSubmitting, setOwnerSubmitting] = useState(false)
   const [ownerDetailItem, setOwnerDetailItem] = useState(null)
   const [ownerShowDetail, setOwnerShowDetail] = useState(false)
@@ -407,7 +410,7 @@ export default function UsuariosGlobales() {
         }
         createdAdminId = created?.id
       }
-      setAdminShowModal(false)
+      setAdminShowModal(false); setAdminCondoText('')
       setTimeout(() => loadData(createdAdminId), 300)
     } catch (err) {
       toast.error(`Error: ${err.message}`)
@@ -499,7 +502,7 @@ export default function UsuariosGlobales() {
         }
       }
       toast.success('Agente actualizado correctamente.')
-      setAgentShowEdit(false); setAgentEditing(null)
+      setAgentShowEdit(false); setAgentEditing(null); setAgentEditCondoText('')
       await loadData()
     } catch (err) {
       toast.error(`Error: ${err.message}`)
@@ -591,7 +594,7 @@ export default function UsuariosGlobales() {
         }
       }
       toast.success('Propietario actualizado correctamente.')
-      setOwnerShowEdit(false); setOwnerEditing(null)
+      setOwnerShowEdit(false); setOwnerEditing(null); setOwnerEditCondoText('')
       await loadData()
     } catch (err) {
       toast.error(`Error: ${err.message}`)
@@ -1091,7 +1094,7 @@ export default function UsuariosGlobales() {
                               <FiEye size={14} />
                             </button>
                             <button style={{ ...btnStyle, backgroundColor: "rgba(245,158,11,0.15)", color: "#d97706", marginRight: "0.25rem" }}
-                              onClick={() => { setAdminEditing(a); setAdminForm({ nombres: a.nombres, apellidos: a.apellidos, correo: a.correo, telefono: a.telefono || '', contrasena: '', idCondominio: a.idCondominio?.toString() || '' }); setAdminShowModal(true) }} title="Editar">
+                              onClick={() => { setAdminEditing(a); setAdminForm({ nombres: a.nombres, apellidos: a.apellidos, correo: a.correo, telefono: a.telefono || '', contrasena: '', idCondominio: a.idCondominio?.toString() || '' }); setAdminCondoText(''); setAdminShowModal(true) }} title="Editar">
                               <FiEdit2 size={14} />
                             </button>
                             <button style={{ ...btnStyle, backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444" }}
@@ -1122,11 +1125,11 @@ export default function UsuariosGlobales() {
           />
 
           {adminShowModal && (
-            <div style={modalOverlay} onClick={() => setAdminShowModal(false)}>
+            <div style={modalOverlay} onClick={() => { setAdminShowModal(false); setAdminCondoText('') }}>
               <div style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>{adminEditing ? 'Editar' : 'Nuevo'} administrador</h3>
-                  <button onClick={() => setAdminShowModal(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}><FiX size={20} /></button>
+                  <button onClick={() => { setAdminShowModal(false); setAdminCondoText('') }} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}><FiX size={20} /></button>
                 </div>
                 <form onSubmit={handleAdminSubmit}>
                   <div style={{ padding: "1.5rem" }}>
@@ -1155,7 +1158,7 @@ export default function UsuariosGlobales() {
                     )}
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Asignar condominio</label>
-                      <DataList value={condominios.find(c => String(c.id) === String(adminForm.idCondominio))?.nombre || ''} onChange={(e) => { const s = condominios.find(c => c.nombre === e.target.value); if (s) setAdminForm({ ...adminForm, idCondominio: s.id }) }} style={estiloInput}>
+                      <DataList value={adminCondoText} onChange={(e) => { setAdminCondoText(e.target.value); const s = condominios.find(c => c.nombre === e.target.value); if (s) setAdminForm({ ...adminForm, idCondominio: s.id }) }} style={estiloInput}>
                         <option value="">Sin asignar</option>
                         {condominios.filter(c => !occupiedCondos.has(c.id) || (adminEditing && adminEditing.idCondominio === c.id)).map(c => (<option key={c.id} value={c.nombre} />))}
                       </DataList>
@@ -1170,7 +1173,7 @@ export default function UsuariosGlobales() {
                     <button type="submit" disabled={adminSubmitting} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: adminSubmitting ? "#cbd5e1" : colorSuper, color: "#fff", fontWeight: "600", cursor: adminSubmitting ? "not-allowed" : "pointer", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
                       {adminSubmitting ? 'Guardando...' : <><FiCheck size={16} /> Guardar</>}
                     </button>
-                    <button type="button" onClick={() => setAdminShowModal(false)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
+                    <button type="button" onClick={() => { setAdminShowModal(false); setAdminCondoText('') }} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
                   </div>
                 </form>
               </div>
@@ -1251,7 +1254,7 @@ export default function UsuariosGlobales() {
                               <FiEye size={14} />
                             </button>
                             <button style={{ ...btnStyle, backgroundColor: "rgba(245,158,11,0.15)", color: "#d97706", marginRight: "0.25rem" }}
-                              onClick={() => { setAgentEditing(u); setAgentEditForm({ nombres: u.nombres, apellidos: u.apellidos, telefono: u.telefono || '', idCondominio: u.idCondominio?.toString() || '' }); setAgentShowEdit(true) }} title="Editar">
+                              onClick={() => { setAgentEditing(u); setAgentEditForm({ nombres: u.nombres, apellidos: u.apellidos, telefono: u.telefono || '', idCondominio: u.idCondominio?.toString() || '' }); setAgentEditCondoText(''); setAgentShowEdit(true) }} title="Editar">
                               <FiEdit2 size={14} />
                             </button>
                             <button style={{ ...btnStyle, backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444" }}
@@ -1331,11 +1334,11 @@ export default function UsuariosGlobales() {
           )}
 
           {agentShowEdit && (
-            <div style={modalOverlay} onClick={() => setAgentShowEdit(false)}>
+            <div style={modalOverlay} onClick={() => { setAgentShowEdit(false); setAgentEditCondoText('') }}>
               <div style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>Editar Agente de Seguridad</h3>
-                  <button onClick={() => setAgentShowEdit(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}><FiX size={20} /></button>
+                  <button onClick={() => { setAgentShowEdit(false); setAgentEditCondoText('') }} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}><FiX size={20} /></button>
                 </div>
                 <form onSubmit={handleAgentEdit}>
                   <div style={{ padding: "1.5rem" }}>
@@ -1353,7 +1356,7 @@ export default function UsuariosGlobales() {
                     </div>
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Condominio</label>
-                      <DataList value={condominios.find(c => String(c.id) === String(agentEditForm.idCondominio))?.nombre || ''} onChange={(e) => { const s = condominios.find(c => c.nombre === e.target.value); if (s) setAgentEditForm({ ...agentEditForm, idCondominio: s.id }) }} style={estiloInput}>
+                      <DataList value={agentEditCondoText} onChange={(e) => { setAgentEditCondoText(e.target.value); const s = condominios.find(c => c.nombre === e.target.value); if (s) setAgentEditForm({ ...agentEditForm, idCondominio: s.id }) }} style={estiloInput}>
                         <option value="">Sin condominio</option>
                         {condominios.map(c => (<option key={c.id} value={c.nombre} />))}
                       </DataList>
@@ -1363,7 +1366,7 @@ export default function UsuariosGlobales() {
                     <button type="submit" disabled={agentSubmitting} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: agentSubmitting ? "#cbd5e1" : colorSuper, color: "#fff", fontWeight: "600", cursor: agentSubmitting ? "not-allowed" : "pointer", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
                       {agentSubmitting ? 'Guardando...' : <><FiCheck size={16} /> Guardar cambios</>}
                     </button>
-                    <button type="button" onClick={() => setAgentShowEdit(false)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
+                    <button type="button" onClick={() => { setAgentShowEdit(false); setAgentEditCondoText('') }} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
                   </div>
                 </form>
               </div>
@@ -1444,7 +1447,7 @@ export default function UsuariosGlobales() {
                               <FiEye size={14} />
                             </button>
                             <button style={{ ...btnStyle, backgroundColor: "rgba(245,158,11,0.15)", color: "#d97706", marginRight: "0.25rem" }}
-                              onClick={() => { setOwnerEditing(u); setOwnerEditForm({ nombres: u.nombres, apellidos: u.apellidos, telefono: u.telefono || '', idCondominio: u.idCondominio?.toString() || '' }); setOwnerShowEdit(true) }} title="Editar">
+                              onClick={() => { setOwnerEditing(u); setOwnerEditForm({ nombres: u.nombres, apellidos: u.apellidos, telefono: u.telefono || '', idCondominio: u.idCondominio?.toString() || '' }); setOwnerEditCondoText(''); setOwnerShowEdit(true) }} title="Editar">
                               <FiEdit2 size={14} />
                             </button>
                             <button style={{ ...btnStyle, backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444" }}
@@ -1524,11 +1527,11 @@ export default function UsuariosGlobales() {
           )}
 
           {ownerShowEdit && (
-            <div style={modalOverlay} onClick={() => setOwnerShowEdit(false)}>
+            <div style={modalOverlay} onClick={() => { setOwnerShowEdit(false); setOwnerEditCondoText('') }}>
               <div style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>Editar Propietario</h3>
-                  <button onClick={() => setOwnerShowEdit(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}><FiX size={20} /></button>
+                  <button onClick={() => { setOwnerShowEdit(false); setOwnerEditCondoText('') }} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}><FiX size={20} /></button>
                 </div>
                 <form onSubmit={handleOwnerEdit}>
                   <div style={{ padding: "1.5rem" }}>
@@ -1546,7 +1549,7 @@ export default function UsuariosGlobales() {
                     </div>
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Condominio</label>
-                      <DataList value={condominios.find(c => String(c.id) === String(ownerEditForm.idCondominio))?.nombre || ''} onChange={(e) => { const s = condominios.find(c => c.nombre === e.target.value); if (s) setOwnerEditForm({ ...ownerEditForm, idCondominio: s.id }) }} style={estiloInput}>
+                      <DataList value={ownerEditCondoText} onChange={(e) => { setOwnerEditCondoText(e.target.value); const s = condominios.find(c => c.nombre === e.target.value); if (s) setOwnerEditForm({ ...ownerEditForm, idCondominio: s.id }) }} style={estiloInput}>
                         <option value="">Sin condominio</option>
                         {condominios.map(c => (<option key={c.id} value={c.nombre} />))}
                       </DataList>
@@ -1556,7 +1559,7 @@ export default function UsuariosGlobales() {
                     <button type="submit" disabled={ownerSubmitting} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: ownerSubmitting ? "#cbd5e1" : colorSuper, color: "#fff", fontWeight: "600", cursor: ownerSubmitting ? "not-allowed" : "pointer", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
                       {ownerSubmitting ? 'Guardando...' : <><FiCheck size={16} /> Guardar cambios</>}
                     </button>
-                    <button type="button" onClick={() => setOwnerShowEdit(false)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
+                    <button type="button" onClick={() => { setOwnerShowEdit(false); setOwnerEditCondoText('') }} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
                   </div>
                 </form>
               </div>
