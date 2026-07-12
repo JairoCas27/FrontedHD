@@ -166,7 +166,7 @@ export default function GlobalBienes() {
   })
   const barcodeRef = useRef(null)
   const toastTimer = useRef(null)
-  const PER_PAGE = 5
+  const PER_PAGE = 10
   const [logPage, setLogPage] = useState(1)
   const [logSearch, setLogSearch] = useState('')
   const [reservaPage, setReservaPage] = useState(1)
