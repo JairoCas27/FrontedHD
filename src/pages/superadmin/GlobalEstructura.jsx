@@ -11,6 +11,23 @@ const globalResponsive = `
 @media (max-width: 767px) {
   .global-card-padding { padding: 1rem !important; }
 }
+@media (max-width: 600px) {
+  .global-card-padding { padding: 0.75rem !important; }
+}
+@media (max-width: 900px) {
+  .ge-grid-2 { grid-template-columns: 1fr !important; }
+  /* .ge-grid-3 removed � not used in JSX */
+}
+@media (max-width: 600px) {
+  .global-search-wrap { flex-direction: column !important; align-items: stretch !important; }
+  .ge-search-input { width: 100% !important; max-width: 100% !important; }
+  .ge-stats-flex { flex-direction: column !important; }
+  .ge-modal > div:first-child { max-width: 95vw !important; }
+  .ge-tree-wrap { overflow-x: auto; }
+  .ge-tree-wrap > * { min-width: 280px; }
+}
+.global-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.ge-btn-group { display: flex; flex-wrap: wrap; align-items: center; }
 `;
 
 const estiloInput = {
@@ -321,7 +338,7 @@ export default function GlobalEstructura() {
       {/* --- CARDS GRID visible cuando no hay selección o se presiona 'Seleccionar otro condominio' --- */}
       {(!condominioId || showCardSelector) && (
         <div style={{ marginBottom: "2rem" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem", marginBottom: "1.25rem" }}>
+          <div className="global-search-wrap" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem", marginBottom: "1.25rem" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
               <div style={{
                 backgroundColor: "rgba(124,58,237,0.1)",
@@ -346,7 +363,7 @@ export default function GlobalEstructura() {
               </div>
             </div>
 
-            <div style={{ width: "260px", maxWidth: "100%", position: "relative" }}>
+            <div className="ge-search-input" style={{ width: "260px", maxWidth: "100%", position: "relative" }}>
               <FiSearch size={14} style={{ position: "absolute", left: "0.8rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
               <input
                 type="text"
@@ -580,7 +597,7 @@ export default function GlobalEstructura() {
                 </div>
               </div>
               <div style={{ marginTop: "1rem", borderTop: "1px solid #f1f5f9", paddingTop: "1rem" }}>
-                <div style={{ display: "flex", gap: "1rem" }}>
+                <div className="ge-stats-flex" style={{ display: "flex", gap: "1rem" }}>
                   <div style={{ flex: 1, backgroundColor: "#f8fafc", borderRadius: "0.5rem", padding: "0.75rem", textAlign: "center" }}>
                     <span style={{ fontSize: "1.25rem", fontWeight: "800", color: colorSuper }}>{totalTorres}</span>
                     <span style={{ display: "block", fontSize: "0.65rem", color: "#94a3b8", fontWeight: "700", textTransform: "uppercase", letterSpacing: "0.025em", marginTop: "0.2rem" }}>Torres</span>
@@ -612,7 +629,7 @@ export default function GlobalEstructura() {
               <p>No hay torres registradas</p>
             </div>
           ) : (
-            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <div className="ge-tree-wrap" style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               {structure.torres.map(torre => {
                 const isTowerOpen = expandedTowers[torre.id]
                 return (
@@ -626,7 +643,7 @@ export default function GlobalEstructura() {
                           {torre.pisos?.length || 0} pisos
                         </span>
                       </div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                      <div className="ge-btn-group" style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
                         <button onClick={(e) => { e.stopPropagation(); setSelectedTowerForFloor(torre); setShowAddFloorModal(true) }}
                           style={{ ...btnStyle, backgroundColor: "transparent", color: colorSuper, border: `1px solid ${colorSuper}` }}><FiPlus size={13} /> Piso</button>
                         <button onClick={(e) => { e.stopPropagation(); handleDeleteTower(torre.id) }} disabled={deletingId === torre.id}
@@ -657,7 +674,7 @@ export default function GlobalEstructura() {
                                         {piso.apartamentos?.length || 0} aptos
                                       </span>
                                     </div>
-                                    <div style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                                    <div className="ge-btn-group" style={{ display: "flex", alignItems: "center", gap: "0.35rem" }}>
                                       <button onClick={(e) => { e.stopPropagation(); setAddAptContext({ nombreTorre: torre.nombre, numeroPiso: piso.numero }); setAptNumero(''); setAptMetraje(''); setAptParking(false); setShowAddAptModal(true) }}
                                         style={{ ...btnStyle, backgroundColor: "transparent", color: colorSuper, border: `1px solid ${colorSuper}` }}><FiPlus size={11} /> Apto</button>
                                       <button onClick={(e) => { e.stopPropagation(); handleDeleteFloor(piso.id) }} disabled={deletingId === piso.id}
@@ -701,7 +718,7 @@ export default function GlobalEstructura() {
                                                   ) : (
                                                     <span style={{ fontSize: "0.65rem", color: "#94a3b8", fontStyle: "italic" }}>Sin propietario</span>
                                                   )}
-                                                  <div style={{ marginLeft: "auto", display: "flex", gap: "0.2rem" }}>
+                                                  <div className="ge-btn-group" style={{ marginLeft: "auto", display: "flex", gap: "0.2rem" }}>
                                                     <button onClick={() => navigate('/superadmin/departamentos?idCondominio=' + condominioId + '&idApartamento=' + apt.id)}
                                                       style={{ ...btnStyle, padding: "0.15rem 0.35rem", color: colorSuper, background: "transparent" }}><FiEdit3 size={10} /></button>
                                                     <button onClick={() => setConfirmDeleteApt(apt)}
@@ -730,12 +747,12 @@ export default function GlobalEstructura() {
 
           {/* Add Tower */}
           {showAddTowerModal && (
-            <div style={modalOverlay} onClick={() => { if (!creatingTower) { setShowAddTowerModal(false); setTowerName('') } }}>
+            <div className="ge-modal" style={modalOverlay} onClick={() => { if (!creatingTower) { setShowAddTowerModal(false); setTowerName('') } }}>
               <div style={modalBox} onClick={e => e.stopPropagation()}>
                 <button onClick={() => { setShowAddTowerModal(false); setTowerName('') }} style={{ position: "absolute", top: "1rem", right: "1rem", background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={20} /></button>
                 <h3 style={{ margin: "0 0 1.5rem", fontSize: "1.1rem", fontWeight: "700", color: "#0f172a" }}>Agregar Torre</h3>
                 <input type="text" placeholder="Nombre" value={towerName} onChange={e => setTowerName(e.target.value)} style={estiloInput} autoFocus />
-                <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem", justifyContent: "flex-end" }}>
+                <div className="ge-btn-group" style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem", justifyContent: "flex-end" }}>
                   <button onClick={handleAddTower} disabled={creatingTower} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: colorSuper, color: "#fff", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>{creatingTower ? 'Creando...' : 'Crear'}</button>
                   <button onClick={() => { setShowAddTowerModal(false); setTowerName('') }} disabled={creatingTower} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
                 </div>
@@ -745,13 +762,13 @@ export default function GlobalEstructura() {
 
           {/* Add Floor */}
           {showAddFloorModal && selectedTowerForFloor && (
-            <div style={modalOverlay} onClick={() => { if (!creatingFloor) { setShowAddFloorModal(false); setFloorNumber(''); setSelectedTowerForFloor(null) } }}>
+            <div className="ge-modal" style={modalOverlay} onClick={() => { if (!creatingFloor) { setShowAddFloorModal(false); setFloorNumber(''); setSelectedTowerForFloor(null) } }}>
               <div style={modalBox} onClick={e => e.stopPropagation()}>
                 <button onClick={() => { setShowAddFloorModal(false); setFloorNumber(''); setSelectedTowerForFloor(null) }} style={{ position: "absolute", top: "1rem", right: "1rem", background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={20} /></button>
                 <h3 style={{ margin: "0 0 0.25rem", fontSize: "1.1rem", fontWeight: "700", color: "#0f172a" }}>Agregar Piso</h3>
                 <p style={{ margin: "0 0 1.25rem", fontSize: "0.85rem", color: "#64748b" }}>Torre: <strong>{selectedTowerForFloor.nombre}</strong></p>
                 <input type="number" min="1" placeholder="Número" value={floorNumber} onChange={e => setFloorNumber(e.target.value)} style={estiloInput} autoFocus />
-                <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem", justifyContent: "flex-end" }}>
+                <div className="ge-btn-group" style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem", justifyContent: "flex-end" }}>
                   <button onClick={handleAddFloor} disabled={creatingFloor} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: colorSuper, color: "#fff", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>{creatingFloor ? 'Creando...' : 'Crear'}</button>
                   <button onClick={() => { setShowAddFloorModal(false); setFloorNumber(''); setSelectedTowerForFloor(null) }} disabled={creatingFloor} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
                 </div>
@@ -761,7 +778,7 @@ export default function GlobalEstructura() {
 
           {/* Add Apartment */}
           {showAddAptModal && (
-            <div style={modalOverlay} onClick={() => { if (!creatingApt) { setShowAddAptModal(false); setAddAptContext(null) } }}>
+            <div className="ge-modal" style={modalOverlay} onClick={() => { if (!creatingApt) { setShowAddAptModal(false); setAddAptContext(null) } }}>
               <div style={modalBox} onClick={e => e.stopPropagation()}>
                 <button onClick={() => { setShowAddAptModal(false); setAddAptContext(null) }} style={{ position: "absolute", top: "1rem", right: "1rem", background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={20} /></button>
                 <h3 style={{ margin: "0 0 0.25rem", fontSize: "1.1rem", fontWeight: "700", color: "#0f172a" }}>Agregar Apartamento</h3>
@@ -777,7 +794,7 @@ export default function GlobalEstructura() {
                     <input type="checkbox" checked={aptParking} onChange={e => setAptParking(e.target.checked)} /> Derecho estacionamiento
                   </label>
                 </div>
-                <div style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem", justifyContent: "flex-end" }}>
+                <div className="ge-btn-group" style={{ display: "flex", gap: "0.75rem", marginTop: "1.25rem", justifyContent: "flex-end" }}>
                   <button onClick={handleAddApt} disabled={creatingApt} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: colorSuper, color: "#fff", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>{creatingApt ? 'Creando...' : 'Crear'}</button>
                   <button onClick={() => { setShowAddAptModal(false); setAddAptContext(null) }} disabled={creatingApt} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
                 </div>
@@ -787,12 +804,12 @@ export default function GlobalEstructura() {
 
           {/* Confirm Delete Apartment */}
           {confirmDeleteApt && (
-            <div style={modalOverlay} onClick={() => setConfirmDeleteApt(null)}>
+            <div className="ge-modal" style={modalOverlay} onClick={() => setConfirmDeleteApt(null)}>
               <div style={{ ...modalBox, maxWidth: "380px", textAlign: "center" }} onClick={e => e.stopPropagation()}>
                 <FiAlertCircle size={40} style={{ color: "#ef4444", marginBottom: "1rem" }} />
                 <h3 style={{ margin: "0 0 0.5rem", fontSize: "1rem", fontWeight: "700", color: "#0f172a" }}>¿Eliminar apartamento?</h3>
                 <p style={{ color: "#64748b", fontSize: "0.85rem", margin: "0 0 1.5rem" }}>Apartamento <strong>{confirmDeleteApt.numero}</strong>. Esta acción no se puede deshacer.</p>
-                <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center" }}>
+                <div className="ge-btn-group" style={{ display: "flex", gap: "0.75rem", justifyContent: "center" }}>
                   <button onClick={handleDeleteApt} disabled={deletingId === ('apt-' + confirmDeleteApt.id)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: "#ef4444", color: "#fff", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>{deletingId === ('apt-' + confirmDeleteApt.id) ? 'Eliminando...' : 'Eliminar'}</button>
                   <button onClick={() => setConfirmDeleteApt(null)} disabled={deletingId === ('apt-' + confirmDeleteApt.id)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", fontSize: "0.85rem", cursor: "pointer" }}>Cancelar</button>
                 </div>
@@ -802,11 +819,11 @@ export default function GlobalEstructura() {
 
           {/* Apartment Detail */}
           {aptDetail && (
-            <div style={modalOverlay} onClick={() => setAptDetail(null)}>
+            <div className="ge-modal" style={modalOverlay} onClick={() => setAptDetail(null)}>
               <div style={{ ...modalBox, maxWidth: "440px" }} onClick={e => e.stopPropagation()}>
                 <button onClick={() => setAptDetail(null)} style={{ position: "absolute", top: "1rem", right: "1rem", background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={20} /></button>
                 <h3 style={{ margin: "0 0 1.25rem", fontSize: "1.1rem", fontWeight: "700", color: "#0f172a" }}>Apartamento {aptDetail.numero}</h3>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "1rem" }}>
+                <div className="ge-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "1rem" }}>
                   <div><span style={{ fontSize: "0.65rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Torre</span><p style={{ margin: "0.15rem 0 0", fontWeight: "600", color: "#0f172a", fontSize: "0.85rem" }}>{aptDetail.torreNombre || '-'}</p></div>
                   <div><span style={{ fontSize: "0.65rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Piso</span><p style={{ margin: "0.15rem 0 0", fontWeight: "600", color: "#0f172a", fontSize: "0.85rem" }}>{aptDetail.pisoNumero || '-'}</p></div>
                   <div><span style={{ fontSize: "0.65rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Metraje</span><p style={{ margin: "0.15rem 0 0", fontWeight: "600", color: "#0f172a", fontSize: "0.85rem" }}>{aptDetail.metraje ? `${aptDetail.metraje} m²` : '-'}</p></div>
