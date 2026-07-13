@@ -102,7 +102,7 @@ export default function AuditoriaGlobal() {
   }
 
   return (
-    <div style={{ padding: '1.5rem', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
+    <div className="global-card-padding" style={{ padding: '1.5rem', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
       <div className="d-flex justify-content-between align-items-start mb-4">
         <div>
           <h1 style={{ fontWeight: 800, color: '#0f172a', margin: 0 }}>Auditoría Global</h1>
@@ -120,6 +120,26 @@ export default function AuditoriaGlobal() {
           0% { transform: scale(0); opacity: 0; }
           60% { transform: scale(1.2); opacity: 1; }
           100% { transform: scale(1); opacity: 1; }
+        }
+
+        .global-card-padding { padding: 1.5rem !important; }
+        .global-filter-wrap { display: flex !important; gap: 1rem !important; align-items: center !important; flex-wrap: wrap !important; }
+        .global-filter-wrap > * { min-width: 160px; }
+        .global-table-wrap { overflow-x: auto !important; -webkit-overflow-scrolling: touch; }
+        .global-table-wrap table { min-width: 600px; }
+        .global-pagination-wrap { display: flex !important; justify-content: center !important; align-items: center !important; gap: 0.5rem !important; flex-wrap: wrap !important; }
+        /* .global-export-wrap removed � no export section in this component */
+
+        @media (max-width: 575.98px) {
+          .global-card-padding { padding: 0.75rem !important; }
+          .global-filter-wrap { flex-direction: column !important; }
+          .global-filter-wrap > * { min-width: 100% !important; width: 100% !important; }
+          .global-pagination-wrap { flex-direction: column !important; gap: 0.4rem !important; }
+          /* .global-export-wrap removed */
+        }
+
+        @media (min-width: 576px) and (max-width: 991.98px) {
+          .global-card-padding { padding: 1.25rem !important; }
         }
       `}</style>
 
@@ -431,7 +451,7 @@ export default function AuditoriaGlobal() {
       {/* --- FILTROS DE LOGS --- */}
       {condoSeleccionado && (
         <div style={{ backgroundColor: '#ffffff', padding: '0.85rem 1.25rem', borderRadius: '1rem', border: '1px solid #e2e8f0', marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <div className="global-filter-wrap" style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
             <div style={{ minWidth: '160px' }}>
               <select className="form-select" value={tipoFiltro}
                 onChange={(e) => setTipoFiltro(e.target.value)}>
@@ -472,7 +492,7 @@ export default function AuditoriaGlobal() {
         </div>
       ) : (
         <div style={{ backgroundColor: '#ffffff', borderRadius: '1rem', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-          <div style={{ overflowX: 'auto' }}>
+          <div className="global-table-wrap" style={{ overflowX: 'auto' }}>
             <table className="table table-hover mb-0" style={{ fontSize: '0.875rem' }}>
               <thead style={{ backgroundColor: '#f8fafc', color: '#64748b', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase' }}>
                 <tr>
@@ -546,7 +566,7 @@ export default function AuditoriaGlobal() {
           </div>
 
           {totalPaginas > 1 && (
-            <div style={{ padding: '0.75rem 1rem', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
+            <div className="global-pagination-wrap" style={{ padding: '0.75rem 1rem', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.5rem' }}>
               <button className="btn btn-outline-secondary btn-sm" disabled={pagina === 0}
                 onClick={() => setPagina(p => p - 1)}>Anterior</button>
               <span style={{ fontSize: '0.85rem', color: '#64748b' }}>Página {pagina + 1} de {totalPaginas}</span>
