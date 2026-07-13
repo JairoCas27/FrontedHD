@@ -20,9 +20,20 @@ import DataList from '../../components/common/DataList'
 const colorSuper = "rgb(124,58,237)"
 
 const globalResponsive = `
+@media (max-width: 600px) {
+  .co-container { padding: 1rem !important; }
+}
+@media (max-width: 900px) {
+  .co-grid-2 { grid-template-columns: 1fr !important; }
+}
 @media (max-width: 767px) {
   .global-card-padding { padding: 1rem !important; }
   .global-search-wrap { width: 100% !important; max-width: 260px !important; }
+  .co-modal-content { max-width: 95vw !important; }
+  .co-search-wrap { width: 100% !important; max-width: 100% !important; }
+  .co-header-row { flex-direction: column !important; align-items: stretch !important; }
+  .co-header-actions { flex-wrap: wrap !important; }
+  .co-actions-cell { white-space: normal !important; }
 }
 `
 
@@ -239,17 +250,17 @@ export default function Condominios() {
     )
 
   return (
-    <div className="global-card-padding" style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
+    <div className="global-card-padding co-container" style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
       <style>{globalResponsive}</style>
       <EncabezadoTabla titulo="Condominios" subtitulo="Gestión de propiedades inmobiliarias" />
 
       <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)" }}>
         <div style={{ padding: "1rem 1.5rem", borderBottom: "1px solid #f1f5f9" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem", marginBottom: "0.75rem" }}>
-            <span style={{ fontWeight: "700", fontSize: "0.9rem", color: "#1e293b" }}>
-              Condominios <span style={{ color: "#94a3b8", fontWeight: "600" }}>({filteredAndSorted.length})</span>
-            </span>
-            <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+            <div className="co-header-row" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.75rem", marginBottom: "0.75rem" }}>
+              <span style={{ fontWeight: "700", fontSize: "0.9rem", color: "#1e293b" }}>
+                Condominios <span style={{ color: "#94a3b8", fontWeight: "600" }}>({filteredAndSorted.length})</span>
+              </span>
+              <div className="co-header-actions" style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
               <button onClick={() => {
                 setEditing(null)
                 setForm({
@@ -267,7 +278,7 @@ export default function Condominios() {
                 style={{ backgroundColor: "rgba(59,130,246,0.1)", color: "#3b82f6", border: "none", padding: "0.4rem 0.85rem", borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" }}>
                 <FiEdit2 size={14} /> Asignar administrador
               </button>
-              <div className="global-search-wrap" style={{ width: "220px", maxWidth: "220px", position: "relative" }}>
+              <div className="global-search-wrap co-search-wrap" style={{ width: "220px", maxWidth: "220px", position: "relative" }}>
                 <FiSearch size={14} style={{ position: "absolute", left: "0.65rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
                 <input type="text" placeholder="Buscar condominio..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
                   style={{ ...estiloInput, paddingLeft: "2rem", paddingTop: "0.45rem", paddingBottom: "0.45rem", fontSize: "0.8rem" }} />
@@ -324,7 +335,7 @@ export default function Condominios() {
                         onChange={() => handleToggleStatus(c.id, c.activo)}
                       />
                     </td>
-                    <td style={{ padding: "0.75rem 1rem", whiteSpace: "nowrap", textAlign: "right" }}>
+                    <td className="co-actions-cell" style={{ padding: "0.75rem 1rem", whiteSpace: "nowrap", textAlign: "right" }}>
                       <button style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper, marginRight: "0.25rem" }}
                         onClick={() => { setDetailItem(c); setShowDetail(true) }} title="Ver detalle">
                         <FiEye size={14} />
@@ -361,7 +372,7 @@ export default function Condominios() {
       {/* Detail Modal */}
       {showDetail && detailItem && (
         <div style={modalOverlay} onClick={() => setShowDetail(false)}>
-          <div style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
+          <div className="co-modal-content" style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>Detalle del Condominio</h3>
               <button onClick={() => setShowDetail(false)}
@@ -370,7 +381,7 @@ export default function Condominios() {
               </button>
             </div>
             <div style={{ padding: "1.5rem" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <div className="co-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                 <div>
                   <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.025em" }}>ID</span>
                   <p style={{ margin: "0.2rem 0 0", fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>{detailItem.id}</p>
@@ -438,7 +449,7 @@ export default function Condominios() {
       {/* Create/Edit Modal */}
       {showModal && (
         <div style={modalOverlay} onClick={() => { if (!editing) setShowModal(false) }}>
-          <div style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
+          <div className="co-modal-content" style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>{editing ? 'Editar' : 'Nuevo'} condominio</h3>
               <button onClick={() => setShowModal(false)}
