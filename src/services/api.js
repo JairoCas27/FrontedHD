@@ -4,7 +4,7 @@ const getHeaders = () => ({
   'Content-Type': 'application/json',
 });
 
-async function safeFetch(path, options = {}) {
+export async function safeFetch(path, options = {}) {
   const response = await fetch(`${BASE_URL}${path}`, {
     ...options,
     credentials: 'include',
