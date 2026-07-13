@@ -6,8 +6,18 @@ import { getCondominiums, getAdminCondoConfig, updateAdminCondoConfig, extractIt
 const colorSuper = "rgb(124,58,237)"
 
 const globalResponsive = `
+.gc-condo-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+.gc-search-wrap { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem; }
+.gc-form-card { padding: 1.5rem; }
 @media (max-width: 767px) {
   .global-card-padding { padding: 1rem !important; }
+  .gc-condo-grid { grid-template-columns: 1fr !important; }
+  .gc-search-wrap { flex-direction: column !important; align-items: stretch !important; }
+  .gc-search-wrap > * { width: 100%; }
+}
+@media (max-width: 600px) {
+  .global-card-padding { padding: 0.75rem !important; }
+  .gc-form-card { padding: 1rem !important; }
 }
 `;
 
@@ -251,7 +261,7 @@ export default function GlobalConfiguracion() {
       {/* --- SELECTOR DE CONDOMINIOS (TARJETAS) --- */}
       {(!condoSeleccionado || showCardSelector) && (
         <div style={{ marginBottom: '1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+          <div className="gc-search-wrap" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <div style={{
                 backgroundColor: 'rgba(124,58,237,0.1)',
@@ -288,7 +298,7 @@ export default function GlobalConfiguracion() {
             </div>
           </div>
 
-          <div style={{
+          <div className="gc-condo-grid" style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
             gap: '1rem'
