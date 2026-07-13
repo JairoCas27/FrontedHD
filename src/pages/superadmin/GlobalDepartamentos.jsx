@@ -9,10 +9,15 @@ import { getCondominiums, getAdminApartments, assignApartmentOwner, getAllUsers,
 const colorSuper = "rgb(124,58,237)"
 
 const globalResponsive = `
-@media (max-width: 767px) {
-  .global-card-padding { padding: 1rem !important; }
+@media (max-width: 600px) {
+  .global-card-padding { padding: 0.75rem !important; }
   .global-table-wrap { overflow-x: auto !important; }
-  .global-search-wrap { width: 100% !important; max-width: 260px !important; }
+  .global-search-wrap { width: 100% !important; max-width: 100% !important; }
+  .gd-modal { max-width: 95vw !important; }
+}
+@media (max-width: 900px) {
+  .gd-grid-2, .gd-grid-3 { grid-template-columns: 1fr !important; }
+  .gd-form-row { grid-template-columns: 1fr !important; }
 }
 `
 
@@ -737,7 +742,7 @@ export default function GlobalDepartamentos() {
                           <span style={{ fontSize: "0.65rem", color: "#ef4444", fontWeight: 700 }}>{totalTorre - occupedTorre} libres</span>
                         </div>
                         {expanded && (
-                          <div style={{ overflowX: "auto" }}>
+                          <div className="global-table-wrap" style={{ overflowX: "auto" }}>
                             <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
                               <thead>
                                 <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: 700, fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
@@ -862,7 +867,7 @@ export default function GlobalDepartamentos() {
       {/* Detail Modal */}
       {modalDetail && (
         <div style={modalOverlay} onClick={() => setModalDetail(null)}>
-          <div style={{ ...modalContent, maxWidth: "640px" }} onClick={(e) => e.stopPropagation()}>
+          <div className="gd-modal" style={{ ...modalContent, maxWidth: "640px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>
                 Depto. {modalDetail.numero}
@@ -873,7 +878,7 @@ export default function GlobalDepartamentos() {
               </button>
             </div>
             <div style={{ padding: "1.5rem" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
+              <div className="gd-grid-3" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
                 <div>
                   <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.025em" }}>Torre</span>
                   <p style={{ margin: "0.2rem 0 0", fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>{modalDetail.torreNombre || '---'}</p>
@@ -997,7 +1002,7 @@ export default function GlobalDepartamentos() {
       {/* Assign Owner Modal */}
       {modalAssign && (
         <div style={modalOverlay} onClick={() => { setModalAssign(null); setAssignUserId(''); setAssignUserText('') }}>
-          <div style={modalContent} onClick={(e) => e.stopPropagation()}>
+          <div className="gd-modal" style={modalContent} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>{modalAssign.idPropietario ? 'Cambiar Propietario' : 'Asignar Propietario'}</h3>
               <button onClick={() => setModalAssign(null)}
@@ -1043,7 +1048,7 @@ export default function GlobalDepartamentos() {
       {/* Add Tenant Modal */}
       {modalTenant && (
         <div style={modalOverlay} onClick={() => setModalTenant(null)}>
-          <div style={{ ...modalContent, maxWidth: "480px" }} onClick={(e) => e.stopPropagation()}>
+          <div className="gd-modal" style={{ ...modalContent, maxWidth: "480px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>{editingTenantIdx !== null ? 'Editar Inquilino' : 'Agregar Inquilino'}</h3>
               <button onClick={() => { setModalTenant(null); setEditingTenantIdx(null); setTenantForm({ nombres: '', apellidos: '', tipoDocumento: 'DNI', numeroDocumento: '' }) }}
@@ -1067,7 +1072,7 @@ export default function GlobalDepartamentos() {
                   <input type="text" value={tenantForm.apellidos} onChange={(e) => setTenantForm({ ...tenantForm, apellidos: e.target.value })}
                     style={estiloInput} placeholder="Apellidos del inquilino" />
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "0.5rem" }}>
+                <div className="gd-form-row" style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "0.5rem" }}>
                   <div>
                     <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Tipo Doc. *</label>
                     <select value={tenantForm.tipoDocumento} onChange={(e) => setTenantForm({ ...tenantForm, tipoDocumento: e.target.value })}
@@ -1108,7 +1113,7 @@ export default function GlobalDepartamentos() {
       {/* Assign Parking Modal */}
       {modalParking && (
         <div style={modalOverlay} onClick={() => { setModalParking(null); setSelectedParkingId(''); setParkingText('') }}>
-          <div style={{ ...modalContent, maxWidth: "480px" }} onClick={(e) => e.stopPropagation()}>
+          <div className="gd-modal" style={{ ...modalContent, maxWidth: "480px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>Asignar Estacionamiento</h3>
               <button onClick={() => { setModalParking(null); setSelectedParkingId(''); setParkingText('') }}
@@ -1155,7 +1160,7 @@ export default function GlobalDepartamentos() {
 
       {tenantDetail && (
         <div style={modalOverlay} onClick={() => setTenantDetail(null)}>
-          <div style={{ ...modalContent, maxWidth: "420px" }} onClick={(e) => e.stopPropagation()}>
+          <div className="gd-modal" style={{ ...modalContent, maxWidth: "420px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>Detalle del Inquilino</h3>
               <button onClick={() => setTenantDetail(null)}
@@ -1164,7 +1169,7 @@ export default function GlobalDepartamentos() {
               </button>
             </div>
             <div style={{ padding: "1.5rem" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <div className="gd-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                 <div>
                   <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Nombres</span>
                   <p style={{ margin: "0.2rem 0 0", fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>{tenantDetail.nombres || tenantDetail.nombre || '-'}</p>
@@ -1189,7 +1194,7 @@ export default function GlobalDepartamentos() {
 
       {confirmRemoveTenantIdx !== null && (
         <div style={modalOverlay} onClick={() => setConfirmRemoveTenantIdx(null)}>
-          <div style={{ ...modalContent, maxWidth: "400px" }} onClick={(e) => e.stopPropagation()}>
+          <div className="gd-modal" style={{ ...modalContent, maxWidth: "400px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", textAlign: "center" }}>
               <FiAlertTriangle size={40} style={{ color: "#ef4444", marginBottom: "1rem" }} />
               <h3 style={{ margin: "0 0 0.5rem", fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>¿Eliminar inquilino?</h3>
@@ -1212,7 +1217,7 @@ export default function GlobalDepartamentos() {
       {/* Create Apartment Modal */}
       {showCreateApt && (
         <div style={modalOverlay} onClick={() => { if (!creatingApt) { setShowCreateApt(false); setCreateAptForm({ numero: '', metraje: '', torreNombre: '', pisoNumero: '', derechoEstacionamiento: false }) } }}>
-          <div style={{ ...modalContent, maxWidth: "480px" }} onClick={(e) => e.stopPropagation()}>
+          <div className="gd-modal" style={{ ...modalContent, maxWidth: "480px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>Nuevo Departamento</h3>
               <button onClick={() => { setShowCreateApt(false); setCreateAptForm({ numero: '', metraje: '', torreNombre: '', pisoNumero: '', derechoEstacionamiento: false }) }}
@@ -1265,7 +1270,7 @@ export default function GlobalDepartamentos() {
       {/* Propietarios Modal */}
       {showOwnersModal && (
         <div style={modalOverlay} onClick={() => setShowOwnersModal(false)}>
-          <div style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
+          <div className="gd-modal" style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>
                 Propietarios de {condominios.find(c => c.id === Number(condoSeleccionado))?.nombre || ''}
@@ -1313,7 +1318,7 @@ export default function GlobalDepartamentos() {
       {/* Confirm Delete Department */}
       {confirmDeleteApt && (
         <div style={modalOverlay} onClick={() => setConfirmDeleteApt(null)}>
-          <div style={{ ...modalContent, maxWidth: "400px" }} onClick={(e) => e.stopPropagation()}>
+          <div className="gd-modal" style={{ ...modalContent, maxWidth: "400px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", textAlign: "center" }}>
               <FiTrash2 size={40} color="#ef4444" style={{ marginBottom: "0.75rem" }} />
               <h3 style={{ margin: "0 0 0.5rem", fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>Eliminar Departamento</h3>
