@@ -25,9 +25,19 @@ import EncabezadoTabla from '../../components/EncabezadoTabla'
 const colorSuper = "rgb(124,58,237)"
 
 const globalResponsive = `
+@media (max-width: 900px) {
+  .global-detail-grid { grid-template-columns: 1fr !important; }
+}
 @media (max-width: 767px) {
   .global-card-padding { padding: 1rem !important; }
-  .global-search-wrap { width: 100% !important; max-width: 260px !important; }
+  .global-search-wrap { width: 100% !important; max-width: 100% !important; }
+  .global-modal-content { max-width: 95vw !important; }
+  .global-header-actions { width: 100% !important; }
+}
+@media (max-width: 600px) {
+  .global-card-padding { padding: 0.75rem !important; }
+  .global-search-wrap { width: 100% !important; max-width: 100% !important; }
+  .global-modal-content { max-width: 95vw !important; }
 }
 `
 
@@ -663,7 +673,7 @@ export default function UsuariosGlobales() {
 
   // ==================== RENDER: TAB BUTTONS ====================
   const renderTabs = () => (
-    <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>
+    <div className="global-tabs" style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>
       {[
         { key: 'todos', label: 'Globales' },
         { key: 'administradores', label: 'Administradores' },
@@ -689,15 +699,15 @@ export default function UsuariosGlobales() {
     if (!item) return null
     return (
       <div style={modalOverlay} onClick={onClose}>
-        <div style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
-          <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>{titulo || 'Detalle'}</h3>
+        <div className="global-modal-content" style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
+           <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+             <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>{titulo || 'Detalle'}</h3>
             <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}>
               <FiX size={20} />
             </button>
           </div>
           <div style={{ padding: "1.5rem" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+            <div className="global-detail-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
               <div>
                 <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.025em" }}>ID</span>
                 <p style={{ margin: "0.2rem 0 0", fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>{item.id}</p>
@@ -826,7 +836,7 @@ export default function UsuariosGlobales() {
                 <span style={{ fontWeight: "700", fontSize: "0.9rem", color: "#1e293b" }}>
                   Usuarios <span style={{ color: "#94a3b8", fontWeight: "600" }}>({filteredAndSorted.length})</span>
                 </span>
-                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+                <div className="global-header-actions" style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
                   <button onClick={() => { setForm({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', idCondominio: '' }); setShowModal(true) }}
                     style={{ backgroundColor: colorSuper, color: "#ffffff", border: "none", padding: "0.4rem 0.85rem", borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" }}>
                     <FiPlus size={14} /> Nuevo Admin
@@ -942,7 +952,7 @@ export default function UsuariosGlobales() {
 
           {showModal && (
             <div style={modalOverlay} onClick={() => setShowModal(false)}>
-              <div style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
+              <div className="global-modal-content" style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>Nuevo Administrador de Condominio</h3>
                   <button onClick={() => setShowModal(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}><FiX size={20} /></button>
@@ -994,7 +1004,7 @@ export default function UsuariosGlobales() {
 
           {showPasswordModal && (
             <div style={modalOverlay} onClick={() => { setShowPasswordModal(false); setNewPassword(''); setPasswordError('') }}>
-              <div style={{ ...modalContent, maxWidth: "480px" }} onClick={(e) => e.stopPropagation()}>
+              <div className="global-modal-content" style={{ ...modalContent, maxWidth: "480px" }} onClick={(e) => e.stopPropagation()}>
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>Forzar cambio de contraseña</h3>
                   <button onClick={() => { setShowPasswordModal(false); setNewPassword(''); setPasswordError('') }} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}><FiX size={20} /></button>
@@ -1031,7 +1041,7 @@ export default function UsuariosGlobales() {
                 <span style={{ fontWeight: "700", fontSize: "0.9rem", color: "#1e293b" }}>
                   Administradores <span style={{ color: "#94a3b8", fontWeight: "600" }}>({adminFiltered.length})</span>
                 </span>
-                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+                <div className="global-header-actions" style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
                   <button onClick={() => { setAdminEditing(null); setAdminForm({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', idCondominio: '' }); setAdminShowModal(true) }}
                     style={{ backgroundColor: colorSuper, color: "#ffffff", border: "none", padding: "0.4rem 0.85rem", borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" }}>
                     <FiPlus size={14} /> Nuevo
@@ -1126,7 +1136,7 @@ export default function UsuariosGlobales() {
 
           {adminShowModal && (
             <div style={modalOverlay} onClick={() => { setAdminShowModal(false); setAdminCondoText('') }}>
-              <div style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
+              <div className="global-modal-content" style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>{adminEditing ? 'Editar' : 'Nuevo'} administrador</h3>
                   <button onClick={() => { setAdminShowModal(false); setAdminCondoText('') }} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}><FiX size={20} /></button>
@@ -1191,7 +1201,7 @@ export default function UsuariosGlobales() {
                 <span style={{ fontWeight: "700", fontSize: "0.9rem", color: "#1e293b" }}>
                   Agentes de Seguridad <span style={{ color: "#94a3b8", fontWeight: "600" }}>({agentFiltered.length})</span>
                 </span>
-                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+                <div className="global-header-actions" style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
                   <button onClick={() => { setAgentCreateForm({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', idCondominio: '' }); setAgentShowCreate(true) }}
                     style={{ backgroundColor: colorSuper, color: "#ffffff", border: "none", padding: "0.4rem 0.85rem", borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" }}>
                     <FiPlus size={14} /> Nuevo Agente
@@ -1287,7 +1297,7 @@ export default function UsuariosGlobales() {
 
           {agentShowCreate && (
             <div style={modalOverlay} onClick={() => setAgentShowCreate(false)}>
-              <div style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
+              <div className="global-modal-content" style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>Nuevo Agente de Seguridad</h3>
                   <button onClick={() => setAgentShowCreate(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}><FiX size={20} /></button>
@@ -1335,7 +1345,7 @@ export default function UsuariosGlobales() {
 
           {agentShowEdit && (
             <div style={modalOverlay} onClick={() => { setAgentShowEdit(false); setAgentEditCondoText('') }}>
-              <div style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
+              <div className="global-modal-content" style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>Editar Agente de Seguridad</h3>
                   <button onClick={() => { setAgentShowEdit(false); setAgentEditCondoText('') }} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}><FiX size={20} /></button>
@@ -1384,7 +1394,7 @@ export default function UsuariosGlobales() {
                 <span style={{ fontWeight: "700", fontSize: "0.9rem", color: "#1e293b" }}>
                   Propietarios <span style={{ color: "#94a3b8", fontWeight: "600" }}>({ownerFiltered.length})</span>
                 </span>
-                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+                <div className="global-header-actions" style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
                   <button onClick={() => { setOwnerCreateForm({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', idCondominio: '' }); setOwnerShowCreate(true) }}
                     style={{ backgroundColor: colorSuper, color: "#ffffff", border: "none", padding: "0.4rem 0.85rem", borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" }}>
                     <FiPlus size={14} /> Nuevo Propietario
@@ -1480,7 +1490,7 @@ export default function UsuariosGlobales() {
 
           {ownerShowCreate && (
             <div style={modalOverlay} onClick={() => setOwnerShowCreate(false)}>
-              <div style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
+              <div className="global-modal-content" style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>Nuevo Propietario</h3>
                   <button onClick={() => setOwnerShowCreate(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}><FiX size={20} /></button>
@@ -1528,7 +1538,7 @@ export default function UsuariosGlobales() {
 
           {ownerShowEdit && (
             <div style={modalOverlay} onClick={() => { setOwnerShowEdit(false); setOwnerEditCondoText('') }}>
-              <div style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
+              <div className="global-modal-content" style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>Editar Propietario</h3>
                   <button onClick={() => { setOwnerShowEdit(false); setOwnerEditCondoText('') }} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}><FiX size={20} /></button>
