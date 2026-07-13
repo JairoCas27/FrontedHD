@@ -7,7 +7,7 @@ import {
   getAdminApartments, extractItems, getAdminVehicles, getSecurityDashboard, getActiveCartLoans,
   registerVehicleEntry, registerVehicleExit, assignAssetApartment, getAdminAccessLogs, unassignVehicleFromSpot,
   registerCartLoan, returnCartLoan, createAdminVehicle, deleteAdminVehicle, getAllCartLoans
-} from '../../services/api'
+} from '../../services/SuperAdminApi'
 import JsBarcode from 'jsbarcode'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts'
 

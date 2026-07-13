@@ -9,7 +9,7 @@ import {
   patchCondominiumStatus,
   getCountries,
   getCities,
-} from '../../services/api'
+} from '../../services/SuperAdminApi'
 import { Form, Spinner } from 'react-bootstrap'
 import { toast } from 'react-toastify'
 import ToggleSwitch from '../../components/common/ToggleSwitch'

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { FiSettings, FiHome, FiMapPin, FiSave, FiTruck, FiClock, FiCheckCircle, FiAlertCircle, FiLoader, FiGrid, FiCheck, FiX, FiSearch } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
-import { getCondominiums, getAdminCondoConfig, updateAdminCondoConfig, extractItems } from '../../services/api'
+import { getCondominiums, getAdminCondoConfig, updateAdminCondoConfig, extractItems } from '../../services/SuperAdminApi'
 
 const colorSuper = "rgb(124,58,237)"
 

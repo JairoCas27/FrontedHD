@@ -15,7 +15,7 @@ import {
   createAdminUser,
   deleteAdministrator,
   extractItems,
-} from '../../services/api'
+} from '../../services/SuperAdminApi'
 import { Spinner } from 'react-bootstrap'
 import { toast } from 'react-toastify'
 import ToggleSwitch from '../../components/common/ToggleSwitch'

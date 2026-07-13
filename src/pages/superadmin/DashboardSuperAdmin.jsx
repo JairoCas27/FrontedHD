@@ -23,7 +23,7 @@ import {
   getCondominiums,
   getAdministrators,
   getAllUsers,
-} from '../../services/api';
+} from '../../services/SuperAdminApi';
 import {
   BarChart,
   Bar,

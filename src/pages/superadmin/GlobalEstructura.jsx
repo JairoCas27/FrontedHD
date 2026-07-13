@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { FiFolder, FiGrid, FiHome, FiMapPin, FiChevronDown, FiChevronRight, FiPlus, FiTrash2, FiLayers, FiX, FiAlertCircle, FiEdit3, FiUser, FiUsers, FiCheck, FiSearch } from "react-icons/fi"
 import { toast } from 'react-toastify'
 import EncabezadoTabla from '../../components/EncabezadoTabla'
-import { getCondominiums, getAdminStructure, createAdminStructureNode, deleteAdminStructureNode, getAllUsers, extractItems } from '../../services/api'
+import { getCondominiums, getAdminStructure, createAdminStructureNode, deleteAdminStructureNode, getAllUsers, extractItems } from '../../services/SuperAdminApi'
 
 const colorSuper = "rgb(124,58,237)"
 

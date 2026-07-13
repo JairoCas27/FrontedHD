@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getProfile, updateProfile, changePassword } from '../../services/api';
+import { getProfile, updateProfile, changePassword } from '../../services/SuperAdminApi';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
 import {

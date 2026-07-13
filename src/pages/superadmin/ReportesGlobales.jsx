@@ -10,7 +10,7 @@ import {
   getAdministrators,
   getAllUsers,
   getAdminDashboardMetrics,
-} from '../../services/api';
+} from '../../services/SuperAdminApi';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,

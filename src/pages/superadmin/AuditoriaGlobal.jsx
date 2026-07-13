@@ -4,7 +4,7 @@ import {
   getCondominiums,
   getAdminLogs,
   extractItems,
-} from '../../services/api';
+} from '../../services/SuperAdminApi';
 
 const COLORS = {
   primary: '#4f46e5', success: '#10b981', warning: '#f59e0b',
