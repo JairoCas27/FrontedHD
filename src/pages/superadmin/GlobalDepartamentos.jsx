@@ -4,7 +4,7 @@ import { FiHome, FiUser, FiUsers, FiGrid, FiSearch, FiMail, FiPhone, FiX, FiChec
 import { toast } from 'react-toastify'
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import DataList from '../../components/common/DataList'
-import { getCondominiums, getAdminApartments, assignApartmentOwner, getAllUsers, getAdminAssets, assignAssetApartment, updateApartmentOccupants, createAdminStructureNode, deleteAdminStructureNode, extractItems } from '../../services/SuperAdminApi'
+import { getCondominiums, getAdminApartments, assignApartmentOwner, getAllUsers, getAdminAssets, assignAssetApartment, updateAdminAssetStatus, updateApartmentOccupants, createAdminStructureNode, deleteAdminStructureNode, extractItems } from '../../services/SuperAdminApi'
 
 const colorSuper = "rgb(124,58,237)"
 
@@ -160,6 +160,8 @@ export default function GlobalDepartamentos() {
           if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
         }, 300)
       }
+      const timer = setTimeout(() => setHighlightedAptId(null), 3000)
+      return () => clearTimeout(timer)
     }
   }, [apartments, highlightedAptId])
 
@@ -357,11 +359,26 @@ export default function GlobalDepartamentos() {
     }
     setAssigningParking(true)
     try {
+      const currentParking = parkingAssets.find(p => String(p.idApartamento) === String(modalParking?.id))
+      if (currentParking) {
+        await assignAssetApartment(currentParking.id, null, condoSeleccionado)
+        await updateAdminAssetStatus(currentParking.id, {
+          tipo: 'ESTACIONAMIENTO', disponible: true, tipoVehiculo: currentParking.tipoVehiculo || 'AUTO'
+        }, condoSeleccionado)
+        setParkingAssets(prev => prev.map(p =>
+          String(p.id) === String(currentParking.id)
+            ? { ...p, idApartamento: null, disponible: true }
+            : p
+        ))
+      }
+      await updateAdminAssetStatus(selectedParkingId, {
+        tipo: 'ESTACIONAMIENTO', disponible: false, tipoVehiculo: parkingAssets.find(p => String(p.id) === String(selectedParkingId))?.tipoVehiculo || 'AUTO'
+      }, condoSeleccionado)
       await assignAssetApartment(selectedParkingId, modalParking.id, condoSeleccionado)
       toast.success('Estacionamiento asignado correctamente')
       setParkingAssets(prev => prev.map(p =>
         String(p.id) === String(selectedParkingId)
-          ? { ...p, idApartamento: modalParking.id }
+          ? { ...p, idApartamento: modalParking.id, disponible: false }
           : p
       ))
       if (modalDetail && String(modalDetail.id) === String(modalParking.id)) {
@@ -377,9 +394,11 @@ export default function GlobalDepartamentos() {
     }
   }
 
-  const parkingDisponibles = parkingAssets.filter(p =>
-    String(p.idApartamento) !== String(modalParking?.id) && p.disponible === true
-  )
+  const parkingDisponibles = parkingAssets.filter(p => {
+    if (p.disponible !== true) return false
+    const assignedToOther = p.idApartamento && String(p.idApartamento) !== String(modalParking?.id)
+    return !assignedToOther
+  })
 
   const btnStyle = {
     padding: "0.45rem 0.75rem", borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: "700",

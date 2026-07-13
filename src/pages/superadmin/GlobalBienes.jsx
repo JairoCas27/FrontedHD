@@ -584,6 +584,16 @@ export default function GlobalBienes() {
     }, 100)
   }
 
+  const openCartTicket = (loan) => {
+    const apt = apartments.find(a => String(a.id) === String(loan.idApartamento))
+    setCartTicket({
+      ...loan,
+      aptNumero: apt?.numero || '—',
+      aptTorre: apt?.torreNombre || '—',
+      aptPiso: apt?.pisoNumero || '—'
+    })
+  }
+
   const printTicket = () => {
     const content = document.getElementById('ticket-content')
     if (!content) return
@@ -1161,37 +1171,37 @@ export default function GlobalBienes() {
                   </div>
                 </div>
                 {assignParkingOpen && (
-                <form onSubmit={handleAssignParking} style={{ padding: "0.75rem 1.25rem", display: "flex", alignItems: "flex-end", gap: "0.75rem", borderBottom: "1px solid #f1f5f9", backgroundColor: "#faf5ff" }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ ...styles.label, fontSize: "0.6rem" }}>Estacionamiento</label>
-                    {parking.filter(p => p.disponible && !p.idApartamento).length === 0 ? (
-                      <div style={{ ...styles.select, display: "flex", alignItems: "center", color: "#ef4444", fontSize: "0.75rem", fontWeight: "600" }}>No hay estacionamientos disponibles</div>
-                    ) : (
-                      <DataList value={assignParkingText} onChange={(e) => { setAssignParkingText(e.target.value); const s = parking.filter(p => p.disponible && !p.idApartamento).find(p => `${p.numero || `#${p.id}`} · ${p.tipoVehiculo || 'Mixto'}` === e.target.value); if (s) setAssignForm(f => ({ ...f, idEstacionamiento: String(s.id) })) }} required style={styles.select}>
-                        <option value="">Seleccionar estacionamiento</option>
-                        {parking.filter(p => p.disponible && !p.idApartamento).map(p => (
-                          <option key={p.id} value={`${p.numero || `#${p.id}`} · ${p.tipoVehiculo || 'Mixto'}`} />
-                        ))}
-                      </DataList>
-                    )}
-                  </div>
-                  <div style={{ flex: 2 }}>
-                    <label style={{ ...styles.label, fontSize: "0.6rem" }}>Departamento</label>
-                    {apartments.filter(a => !parking.some(p => String(p.idApartamento) === String(a.id))).length === 0 ? (
-                      <div style={{ ...styles.select, display: "flex", alignItems: "center", color: "#ef4444", fontSize: "0.75rem", fontWeight: "600" }}>No hay apartamentos disponibles</div>
-                    ) : (
-                      <DataList value={assignAptText} onChange={(e) => { setAssignAptText(e.target.value); const s = apartments.filter(a => !parking.some(p => String(p.idApartamento) === String(a.id))).find(a => `N° ${a.numero}${a.torreNombre ? ` · ${a.torreNombre}` : ''}` === e.target.value); if (s) setAssignForm(f => ({ ...f, idApartamento: String(s.id) })) }} required style={styles.select}>
-                        <option value="">Seleccionar apartamento</option>
-                        {apartments.filter(a => !parking.some(p => String(p.idApartamento) === String(a.id))).map(a => (
-                          <option key={a.id} value={`N° ${a.numero}${a.torreNombre ? ` · ${a.torreNombre}` : ''}`} />
-                        ))}
-                      </DataList>
-                    )}
-                  </div>
-                  <button type="submit" disabled={saving} style={{ ...styles.btnPrimary, padding: "0.5rem 1rem", whiteSpace: "nowrap", height: "fit-content" }}>
-                    {saving ? 'Asignando...' : <><FiHome size={14} /> Asignar Departamento</>}
-                  </button>
-                </form>
+                  <form onSubmit={handleAssignParking} style={{ padding: "0.75rem 1.25rem", display: "flex", alignItems: "flex-end", gap: "0.75rem", borderBottom: "1px solid #f1f5f9", backgroundColor: "#faf5ff" }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ ...styles.label, fontSize: "0.6rem" }}>Estacionamiento</label>
+                      {parking.filter(p => p.disponible && !p.idApartamento).length === 0 ? (
+                        <div style={{ ...styles.select, display: "flex", alignItems: "center", color: "#ef4444", fontSize: "0.75rem", fontWeight: "600" }}>No hay estacionamientos disponibles</div>
+                      ) : (
+                        <DataList value={assignParkingText} onChange={(e) => { setAssignParkingText(e.target.value); const s = parking.filter(p => p.disponible && !p.idApartamento).find(p => `${p.numero || `#${p.id}`} · ${p.tipoVehiculo || 'Mixto'}` === e.target.value); if (s) setAssignForm(f => ({ ...f, idEstacionamiento: String(s.id) })) }} required style={styles.select}>
+                          <option value="">Seleccionar estacionamiento</option>
+                          {parking.filter(p => p.disponible && !p.idApartamento).map(p => (
+                            <option key={p.id} value={`${p.numero || `#${p.id}`} · ${p.tipoVehiculo || 'Mixto'}`} />
+                          ))}
+                        </DataList>
+                      )}
+                    </div>
+                    <div style={{ flex: 2 }}>
+                      <label style={{ ...styles.label, fontSize: "0.6rem" }}>Departamento</label>
+                      {apartments.filter(a => !parking.some(p => String(p.idApartamento) === String(a.id))).length === 0 ? (
+                        <div style={{ ...styles.select, display: "flex", alignItems: "center", color: "#ef4444", fontSize: "0.75rem", fontWeight: "600" }}>No hay apartamentos disponibles</div>
+                      ) : (
+                        <DataList value={assignAptText} onChange={(e) => { setAssignAptText(e.target.value); const s = apartments.filter(a => !parking.some(p => String(p.idApartamento) === String(a.id))).find(a => `N° ${a.numero}${a.torreNombre ? ` · ${a.torreNombre}` : ''}` === e.target.value); if (s) setAssignForm(f => ({ ...f, idApartamento: String(s.id) })) }} required style={styles.select}>
+                          <option value="">Seleccionar apartamento</option>
+                          {apartments.filter(a => !parking.some(p => String(p.idApartamento) === String(a.id))).map(a => (
+                            <option key={a.id} value={`N° ${a.numero}${a.torreNombre ? ` · ${a.torreNombre}` : ''}`} />
+                          ))}
+                        </DataList>
+                      )}
+                    </div>
+                    <button type="submit" disabled={saving} style={{ ...styles.btnPrimary, padding: "0.5rem 1rem", whiteSpace: "nowrap", height: "fit-content" }}>
+                      {saving ? 'Asignando...' : <><FiHome size={14} /> Asignar Departamento</>}
+                    </button>
+                  </form>
                 )}
                 <div style={{ padding: "1.25rem" }}>
                   {parking.length === 0 ? (
@@ -1450,7 +1460,6 @@ export default function GlobalBienes() {
                             <th style={{ padding: "0.75rem" }}>Vehículo</th>
                             <th style={{ padding: "0.75rem" }}>Estacionamiento</th>
                             <th style={{ padding: "0.75rem" }}>Ocupante</th>
-                            <th style={{ padding: "0.75rem" }}>Nombre</th>
                             <th style={{ padding: "0.75rem" }}>Entrada</th>
                             <th style={{ padding: "0.75rem" }}>Salida</th>
                             <th style={{ padding: "0.75rem" }}>Método</th>
@@ -1476,7 +1485,6 @@ export default function GlobalBienes() {
                                     l.ocupante === 'PROPIETARIO' ? "#10b981" : l.ocupante === 'INQUILINO' ? "#f59e0b" : "#3b82f6"
                                   )}>{l.ocupante || '—'}</span>
                                 </td>
-                                <td style={{ padding: "0.75rem", fontSize: "0.78rem" }}>{l.datosInquilino || '—'}</td>
                                 <td style={{ padding: "0.75rem", fontSize: "0.75rem", color: "#64748b" }}>{formatDate(l.fechaEntrada)}</td>
                                 <td style={{ padding: "0.75rem", fontSize: "0.75rem", color: l.fechaSalida ? "#64748b" : "#10b981", fontWeight: l.fechaSalida ? 400 : 600 }}>
                                   {l.fechaSalida ? formatDate(l.fechaSalida) : <span style={{ color: "#10b981" }}>Dentro</span>}
@@ -1491,7 +1499,7 @@ export default function GlobalBienes() {
                               </tr>
                             )
                           })}
-                          {filtered.length === 0 && <tr><td colSpan={12} style={{ padding: "2rem", textAlign: "center", color: "#94a3b8" }}>Sin registros</td></tr>}
+                          {filtered.length === 0 && <tr><td colSpan={11} style={{ padding: "2rem", textAlign: "center", color: "#94a3b8" }}>Sin registros</td></tr>}
                         </tbody>
                       </table>
                     </div>
@@ -1989,6 +1997,7 @@ export default function GlobalBienes() {
                               <th style={thStyle}>Préstamo</th>
                               <th style={thStyle}>Devolución</th>
                               <th style={thStyle}>Estado</th>
+                              <th style={{ ...thStyle, textAlign: "right" }}>Ticket</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -2006,6 +2015,11 @@ export default function GlobalBienes() {
                                   <td style={tdStyle}>{fmtDate(loan.fechaPrestamo)}</td>
                                   <td style={tdStyle}>{loan.fechaDevolucion ? fmtDate(loan.fechaDevolucion) : '—'}</td>
                                   <td style={tdStyle}>{loan.fechaDevolucion ? <span style={styles.badge("#dcfce7", "#16a34a")}>Devuelto</span> : <span style={styles.badge("#fef3c7", "#d97706")}>Activo</span>}</td>
+                                  <td style={{ ...tdStyle, textAlign: "right" }}>
+                                    <button onClick={() => openCartTicket(loan)} style={{ background: "none", border: "none", cursor: "pointer", color: colorSuper }} title="Ver ticket">
+                                      <FiEye size={15} />
+                                    </button>
+                                  </td>
                                 </tr>
                               )
                             })}
@@ -2340,7 +2354,6 @@ export default function GlobalBienes() {
                   { l: 'Vehículo', v: `${ticket.vehiculoMarca} ${ticket.vehiculoModelo}`.trim() },
                   { l: 'Placa', v: ticket.placa },
                   { l: 'Ocupante', v: ticket.ocupante || '—' },
-                  { l: 'Nombre', v: ticket.datosInquilino || '—' },
                   { l: 'Entrada', v: formatDate(ticket.fechaEntrada) },
                   { l: 'Salida', v: ticket.fechaSalida ? formatDate(ticket.fechaSalida) : 'En curso' },
                   { l: 'Método', v: ticket.metodo || '—' }

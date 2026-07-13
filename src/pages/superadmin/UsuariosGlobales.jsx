@@ -95,7 +95,7 @@ export default function UsuariosGlobales() {
   // ==================== TODOS TAB ====================
   const [filters, setFilters] = useState({ search: '', rol: '', estado: '', condominio: '' })
   const [sortOrder, setSortOrder] = useState('asc')
-  const [sortField, setSortField] = useState('nombre')
+  const [sortField, setSortField] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [detailItem, setDetailItem] = useState(null)
   const [showDetail, setShowDetail] = useState(false)
@@ -111,7 +111,7 @@ export default function UsuariosGlobales() {
   const [admins, setAdmins] = useState([])
   const [adminSearch, setAdminSearch] = useState('')
   const [adminCondoFilter, setAdminCondoFilter] = useState('')
-  const [adminSortField, setAdminSortField] = useState('nombre')
+  const [adminSortField, setAdminSortField] = useState('')
   const [adminSortOrder, setAdminSortOrder] = useState('asc')
   const [adminShowModal, setAdminShowModal] = useState(false)
   const [adminEditing, setAdminEditing] = useState(null)
@@ -125,7 +125,7 @@ export default function UsuariosGlobales() {
   // ==================== AGENTES TAB ====================
   const [agentSearch, setAgentSearch] = useState('')
   const [agentCondoFilter, setAgentCondoFilter] = useState('')
-  const [agentSortField, setAgentSortField] = useState('nombre')
+  const [agentSortField, setAgentSortField] = useState('')
   const [agentSortOrder, setAgentSortOrder] = useState('asc')
   const [agentShowCreate, setAgentShowCreate] = useState(false)
   const [agentShowEdit, setAgentShowEdit] = useState(false)
@@ -141,7 +141,7 @@ export default function UsuariosGlobales() {
   // ==================== PROPIETARIOS TAB ====================
   const [ownerSearch, setOwnerSearch] = useState('')
   const [ownerCondoFilter, setOwnerCondoFilter] = useState('')
-  const [ownerSortField, setOwnerSortField] = useState('nombre')
+  const [ownerSortField, setOwnerSortField] = useState('')
   const [ownerSortOrder, setOwnerSortOrder] = useState('asc')
   const [ownerShowCreate, setOwnerShowCreate] = useState(false)
   const [ownerShowEdit, setOwnerShowEdit] = useState(false)
@@ -183,9 +183,9 @@ export default function UsuariosGlobales() {
       const usersList = extractItems(usersData)
       const condosList = extractItems(condosData)
       const adminsList = extractItems(adminsData)
-      setUsers(usersList)
+      setUsers([...usersList].sort((a, b) => (b.id || 0) - (a.id || 0)))
       setCondominios(condosList)
-      setAdmins(adminsList)
+      setAdmins([...adminsList].sort((a, b) => (b.id || 0) - (a.id || 0)))
       const occupied = new Set()
       adminsList.forEach(admin => {
         if (admin.activo && admin.idCondominio !== null && admin.idCondominio !== undefined) {
