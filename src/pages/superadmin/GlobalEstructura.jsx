@@ -16,7 +16,7 @@ const globalResponsive = `
 }
 @media (max-width: 900px) {
   .ge-grid-2 { grid-template-columns: 1fr !important; }
-  /* .ge-grid-3 removed — not used in JSX */
+  /* .ge-grid-3 removed ï¿½ not used in JSX */
 }
 @media (max-width: 600px) {
   .global-search-wrap { flex-direction: column !important; align-items: stretch !important; }
@@ -39,7 +39,7 @@ const estiloInput = {
 const modalOverlay = {
   position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
   backgroundColor: "rgba(0,0,0,0.4)", display: "flex",
-  alignItems: "center", justifyContent: "center", zIndex: 1000
+  alignItems: "center", justifyContent: "center", zIndex: 1100
 }
 
 const coloresGradiente = [

@@ -48,7 +48,7 @@ const styles = {
   btnDanger: { backgroundColor: "#ef4444", color: "#fff", border: "none", padding: "0.45rem 1rem", borderRadius: "0.5rem", fontSize: "0.8rem", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" },
   btnOutline: { backgroundColor: "#fff", color: "#475569", border: "1px solid #cbd5e1", padding: "0.45rem 1rem", borderRadius: "0.5rem", fontSize: "0.8rem", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" },
   btnWarning: { backgroundColor: "#f59e0b", color: "#fff", border: "none", padding: "0.45rem 1rem", borderRadius: "0.5rem", fontSize: "0.8rem", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" },
-  modalOverlay: { position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.35)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" },
+  modalOverlay: { position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.35)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100, backdropFilter: "blur(4px)" },
   modalBox: { backgroundColor: "#fff", borderRadius: "1.25rem", width: "100%", maxWidth: "560px", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)", maxHeight: "90vh", overflowY: "auto" },
   modalContent: { padding: "1.5rem" },
   formGroup: { marginBottom: "1rem" },
@@ -66,7 +66,7 @@ const thStyle = { padding: "0.55rem 0.75rem", textAlign: "left", fontWeight: 700
 const tdStyle = { padding: "0.55rem 0.75rem", color: "#334155", whiteSpace: "nowrap" }
 
 const fmtDate = (iso) => {
-  if (!iso) return '—'
+  if (!iso) return 'ï¿½'
   try {
     const d = new Date(iso)
     const day = String(d.getDate()).padStart(2, '0')
@@ -199,7 +199,7 @@ export default function GlobalBienes() {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: "0.3rem", padding: "0.75rem", borderTop: "1px solid #f1f5f9" }}>
         <button onClick={() => setPage(Math.max(1, page - 1))} disabled={page <= 1}
           style={{ padding: "0.3rem 0.6rem", borderRadius: "0.4rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: page <= 1 ? "#cbd5e1" : "#475569", fontSize: "0.7rem", fontWeight: 600, cursor: page <= 1 ? "not-allowed" : "pointer" }}>
-          Atrás
+          Atrï¿½s
         </button>
         {pages.map((p, i) =>
           p === '...' ? <span key={`e${i}`} style={{ fontSize: "0.7rem", color: "#94a3b8" }}>...</span> :
@@ -269,7 +269,7 @@ export default function GlobalBienes() {
   const allOccupants = React.useMemo(() => {
     const names = []
     apartments.forEach(apt => {
-      if (apt.nombrePropietario) names.push({ label: `${apt.nombrePropietario} (Dueño, Apt ${apt.numero})`, nombre: apt.nombrePropietario, dni: '' })
+      if (apt.nombrePropietario) names.push({ label: `${apt.nombrePropietario} (Dueï¿½o, Apt ${apt.numero})`, nombre: apt.nombrePropietario, dni: '' })
       if (apt.inquilinos) apt.inquilinos.forEach(inq => {
         names.push({ label: `${inq.nombres} ${inq.apellidos} (Inquilino, Apt ${apt.numero})`, nombre: `${inq.nombres} ${inq.apellidos}`, dni: inq.numeroDocumento })
       })
@@ -370,7 +370,7 @@ export default function GlobalBienes() {
       await updateAdminAssetStatus(configForm.id, {
         tipo: 'ESTACIONAMIENTO', tipoVehiculo: configForm.tipoVehiculo, capacidadMaxima: Number(configForm.capacidadMaxima)
       }, condoId)
-      showToast('Configuración actualizada')
+      showToast('Configuraciï¿½n actualizada')
       setShowModal(null)
       loadData(condoId)
     } catch (e) { showToast('Error: ' + e.message, 'error') }
@@ -398,7 +398,7 @@ export default function GlobalBienes() {
 
   const handleRegisterEntry = async (e) => {
     e.preventDefault()
-    if (!entryForm.placa) return showToast('Selecciona un vehículo', 'error')
+    if (!entryForm.placa) return showToast('Selecciona un vehï¿½culo', 'error')
     setSaving(true)
     try {
       const selected = vehicles.find(v => v.placa === entryForm.placa)
@@ -461,7 +461,7 @@ export default function GlobalBienes() {
         inquilinoId: vehicleForm.inquilinoId ? Number(vehicleForm.inquilinoId) : null
       }
       await createAdminVehicle(payload, condoId)
-      showToast('Vehículo registrado')
+      showToast('Vehï¿½culo registrado')
       setShowModal(null)
       setVehicleForm({ id: null, marca: '', color: 'BLANCO', modelo: '', placa: '', tipo: 'AUTO', inquilinoId: '' }); setVehInquilinoText('')
       loadData(condoId)
@@ -472,7 +472,7 @@ export default function GlobalBienes() {
   const handleEditVehicle = async (e) => {
     e.preventDefault()
     if (!vehicleForm.marca || !vehicleForm.placa) return showToast('Completa marca y placa', 'error')
-    if (!vehicleForm.id) return showToast('Error: vehículo no identificado', 'error')
+    if (!vehicleForm.id) return showToast('Error: vehï¿½culo no identificado', 'error')
     setSaving(true)
     try {
       const payload = {
@@ -482,7 +482,7 @@ export default function GlobalBienes() {
       if (vehicleForm.inquilinoId) payload.inquilinoId = Number(vehicleForm.inquilinoId)
       await deleteAdminVehicle(vehicleForm.id, condoId)
       await createAdminVehicle(payload, condoId)
-      showToast('Vehículo actualizado')
+      showToast('Vehï¿½culo actualizado')
       setShowModal(null)
       setVehicleForm({ id: null, marca: '', color: 'BLANCO', modelo: '', placa: '', tipo: 'AUTO', inquilinoId: '' }); setVehInquilinoText('')
       loadData(condoId)
@@ -493,7 +493,7 @@ export default function GlobalBienes() {
   const handleDeleteVehicle = async (id) => {
     try {
       await deleteAdminVehicle(id, condoId)
-      showToast('Vehículo eliminado')
+      showToast('Vehï¿½culo eliminado')
       loadData(condoId)
     } catch (e) { showToast('Error: ' + e.message, 'error') }
   }
@@ -501,14 +501,14 @@ export default function GlobalBienes() {
   const handleUnassignVehicle = async (vehicle) => {
     try {
       await unassignVehicleFromSpot(vehicle.id, condoId)
-      showToast('Vehículo retirado del estacionamiento')
+      showToast('Vehï¿½culo retirado del estacionamiento')
       loadData(condoId)
     } catch (e) { showToast('Error: ' + e.message, 'error') }
   }
 
   const handleCartLoan = async (e) => {
     e.preventDefault()
-    if (!cartLoanForm.codigoCarrito) return showToast('No hay carritos disponibles con código', 'error')
+    if (!cartLoanForm.codigoCarrito) return showToast('No hay carritos disponibles con cï¿½digo', 'error')
     setSaving(true)
     try {
       const resp = await registerCartLoan({
@@ -522,7 +522,7 @@ export default function GlobalBienes() {
       }, condoId)
       const apt = apartments.find(a => String(a.id) === cartLoanForm.idApartamento)
       setCartTicket({ ...resp, aptNumero: cartLoanForm.numeroApartamento, aptTorre: apt?.torreNombre || '', aptPiso: apt?.pisoNumero || '' })
-      showToast('Préstamo registrado')
+      showToast('Prï¿½stamo registrado')
       setShowModal(null)
       setCartLoanForm({ codigoCarrito: '', idApartamento: '', numeroApartamento: '', nombreSolicitante: '', dniSolicitante: '', solicitante: 'PROPIETARIO', idPropietario: '', idInquilino: '' })
       setCartFilters({ torre: '', piso: '', aptId: '' })
@@ -552,7 +552,7 @@ export default function GlobalBienes() {
         datosInquilino: null,
         idEstacionamiento: parseInt(assignVehicleForm.idEstacionamiento)
       }, condoId)
-      showToast('Vehículo asignado al estacionamiento')
+      showToast('Vehï¿½culo asignado al estacionamiento')
       setShowModal(null)
       setAssignVehicleForm({ idEstacionamiento: '', idVehiculo: '' }); setPickVehicleText('')
       loadData(condoId)
@@ -566,12 +566,12 @@ export default function GlobalBienes() {
     const apt = spot ? apartments.find(a => String(a.id) === String(spot.idApartamento)) : null
     setTicket({
       ...log,
-      vehiculoMarca: veh?.marca || '—',
-      vehiculoModelo: veh?.modelo || '—',
-      spotNumero: spot?.numero || '—',
-      aptNumero: apt?.numero || '—',
-      torreNombre: apt?.torreNombre || '—',
-      condominioNombre: condo?.nombre || '—'
+      vehiculoMarca: veh?.marca || 'ï¿½',
+      vehiculoModelo: veh?.modelo || 'ï¿½',
+      spotNumero: spot?.numero || 'ï¿½',
+      aptNumero: apt?.numero || 'ï¿½',
+      torreNombre: apt?.torreNombre || 'ï¿½',
+      condominioNombre: condo?.nombre || 'ï¿½'
     })
     setTimeout(() => {
       if (barcodeRef.current) {
@@ -608,11 +608,11 @@ export default function GlobalBienes() {
   const aptLabel = (id) => {
     if (!id) return null
     const a = apartments.find(x => String(x.id) === String(id))
-    return a ? `N°${a.numero}${a.torreNombre ? ` (${a.torreNombre})` : ''}` : `#${id}`
+    return a ? `Nï¿½${a.numero}${a.torreNombre ? ` (${a.torreNombre})` : ''}` : `#${id}`
   }
 
   const formatDate = (d) => {
-    if (!d) return '—'
+    if (!d) return 'ï¿½'
     try { return new Date(d).toLocaleString('es-PE') } catch { return d }
   }
 
@@ -667,12 +667,12 @@ export default function GlobalBienes() {
   return (
     <div style={styles.container} className="gb-container">
       {toast && (
-        <div style={{ position: "fixed", top: "1.5rem", right: "1.5rem", zIndex: 200, backgroundColor: toast.type === 'error' ? "#ef4444" : "#10b981", color: "#fff", padding: "0.75rem 1.25rem", borderRadius: "0.75rem", fontWeight: 700, fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.5rem", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.15)" }}>
+        <div style={{ position: "fixed", top: "1.5rem", right: "1.5rem", zIndex: 1300, backgroundColor: toast.type === 'error' ? "#ef4444" : "#10b981", color: "#fff", padding: "0.75rem 1.25rem", borderRadius: "0.75rem", fontWeight: 700, fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.5rem", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.15)" }}>
           {toast.type === 'error' ? <FiAlertCircle size={16} /> : <FiCheck size={16} />} {toast.msg}
         </div>
       )}
 
-      <EncabezadoTabla titulo="Bienes Comunes" subtitulo="Gestión integral de estacionamientos, vehículos y carritos" />
+      <EncabezadoTabla titulo="Bienes Comunes" subtitulo="Gestiï¿½n integral de estacionamientos, vehï¿½culos y carritos" />
 
       <style>{`
         @keyframes gradientShift {
@@ -990,7 +990,7 @@ export default function GlobalBienes() {
             })}
             {filteredCondominios.length === 0 && (
               <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
-                <p style={{ fontWeight: 600, margin: 0 }}>Ningún condominio coincide con tu búsqueda</p>
+                <p style={{ fontWeight: 600, margin: 0 }}>Ningï¿½n condominio coincide con tu bï¿½squeda</p>
               </div>
             )}
           </div>
@@ -1009,9 +1009,9 @@ export default function GlobalBienes() {
             {[
               { key: 'dashboard', label: 'Dashboard', icon: <FiHome size={14} /> },
               { key: 'mapa', label: 'Mapa Parqueo', icon: <FiGrid size={14} /> },
-              { key: 'gestion', label: 'Gestión', icon: <FiSettings size={14} /> },
+              { key: 'gestion', label: 'Gestiï¿½n', icon: <FiSettings size={14} /> },
               { key: 'reservas', label: 'Reservas', icon: <FiClock size={14} /> },
-              { key: 'vehiculos', label: 'Vehículos', icon: <FiNavigation2 size={14} /> },
+              { key: 'vehiculos', label: 'Vehï¿½culos', icon: <FiNavigation2 size={14} /> },
               { key: 'carritos', label: 'Carritos', icon: <FiTruck size={14} /> },
 
             ].map(t => (
@@ -1025,17 +1025,17 @@ export default function GlobalBienes() {
           {activeTab === 'dashboard' && (
             <>
               <div style={{ display: "grid", gap: "1rem", marginBottom: "1.5rem" }} className="gb-stats-grid">
-                <StatCard icon={<FiHome />} label="Estacionamientos" value={stats.totalParking} sub={`${stats.disponibleParking} libres · ${stats.ocupadoParking} ocupados`} color={colorSuper} />
-                <StatCard icon={<FiUsers />} label="Capacidad Total" value={stats.capacidadTotal} sub={`${stats.ocupacionActual} vehículos ahora (${stats.capacidadTotal > 0 ? ((stats.ocupacionActual / stats.capacidadTotal) * 100).toFixed(0) : 0}%)`} color="#3b82f6" />
-                <StatCard icon={<FiTruck />} label="Carritos" value={stats.totalCarts} sub={`${stats.cartDisponible} disp · ${stats.cartEnUso} uso · ${stats.cartMant} mant`} color={colorSuper} />
-                <StatCard icon={<FiNavigation2 />} label="Vehículos Registrados" value={stats.totalVehicles} color="#f59e0b" />
-                <StatCard icon={<FiLogIn />} label="Vehículos Dentro" value={stats.activeEntries.length} sub={`${stats.disponibleParking} spots libres`} color="#10b981" />
+                <StatCard icon={<FiHome />} label="Estacionamientos" value={stats.totalParking} sub={`${stats.disponibleParking} libres ï¿½ ${stats.ocupadoParking} ocupados`} color={colorSuper} />
+                <StatCard icon={<FiUsers />} label="Capacidad Total" value={stats.capacidadTotal} sub={`${stats.ocupacionActual} vehï¿½culos ahora (${stats.capacidadTotal > 0 ? ((stats.ocupacionActual / stats.capacidadTotal) * 100).toFixed(0) : 0}%)`} color="#3b82f6" />
+                <StatCard icon={<FiTruck />} label="Carritos" value={stats.totalCarts} sub={`${stats.cartDisponible} disp ï¿½ ${stats.cartEnUso} uso ï¿½ ${stats.cartMant} mant`} color={colorSuper} />
+                <StatCard icon={<FiNavigation2 />} label="Vehï¿½culos Registrados" value={stats.totalVehicles} color="#f59e0b" />
+                <StatCard icon={<FiLogIn />} label="Vehï¿½culos Dentro" value={stats.activeEntries.length} sub={`${stats.disponibleParking} spots libres`} color="#10b981" />
               </div>
 
               <div style={{ display: "grid" }} className="gb-grid-2">
                 <div style={styles.card}>
                   <div style={styles.cardHeader}>
-                    <span style={{ fontWeight: 800, fontSize: "0.8rem", color: "#0f172a" }}>Ocupación de Estacionamientos</span>
+                    <span style={{ fontWeight: 800, fontSize: "0.8rem", color: "#0f172a" }}>Ocupaciï¿½n de Estacionamientos</span>
                     <div style={{ display: "flex", gap: "0.65rem", alignItems: "center", flexWrap: "wrap" }}>
                       <span style={{ fontSize: "0.6rem", display: "flex", alignItems: "center", gap: "0.2rem" }}><span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: "#10b981", display: "inline-block" }} /> Libre</span>
                       <span style={{ fontSize: "0.6rem", display: "flex", alignItems: "center", gap: "0.2rem" }}><span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: "#f59e0b", display: "inline-block" }} /> Parcial</span>
@@ -1070,7 +1070,7 @@ export default function GlobalBienes() {
                             return (
                               <div style={{ backgroundColor: "#fff", border: "1px solid #e2e8f0", borderRadius: "0.5rem", padding: "0.5rem 0.75rem", boxShadow: "0 4px 12px rgba(0,0,0,0.08)", fontSize: "0.75rem" }}>
                                 <div style={{ fontWeight: 700, color: "#0f172a", marginBottom: "0.25rem" }}>Estacionamiento {d.name}</div>
-                                <div style={{ color: "#475569" }}>Capacidad: {d.capacidad} vehículos</div>
+                                <div style={{ color: "#475569" }}>Capacidad: {d.capacidad} vehï¿½culos</div>
                                 <div style={{ color: "#ef4444", fontWeight: 600 }}>Ocupados: {d.ocupado}</div>
                                 <div style={{ color: "#10b981", fontWeight: 600 }}>Libres: {d.disponible}</div>
                                 <div style={{ color: d.colorOcupado, fontWeight: 700, marginTop: "0.15rem" }}>{d.pct.toFixed(0)}% ocupado</div>
@@ -1093,11 +1093,11 @@ export default function GlobalBienes() {
 
                 <div style={styles.card}>
                   <div style={styles.cardHeader}>
-                    <span style={{ fontWeight: 800, fontSize: "0.8rem", color: "#0f172a" }}>Vehículos dentro ahora</span>
+                    <span style={{ fontWeight: 800, fontSize: "0.8rem", color: "#0f172a" }}>Vehï¿½culos dentro ahora</span>
                   </div>
                   <div style={{ maxHeight: "200px", overflowY: "auto" }}>
                     {stats.activeEntries.length === 0 ? (
-                      <div style={{ padding: "1.5rem", textAlign: "center", color: "#94a3b8", fontSize: "0.8rem" }}>Ningún vehículo dentro</div>
+                      <div style={{ padding: "1.5rem", textAlign: "center", color: "#94a3b8", fontSize: "0.8rem" }}>Ningï¿½n vehï¿½culo dentro</div>
                     ) : stats.activeEntries.slice(0, 10).map(l => (
                       <div key={l.id} style={{ padding: "0.5rem 1rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <div>
@@ -1107,7 +1107,7 @@ export default function GlobalBienes() {
                         <span style={{ fontSize: "0.65rem", color: "#3b82f6" }}>{formatDate(l.fechaEntrada)}</span>
                       </div>
                     ))}
-                    {stats.activeEntries.length > 10 && <div style={{ padding: "0.5rem", textAlign: "center", fontSize: "0.7rem", color: "#94a3b8" }}>+{stats.activeEntries.length - 10} más</div>}
+                    {stats.activeEntries.length > 10 && <div style={{ padding: "0.5rem", textAlign: "center", fontSize: "0.7rem", color: "#94a3b8" }}>+{stats.activeEntries.length - 10} mï¿½s</div>}
                   </div>
                 </div>
               </div>
@@ -1116,7 +1116,7 @@ export default function GlobalBienes() {
                 <div className="gb-grid-3" style={{ display: "grid", gap: "1rem", marginTop: "1.5rem" }}>
                   <div style={styles.card}>
                     <div style={{ padding: "1.25rem", textAlign: "center" }}>
-                      <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>Vehículos dentro</div>
+                      <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>Vehï¿½culos dentro</div>
                       <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "#10b981" }}>{dashboard.vehiculosDentro ?? stats.activeEntries.length}</div>
                     </div>
                   </div>
@@ -1167,10 +1167,10 @@ export default function GlobalBienes() {
                     {parking.filter(p => p.disponible && !p.idApartamento).length === 0 ? (
                       <div style={{ ...styles.select, display: "flex", alignItems: "center", color: "#ef4444", fontSize: "0.75rem", fontWeight: "600" }}>No hay estacionamientos disponibles</div>
                     ) : (
-                      <DataList value={assignParkingText} onChange={(e) => { setAssignParkingText(e.target.value); const s = parking.filter(p => p.disponible && !p.idApartamento).find(p => `${p.numero || `#${p.id}`} — ${p.tipoVehiculo || 'Mixto'}` === e.target.value); if (s) setAssignForm(f => ({ ...f, idEstacionamiento: String(s.id) })) }} required style={styles.select}>
+                      <DataList value={assignParkingText} onChange={(e) => { setAssignParkingText(e.target.value); const s = parking.filter(p => p.disponible && !p.idApartamento).find(p => `${p.numero || `#${p.id}`} ï¿½ ${p.tipoVehiculo || 'Mixto'}` === e.target.value); if (s) setAssignForm(f => ({ ...f, idEstacionamiento: String(s.id) })) }} required style={styles.select}>
                         <option value="">Seleccionar estacionamiento</option>
                         {parking.filter(p => p.disponible && !p.idApartamento).map(p => (
-                          <option key={p.id} value={`${p.numero || `#${p.id}`} — ${p.tipoVehiculo || 'Mixto'}`} />
+                          <option key={p.id} value={`${p.numero || `#${p.id}`} ï¿½ ${p.tipoVehiculo || 'Mixto'}`} />
                         ))}
                       </DataList>
                     )}
@@ -1180,10 +1180,10 @@ export default function GlobalBienes() {
                     {apartments.filter(a => !parking.some(p => String(p.idApartamento) === String(a.id))).length === 0 ? (
                       <div style={{ ...styles.select, display: "flex", alignItems: "center", color: "#ef4444", fontSize: "0.75rem", fontWeight: "600" }}>No hay apartamentos disponibles</div>
                     ) : (
-                      <DataList value={assignAptText} onChange={(e) => { setAssignAptText(e.target.value); const s = apartments.filter(a => !parking.some(p => String(p.idApartamento) === String(a.id))).find(a => `N° ${a.numero}${a.torreNombre ? ` — ${a.torreNombre}` : ''}` === e.target.value); if (s) setAssignForm(f => ({ ...f, idApartamento: String(s.id) })) }} required style={styles.select}>
+                      <DataList value={assignAptText} onChange={(e) => { setAssignAptText(e.target.value); const s = apartments.filter(a => !parking.some(p => String(p.idApartamento) === String(a.id))).find(a => `Nï¿½ ${a.numero}${a.torreNombre ? ` ï¿½ ${a.torreNombre}` : ''}` === e.target.value); if (s) setAssignForm(f => ({ ...f, idApartamento: String(s.id) })) }} required style={styles.select}>
                         <option value="">Seleccionar apartamento</option>
                         {apartments.filter(a => !parking.some(p => String(p.idApartamento) === String(a.id))).map(a => (
-                          <option key={a.id} value={`N° ${a.numero}${a.torreNombre ? ` — ${a.torreNombre}` : ''}`} />
+                          <option key={a.id} value={`Nï¿½ ${a.numero}${a.torreNombre ? ` ï¿½ ${a.torreNombre}` : ''}`} />
                         ))}
                       </DataList>
                     )}
@@ -1209,12 +1209,12 @@ export default function GlobalBienes() {
                             <div style={{ padding: "0.75rem" }}>
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.3rem" }}>
                                 <div style={{ fontSize: "0.6rem", fontWeight: 700, color: vehiclesInSpot.length === 0 ? "#10b981" : "#ef4444", textTransform: "uppercase" }}>
-                                  {vehiclesInSpot.length === 0 ? 'Disponible' : 'Ocupado'} · {p.tipoVehiculo || 'MIXTO'}
+                                  {vehiclesInSpot.length === 0 ? 'Disponible' : 'Ocupado'} ï¿½ {p.tipoVehiculo || 'MIXTO'}
                                 </div>
                                 <div style={{ fontSize: "1rem", fontWeight: 800, color: "#0f172a" }}>#{p.numero || p.id}</div>
                               </div>
                               <div style={{ fontSize: "0.65rem", color: "#94a3b8", marginBottom: "0.3rem" }}>
-                                {p.cantidadActual ?? 0}/{p.capacidadMaxima || '8'} vehículos
+                                {p.cantidadActual ?? 0}/{p.capacidadMaxima || '8'} vehï¿½culos
                               </div>
                               <ParkingMatrix spot={p} occupiedCount={vehiclesInSpot.length} />
                               <div style={{ marginTop: "0.3rem" }}>
@@ -1228,7 +1228,7 @@ export default function GlobalBienes() {
                             {/* Vehicles occupying this spot */}
                             {vehiclesInSpot.length > 0 && (
                               <div style={{ borderTop: "1px solid #e2e8f0", backgroundColor: "#f8fafc", padding: "0.5rem 0.75rem" }}>
-                                <div style={{ fontSize: "0.6rem", fontWeight: 700, color: "#64748b", marginBottom: "0.3rem" }}>Vehículos:</div>
+                                <div style={{ fontSize: "0.6rem", fontWeight: 700, color: "#64748b", marginBottom: "0.3rem" }}>Vehï¿½culos:</div>
                                 {vehiclesInSpot.map(v => (
                                   <div key={v.id} style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.7rem", color: "#334155", marginBottom: "0.2rem" }}>
                                     <span style={{
@@ -1276,7 +1276,7 @@ export default function GlobalBienes() {
             </div>
           )}
 
-          {/* ===== GESTIÓN ===== */}
+          {/* ===== GESTIï¿½N ===== */}
           {activeTab === 'gestion' && (
             <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
@@ -1302,38 +1302,38 @@ export default function GlobalBienes() {
                         {floors.map(f => <option key={f} value={f} />)}
                       </DataList>
                       <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar departamento</label>
-                      <DataList value={entryAptText} onChange={e => { setEntryAptText(e.target.value); const apt = apartments.find(a => `N° ${a.numero}` === e.target.value || String(a.numero) === e.target.value); if (apt) { setEntryFilters(f => ({ ...f, aptId: String(apt.id) })); if (apt.nombrePropietario) setEntryForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: apt.nombrePropietario })) } else { setEntryFilters(f => ({ ...f, aptId: '' })); setEntryForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: '' })) } }} style={{ ...styles.select, fontSize: "0.7rem" }}>
+                      <DataList value={entryAptText} onChange={e => { setEntryAptText(e.target.value); const apt = apartments.find(a => `Nï¿½ ${a.numero}` === e.target.value || String(a.numero) === e.target.value); if (apt) { setEntryFilters(f => ({ ...f, aptId: String(apt.id) })); if (apt.nombrePropietario) setEntryForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: apt.nombrePropietario })) } else { setEntryFilters(f => ({ ...f, aptId: '' })); setEntryForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: '' })) } }} style={{ ...styles.select, fontSize: "0.7rem" }}>
                         <option value="">Departamento</option>
-                        {filteredApts.map(a => <option key={a.id} value={`N° ${a.numero}`} />)}
+                        {filteredApts.map(a => <option key={a.id} value={`Nï¿½ ${a.numero}`} />)}
                       </DataList>
                       {entryFilters.aptId && (() => {
                         const apt = apartments.find(a => String(a.id) === entryFilters.aptId)
                         if (!apt) return null
                         const occupants = []
-                        if (apt.nombrePropietario) occupants.push({ label: `${apt.nombrePropietario} (Dueño)`, nombre: apt.nombrePropietario, tipo: 'PROPIETARIO', dni: '' })
+                        if (apt.nombrePropietario) occupants.push({ label: `${apt.nombrePropietario} (Dueï¿½o)`, nombre: apt.nombrePropietario, tipo: 'PROPIETARIO', dni: '' })
                         if (apt.inquilinos) apt.inquilinos.forEach(inq => occupants.push({ label: `${inq.nombres} ${inq.apellidos} (Inquilino)`, nombre: `${inq.nombres} ${inq.apellidos}`, tipo: 'INQUILINO', dni: inq.numeroDocumento }))
                         return occupants.length > 0 ? (
                           <select style={styles.select} value={entryForm.datosInquilino} onChange={e => {
                             const sel = occupants.find(o => o.nombre === e.target.value)
                             if (sel) setEntryForm(f => ({ ...f, ocupante: sel.tipo, datosInquilino: sel.nombre }))
                           }}>
-                            <option value="">Seleccionar ocupante de N° {apt.numero}</option>
-                            {occupants.map(o => <option key={o.nombre} value={o.nombre}>{o.label}{o.dni ? ` — DNI: ${o.dni}` : ''}</option>)}
+                            <option value="">Seleccionar ocupante de Nï¿½ {apt.numero}</option>
+                            {occupants.map(o => <option key={o.nombre} value={o.nombre}>{o.label}{o.dni ? ` ï¿½ DNI: ${o.dni}` : ''}</option>)}
                           </select>
                         ) : (
-                          <div style={{ fontSize: "0.75rem", color: "#94a3b8", textAlign: "center", padding: "0.5rem" }}>Sin ocupantes registrados en N° {apt.numero}</div>
+                          <div style={{ fontSize: "0.75rem", color: "#94a3b8", textAlign: "center", padding: "0.5rem" }}>Sin ocupantes registrados en Nï¿½ {apt.numero}</div>
                         )
                       })()}
-                      <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar vehículo</label>
+                      <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar vehï¿½culo</label>
                       <DataList value={entryPlacaText} onChange={e => { setEntryPlacaText(e.target.value); const v = vehicles.find(x => x.placa === e.target.value); const owner = vehicleOwnerMap[v?.id]; if (owner && !entryFilters.aptId) { setEntryForm(f => ({ ...f, placa: e.target.value, ocupante: owner.tipo, datosInquilino: owner.nombre })) } else { setEntryForm(f => ({ ...f, placa: e.target.value })) } }} required style={styles.select}>
-                        <option value="">Seleccionar vehículo</option>
+                        <option value="">Seleccionar vehï¿½culo</option>
                         {vehicles.filter(v => !v.idEstacionamiento).map(v => (
                           <option key={v.id} value={v.placa} />
                         ))}
                       </DataList>
                       <div className="gb-form-grid" style={{ display: "grid", gap: "0.75rem" }}>
                         <div>
-                          <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Método</label>
+                          <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Mï¿½todo</label>
                           <select style={styles.select} value={entryForm.metodo} onChange={e => setEntryForm(f => ({ ...f, metodo: e.target.value }))}>
                             <option value="OCR">OCR</option>
                             <option value="MANUAL">Manual</option>
@@ -1351,13 +1351,13 @@ export default function GlobalBienes() {
                         <input style={styles.input} placeholder="Nombre del inquilino" value={entryForm.datosInquilino} onChange={e => setEntryForm(f => ({ ...f, datosInquilino: e.target.value }))} />
                       )}
                       <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar estacionamiento</label>
-                      <DataList value={entryParkText} onChange={e => { setEntryParkText(e.target.value); const s = parking.filter(p => (p.cantidadActual || 0) < p.capacidadMaxima).find(p => `#${p.numero} (${p.tipoVehiculo}) — ${p.cantidadActual || 0}/${p.capacidadMaxima}` === e.target.value); if (s) setEntryForm(f => ({ ...f, idEstacionamiento: String(s.id) })) }} style={styles.select}>
+                      <DataList value={entryParkText} onChange={e => { setEntryParkText(e.target.value); const s = parking.filter(p => (p.cantidadActual || 0) < p.capacidadMaxima).find(p => `#${p.numero} (${p.tipoVehiculo}) ï¿½ ${p.cantidadActual || 0}/${p.capacidadMaxima}` === e.target.value); if (s) setEntryForm(f => ({ ...f, idEstacionamiento: String(s.id) })) }} style={styles.select}>
                         <option value="">Estacionamiento (auto)</option>
                         {parking.filter(p => (p.cantidadActual || 0) < p.capacidadMaxima).map(p => (
-                          <option key={p.id} value={`#${p.numero} (${p.tipoVehiculo}) — ${p.cantidadActual || 0}/${p.capacidadMaxima}`} />
+                          <option key={p.id} value={`#${p.numero} (${p.tipoVehiculo}) ï¿½ ${p.cantidadActual || 0}/${p.capacidadMaxima}`} />
                         ))}
                       </DataList>
-                      {vehicles.length === 0 && <div style={{ fontSize: "0.75rem", color: "#ef4444" }}>No hay vehículos registrados en el sistema</div>}
+                      {vehicles.length === 0 && <div style={{ fontSize: "0.75rem", color: "#ef4444" }}>No hay vehï¿½culos registrados en el sistema</div>}
                       <button type="submit" disabled={saving || vehicles.length === 0} style={{ ...styles.btnSuccess, width: "100%", justifyContent: "center", padding: "0.6rem" }}>
                         {saving ? 'Registrando...' : <><FiLogIn size={14} /> Registrar Entrada</>}
                       </button>
@@ -1376,11 +1376,11 @@ export default function GlobalBienes() {
                   </div>
                   {exitOpen && (
                     <form onSubmit={handleRegisterExit} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                      <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar vehículo dentro</label>
-                      <DataList value={exitLogText} onChange={e => { setExitLogText(e.target.value); const s = stats.activeEntries.find(l => `${l.placa} — ${l.ocupante} — Entrada: ${formatDate(l.fechaEntrada)}` === e.target.value); if (s) setExitForm(f => ({ ...f, idLogAcceso: String(s.id) })) }} required style={styles.select}>
-                        <option value="">Seleccionar vehículo dentro</option>
+                      <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar vehï¿½culo dentro</label>
+                      <DataList value={exitLogText} onChange={e => { setExitLogText(e.target.value); const s = stats.activeEntries.find(l => `${l.placa} ï¿½ ${l.ocupante} ï¿½ Entrada: ${formatDate(l.fechaEntrada)}` === e.target.value); if (s) setExitForm(f => ({ ...f, idLogAcceso: String(s.id) })) }} required style={styles.select}>
+                        <option value="">Seleccionar vehï¿½culo dentro</option>
                         {stats.activeEntries.map(l => (
-                          <option key={l.id} value={`${l.placa} — ${l.ocupante} — Entrada: ${formatDate(l.fechaEntrada)}`} />
+                          <option key={l.id} value={`${l.placa} ï¿½ ${l.ocupante} ï¿½ Entrada: ${formatDate(l.fechaEntrada)}`} />
                         ))}
                       </DataList>
                       {(() => {
@@ -1388,8 +1388,8 @@ export default function GlobalBienes() {
                         return sel ? (
                           <div style={{ fontSize: "0.75rem", backgroundColor: "#fef2f2", padding: "0.75rem", borderRadius: "0.5rem", color: "#991b1b" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.25rem" }}>
-                              <span><strong>Vehículo:</strong> {sel.placa}</span>
-                              <span><strong>Método:</strong> {sel.metodo}</span>
+                              <span><strong>Vehï¿½culo:</strong> {sel.placa}</span>
+                              <span><strong>Mï¿½todo:</strong> {sel.metodo}</span>
                             </div>
                             <div style={{ display: "flex", justifyContent: "space-between" }}>
                               <span><strong>Ocupante:</strong> {sel.ocupante}</span>
@@ -1402,14 +1402,14 @@ export default function GlobalBienes() {
                                 const h = Math.floor(diff / 3600000)
                                 const m = Math.floor((diff % 3600000) / 60000)
                                 return `${h}h ${m}m`
-                              })() : '—'}
+                              })() : 'ï¿½'}
                             </div>
                           </div>
                         ) : null
                       })()}
-                      {stats.activeEntries.length === 0 && <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>No hay vehículos dentro</div>}
+                      {stats.activeEntries.length === 0 && <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>No hay vehï¿½culos dentro</div>}
                       <button type="submit" disabled={saving || stats.activeEntries.length === 0} style={{ ...styles.btnDanger, width: "100%", justifyContent: "center", padding: "0.6rem" }}>
-                        {saving ? 'Registrando...' : <><FiLogOut size={14} /> Registrar Salida — {new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}</>}
+                        {saving ? 'Registrando...' : <><FiLogOut size={14} /> Registrar Salida ï¿½ {new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}</>}
                       </button>
                     </form>
                   )}
@@ -1419,12 +1419,12 @@ export default function GlobalBienes() {
               <div style={styles.card}>
                 <div style={styles.cardHeader}>
                   <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "#0f172a", display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                    <FiCalendar size={14} color={colorSuper} /> Bitácora de Accesos Vehiculares
+                    <FiCalendar size={14} color={colorSuper} /> Bitï¿½cora de Accesos Vehiculares
                   </span>
                   <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                     <div style={{ position: "relative" }}>
                       <FiSearch size={13} style={{ position: "absolute", left: "0.5rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
-                      <input type="text" placeholder="Buscar placa, vehículo..." value={logSearch} onChange={e => { setLogSearch(e.target.value); setLogPage(1) }}
+                      <input type="text" placeholder="Buscar placa, vehï¿½culo..." value={logSearch} onChange={e => { setLogSearch(e.target.value); setLogPage(1) }}
                         style={{ ...styles.input, padding: "0.35rem 0.5rem 0.35rem 1.6rem", fontSize: "0.75rem", width: "180px" }} />
                     </div>
                     <button onClick={() => loadData(condoId)} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiRefreshCw size={16} /></button>
@@ -1447,13 +1447,13 @@ export default function GlobalBienes() {
                             <th style={{ padding: "0.75rem 1rem" }}>#</th>
                             <th style={{ padding: "0.75rem" }}>Ticket</th>
                             <th style={{ padding: "0.75rem" }}>Placa</th>
-                            <th style={{ padding: "0.75rem" }}>Vehículo</th>
+                            <th style={{ padding: "0.75rem" }}>Vehï¿½culo</th>
                             <th style={{ padding: "0.75rem" }}>Estacionamiento</th>
                             <th style={{ padding: "0.75rem" }}>Ocupante</th>
                             <th style={{ padding: "0.75rem" }}>Nombre</th>
                             <th style={{ padding: "0.75rem" }}>Entrada</th>
                             <th style={{ padding: "0.75rem" }}>Salida</th>
-                            <th style={{ padding: "0.75rem" }}>Método</th>
+                            <th style={{ padding: "0.75rem" }}>Mï¿½todo</th>
                             <th style={{ padding: "0.75rem" }}>Condominio</th>
                             <th style={{ padding: "0.75rem 1rem", textAlign: "right" }}>Ticket</th>
                           </tr>
@@ -1468,21 +1468,21 @@ export default function GlobalBienes() {
                                 <td style={{ padding: "0.75rem 1rem", color: "#94a3b8", fontSize: "0.7rem" }}>{(logPage - 1) * PER_PAGE + idx + 1}</td>
                                 <td style={{ padding: "0.75rem", fontWeight: 700, fontFamily: "monospace", fontSize: "0.75rem", color: colorSuper }}>TKT-{l.id}</td>
                                 <td style={{ padding: "0.75rem", fontWeight: 700, color: "#0f172a", fontFamily: "monospace" }}>{l.placa}</td>
-                                <td style={{ padding: "0.75rem", fontSize: "0.78rem" }}>{veh ? `${veh.marca} ${veh.modelo} (${veh.color})` : '—'}</td>
-                                <td style={{ padding: "0.75rem", fontSize: "0.78rem" }}>#{spot?.numero || '—'}{apt ? ` — N°${apt.numero}` : ''}</td>
+                                <td style={{ padding: "0.75rem", fontSize: "0.78rem" }}>{veh ? `${veh.marca} ${veh.modelo} (${veh.color})` : 'ï¿½'}</td>
+                                <td style={{ padding: "0.75rem", fontSize: "0.78rem" }}>#{spot?.numero || 'ï¿½'}{apt ? ` ï¿½ Nï¿½${apt.numero}` : ''}</td>
                                 <td style={{ padding: "0.75rem" }}>
                                   <span style={styles.badge(
                                     l.ocupante === 'PROPIETARIO' ? "rgba(16,185,129,0.1)" : l.ocupante === 'INQUILINO' ? "rgba(245,158,11,0.1)" : "rgba(59,130,246,0.1)",
                                     l.ocupante === 'PROPIETARIO' ? "#10b981" : l.ocupante === 'INQUILINO' ? "#f59e0b" : "#3b82f6"
-                                  )}>{l.ocupante || '—'}</span>
+                                  )}>{l.ocupante || 'ï¿½'}</span>
                                 </td>
-                                <td style={{ padding: "0.75rem", fontSize: "0.78rem" }}>{l.datosInquilino || '—'}</td>
+                                <td style={{ padding: "0.75rem", fontSize: "0.78rem" }}>{l.datosInquilino || 'ï¿½'}</td>
                                 <td style={{ padding: "0.75rem", fontSize: "0.75rem", color: "#64748b" }}>{formatDate(l.fechaEntrada)}</td>
                                 <td style={{ padding: "0.75rem", fontSize: "0.75rem", color: l.fechaSalida ? "#64748b" : "#10b981", fontWeight: l.fechaSalida ? 400 : 600 }}>
                                   {l.fechaSalida ? formatDate(l.fechaSalida) : <span style={{ color: "#10b981" }}>Dentro</span>}
                                 </td>
-                                <td style={{ padding: "0.75rem", fontSize: "0.7rem", color: "#64748b" }}>{l.metodo || '—'}</td>
-                                <td style={{ padding: "0.75rem", fontSize: "0.7rem", color: "#64748b" }}>{condo?.nombre || '—'}</td>
+                                <td style={{ padding: "0.75rem", fontSize: "0.7rem", color: "#64748b" }}>{l.metodo || 'ï¿½'}</td>
+                                <td style={{ padding: "0.75rem", fontSize: "0.7rem", color: "#64748b" }}>{condo?.nombre || 'ï¿½'}</td>
                                 <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
                                   <button onClick={() => openTicket(l)} style={{ background: "none", border: "none", cursor: "pointer", color: colorSuper }} title="Ver ticket">
                                     <FiEye size={15} />
@@ -1517,7 +1517,7 @@ export default function GlobalBienes() {
                 {reserveOpen && (
                   <form onSubmit={async (e) => {
                     e.preventDefault()
-                    if (!reserveForm.placa) return showToast('Selecciona un vehículo', 'error')
+                    if (!reserveForm.placa) return showToast('Selecciona un vehï¿½culo', 'error')
                     if (!reserveForm.idEstacionamiento) return showToast('Selecciona un estacionamiento', 'error')
                     setSaving(true)
                     try {
@@ -1541,7 +1541,7 @@ export default function GlobalBienes() {
                     } catch (e) { showToast('Error: ' + e.message, 'error') }
                     finally { setSaving(false) }
                   }} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                    <div style={{ fontSize: "0.7rem", color: "#64748b" }}>Asigna un estacionamiento a un vehículo por tiempo limitado. Se registrará la entrada y se liberará automáticamente al vencer.</div>
+                    <div style={{ fontSize: "0.7rem", color: "#64748b" }}>Asigna un estacionamiento a un vehï¿½culo por tiempo limitado. Se registrarï¿½ la entrada y se liberarï¿½ automï¿½ticamente al vencer.</div>
                     <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar torre</label>
                     <DataList value={reserveTorreText} onChange={e => { setReserveTorreText(e.target.value); setReserveFilters(f => ({ ...f, torre: e.target.value, piso: '', aptId: '' })) }} style={{ ...styles.select, fontSize: "0.7rem" }}>
                       <option value="">Torre</option>
@@ -1553,41 +1553,41 @@ export default function GlobalBienes() {
                       {floors.map(f => <option key={f} value={f} />)}
                     </DataList>
                     <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar departamento</label>
-                    <DataList value={reserveAptText} onChange={e => { setReserveAptText(e.target.value); const apt = apartments.find(a => `N° ${a.numero}` === e.target.value || String(a.numero) === e.target.value); if (apt) { setReserveFilters(f => ({ ...f, aptId: String(apt.id) })); if (apt.nombrePropietario) setReserveForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: apt.nombrePropietario })) } else { setReserveFilters(f => ({ ...f, aptId: '' })); setReserveForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: '' })) } }} style={{ ...styles.select, fontSize: "0.7rem" }}>
+                    <DataList value={reserveAptText} onChange={e => { setReserveAptText(e.target.value); const apt = apartments.find(a => `Nï¿½ ${a.numero}` === e.target.value || String(a.numero) === e.target.value); if (apt) { setReserveFilters(f => ({ ...f, aptId: String(apt.id) })); if (apt.nombrePropietario) setReserveForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: apt.nombrePropietario })) } else { setReserveFilters(f => ({ ...f, aptId: '' })); setReserveForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: '' })) } }} style={{ ...styles.select, fontSize: "0.7rem" }}>
                       <option value="">Departamento</option>
                       {apartments.filter(a =>
                         (!reserveFilters.torre || a.torreNombre === reserveFilters.torre) &&
                         (!reserveFilters.piso || String(a.pisoNumero) === reserveFilters.piso)
-                      ).map(a => <option key={a.id} value={`N° ${a.numero}`} />)}
+                      ).map(a => <option key={a.id} value={`Nï¿½ ${a.numero}`} />)}
                     </DataList>
                     {reserveFilters.aptId && (() => {
                       const apt = apartments.find(a => String(a.id) === reserveFilters.aptId)
                       if (!apt) return null
                       const occupants = []
-                      if (apt.nombrePropietario) occupants.push({ label: `${apt.nombrePropietario} (Dueño)`, nombre: apt.nombrePropietario, tipo: 'PROPIETARIO', dni: '' })
+                      if (apt.nombrePropietario) occupants.push({ label: `${apt.nombrePropietario} (Dueï¿½o)`, nombre: apt.nombrePropietario, tipo: 'PROPIETARIO', dni: '' })
                       if (apt.inquilinos) apt.inquilinos.forEach(inq => occupants.push({ label: `${inq.nombres} ${inq.apellidos} (Inquilino)`, nombre: `${inq.nombres} ${inq.apellidos}`, tipo: 'INQUILINO', dni: inq.numeroDocumento }))
                       return occupants.length > 0 ? (
                         <select style={styles.select} value={reserveForm.datosInquilino} onChange={e => {
                           const sel = occupants.find(o => o.nombre === e.target.value)
                           if (sel) setReserveForm(f => ({ ...f, ocupante: sel.tipo, datosInquilino: sel.nombre }))
                         }}>
-                          <option value="">Seleccionar ocupante de N° {apt.numero}</option>
-                          {occupants.map(o => <option key={o.nombre} value={o.nombre}>{o.label}{o.dni ? ` — DNI: ${o.dni}` : ''}</option>)}
+                          <option value="">Seleccionar ocupante de Nï¿½ {apt.numero}</option>
+                          {occupants.map(o => <option key={o.nombre} value={o.nombre}>{o.label}{o.dni ? ` ï¿½ DNI: ${o.dni}` : ''}</option>)}
                         </select>
                       ) : (
-                        <div style={{ fontSize: "0.75rem", color: "#94a3b8", textAlign: "center", padding: "0.5rem" }}>Sin ocupantes registrados en N° {apt.numero}</div>
+                        <div style={{ fontSize: "0.75rem", color: "#94a3b8", textAlign: "center", padding: "0.5rem" }}>Sin ocupantes registrados en Nï¿½ {apt.numero}</div>
                       )
                     })()}
-                    <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar vehículo</label>
+                    <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar vehï¿½culo</label>
                     <DataList value={reservePlacaText} onChange={e => { setReservePlacaText(e.target.value); const v = vehicles.find(x => x.placa === e.target.value); const owner = vehicleOwnerMap[v?.id]; if (owner && !reserveFilters.aptId) { setReserveForm(f => ({ ...f, placa: e.target.value, ocupante: owner.tipo, datosInquilino: owner.nombre })) } else { setReserveForm(f => ({ ...f, placa: e.target.value })) } }} required style={styles.select}>
-                      <option value="">Seleccionar vehículo</option>
+                      <option value="">Seleccionar vehï¿½culo</option>
                       {vehicles.filter(v => !v.idEstacionamiento).map(v => (
                         <option key={v.id} value={v.placa} />
                       ))}
                     </DataList>
                     <div className="gb-form-grid" style={{ display: "grid", gap: "0.75rem" }}>
                       <div>
-                        <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Método</label>
+                        <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Mï¿½todo</label>
                         <select style={styles.select} value={reserveForm.metodo} onChange={e => setReserveForm(f => ({ ...f, metodo: e.target.value }))}>
                           <option value="OCR">OCR</option>
                           <option value="MANUAL">Manual</option>
@@ -1607,10 +1607,10 @@ export default function GlobalBienes() {
                     <div className="gb-form-grid" style={{ display: "grid", gap: "0.75rem" }}>
                       <div>
                         <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar estacionamiento</label>
-                        <DataList value={reserveParkText} onChange={e => { setReserveParkText(e.target.value); const s = parking.filter(p => (p.cantidadActual || 0) < (p.capacidadMaxima ?? 1)).find(p => `#${p.numero || p.id} — ${p.tipoVehiculo || 'Mixto'} (${(p.capacidadMaxima || 1) - (p.cantidadActual || 0)} libres)` === e.target.value); if (s) setReserveForm(f => ({ ...f, idEstacionamiento: String(s.id) })) }} required style={styles.select}>
+                        <DataList value={reserveParkText} onChange={e => { setReserveParkText(e.target.value); const s = parking.filter(p => (p.cantidadActual || 0) < (p.capacidadMaxima ?? 1)).find(p => `#${p.numero || p.id} ï¿½ ${p.tipoVehiculo || 'Mixto'} (${(p.capacidadMaxima || 1) - (p.cantidadActual || 0)} libres)` === e.target.value); if (s) setReserveForm(f => ({ ...f, idEstacionamiento: String(s.id) })) }} required style={styles.select}>
                           <option value="">Estacionamiento</option>
                           {parking.filter(p => (p.cantidadActual || 0) < (p.capacidadMaxima ?? 1)).map(p => (
-                            <option key={p.id} value={`#${p.numero || p.id} — ${p.tipoVehiculo || 'Mixto'} (${(p.capacidadMaxima || 1) - (p.cantidadActual || 0)} libres)`} />
+                            <option key={p.id} value={`#${p.numero || p.id} ï¿½ ${p.tipoVehiculo || 'Mixto'} (${(p.capacidadMaxima || 1) - (p.cantidadActual || 0)} libres)`} />
                           ))}
                         </DataList>
                       </div>
@@ -1658,14 +1658,14 @@ export default function GlobalBienes() {
                           <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: 700, fontSize: "0.65rem", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
                             <th style={{ padding: "0.75rem 1rem" }}>Ticket</th>
                             <th style={{ padding: "0.75rem" }}>Placa</th>
-                            <th style={{ padding: "0.75rem" }}>Vehículo</th>
+                            <th style={{ padding: "0.75rem" }}>Vehï¿½culo</th>
                             <th style={{ padding: "0.75rem" }}>Estacionamiento</th>
                             <th style={{ padding: "0.75rem" }}>Ocupante</th>
-                            <th style={{ padding: "0.75rem" }}>Duración</th>
+                            <th style={{ padding: "0.75rem" }}>Duraciï¿½n</th>
                             <th style={{ padding: "0.75rem" }}>Entrada</th>
                             <th style={{ padding: "0.75rem" }}>Expira</th>
                             <th style={{ padding: "0.75rem" }}>Salida</th>
-                            <th style={{ padding: "0.75rem" }}>Método</th>
+                            <th style={{ padding: "0.75rem" }}>Mï¿½todo</th>
                             <th style={{ padding: "0.75rem" }}>Ticket</th>
                           </tr>
                         </thead>
@@ -1681,20 +1681,20 @@ export default function GlobalBienes() {
                               <tr key={l.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
                                 <td style={{ padding: "0.6rem 1rem", fontWeight: 700, fontFamily: "monospace", fontSize: "0.75rem" }}>TKT-{l.id}</td>
                                 <td style={{ padding: "0.6rem", fontWeight: 700, fontFamily: "monospace" }}>{l.placa}</td>
-                                <td style={{ padding: "0.6rem" }}>{veh ? `${veh.marca} ${veh.modelo}` : '—'}</td>
-                                <td style={{ padding: "0.6rem" }}>#{spot?.numero || '—'}{apt ? ` (N° ${apt.numero})` : ''}</td>
-                                <td style={{ padding: "0.6rem" }}>{l.ocupante || '—'}</td>
+                                <td style={{ padding: "0.6rem" }}>{veh ? `${veh.marca} ${veh.modelo}` : 'ï¿½'}</td>
+                                <td style={{ padding: "0.6rem" }}>#{spot?.numero || 'ï¿½'}{apt ? ` (Nï¿½ ${apt.numero})` : ''}</td>
+                                <td style={{ padding: "0.6rem" }}>{l.ocupante || 'ï¿½'}</td>
                                 <td style={{ padding: "0.6rem", fontWeight: 700, color: "#f59e0b" }}>{horas}h</td>
                                 <td style={{ padding: "0.6rem", fontSize: "0.75rem" }}>{formatDate(l.fechaEntrada)}</td>
                                 <td style={{ padding: "0.6rem", fontSize: "0.75rem" }}>
-                                  {l.fechaSalida ? '—' : expira ? (
+                                  {l.fechaSalida ? 'ï¿½' : expira ? (
                                     <span style={Date.now() > expira.getTime() ? { color: '#ef4444', fontWeight: 600 } : { color: '#10b981', fontWeight: 600 }}>
                                       {formatDate(expira.toISOString())}{Date.now() > expira.getTime() ? ' (Vencido)' : ''}
                                     </span>
-                                  ) : '—'}
+                                  ) : 'ï¿½'}
                                 </td>
                                 <td style={{ padding: "0.6rem", fontSize: "0.75rem" }}>{l.fechaSalida ? formatDate(l.fechaSalida) : <span style={{ color: "#f59e0b", fontWeight: 600 }}>En curso</span>}</td>
-                                <td style={{ padding: "0.6rem" }}>{l.metodo || '—'}</td>
+                                <td style={{ padding: "0.6rem" }}>{l.metodo || 'ï¿½'}</td>
                                 <td style={{ padding: "0.6rem" }}>
                                   <button onClick={() => openTicket(l)} style={{ background: "none", border: "none", cursor: "pointer", color: colorSuper, fontSize: "0.7rem", fontWeight: 600 }}>
                                     Ver
@@ -1713,12 +1713,12 @@ export default function GlobalBienes() {
             </div>
           )}
 
-          {/* ===== VEHÍCULOS ===== */}
+          {/* ===== VEHï¿½CULOS ===== */}
           {activeTab === 'vehiculos' && (
             <div style={styles.card}>
               <div style={styles.cardHeader}>
                 <span style={{ fontWeight: 800, fontSize: "0.9rem", color: "#0f172a", display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                  <FiNavigation2 size={15} color={colorSuper} /> Vehículos Registrados ({vehicles.length})
+                  <FiNavigation2 size={15} color={colorSuper} /> Vehï¿½culos Registrados ({vehicles.length})
                 </span>
                 <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                   <div style={{ position: "relative" }}>
@@ -1741,7 +1741,7 @@ export default function GlobalBienes() {
                   v.tipo?.toLowerCase().includes(vehicleSearch.toLowerCase())
                 )
                 if (filtered.length === 0) return (
-                  <div style={{ padding: "2rem", textAlign: "center", color: "#94a3b8", fontSize: "0.85rem" }}>No hay vehículos registrados</div>
+                  <div style={{ padding: "2rem", textAlign: "center", color: "#94a3b8", fontSize: "0.85rem" }}>No hay vehï¿½culos registrados</div>
                 )
                 const paged = paginate(filtered, vehiclePage)
                 return (<>
@@ -1755,7 +1755,7 @@ export default function GlobalBienes() {
                           <th style={{ padding: "0.75rem" }}>Color</th>
                           <th style={{ padding: "0.75rem" }}>Tipo</th>
                           <th style={{ padding: "0.75rem" }}>Estacionamiento</th>
-                          <th style={{ padding: "0.75rem 1rem", textAlign: "right" }}>Acción</th>
+                          <th style={{ padding: "0.75rem 1rem", textAlign: "right" }}>Acciï¿½n</th>
                         </tr>
                       </thead>
                       <tbody style={{ color: "#334155" }}>
@@ -1775,10 +1775,10 @@ export default function GlobalBienes() {
                               <td style={{ padding: "0.75rem" }}>
                                 <span style={styles.badge(v.tipo === 'AUTO' ? "rgba(124,58,237,0.1)" : "rgba(139,92,246,0.1)", v.tipo === 'AUTO' ? colorSuper : "#8b5cf6")}>{v.tipo}</span>
                               </td>
-                              <td style={{ padding: "0.75rem", color: "#64748b" }}>{spot ? `#${spot.numero || spot.id}` : '—'}</td>
+                              <td style={{ padding: "0.75rem", color: "#64748b" }}>{spot ? `#${spot.numero || spot.id}` : 'ï¿½'}</td>
                               <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
                                 <div style={{ display: "flex", gap: "0.3rem", justifyContent: "flex-end" }}>
-                                  <button onClick={() => { const t = allTenantsList.find(x => String(x.id) === String(v.inquilinoId)); setVehInquilinoText(t ? `${t.nombres} ${t.apellidos} — ${t.numeroDocumento} (Apt ${t.apartamentoNumero})` : ''); setVehicleForm({ id: v.id, placa: v.placa, marca: v.marca, modelo: v.modelo, color: v.color, tipo: v.tipo, inquilinoId: v.inquilinoId ? String(v.inquilinoId) : '' }); setShowModal('vehicle') }}
+                                  <button onClick={() => { const t = allTenantsList.find(x => String(x.id) === String(v.inquilinoId)); setVehInquilinoText(t ? `${t.nombres} ${t.apellidos} ï¿½ ${t.numeroDocumento} (Apt ${t.apartamentoNumero})` : ''); setVehicleForm({ id: v.id, placa: v.placa, marca: v.marca, modelo: v.modelo, color: v.color, tipo: v.tipo, inquilinoId: v.inquilinoId ? String(v.inquilinoId) : '' }); setShowModal('vehicle') }}
                                     style={{ background: "rgba(59,130,246,0.1)", color: "#3b82f6", border: "none", padding: "0.3rem 0.55rem", borderRadius: "0.4rem", fontSize: "0.7rem", fontWeight: 700, cursor: "pointer" }}>
                                     <FiEdit3 size={13} />
                                   </button>
@@ -1830,9 +1830,9 @@ export default function GlobalBienes() {
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
                       <thead>
                         <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: 700, fontSize: "0.65rem", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
-                          <th style={{ padding: "0.75rem 1rem" }}>Código</th>
+                          <th style={{ padding: "0.75rem 1rem" }}>Cï¿½digo</th>
                           <th style={{ padding: "0.75rem" }}>Estado</th>
-                          <th style={{ padding: "0.75rem 1rem", textAlign: "right" }}>Acción</th>
+                          <th style={{ padding: "0.75rem 1rem", textAlign: "right" }}>Acciï¿½n</th>
                         </tr>
                       </thead>
                       <tbody style={{ color: "#334155" }}>
@@ -1867,7 +1867,7 @@ export default function GlobalBienes() {
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               <div style={styles.card}>
                 <div style={{ ...styles.cardHeader, cursor: "pointer" }} onClick={() => setCartOpen(!cartOpen)}>
-                  <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "#0f172a" }}>Préstamo de Carrito</span>
+                  <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "#0f172a" }}>Prï¿½stamo de Carrito</span>
                   <span style={{ color: cartOpen ? "#10b981" : "#94a3b8", fontWeight: 700, fontSize: "0.8rem", transition: "transform 0.2s", transform: cartOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
                     {cartOpen ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
                   </span>
@@ -1890,18 +1890,18 @@ export default function GlobalBienes() {
                       {[...new Set(apartments.filter(a => !cartFilters.torre || a.torreNombre === cartFilters.torre).map(a => a.pisoNumero).filter(Boolean))].map(f => <option key={f} value={f} />)}
                     </DataList>
                     <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar departamento</label>
-                    <DataList value={cartAptText} onChange={e => { setCartAptText(e.target.value); const apt = apartments.find(a => `N° ${a.numero}` === e.target.value || String(a.numero) === e.target.value); if (apt) { setCartFilters(f => ({ ...f, aptId: String(apt.id) })); setCartLoanForm(f => ({ ...f, idApartamento: String(apt.id), numeroApartamento: apt.numero, idPropietario: apt.idPropietario || '', nombreSolicitante: apt.nombrePropietario || '', solicitante: 'PROPIETARIO', dniSolicitante: '' })) } else { setCartFilters(f => ({ ...f, aptId: '' })); setCartLoanForm(f => ({ ...f, idApartamento: '', numeroApartamento: '', idPropietario: '', nombreSolicitante: '', solicitante: 'PROPIETARIO', dniSolicitante: '' })) } }} style={{ ...styles.select, fontSize: "0.7rem" }}>
+                    <DataList value={cartAptText} onChange={e => { setCartAptText(e.target.value); const apt = apartments.find(a => `Nï¿½ ${a.numero}` === e.target.value || String(a.numero) === e.target.value); if (apt) { setCartFilters(f => ({ ...f, aptId: String(apt.id) })); setCartLoanForm(f => ({ ...f, idApartamento: String(apt.id), numeroApartamento: apt.numero, idPropietario: apt.idPropietario || '', nombreSolicitante: apt.nombrePropietario || '', solicitante: 'PROPIETARIO', dniSolicitante: '' })) } else { setCartFilters(f => ({ ...f, aptId: '' })); setCartLoanForm(f => ({ ...f, idApartamento: '', numeroApartamento: '', idPropietario: '', nombreSolicitante: '', solicitante: 'PROPIETARIO', dniSolicitante: '' })) } }} style={{ ...styles.select, fontSize: "0.7rem" }}>
                       <option value="">Departamento</option>
                       {apartments.filter(a =>
                         (!cartFilters.torre || a.torreNombre === cartFilters.torre) &&
                         (!cartFilters.piso || String(a.pisoNumero) === cartFilters.piso)
-                      ).map(a => <option key={a.id} value={`N° ${a.numero}`} />)}
+                      ).map(a => <option key={a.id} value={`Nï¿½ ${a.numero}`} />)}
                     </DataList>
                     {cartFilters.aptId && (() => {
                       const apt = apartments.find(a => String(a.id) === cartFilters.aptId)
                       if (!apt) return null
                       const occupants = []
-                      if (apt.nombrePropietario) occupants.push({ label: `${apt.nombrePropietario} (Dueño)`, nombre: apt.nombrePropietario, tipo: 'PROPIETARIO', id: apt.idPropietario, dni: '' })
+                      if (apt.nombrePropietario) occupants.push({ label: `${apt.nombrePropietario} (Dueï¿½o)`, nombre: apt.nombrePropietario, tipo: 'PROPIETARIO', id: apt.idPropietario, dni: '' })
                       if (apt.inquilinos) apt.inquilinos.forEach(inq => occupants.push({ label: `${inq.nombres} ${inq.apellidos} (Inquilino)`, nombre: `${inq.nombres} ${inq.apellidos}`, tipo: 'INQUILINO', id: inq.id, dni: inq.numeroDocumento }))
                       return occupants.length > 0 ? (
                         <select style={styles.select} value={`${cartLoanForm.solicitante}|${cartLoanForm.nombreSolicitante}`} onChange={e => {
@@ -1915,11 +1915,11 @@ export default function GlobalBienes() {
                             idInquilino: sel.tipo === 'INQUILINO' ? (sel.id || '') : ''
                           }))
                         }}>
-                          <option value="">Seleccionar ocupante de N° {apt.numero}</option>
-                          {occupants.map(o => <option key={o.nombre} value={`${o.tipo}|${o.nombre}`}>{o.label}{o.dni ? ` — DNI: ${o.dni}` : ''}</option>)}
+                          <option value="">Seleccionar ocupante de Nï¿½ {apt.numero}</option>
+                          {occupants.map(o => <option key={o.nombre} value={`${o.tipo}|${o.nombre}`}>{o.label}{o.dni ? ` ï¿½ DNI: ${o.dni}` : ''}</option>)}
                         </select>
                       ) : (
-                        <div style={{ fontSize: "0.75rem", color: "#94a3b8", textAlign: "center", padding: "0.5rem" }}>Sin ocupantes registrados en N° {apt.numero}</div>
+                        <div style={{ fontSize: "0.75rem", color: "#94a3b8", textAlign: "center", padding: "0.5rem" }}>Sin ocupantes registrados en Nï¿½ {apt.numero}</div>
                       )
                     })()}
                     <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Nombre del solicitante</label>
@@ -1937,14 +1937,14 @@ export default function GlobalBienes() {
               {activeLoans.length > 0 && (
                 <div style={styles.card}>
                   <div style={styles.cardHeader}>
-                    <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "#0f172a" }}>Préstamos Activos ({activeLoans.length})</span>
+                    <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "#0f172a" }}>Prï¿½stamos Activos ({activeLoans.length})</span>
                   </div>
                   <div style={{ maxHeight: "200px", overflowY: "auto" }}>
                     {activeLoans.map(loan => (
                       <div key={loan.id} style={{ padding: "0.6rem 1rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <div>
                           <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#0f172a" }}>{loan.nombreSolicitante}</div>
-                          <div style={{ fontSize: "0.65rem", color: "#94a3b8" }}>{loan.codigoCarrito} · {loan.dniSolicitante}</div>
+                          <div style={{ fontSize: "0.65rem", color: "#94a3b8" }}>{loan.codigoCarrito} ï¿½ {loan.dniSolicitante}</div>
                         </div>
                         <button onClick={() => handleReturnCart(loan.id)} style={styles.btnSuccess}>Devolver</button>
                       </div>
@@ -1958,10 +1958,10 @@ export default function GlobalBienes() {
               <div style={{ marginTop: "1.5rem" }}>
                 <div style={styles.card}>
                   <div style={styles.cardHeader}>
-                    <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "#0f172a" }}>Historial de Préstamos ({allCartLoans.length})</span>
+                    <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "#0f172a" }}>Historial de Prï¿½stamos ({allCartLoans.length})</span>
                     <div style={{ position: "relative" }}>
                       <FiSearch size={13} style={{ position: "absolute", left: "0.5rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
-                      <input type="text" placeholder="Buscar préstamo..." value={loanSearch} onChange={e => { setLoanSearch(e.target.value); setLoanPage(1) }}
+                      <input type="text" placeholder="Buscar prï¿½stamo..." value={loanSearch} onChange={e => { setLoanSearch(e.target.value); setLoanPage(1) }}
                         style={{ ...styles.input, padding: "0.35rem 0.5rem 0.35rem 1.6rem", fontSize: "0.75rem", width: "180px" }} />
                     </div>
                   </div>
@@ -1986,8 +1986,8 @@ export default function GlobalBienes() {
                               <th style={thStyle}>Departamento</th>
                               <th style={thStyle}>Torre</th>
                               <th style={thStyle}>Piso</th>
-                              <th style={thStyle}>Préstamo</th>
-                              <th style={thStyle}>Devolución</th>
+                              <th style={thStyle}>Prï¿½stamo</th>
+                              <th style={thStyle}>Devoluciï¿½n</th>
                               <th style={thStyle}>Estado</th>
                             </tr>
                           </thead>
@@ -1997,14 +1997,14 @@ export default function GlobalBienes() {
                               return (
                                 <tr key={loan.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
                                   <td style={tdStyle}>{(loanPage - 1) * PER_PAGE + i + 1}</td>
-                                  <td style={tdStyle}><strong>{loan.codigoCarrito || '—'}</strong></td>
+                                  <td style={tdStyle}><strong>{loan.codigoCarrito || 'ï¿½'}</strong></td>
                                   <td style={tdStyle}>{loan.nombreSolicitante}<br /><span style={{ color: "#94a3b8" }}>{loan.dniSolicitante}</span></td>
-                                  <td style={tdStyle}>{loan.solicitante === 'PROPIETARIO' ? <span style={styles.badge("#e0e7ff", "#4338ca")}>Dueño</span> : <span style={styles.badge("#fef3c7", "#d97706")}>Inquilino</span>}</td>
-                                  <td style={tdStyle}>N° {apt?.numero || '—'}</td>
-                                  <td style={tdStyle}>{apt?.torreNombre || '—'}</td>
-                                  <td style={tdStyle}>{apt?.pisoNumero != null ? `Piso ${apt.pisoNumero}` : '—'}</td>
+                                  <td style={tdStyle}>{loan.solicitante === 'PROPIETARIO' ? <span style={styles.badge("#e0e7ff", "#4338ca")}>Dueï¿½o</span> : <span style={styles.badge("#fef3c7", "#d97706")}>Inquilino</span>}</td>
+                                  <td style={tdStyle}>Nï¿½ {apt?.numero || 'ï¿½'}</td>
+                                  <td style={tdStyle}>{apt?.torreNombre || 'ï¿½'}</td>
+                                  <td style={tdStyle}>{apt?.pisoNumero != null ? `Piso ${apt.pisoNumero}` : 'ï¿½'}</td>
                                   <td style={tdStyle}>{fmtDate(loan.fechaPrestamo)}</td>
-                                  <td style={tdStyle}>{loan.fechaDevolucion ? fmtDate(loan.fechaDevolucion) : '—'}</td>
+                                  <td style={tdStyle}>{loan.fechaDevolucion ? fmtDate(loan.fechaDevolucion) : 'ï¿½'}</td>
                                   <td style={tdStyle}>{loan.fechaDevolucion ? <span style={styles.badge("#dcfce7", "#16a34a")}>Devuelto</span> : <span style={styles.badge("#fef3c7", "#d97706")}>Activo</span>}</td>
                                 </tr>
                               )
@@ -2028,8 +2028,8 @@ export default function GlobalBienes() {
           <div style={styles.modalBox} className="gb-modal-box" onClick={e => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", textAlign: "center" }}>
               <div style={{ fontSize: "2rem", color: colorSuper, marginBottom: "0.5rem" }}><FiFileText /></div>
-              <h3 style={{ margin: "0 0 0.25rem", fontSize: "1.1rem", fontWeight: 800, color: "#1e293b" }}>Comprobante de Préstamo</h3>
-              <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Préstamo de Carrito · #{cartTicket.id}</div>
+              <h3 style={{ margin: "0 0 0.25rem", fontSize: "1.1rem", fontWeight: 800, color: "#1e293b" }}>Comprobante de Prï¿½stamo</h3>
+              <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Prï¿½stamo de Carrito ï¿½ #{cartTicket.id}</div>
             </div>
             <div style={{ padding: "0 1.5rem 1.5rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
               <div className="gb-form-grid" style={{ display: "grid", gap: "0.75rem" }}>
@@ -2038,7 +2038,7 @@ export default function GlobalBienes() {
                   <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#0f172a" }}>{cartTicket.codigoCarrito}</div>
                 </div>
                 <div>
-                  <div style={styles.label}>Fecha de Préstamo</div>
+                  <div style={styles.label}>Fecha de Prï¿½stamo</div>
                   <div style={{ fontSize: "0.85rem", color: "#0f172a" }}>{fmtDate(cartTicket.fechaPrestamo)}</div>
                 </div>
               </div>
@@ -2055,11 +2055,11 @@ export default function GlobalBienes() {
               <div className="gb-form-grid" style={{ display: "grid", gap: "0.75rem" }}>
                 <div>
                   <div style={styles.label}>Departamento</div>
-                  <div style={{ fontSize: "0.85rem", color: "#0f172a" }}>N° {cartTicket.aptNumero}</div>
+                  <div style={{ fontSize: "0.85rem", color: "#0f172a" }}>Nï¿½ {cartTicket.aptNumero}</div>
                 </div>
                 <div>
                   <div style={styles.label}>Torre / Piso</div>
-                  <div style={{ fontSize: "0.85rem", color: "#0f172a" }}>{cartTicket.aptTorre}{cartTicket.aptPiso ? ` · Piso ${cartTicket.aptPiso}` : ''}</div>
+                  <div style={{ fontSize: "0.85rem", color: "#0f172a" }}>{cartTicket.aptTorre}{cartTicket.aptPiso ? ` ï¿½ Piso ${cartTicket.aptPiso}` : ''}</div>
                 </div>
               </div>
             </div>
@@ -2084,24 +2084,24 @@ export default function GlobalBienes() {
               <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
                 {showModal === 'createCart' ? (
                   <div>
-                    <label style={styles.label}>Código del carrito</label>
+                    <label style={styles.label}>Cï¿½digo del carrito</label>
                     <input style={styles.input} placeholder="Ej: CARR-001" value={createForm.codigo} onChange={e => setCreateForm(f => ({ ...f, codigo: e.target.value }))} />
                   </div>
                 ) : (
                   <>
                     <div>
-                      <label style={styles.label}>Número</label>
+                      <label style={styles.label}>Nï¿½mero</label>
                       <input type="number" min="1" style={styles.input} placeholder="Ej: 15" value={createForm.numero} onChange={e => setCreateForm(f => ({ ...f, numero: e.target.value }))} />
                     </div>
                     <div>
-                      <label style={styles.label}>Tipo de vehículo</label>
+                      <label style={styles.label}>Tipo de vehï¿½culo</label>
                       <select style={styles.select} value={createForm.tipoVehiculo} onChange={e => setCreateForm(f => ({ ...f, tipoVehiculo: e.target.value }))}>
                         <option value="AUTO">Auto (4x4)</option>
                         <option value="MOTO">Moto (4x2)</option>
                       </select>
                     </div>
                     <div>
-                      <label style={styles.label}>Capacidad máxima (celdas)</label>
+                      <label style={styles.label}>Capacidad mï¿½xima (celdas)</label>
                       <input type="number" min="1" max="16" style={styles.input} value={createForm.capacidadMaxima} onChange={e => setCreateForm(f => ({ ...f, capacidadMaxima: e.target.value }))} />
                     </div>
                   </>
@@ -2124,7 +2124,7 @@ export default function GlobalBienes() {
           <div style={styles.modalBox} className="gb-modal-box" onClick={e => e.stopPropagation()}>
             <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "#1e293b" }}>
-                <FiNavigation2 size={16} style={{ marginRight: 8, verticalAlign: "middle" }} />{vehicleForm.id ? 'Editar Vehículo' : 'Nuevo Vehículo'}
+                <FiNavigation2 size={16} style={{ marginRight: 8, verticalAlign: "middle" }} />{vehicleForm.id ? 'Editar Vehï¿½culo' : 'Nuevo Vehï¿½culo'}
               </h3>
               <button onClick={() => { setShowModal(null); setVehicleForm({ id: null, marca: '', color: 'BLANCO', modelo: '', placa: '', tipo: 'AUTO', inquilinoId: '' }); setVehInquilinoText('') }} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={18} /></button>
             </div>
@@ -2164,9 +2164,9 @@ export default function GlobalBienes() {
                 </div>
                 <div>
                   <label style={styles.label}>Asignar a inquilino (opcional)</label>
-                  <DataList value={vehInquilinoText} onChange={e => { setVehInquilinoText(e.target.value); const t = allTenantsList.find(x => `${x.nombres} ${x.apellidos} — ${x.numeroDocumento} (Apt ${x.apartamentoNumero})` === e.target.value); setVehicleForm(f => ({ ...f, inquilinoId: t ? String(t.id) : '' })) }} style={styles.select}>
+                  <DataList value={vehInquilinoText} onChange={e => { setVehInquilinoText(e.target.value); const t = allTenantsList.find(x => `${x.nombres} ${x.apellidos} ï¿½ ${x.numeroDocumento} (Apt ${x.apartamentoNumero})` === e.target.value); setVehicleForm(f => ({ ...f, inquilinoId: t ? String(t.id) : '' })) }} style={styles.select}>
                     <option value="">Propietario</option>
-                    {allTenantsList.map(t => <option key={t.id} value={`${t.nombres} ${t.apellidos} — ${t.numeroDocumento} (Apt ${t.apartamentoNumero})`} />)}
+                    {allTenantsList.map(t => <option key={t.id} value={`${t.nombres} ${t.apellidos} ï¿½ ${t.numeroDocumento} (Apt ${t.apartamentoNumero})`} />)}
                   </DataList>
                 </div>
               </div>
@@ -2192,18 +2192,18 @@ export default function GlobalBienes() {
             <form onSubmit={handleUpdateParkingConfig}>
               <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
                 <div>
-                  <label style={styles.label}>Tipo de vehículo</label>
+                  <label style={styles.label}>Tipo de vehï¿½culo</label>
                   <select style={styles.select} value={configForm.tipoVehiculo} onChange={e => setConfigForm(f => ({ ...f, tipoVehiculo: e.target.value }))}>
                     <option value="AUTO">Auto</option>
                     <option value="MOTO">Moto</option>
                   </select>
                 </div>
                 <div>
-                  <label style={styles.label}>Capacidad máxima (vehículos)</label>
+                  <label style={styles.label}>Capacidad mï¿½xima (vehï¿½culos)</label>
                   <input type="number" min="1" max="16" style={styles.input} value={configForm.capacidadMaxima} onChange={e => setConfigForm(f => ({ ...f, capacidadMaxima: e.target.value }))} />
                 </div>
                 <div style={{ fontSize: "0.75rem", color: "#64748b", backgroundColor: "#f8fafc", padding: "0.75rem", borderRadius: "0.5rem" }}>
-                  {configForm.tipoVehiculo === 'AUTO' ? 'Matriz 4×4: los autos se muestran en una cuadrícula de 4 columnas.' : 'Matriz 4×2: las motos se muestran en una cuadrícula de 4 columnas y 2 filas.'}
+                  {configForm.tipoVehiculo === 'AUTO' ? 'Matriz 4ï¿½4: los autos se muestran en una cuadrï¿½cula de 4 columnas.' : 'Matriz 4ï¿½2: las motos se muestran en una cuadrï¿½cula de 4 columnas y 2 filas.'}
                 </div>
               </div>
               <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: "0.75rem", backgroundColor: "#f8fafc" }}>
@@ -2222,7 +2222,7 @@ export default function GlobalBienes() {
         <div style={styles.modalOverlay} onClick={() => { setShowModal(null); setAssignVehicleForm({ idEstacionamiento: '', idVehiculo: '' }); setPickVehicleText('') }}>
           <div style={{ ...styles.modalBox, maxWidth: "420px" }} className="gb-modal-box" onClick={e => e.stopPropagation()}>
             <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "#1e293b" }}>Asignar Vehículo</h3>
+              <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "#1e293b" }}>Asignar Vehï¿½culo</h3>
               <button onClick={() => { setShowModal(null); setAssignVehicleForm({ idEstacionamiento: '', idVehiculo: '' }); setPickVehicleText('') }} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={18} /></button>
             </div>
             <form onSubmit={handleAssignVehicleToSpot} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
@@ -2231,16 +2231,16 @@ export default function GlobalBienes() {
                 <input style={styles.input} value={`#${parking.find(p => String(p.id) === assignVehicleForm.idEstacionamiento)?.numero || assignVehicleForm.idEstacionamiento}`} disabled />
               </div>
               <div>
-                <label style={styles.label}>Vehículo</label>
-                <DataList value={pickVehicleText} onChange={e => { setPickVehicleText(e.target.value); const v = vehicles.filter(x => !x.idEstacionamiento).find(x => `${x.placa} — ${x.marca} ${x.modelo} (${x.tipo})` === e.target.value); setAssignVehicleForm(f => ({ ...f, idVehiculo: v ? v.placa : '' })) }} required style={styles.select}>
-                  <option value="">Seleccionar vehículo</option>
+                <label style={styles.label}>Vehï¿½culo</label>
+                <DataList value={pickVehicleText} onChange={e => { setPickVehicleText(e.target.value); const v = vehicles.filter(x => !x.idEstacionamiento).find(x => `${x.placa} ï¿½ ${x.marca} ${x.modelo} (${x.tipo})` === e.target.value); setAssignVehicleForm(f => ({ ...f, idVehiculo: v ? v.placa : '' })) }} required style={styles.select}>
+                  <option value="">Seleccionar vehï¿½culo</option>
                   {vehicles.filter(v => !v.idEstacionamiento).map(v => (
-                    <option key={v.id} value={`${v.placa} — ${v.marca} ${v.modelo} (${v.tipo})`} />
+                    <option key={v.id} value={`${v.placa} ï¿½ ${v.marca} ${v.modelo} (${v.tipo})`} />
                   ))}
                 </DataList>
               </div>
               {vehicles.filter(v => !v.idEstacionamiento).length === 0 && (
-                <div style={{ fontSize: "0.75rem", color: "#ef4444" }}>No hay vehículos disponibles</div>
+                <div style={{ fontSize: "0.75rem", color: "#ef4444" }}>No hay vehï¿½culos disponibles</div>
               )}
               <button type="submit" disabled={saving || vehicles.filter(v => !v.idEstacionamiento).length === 0} style={{ ...styles.btnSuccess, width: "100%", justifyContent: "center", padding: "0.6rem" }}>
                 {saving ? 'Asignando...' : <><FiUserPlus size={14} /> Asignar</>}
@@ -2272,16 +2272,16 @@ export default function GlobalBienes() {
                       {(detailItem.cantidadActual || 0) > 0 ? 'Ocupado' : 'Disponible'}
                     </span>
                   </Row>
-                  <Row label="Tipo de vehículo">{detailItem.tipoVehiculo || 'MIXTO'}</Row>
-                  <Row label="Capacidad máxima">{detailItem.capacidadMaxima ?? '8'}</Row>
-                  <Row label="Ocupación actual">{detailItem.cantidadActual ?? 0}</Row>
-                  <Row label="Apartamento">{detailItem.idApartamento ? aptLabel(detailItem.idApartamento) : '—'}</Row>
-                  <Row label="Condominio">{condo?.nombre || '—'}</Row>
+                  <Row label="Tipo de vehï¿½culo">{detailItem.tipoVehiculo || 'MIXTO'}</Row>
+                  <Row label="Capacidad mï¿½xima">{detailItem.capacidadMaxima ?? '8'}</Row>
+                  <Row label="Ocupaciï¿½n actual">{detailItem.cantidadActual ?? 0}</Row>
+                  <Row label="Apartamento">{detailItem.idApartamento ? aptLabel(detailItem.idApartamento) : 'ï¿½'}</Row>
+                  <Row label="Condominio">{condo?.nombre || 'ï¿½'}</Row>
                   {(() => {
                     const spotVehicles = vehicles.filter(v => String(v.idEstacionamiento) === String(detailItem.id))
                     return spotVehicles.length > 0 ? (
                       <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "0.75rem" }}>
-                        <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "#64748b", marginBottom: "0.5rem" }}>Vehículos ocupando:</div>
+                        <div style={{ fontSize: "0.75rem", fontWeight: 600, color: "#64748b", marginBottom: "0.5rem" }}>Vehï¿½culos ocupando:</div>
                         {spotVehicles.map(v => (
                           <div key={v.id} style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.8rem", color: "#334155", marginBottom: "0.3rem", padding: "0.3rem 0.5rem", backgroundColor: "#f8fafc", borderRadius: "0.4rem" }}>
                             <span style={{ display: "inline-block", width: 10, height: 10, borderRadius: "50%", backgroundColor: colorSwatch(v.color), border: "1px solid #e2e8f0" }} />
@@ -2301,7 +2301,7 @@ export default function GlobalBienes() {
                 </>
               ) : (
                 <>
-                  <Row label="Código">{detailItem.codigo || `#${detailItem.id}`}</Row>
+                  <Row label="Cï¿½digo">{detailItem.codigo || `#${detailItem.id}`}</Row>
                   <Row label="Estado">
                     <span style={{
                       padding: "0.15rem 0.5rem", borderRadius: "999px", fontSize: "0.7rem", fontWeight: 700,
@@ -2337,13 +2337,13 @@ export default function GlobalBienes() {
                   { l: 'Torre', v: ticket.torreNombre },
                   { l: 'Departamento', v: ticket.aptNumero },
                   { l: 'Estacionamiento', v: `#${ticket.spotNumero}` },
-                  { l: 'Vehículo', v: `${ticket.vehiculoMarca} ${ticket.vehiculoModelo}`.trim() },
+                  { l: 'Vehï¿½culo', v: `${ticket.vehiculoMarca} ${ticket.vehiculoModelo}`.trim() },
                   { l: 'Placa', v: ticket.placa },
-                  { l: 'Ocupante', v: ticket.ocupante || '—' },
-                  { l: 'Nombre', v: ticket.datosInquilino || '—' },
+                  { l: 'Ocupante', v: ticket.ocupante || 'ï¿½' },
+                  { l: 'Nombre', v: ticket.datosInquilino || 'ï¿½' },
                   { l: 'Entrada', v: formatDate(ticket.fechaEntrada) },
                   { l: 'Salida', v: ticket.fechaSalida ? formatDate(ticket.fechaSalida) : 'En curso' },
-                  { l: 'Método', v: ticket.metodo || '—' }
+                  { l: 'Mï¿½todo', v: ticket.metodo || 'ï¿½' }
                 ].map((r, i) => (
                   <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "0.2rem 0" }}>
                     <span style={{ color: "#64748b" }}>{r.l}:</span>
@@ -2353,7 +2353,7 @@ export default function GlobalBienes() {
               </div>
               <hr style={{ border: "1px dashed #d1d5db", margin: "0.5rem 0" }} />
               <div style={{ margin: "0.75rem 0" }}><canvas ref={barcodeRef} style={{ maxWidth: "100%" }} /></div>
-              <div style={{ fontSize: "0.65rem", color: "#94a3b8" }}>{condo?.nombre || 'SGC'} · {new Date().toLocaleDateString('es-PE')}</div>
+              <div style={{ fontSize: "0.65rem", color: "#94a3b8" }}>{condo?.nombre || 'SGC'} ï¿½ {new Date().toLocaleDateString('es-PE')}</div>
             </div>
             <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "center", gap: "0.75rem", backgroundColor: "#f8fafc" }}>
               <button onClick={printTicket} style={{ backgroundColor: colorSuper, color: "#fff", border: "none", padding: "0.5rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.4rem" }}>
@@ -2370,8 +2370,8 @@ export default function GlobalBienes() {
           <div style={{ ...styles.modalBox, maxWidth: "400px" }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", textAlign: "center" }}>
               <FiAlertCircle size={40} color="#ef4444" style={{ marginBottom: "0.75rem" }} />
-              <h3 style={{ margin: "0 0 0.5rem", fontSize: "1rem", fontWeight: 800, color: "#1e293b" }}>Confirmar eliminación</h3>
-              <p style={{ fontSize: "0.85rem", color: "#64748b", margin: 0 }}>¿Eliminar {confirmDelete.tipo === 'CARRITO' ? 'carrito' : 'estacionamiento'} #{confirmDelete.id}?</p>
+              <h3 style={{ margin: "0 0 0.5rem", fontSize: "1rem", fontWeight: 800, color: "#1e293b" }}>Confirmar eliminaciï¿½n</h3>
+              <p style={{ fontSize: "0.85rem", color: "#64748b", margin: 0 }}>ï¿½Eliminar {confirmDelete.tipo === 'CARRITO' ? 'carrito' : 'estacionamiento'} #{confirmDelete.id}?</p>
               <div style={{ display: "flex", gap: "0.75rem", justifyContent: "center", marginTop: "1.25rem" }}>
                 <button onClick={handleDelete} style={{ backgroundColor: "#ef4444", border: "none", color: "#fff", padding: "0.5rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>Eliminar</button>
                 <button onClick={() => setConfirmDelete(null)} style={{ backgroundColor: "#fff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>Cancelar</button>
