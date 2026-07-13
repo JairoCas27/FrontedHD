@@ -160,9 +160,13 @@ export default function ReportesGlobales() {
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      setIsTablet(window.innerWidth >= 768 && window.innerWidth < 1024);
+    };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -312,6 +316,22 @@ export default function ReportesGlobales() {
         .rg-chart3    { animation: fadeSlideUp 0.5s ease both; animation-delay: 0.3s; }
         .rg-chart4    { animation: fadeSlideUp 0.5s ease both; animation-delay: 0.35s; }
         .rg-metrics   { animation: fadeSlideUp 0.5s ease both; animation-delay: 0.4s; }
+        .rg-stats-grid { display: grid; gap: 16px; margin-bottom: 22px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+        .rg-condo-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+        .rg-filter-bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem; }
+        .rg-admin-metrics { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+        /* .rg-table-scroll removed — no table elements in this component */
+        @media (max-width: 1023px) {
+          .rg-stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 767px) {
+          .rg-stats-grid { grid-template-columns: 1fr; }
+          .rg-condo-grid { grid-template-columns: 1fr; }
+          .rg-admin-metrics { grid-template-columns: repeat(2, 1fr); }
+          .rg-filter-bar { flex-direction: column; align-items: stretch; }
+          .rg-filter-bar > * { width: 100%; }
+          .rg-filter-bar .rg-filter-search { width: 100%; }
+        }
       `}</style>
 
       <div style={{
@@ -397,12 +417,7 @@ export default function ReportesGlobales() {
         </div>
       </div>
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-        gap: '16px',
-        marginBottom: '22px',
-      }}>
+      <div className="rg-stats-grid">
         {stats.map((stat, idx) => (
           <div
             key={idx}
@@ -737,7 +752,7 @@ export default function ReportesGlobales() {
 
         {(!condoSeleccionado || showCardSelector) && (
           <div style={{ padding: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+            <div className="rg-filter-bar" style={{ marginBottom: '1.25rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                 <div style={{
                   backgroundColor: 'rgba(124,58,237,0.1)',
@@ -783,11 +798,7 @@ export default function ReportesGlobales() {
                 />
               </div>
             </div>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))',
-              gap: '14px',
-            }}>
+            <div className="rg-condo-grid">
               {filteredCondominios.map((c, idx) => {
                 const isSelected = String(c.id) === String(condoSeleccionado);
                 const [color1, color2] = coloresGradiente[idx % coloresGradiente.length];
@@ -966,11 +977,7 @@ export default function ReportesGlobales() {
                 description="No se pudieron cargar las mÃ©tricas para este condominio."
               />
             ) : (
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-                gap: '12px',
-              }}>
+              <div className="rg-admin-metrics">
                 {[
                   { label: 'Torres', value: adminMetrics.totalTorres || 0, icon: <FiLayers size={18} />, color: SUPER.primary, bg: SUPER.primaryBg },
                   { label: 'Pisos', value: adminMetrics.totalPisos || 0, icon: <FiBox size={18} />, color: '#3b82f6', bg: '#eff6ff' },
