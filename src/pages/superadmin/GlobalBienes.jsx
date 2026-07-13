@@ -245,7 +245,7 @@ export default function GlobalBienes() {
         getActiveCartLoans(id).catch(() => []),
         getAllCartLoans(id).catch(() => [])
       ])
-      setParking(extractItems(p))
+      setParking(extractItems(p).sort((a, b) => (parseInt(a.numero, 10) || a.id) - (parseInt(b.numero, 10) || b.id)))
       setCarts(extractItems(c))
       setApartments(extractItems(a))
       setVehicles(Array.isArray(v) ? v : [])
