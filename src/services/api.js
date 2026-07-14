@@ -233,7 +233,8 @@ export async function getAdminLogsByCondo(condominiumId, params = "") {
 }
 
 
-// PROPIETARIO
+// ─── PROPIETARIO ──────────────────────────────────────────────────────────────
+ 
 export const getHomeownerDashboard = () =>
   safeFetch('/api/homeowner/dashboard/summary');
  
@@ -243,16 +244,36 @@ export const getHomeownerApartment = () =>
 export const getHomeownerVehicles = () =>
   safeFetch('/api/homeowner/vehicles');
  
-// inquilinoId es opcional — si se omite el vehículo se asigna al propietario
 export const createHomeownerVehicle = (data) =>
   safeFetch('/api/homeowner/vehicles', {
     method: 'POST',
     body: JSON.stringify(data),
   });
  
+export const updateHomeownerVehicle = (id, data) =>
+  safeFetch(`/api/homeowner/vehicles/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      marca:  data.marca,
+      color:  data.color,
+      modelo: data.modelo,
+      placa:  data.placa,
+    }),
+  });
+ 
 export const deleteHomeownerVehicle = (id) =>
   safeFetch(`/api/homeowner/vehicles/${id}`, { method: 'DELETE' });
  
+export const assignHomeownerVehicleParking = (vehicleId, idEstacionamiento) =>
+  safeFetch(`/api/homeowner/vehicles/${vehicleId}/parking`, {
+    method: 'PUT',
+    body: JSON.stringify({ idEstacionamiento }),
+  });
+ 
+export const getHomeownerParkingSpots = (condominioId) => {
+  const qs = condominioId ? `?condominioId=${condominioId}` : '';
+  return safeFetch(`/api/homeowner/parking-spots${qs}`);
+};
  
 export const getHomeownerTenants = () =>
   safeFetch('/api/homeowner/tenants');
@@ -272,25 +293,8 @@ export const getHomeownerLogs = ({ type, fechaInicio, fechaFin, page = 0, size =
   if (fechaFin)    params.append('fechaFin',    fechaFin);
   return safeFetch(`/api/homeowner/logs?${params.toString()}`);
 };
- 
-// PUT /api/homeowner/vehicles/{id}
 
-export const updateHomeownerVehicle = (id, data) =>
-  safeFetch(`/api/homeowner/vehicles/${id}`, {
-    method: 'PUT',
-    body: JSON.stringify({
-      marca:   data.marca,
-      color:   data.color,
-      modelo:  data.modelo,
-      placa:   data.placa,
-    }),
-  });
-  
-export async function getHomeownerParkingSpots(condominioId) {
-  const qs = condominioId ? `?condominioId=${condominioId}` : '';
-  return safeFetch(`/api/homeowner/parking-spots${qs}`);
-}
-  // fin propietario //
+// FIN PROPIETARIO ___________________________
 
 export async function getAdminDashboardMetrics(condominioId) {
   const qs = condominioId ? `?condominioId=${condominioId}` : '';
