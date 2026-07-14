@@ -558,15 +558,6 @@ export async function registerVehicleExit(data) {
   });
 }
 
-export async function getHomeownerParkingSpots(condominioId) {
-  const qs = condominioId ? `?condominioId=${condominioId}` : '';
-  return safeFetch(`/api/homeowner/parking-spots${qs}`);
-}
-
-export async function getHomeownerAllVehicles() {
-  return safeFetch('/api/homeowner/vehicles');
-}
-
 export async function getAdminAccessLogs(condominioId, params = {}) {
   const qs = new URLSearchParams();
   if (condominioId) qs.append('condominioId', condominioId);
