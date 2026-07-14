@@ -284,6 +284,17 @@ export const createHomeownerTenant = (data) =>
     body: JSON.stringify(data),
   });
  
+export const updateHomeownerTenant = (id, data) =>
+  safeFetch(`/api/homeowner/tenants/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      nombres:         data.nombres,
+      apellidos:       data.apellidos,
+      tipoDocumento:   data.tipoDocumento,
+      numeroDocumento: data.numeroDocumento,
+    }),
+ });
+
 export const deleteHomeownerTenant = (id) =>
   safeFetch(`/api/homeowner/tenants/${id}`, { method: 'DELETE' });
  
