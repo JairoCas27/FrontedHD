@@ -250,18 +250,9 @@ export const createHomeownerVehicle = (data) =>
     body: JSON.stringify(data),
   });
  
-// idEstacionamiento: number para asignar, null para desasignar
-export const assignHomeownerVehicleParking = (vehicleId, idEstacionamiento) =>
-  safeFetch(`/api/homeowner/vehicles/${vehicleId}/parking`, {
-    method: 'PUT',
-    body: JSON.stringify({ idEstacionamiento }),
-  });
- 
 export const deleteHomeownerVehicle = (id) =>
   safeFetch(`/api/homeowner/vehicles/${id}`, { method: 'DELETE' });
  
-export const getHomeownerParkingSpots = () =>
-  safeFetch('/api/homeowner/parking-spots');
  
 export const getHomeownerTenants = () =>
   safeFetch('/api/homeowner/tenants');
@@ -294,7 +285,11 @@ export const updateHomeownerVehicle = (id, data) =>
       placa:   data.placa,
     }),
   });
-
+  
+export async function getHomeownerParkingSpots(condominioId) {
+  const qs = condominioId ? `?condominioId=${condominioId}` : '';
+  return safeFetch(`/api/homeowner/parking-spots${qs}`);
+}
   // fin propietario //
 
 export async function getAdminDashboardMetrics(condominioId) {
