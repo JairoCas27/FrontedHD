@@ -1,8 +1,8 @@
 // src/pages/propietario/MiApartamento.jsx
 
-import { useEffect, useState } from "react";
-import { Building2, Car, Users, CheckCircle, XCircle, Maximize2 } from "lucide-react";
-import { getHomeownerApartment } from "../../services/api";
+import { useEffect, useState, useCallback } from "react";
+import { Building2, Car, Users, CheckCircle, XCircle, Maximize2, ParkingSquare } from "lucide-react";
+import { getHomeownerApartment, getHomeownerParkingSpots } from "../../services/api";
 import { colors, radius, shadow, transition } from "../../theme/colors";
 import InfoCard from "../../components/common/InfoCard";
 import SectionHeader from "../../components/common/SectionHeader";
@@ -15,6 +15,8 @@ const PAGE = {
   margin: "0 auto",
   fontFamily: "system-ui, sans-serif",
 };
+
+// ─── Sub-componentes ──────────────────────────────────────────────────────────
 
 function DetailRow({ label, value, icon: Icon }) {
   return (
@@ -147,13 +149,109 @@ function TenantCard({ t }) {
   );
 }
 
+function ParkingCard({ spot }) {
+  const [hovered, setHovered] = useState(false);
+  const lleno = spot.cantidadActual >= spot.capacidadMaxima;
+  const ocupacionPct = spot.capacidadMaxima > 0
+    ? Math.round((spot.cantidadActual / spot.capacidadMaxima) * 100)
+    : 0;
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: colors.white,
+        borderRadius: radius.md,
+        padding: "18px 20px",
+        border: `1px solid ${hovered ? colors.orangeBorder : colors.border}`,
+        boxShadow: hovered ? shadow.md : shadow.sm,
+        transform: hovered ? "translateY(-2px)" : "none",
+        transition,
+        display: "flex",
+        alignItems: "center",
+        gap: "16px",
+      }}
+    >
+      <div
+        style={{
+          width: "42px",
+          height: "42px",
+          borderRadius: radius.sm,
+          background: lleno ? colors.redLight : colors.greenLight,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        <ParkingSquare size={20} color={lleno ? colors.red : colors.green} />
+      </div>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ margin: 0, fontWeight: 600, color: colors.slate, fontSize: "14px" }}>
+          Estacionamiento #{spot.numero}
+        </p>
+        <p style={{ margin: "2px 0 0", fontSize: "12px", color: colors.slateLight }}>
+          {spot.tipoVehiculo} · {spot.cantidadActual}/{spot.capacidadMaxima} ocupado{spot.cantidadActual !== 1 ? "s" : ""}
+        </p>
+
+        {/* Barra de ocupación */}
+        <div
+          style={{
+            marginTop: "8px",
+            height: "4px",
+            borderRadius: "2px",
+            background: colors.border,
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              height: "100%",
+              width: `${ocupacionPct}%`,
+              borderRadius: "2px",
+              background: lleno ? colors.red : ocupacionPct > 60 ? colors.orange : colors.green,
+              transition,
+            }}
+          />
+        </div>
+      </div>
+
+      <span
+        style={{
+          fontSize: "11px",
+          fontWeight: 600,
+          padding: "3px 8px",
+          borderRadius: radius.xl,
+          background: lleno ? colors.redLight : colors.greenLight,
+          color: lleno ? colors.red : colors.green,
+          whiteSpace: "nowrap",
+          flexShrink: 0,
+        }}
+      >
+        {lleno ? "Lleno" : "Disponible"}
+      </span>
+    </div>
+  );
+}
+
+// ─── Vista principal ──────────────────────────────────────────────────────────
+
 export default function MiApartamento() {
-  const [apt, setApt] = useState(null);
+  const [apt,     setApt]     = useState(null);
+  const [spots,   setSpots]   = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    getHomeownerApartment()
-      .then(setApt)
+    Promise.all([
+      getHomeownerApartment(),
+      getHomeownerParkingSpots().catch(() => []),
+    ])
+      .then(([aptData, spotsData]) => {
+        setApt(aptData);
+        setSpots(Array.isArray(spotsData) ? spotsData : []);
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
@@ -191,12 +289,13 @@ export default function MiApartamento() {
           marginBottom: "24px",
         }}
       >
+        {/* Columna izquierda — datos generales */}
         <InfoCard title="Datos del apartamento">
-          <DetailRow label="Número" value={apt.numero} icon={Building2} />
-          <DetailRow label="Torre" value={apt.torreNombre} icon={Building2} />
-          <DetailRow label="Piso" value={apt.pisoNumero} icon={Building2} />
+          <DetailRow label="Número"  value={apt.numero}       icon={Building2} />
+          <DetailRow label="Torre"   value={apt.torreNombre}  icon={Building2} />
+          <DetailRow label="Piso"    value={apt.pisoNumero}   icon={Building2} />
           <DetailRow label="Metraje" value={`${apt.metraje} m²`} icon={Maximize2} />
-          <DetailRow label="Total vehículos" value={apt.totalVehiculos} icon={Car} />
+          <DetailRow label="Total vehículos"  value={apt.totalVehiculos}  icon={Car}   />
           <DetailRow label="Total inquilinos" value={apt.totalInquilinos} icon={Users} />
           <div
             style={{
@@ -224,7 +323,21 @@ export default function MiApartamento() {
           </div>
         </InfoCard>
 
+        {/* Columna derecha — listas */}
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+
+          {/* Estacionamientos */}
+          {spots.length > 0 && (
+            <InfoCard title={`Estacionamientos (${spots.length})`}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {spots.map((spot) => (
+                  <ParkingCard key={spot.id} spot={spot} />
+                ))}
+              </div>
+            </InfoCard>
+          )}
+
+          {/* Vehículos */}
           <InfoCard title={`Vehículos (${apt.vehiculos?.length ?? 0})`}>
             {apt.vehiculos?.length === 0 ? (
               <EmptyState icon={Car} title="Sin vehículos registrados" />
@@ -237,6 +350,7 @@ export default function MiApartamento() {
             )}
           </InfoCard>
 
+          {/* Inquilinos */}
           <InfoCard title={`Inquilinos (${apt.inquilinos?.length ?? 0})`}>
             {apt.inquilinos?.length === 0 ? (
               <EmptyState icon={Users} title="Sin inquilinos registrados" />
@@ -248,6 +362,7 @@ export default function MiApartamento() {
               </div>
             )}
           </InfoCard>
+
         </div>
       </div>
     </div>

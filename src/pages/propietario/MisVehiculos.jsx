@@ -178,6 +178,8 @@ function ParkingModal({ open, vehicle, spots, onClose, onSave, saving }) {
       onClose={onClose}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+
+        {/* Info del vehículo */}
         <div
           style={{
             background: colors.background,
@@ -197,18 +199,21 @@ function ParkingModal({ open, vehicle, spots, onClose, onSave, saving }) {
           </span>
         </div>
 
+        {/* Lista de spots */}
         {spots.length === 0 ? (
           <p style={{ fontSize: "14px", color: colors.slateLight, textAlign: "center", padding: "16px 0" }}>
             No hay estacionamientos disponibles para tu apartamento.
           </p>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "260px", overflowY: "auto" }}>
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "280px", overflowY: "auto" }}>
             {spots.map((spot) => {
               const isSelected = selected === spot.id;
+              const lleno = spot.cantidadActual >= spot.capacidadMaxima;
+
               return (
                 <button
                   key={spot.id}
-                  onClick={() => setSelected(isSelected ? null : spot.id)}
+                  onClick={() => !lleno && setSelected(isSelected ? null : spot.id)}
                   style={{
                     display: "flex",
                     alignItems: "center",
@@ -216,35 +221,49 @@ function ParkingModal({ open, vehicle, spots, onClose, onSave, saving }) {
                     padding: "12px 16px",
                     borderRadius: radius.sm,
                     border: `1px solid ${isSelected ? colors.orange : colors.border}`,
-                    background: isSelected ? colors.orangeLight : colors.white,
-                    cursor: "pointer",
+                    background: isSelected ? colors.orangeLight : lleno ? colors.background : colors.white,
+                    cursor: lleno ? "not-allowed" : "pointer",
                     fontFamily: "system-ui, sans-serif",
                     transition,
                     textAlign: "left",
+                    opacity: lleno ? 0.6 : 1,
                   }}
                 >
                   <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <ParkingSquare size={16} color={isSelected ? colors.orange : colors.slateLight} />
-                    <span style={{ fontSize: "14px", fontWeight: 500, color: isSelected ? colors.orange : colors.slate }}>
-                      Estacionamiento #{spot.id}
-                    </span>
-                    {spot.nombre && (
-                      <span style={{ fontSize: "12px", color: colors.slateLight }}>
-                        {spot.nombre}
+                    <ParkingSquare size={16} color={isSelected ? colors.orange : lleno ? colors.slateLighter : colors.slateLight} />
+                    <div>
+                      <p style={{ margin: 0, fontSize: "14px", fontWeight: 500, color: isSelected ? colors.orange : colors.slate }}>
+                        Estacionamiento #{spot.numero}
+                      </p>
+                      <p style={{ margin: "2px 0 0", fontSize: "11px", color: colors.slateLighter }}>
+                        {spot.tipoVehiculo} · {spot.cantidadActual}/{spot.capacidadMaxima} ocupado{spot.cantidadActual !== 1 ? "s" : ""}
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                    {isSelected && (
+                      <span style={{ fontSize: "11px", fontWeight: 600, color: colors.orange }}>
+                        SELECCIONADO
+                      </span>
+                    )}
+                    {lleno && (
+                      <span style={{ fontSize: "11px", fontWeight: 600, color: colors.red }}>
+                        LLENO
+                      </span>
+                    )}
+                    {!lleno && !isSelected && spot.disponible && (
+                      <span style={{ fontSize: "11px", color: colors.green, fontWeight: 500 }}>
+                        Disponible
                       </span>
                     )}
                   </div>
-                  {isSelected && (
-                    <span style={{ fontSize: "11px", fontWeight: 600, color: colors.orange }}>
-                      SELECCIONADO
-                    </span>
-                  )}
                 </button>
               );
             })}
           </div>
         )}
 
+        {/* Desasignar */}
         {hasParking && (
           <button
             onClick={() => setSelected(null)}
@@ -279,6 +298,7 @@ function ParkingModal({ open, vehicle, spots, onClose, onSave, saving }) {
             {saving ? "Guardando..." : "Guardar"}
           </ActionButton>
         </div>
+
       </div>
     </Modal>
   );
