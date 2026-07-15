@@ -1,186 +1,216 @@
 import { useState, useEffect } from "react";
-import { FiActivity, FiFilter, FiLogIn, FiLogOut, FiCalendar, FiSearch } from "react-icons/fi";
+import { FiActivity, FiFilter, FiLogIn, FiLogOut, FiCalendar, FiSearch, FiUser } from "react-icons/fi";
+import { getSecurityDashboardStatus } from "../../services/api";
+
+function formatFecha(str) {
+  if (!str) return "—";
+  try {
+    return new Date(str).toLocaleString("es-PE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: false,
+    });
+  } catch {
+    return str;
+  }
+}
 
 export default function Movimientos() {
-  const [accesos, setAccesos] = useState([]);
+  const [movimientos, setMovimientos] = useState([]);
+  const [stats, setStats] = useState({ totalEstacionamientos: 0, estacionamientosOcupados: 0, prestamosActivos: 0 });
   const [filtroTipo, setFiltroTipo] = useState("TODOS");
-  const [filtroPlaca, setFiltroPlaca] = useState("");
+  const [filtroDesc, setFiltroDesc] = useState("");
   const [filtroFecha, setFiltroFecha] = useState("");
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const data = JSON.parse(localStorage.getItem("accesosSeguridad") || "[]");
-    setAccesos(data);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const data = await getSecurityDashboardStatus();
+        setMovimientos(data.movimientosRecientes || []);
+        setStats({
+          totalEstacionamientos: data.totalEstacionamientos,
+          estacionamientosOcupados: data.estacionamientosOcupados,
+          prestamosActivos: data.prestamosActivos,
+        });
+      } catch {
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
   }, []);
 
-  const hoy = new Date().toDateString();
-
-  const stats = {
-    total: accesos.filter(a => new Date(a.fecha).toDateString() === hoy).length,
-    entradas: accesos.filter(a => new Date(a.fecha).toDateString() === hoy && a.tipo === "ENTRADA").length,
-    salidas: accesos.filter(a => new Date(a.fecha).toDateString() === hoy && a.tipo === "SALIDA").length,
-  };
-
-  const filtrados = accesos.filter(a => {
-    const tipoOk = filtroTipo === "TODOS" || a.tipo === filtroTipo;
-    const placaOk = !filtroPlaca || a.placa.includes(filtroPlaca.toUpperCase());
-    const fechaOk = !filtroFecha || a.fecha.split("T")[0] === filtroFecha;
-    return tipoOk && placaOk && fechaOk;
+  const movimientosFiltrados = movimientos.filter((m) => {
+    const coincideTipo = filtroTipo === "TODOS" || m.tipo?.toUpperCase() === filtroTipo;
+    const coincideDesc = !filtroDesc || m.descripcion?.toLowerCase().includes(filtroDesc.toLowerCase());
+    const coincideFecha = !filtroFecha || (m.fecha && m.fecha.startsWith(filtroFecha));
+    return coincideTipo && coincideDesc && coincideFecha;
   });
 
-  const StatCard = ({ label, value, color }) => (
-    <div className="bg-white rounded-xl p-6 shadow-md text-center">
-      <p className="text-xs font-bold text-slate-400 uppercase mb-2">{label}</p>
-      <p className={`text-3xl font-extrabold ${color}`}>{value}</p>
-    </div>
-  );
-
-  const FilterSelect = ({ label, icon: Icon, value, onChange, children }) => (
-    <div className="flex-1 min-w-[150px]">
-      <label className="block text-xs font-bold text-slate-400 uppercase mb-2">{label}</label>
-      <div className="flex items-center gap-2">
-        {Icon && <Icon size={16} className="text-slate-400" />}
-        <select
-          value={value}
-          onChange={onChange}
-          className="w-full px-3 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-emerald-400"
-        >
-          {children}
-        </select>
-      </div>
-    </div>
-  );
-
-  const FilterInput = ({ label, icon: Icon, type = "text", value, onChange, placeholder }) => (
-    <div className="flex-1 min-w-[150px]">
-      <label className="block text-xs font-bold text-slate-400 uppercase mb-2">{label}</label>
-      <div className="flex items-center gap-2">
-        {Icon && <Icon size={16} className="text-slate-400" />}
-        <input
-          type={type}
-          value={value}
-          onChange={onChange}
-          placeholder={placeholder}
-          className="w-full px-3 py-3 rounded-xl border border-slate-200 outline-none focus:ring-2 focus:ring-emerald-400"
-        />
-      </div>
-    </div>
-  );
-
-  const Badge = ({ tipo, children }) => {
-    const styles = {
-      ENTRADA: "bg-emerald-100 text-emerald-800",
-      SALIDA: "bg-red-100 text-red-800",
-      RESIDENTE: "bg-blue-100 text-blue-800",
-      VISITANTE: "bg-amber-100 text-amber-800",
-    };
-    return (
-      <span className={`px-3 py-1.5 rounded-full text-xs font-bold ${styles[tipo] || styles.VISITANTE}`}>
-        {children}
-      </span>
-    );
+  const estiloTh = {
+    padding: "0.85rem 1rem",
+    textAlign: "center",
+    fontSize: "0.72rem",
+    fontWeight: 700,
+    color: "#94a3b8",
+    textTransform: "uppercase",
+    letterSpacing: "0.06em",
   };
 
+  const estiloTd = {
+    padding: "0.85rem 1rem",
+    color: "#64748b",
+    fontSize: "0.9rem",
+    textAlign: "center",
+    verticalAlign: "middle",
+  };
+
+  const estiloLabel = {
+    display: "block",
+    fontSize: "0.72rem",
+    fontWeight: 700,
+    color: "#94a3b8",
+    textTransform: "uppercase",
+    letterSpacing: "0.05em",
+    marginBottom: "0.4rem",
+  };
+
+  const estiloInput = {
+    width: "100%",
+    padding: "0.65rem 0.75rem",
+    borderRadius: "8px",
+    border: "1px solid #e2e8f0",
+    fontSize: "0.9rem",
+    outline: "none",
+    background: "#f8fafc",
+    color: "#1e293b",
+    boxSizing: "border-box",
+  };
+
+  const statCard = (label, value, color = "#1e293b") => (
+    <div style={{ background: "#fff", borderRadius: "12px", padding: "1.5rem", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", textAlign: "center" }}>
+      <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.5rem", margin: "0 0 0.5rem" }}>{label}</p>
+      <p style={{ fontSize: "1.8rem", fontWeight: 800, color, margin: 0 }}>{value}</p>
+    </div>
+  );
+
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-extrabold text-slate-800">Movimientos</h1>
-        <p className="text-slate-500 mt-1 text-sm">Historial completo de accesos al condominio</p>
+    <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", boxSizing: "border-box" }}>
+      <div style={{ marginBottom: "2rem" }}>
+        <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>Movimientos</h1>
+        <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>Historial de actividad reciente del condominio</p>
       </div>
 
-      {/* Estadísticas */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-        <StatCard label="Total Hoy" value={stats.total} color="text-slate-800" />
-        <StatCard label="Entradas" value={stats.entradas} color="text-emerald-500" />
-        <StatCard label="Salidas" value={stats.salidas} color="text-red-500" />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
+        {statCard("Estacionamientos", stats.totalEstacionamientos)}
+        {statCard("Ocupados", stats.estacionamientosOcupados, "#ef4444")}
+        {statCard("Préstamos Activos", stats.prestamosActivos, "#10b981")}
       </div>
 
-      {/* Filtros */}
-      <div className="bg-white rounded-2xl p-6 shadow-md mb-8">
-        <h5 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
-          <FiFilter size={18} />
+      <div style={{ background: "#fff", borderRadius: "16px", padding: "1.5rem", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginBottom: "2rem" }}>
+        <h5 style={{ fontWeight: 700, color: "#1e293b", margin: "0 0 1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <FiFilter size={18} color="#64748b" />
           Filtros
         </h5>
-        
-        <div className="flex gap-4 flex-wrap items-end">
-          <FilterSelect
-            label="Tipo"
-            icon={FiFilter}
-            value={filtroTipo}
-            onChange={(e) => setFiltroTipo(e.target.value)}
-          >
-            <option value="TODOS">Todos</option>
-            <option value="ENTRADA">Entradas</option>
-            <option value="SALIDA">Salidas</option>
-          </FilterSelect>
-
-          <FilterInput
-            label="Placa"
-            icon={FiSearch}
-            value={filtroPlaca}
-            onChange={(e) => setFiltroPlaca(e.target.value.toUpperCase())}
-            placeholder="ABC-123"
-          />
-
-          <FilterInput
-            label="Fecha"
-            icon={FiCalendar}
-            type="date"
-            value={filtroFecha}
-            onChange={(e) => setFiltroFecha(e.target.value)}
-          />
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "1rem" }}>
+          <div>
+            <label style={estiloLabel}>Tipo</label>
+            <select style={estiloInput} value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}>
+              <option value="TODOS">Todos</option>
+              <option value="ENTRADA">Entrada</option>
+              <option value="SALIDA">Salida</option>
+              <option value="PRESTAMO">Préstamo</option>
+              <option value="DEVOLUCION">Devolución</option>
+            </select>
+          </div>
+          <div>
+            <label style={estiloLabel}>Descripción</label>
+            <div style={{ position: "relative" }}>
+              <FiSearch size={14} color="#94a3b8" style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)" }} />
+              <input
+                type="text"
+                placeholder="Buscar..."
+                value={filtroDesc}
+                onChange={(e) => setFiltroDesc(e.target.value)}
+                style={{ ...estiloInput, paddingLeft: "2rem" }}
+              />
+            </div>
+          </div>
+          <div>
+            <label style={estiloLabel}>Fecha</label>
+            <div style={{ position: "relative" }}>
+              <FiCalendar size={14} color="#94a3b8" style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)" }} />
+              <input
+                type="date"
+                value={filtroFecha}
+                onChange={(e) => setFiltroFecha(e.target.value)}
+                style={{ ...estiloInput, paddingLeft: "2rem" }}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Tabla */}
-      <div className="bg-white rounded-2xl p-8 shadow-md">
-        <div className="flex justify-between items-center mb-6">
-          <h5 className="font-bold text-slate-800 flex items-center gap-2">
-            <FiActivity size={20} />
+      <div style={{ background: "#fff", borderRadius: "16px", padding: "2rem", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+          <h5 style={{ fontWeight: 700, color: "#1e293b", margin: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <FiActivity size={20} color="#64748b" />
             Registro de Movimientos
           </h5>
-          <span className="px-3 py-1.5 bg-slate-100 rounded-full text-xs font-semibold text-slate-500">
-            {filtrados.length} registros
+          <span style={{ padding: "0.35rem 0.75rem", backgroundColor: "#f1f5f9", borderRadius: "20px", fontSize: "0.85rem", fontWeight: 600, color: "#64748b" }}>
+            {movimientosFiltrados.length} registros
           </span>
         </div>
 
-        {filtrados.length === 0 ? (
-          <div className="text-center py-12 text-slate-400">
-            <FiActivity size={48} className="mx-auto mb-4 opacity-40" />
-            <p className="text-base font-medium">No hay movimientos registrados</p>
-            <p className="text-sm mt-1">Los registros aparecerán aquí</p>
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "3rem 2rem", color: "#94a3b8" }}>
+            <FiActivity size={36} style={{ marginBottom: "1rem", opacity: 0.35, display: "block", margin: "0 auto 1rem" }} />
+            <p style={{ fontWeight: 600, margin: 0 }}>Cargando movimientos...</p>
+          </div>
+        ) : movimientosFiltrados.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "3rem 2rem", color: "#94a3b8" }}>
+            <FiActivity size={40} style={{ display: "block", margin: "0 auto 1rem", opacity: 0.35 }} />
+            <p style={{ fontSize: "1rem", fontWeight: 600, margin: "0 0 0.25rem" }}>Sin movimientos registrados</p>
+            <p style={{ fontSize: "0.85rem", margin: 0 }}>Los registros aparecerán aquí</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-slate-50">
-                  <th className="p-4 text-left text-xs font-bold text-slate-400 uppercase">Fecha</th>
-                  <th className="p-4 text-left text-xs font-bold text-slate-400 uppercase">Hora</th>
-                  <th className="p-4 text-left text-xs font-bold text-slate-400 uppercase">Placa</th>
-                  <th className="p-4 text-left text-xs font-bold text-slate-400 uppercase">Tipo</th>
-                  <th className="p-4 text-left text-xs font-bold text-slate-400 uppercase">Residente/Visitante</th>
-                  <th className="p-4 text-left text-xs font-bold text-slate-400 uppercase">Estado</th>
+                <tr style={{ backgroundColor: "#f8fafc" }}>
+                  {["ID", "Tipo", "Descripción", "Fecha"].map((h) => (
+                    <th key={h} style={estiloTh}>{h}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
-                {filtrados.map((a) => (
-                  <tr key={a.id} className="border-b border-slate-100">
-                    <td className="p-4 text-slate-500">{new Date(a.fecha).toLocaleDateString()}</td>
-                    <td className="p-4 font-bold text-slate-800">{a.hora}</td>
-                    <td className="p-4 text-slate-500">{a.placa}</td>
-                    <td className="p-4">
-                      <Badge tipo={a.tipo}>
-                        {a.tipo === "ENTRADA" ? <FiLogIn size={12} className="inline mr-1" /> : <FiLogOut size={12} className="inline mr-1" />}
-                        {a.tipo}
-                      </Badge>
+                {movimientosFiltrados.map((m) => (
+                  <tr key={m.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+                    <td style={{ ...estiloTd, fontWeight: 700, color: "#1e293b", fontFamily: "monospace" }}>#{m.id}</td>
+                    <td style={estiloTd}>
+                      <span style={{
+                        padding: "0.3rem 0.7rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 700,
+                        backgroundColor: m.tipo?.toUpperCase() === "ENTRADA" ? "#dcfce7" : m.tipo?.toUpperCase() === "SALIDA" ? "#fee2e2" : "#dbeafe",
+                        color: m.tipo?.toUpperCase() === "ENTRADA" ? "#166534" : m.tipo?.toUpperCase() === "SALIDA" ? "#991b1b" : "#1e40af",
+                        display: "inline-flex", alignItems: "center", gap: "0.3rem",
+                      }}>
+                        {m.tipo?.toUpperCase() === "ENTRADA" ? <FiLogIn size={11} /> : m.tipo?.toUpperCase() === "SALIDA" ? <FiLogOut size={11} /> : <FiActivity size={11} />}
+                        {m.tipo}
+                      </span>
                     </td>
-                    <td className="p-4 text-slate-500">{a.nombreResidente}</td>
-                    <td className="p-4">
-                      <Badge tipo={a.esResidente ? "RESIDENTE" : "VISITANTE"}>
-                        {a.esResidente ? "Residente" : "Visitante"}
-                      </Badge>
+                    <td style={estiloTd}>
+                      <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
+                        <FiUser size={14} color="#94a3b8" />
+                        {m.descripcion}
+                      </div>
                     </td>
+                    <td style={estiloTd}>{formatFecha(m.fecha)}</td>
                   </tr>
                 ))}
               </tbody>

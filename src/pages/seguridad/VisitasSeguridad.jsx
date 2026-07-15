@@ -2,13 +2,63 @@ import { useState, useEffect } from "react";
 import { FiActivity, FiUserPlus, FiClock, FiLogOut, FiUsers, FiLoader } from "react-icons/fi";
 import { registerEntry, registerExit } from "../../services/api";
 
-export default function VisitasSeguridad() {
+const estiloLabel = {
+  display: "block",
+  fontSize: "0.72rem",
+  fontWeight: 700,
+  color: "#94a3b8",
+  textTransform: "uppercase",
+  letterSpacing: "0.05em",
+  marginBottom: "0.4rem",
+};
+
+const estiloInput = {
+  width: "100%",
+  padding: "0.65rem 0.75rem",
+  borderRadius: "8px",
+  border: "1px solid #e2e8f0",
+  fontSize: "0.9rem",
+  outline: "none",
+  background: "#f8fafc",
+  color: "#1e293b",
+  boxSizing: "border-box",
+};
+
+const estiloTh = {
+  padding: "0.85rem 1rem",
+  textAlign: "center",
+  fontSize: "0.72rem",
+  fontWeight: 700,
+  color: "#94a3b8",
+  textTransform: "uppercase",
+  letterSpacing: "0.06em",
+};
+
+const estiloTd = { padding: "0.85rem 1rem", color: "#64748b", fontSize: "0.9rem", textAlign: "center", verticalAlign: "middle" };
+
+function formatFecha(fechaStr) {
+  if (!fechaStr) return "—";
+  try {
+    return new Date(fechaStr).toLocaleDateString("es-PE", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+    });
+  } catch {
+    return fechaStr;
+  }
+}
+
+export default function PrestamosSeguridad() {
+  const [prestamos, setPrestamos] = useState([]);
+  const [loadingPrestamos, setLoadingPrestamos] = useState(true);
+  const [loadingSubmit, setLoadingSubmit] = useState(false);
+  const [loadingReturn, setLoadingReturn] = useState(null);
   const [formData, setFormData] = useState({
-    nombre: "",
-    dni: "",
-    placa: "",
-    visitaA: "",
-    motivo: ""
+    codigoCarrito: "",
+    numeroApartamento: "",
+    nombreSolicitante: "",
+    dniSolicitante: "",
   });
   const [mensaje, setMensaje] = useState(null);
   const [visitasActivas, setVisitasActivas] = useState([]);
@@ -29,14 +79,13 @@ export default function VisitasSeguridad() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const registrarVisita = async (e) => {
     e.preventDefault();
-    
-    if (!formData.nombre || !formData.dni || !formData.visitaA) {
-      setMensaje({ tipo: "warning", texto: "Complete nombre, DNI y a quién visita" });
+    if (!formData.codigoCarrito || !formData.numeroApartamento || !formData.nombreSolicitante || !formData.dniSolicitante) {
+      toast.warning("Completa todos los campos");
       return;
     }
 
@@ -219,8 +268,8 @@ export default function VisitasSeguridad() {
                         disabled={loading}
                         className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold text-sm flex items-center gap-2 disabled:bg-slate-400 disabled:cursor-not-allowed transition-colors"
                       >
-                        <FiLogOut size={14} />
-                        Salida
+                        <FiLogOut size={13} />
+                        {loadingReturn === p.id ? "..." : "Devolver"}
                       </button>
                     </td>
                   </tr>

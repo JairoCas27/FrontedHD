@@ -4,7 +4,7 @@ import { AlertTriangle } from "lucide-react";
 import { colors, radius, shadow } from "../../theme/colors";
 import ActionButton from "./ActionButton";
 
-export default function ConfirmModal({ open, title, description, onConfirm, onCancel, loading }) {
+export default function ConfirmModal({ open, title, description, onConfirm, onCancel, loading, confirmLabel = "Eliminar", variant = "danger" }) {
   if (!open) return null;
 
   return (
@@ -61,11 +61,11 @@ export default function ConfirmModal({ open, title, description, onConfirm, onCa
           )}
         </div>
         <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+          <ActionButton variant={variant} onClick={onConfirm} disabled={loading}>
+            {loading ? `${confirmLabel}...` : confirmLabel}
+          </ActionButton>
           <ActionButton variant="ghost" onClick={onCancel} disabled={loading}>
             Cancelar
-          </ActionButton>
-          <ActionButton variant="danger" onClick={onConfirm} disabled={loading}>
-            {loading ? "Eliminando..." : "Eliminar"}
           </ActionButton>
         </div>
       </div>

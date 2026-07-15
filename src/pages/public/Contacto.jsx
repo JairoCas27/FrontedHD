@@ -74,7 +74,7 @@ function Contacto() {
 
             <div className="mb-4 text-start">
               <label className="form-label fw-semibold text-dark">
-                Correo
+                Correo electrónico
               </label>
               <input
                 type="email"
@@ -100,7 +100,7 @@ function Contacto() {
               <textarea
                 name="message"
                 rows="4"
-                placeholder="Describe tu consulta o requerimiento..."
+                placeholder="Describe tu consulta o requerimiento."
                 className="form-control"
                 value={formData.message}
                 onChange={handleChange}

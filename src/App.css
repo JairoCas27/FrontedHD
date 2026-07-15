@@ -1,0 +1,155 @@
+#root {
+  margin: 0;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+.custom-accordion .accordion-button {
+  background-color: #212529 !important;
+  color: white !important;
+}
+
+.custom-accordion .accordion-button:not(.collapsed) {
+  background-color: #343a40 !important;
+  color: white !important;
+}
+
+.custom-accordion .accordion-body {
+  background-color: #212529 !important;
+  color: white !important;
+  text-align: start;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.accordion-body {
+  background-color: #212529; 
+  color: white;
+  opacity: 0;
+  transform: translateY(20px);
+}
+
+.accordion-collapse {
+  background-color: #212529; 
+}
+
+.accordion-collapse.show .accordion-body {
+  animation: slideUp 0.6s ease forwards;
+  animation-delay: 0.1s;
+}
+
+.navbar {
+  transition: background-color 0.4s ease-in-out;
+}
+
+.navbar-custom .navbar-brand {
+  color: #ffffff !important;
+  font-weight: bold;
+}
+
+.navbar-custom .nav-link {
+  color: #ffffff !important;
+}
+
+.navbar-custom .nav-link:hover {
+  color: #00ccff !important;
+}
+@media (max-width: 992px) {
+  .navbar-custom.bg-transparent {
+    background-color: rgba(63, 60, 60, 0.877) !important;
+  }
+}
+.card-custom {
+  min-height: 320px;
+}
+
+.auth-input::placeholder {
+  color: #94a3b8;
+  opacity: 1;
+}
+
+.auth-input:-webkit-autofill,
+.auth-input:-webkit-autofill:hover,
+.auth-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #1e293b;
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset;
+  box-shadow: 0 0 0px 1000px #ffffff inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+@media (max-width: 768px) {
+  .Toastify__toast-container {
+    top: 12px !important;
+    right: 12px !important;
+    left: auto !important;
+    width: 55vw !important;
+    max-width: 210px !important;
+    padding: 0 !important;
+  }
+
+  .Toastify__toast {
+    font-size: 0.92rem !important;
+    padding: 12px 14px !important;
+    border-radius: 12px !important;
+    line-height: 1.5 !important;
+    word-break: break-word !important;
+    white-space: normal !important;
+    min-height: unset !important;
+    overflow-wrap: break-word !important;
+  }
+
+  .Toastify__toast-body {
+    white-space: normal !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}

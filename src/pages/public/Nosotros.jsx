@@ -23,8 +23,8 @@ function Nosotros() {
         title="Digitalización de la administración residencial"
         text={[
           "Urbania reemplaza procesos manuales en condominios por una gestión completamente digital basada en roles y permisos.",
-          "Permite administrar estructuras complejas como condominios con múltiples torres, edificios y unidades habitacionales.",
-          "Incluye control detallado de residentes, propietarios, visitantes y personal de seguridad con historial de actividad."
+          "Permite administrar estructuras complejas, como condominios con múltiples torres, edificios y unidades habitacionales.",
+          "Incluye control detallado de residentes, propietarios, visitantes y personal de seguridad, con historial de actividad."
         ]}
         image={parkingSystem}
         imageAlt="Sistema Urbania"
@@ -37,7 +37,7 @@ function Nosotros() {
         title="Control operativo y automatización"
         text={[
           "El sistema gestiona accesos vehiculares y peatonales mediante registros digitales y validaciones en tiempo real.",
-          "Incluye administración de estacionamientos con asignación dinámica y control de ocupación por condominio.",
+          "Incluye la administración de estacionamientos con asignación dinámica y control de ocupación por condominio.",
           "Permite la gestión de carritos compartidos con flujo de préstamo, devolución y trazabilidad completa."
         ]}
         image={controlOperativo}
@@ -62,7 +62,7 @@ function Nosotros() {
       />
 
       <SeccionConImg
-        title="Evolución hacia gestión urbana inteligente"
+        title="Evolución hacia una gestión urbana inteligente"
         text={[
           "Urbania busca evolucionar la administración de condominios hacia un modelo basado en datos y automatización.",
           "El sistema permite generar reportes de uso, comportamiento de residentes y eficiencia de espacios comunes.",

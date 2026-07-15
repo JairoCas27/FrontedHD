@@ -1,4 +1,3 @@
-// src/pages/superadmin/DashboardSuperAdmin.jsx
 import { useEffect, useState } from 'react';
 import {
   FiHome,
@@ -6,17 +5,25 @@ import {
   FiGrid,
   FiActivity,
   FiUserCheck,
-  FiUserX,
-  FiTrendingUp,
-  FiTrendingDown,
   FiCalendar,
   FiClock,
+  FiRefreshCw,
+  FiClipboard,
+  FiAlertCircle,
+  FiMapPin,
+  FiMail,
+  FiBox,
+  FiShield,
+  FiTrendingUp,
 } from 'react-icons/fi';
 import {
   getSuperAdminDashboardMetrics,
   getSuperAdminRecentAdmins,
   getSuperAdminRecentCondos,
-} from '../../services/api';
+  getCondominiums,
+  getAdministrators,
+  getAllUsers,
+} from '../../services/SuperAdminApi';
 import {
   BarChart,
   Bar,
@@ -24,399 +31,772 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
-  Area,
-  AreaChart,
 } from 'recharts';
-import { Card, Badge, Row, Col, Spinner } from 'react-bootstrap';
+import { colors, radius, shadow, transition } from '../../theme/colors';
+import SectionHeader from '../../components/common/SectionHeader';
+import Loading from '../../components/common/Loading';
+import EmptyState from '../../components/common/EmptyState';
 
-// Colores corporativos
-const COLORS = {
-  primary: '#4f46e5',
-  success: '#10b981',
-  warning: '#f59e0b',
-  danger: '#ef4444',
-  info: '#3b82f6',
-  purple: '#8b5cf6',
-  pink: '#ec4899',
-  gray: '#6b7280',
+// ─── Color palette ───────────────────────────────────────────────────────────
+const SUPER = {
+  primary: '#7c3aed',
+  primaryDark: '#6d28d9',
+  primaryLight: '#ede9fe',
+  primaryBg: 'rgba(124,58,237,0.08)',
 };
 
-const CHART_COLORS = ['#4f46e5', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
+const CHART_COLORS = ['#7c3aed', '#10b981', '#f59e0b', '#ef4444', '#3b82f6', '#ec4899'];
 
+const STAT_COLORS = [
+  { accent: SUPER.primary, bg: '#ede9fe', gradient: ['#7c3aed', '#6d28d9'] },
+  { accent: '#10b981', bg: '#ecfdf5', gradient: ['#10b981', '#047857'] },
+  { accent: '#f59e0b', bg: '#fffbeb', gradient: ['#f59e0b', '#b45309'] },
+  { accent: '#3b82f6', bg: '#eff6ff', gradient: ['#3b82f6', '#1d4ed8'] },
+];
+
+// ─── Styles ──────────────────────────────────────────────────────────────────
+const cardBase = {
+  background: colors.white,
+  borderRadius: radius.lg,
+  border: `1px solid ${colors.border}`,
+  boxShadow: shadow.sm,
+  transition: 'all 0.25s ease',
+  overflow: 'hidden',
+};
+
+const cardHeader = {
+  padding: '18px 22px',
+  borderBottom: `1px solid ${colors.border}`,
+  display: 'flex',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  flexWrap: 'wrap',
+  gap: '8px',
+};
+
+const iconBox = (accent, bg) => ({
+  width: 36,
+  height: 36,
+  borderRadius: radius.sm,
+  background: bg,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  flexShrink: 0,
+  color: accent,
+});
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+const extractItems = (data) => {
+  if (Array.isArray(data)) return data;
+  if (data?.items && Array.isArray(data.items)) return data.items;
+  if (data?.content && Array.isArray(data.content)) return data.content;
+  if (data?.data && Array.isArray(data.data)) return data.data;
+  return [];
+};
+
+const formatDate = (dateStr) => {
+  if (!dateStr) return '—';
+  const date = new Date(dateStr);
+  return date.toLocaleDateString('es-ES', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+// ─── Tooltip components ──────────────────────────────────────────────────────
+const BarTooltip = ({ active, payload, label }) => {
+  if (!active || !payload?.length) return null;
+  return (
+    <div style={{
+      background: colors.white, border: `1px solid ${colors.border}`,
+      borderRadius: '10px', padding: '10px 14px',
+      boxShadow: shadow.lg, fontSize: '13px',
+    }}>
+      <div style={{ fontWeight: 700, color: colors.slate, marginBottom: 4 }}>{label}</div>
+      {payload.map((p, i) => (
+        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 6, color: colors.slateLight }}>
+          <span style={{ width: 8, height: 8, borderRadius: 2, backgroundColor: p.color, display: 'inline-block' }} />
+          <span>{p.name}: <strong style={{ color: colors.slate }}>{p.value}</strong></span>
+        </div>
+      ))}
+    </div>
+  );
+};
+
+const PieTooltip = ({ active, payload }) => {
+  if (!active || !payload?.length) return null;
+  const d = payload[0];
+  return (
+    <div style={{
+      background: colors.white, border: `1px solid ${colors.border}`,
+      borderRadius: '10px', padding: '10px 14px',
+      boxShadow: shadow.lg, fontSize: '13px',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <span style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: d.color, display: 'inline-block' }} />
+        <span style={{ fontWeight: 700, color: colors.slate }}>{d.name}: <strong>{d.value}</strong></span>
+      </div>
+    </div>
+  );
+};
+
+// ─── Component ───────────────────────────────────────────────────────────────
 export default function DashboardSuperAdmin() {
   const [metrics, setMetrics] = useState(null);
   const [recentAdmins, setRecentAdmins] = useState([]);
+  const [allCondos, setAllCondos] = useState([]);
   const [recentCondos, setRecentCondos] = useState([]);
+  const [allAdmins, setAllAdmins] = useState([]);
+  const [allUsers, setAllUsers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const [m, admins, condos] = await Promise.all([
-          getSuperAdminDashboardMetrics(),
-          getSuperAdminRecentAdmins(),
-          getSuperAdminRecentCondos(),
-        ]);
-        setMetrics(m);
-        setRecentAdmins(admins);
-        setRecentCondos(condos);
-      } catch (err) {
-        console.error(err);
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const loadData = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
+    setError(null);
+    try {
+      const [m, adminsData, recentCondosData, allCondosData, allAdminsData, allUsersData] = await Promise.all([
+        getSuperAdminDashboardMetrics(),
+        getSuperAdminRecentAdmins(),
+        getSuperAdminRecentCondos(),
+        getCondominiums(),
+        getAdministrators(),
+        getAllUsers(),
+      ]);
+      setMetrics(m);
+      setRecentAdmins(extractItems(adminsData));
+      setRecentCondos(extractItems(recentCondosData));
+      setAllCondos(extractItems(allCondosData));
+      setAllAdmins(extractItems(allAdminsData));
+      setAllUsers(extractItems(allUsersData));
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+    } finally {
+      if (showLoading) setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  useEffect(() => { loadData(true); }, []);
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadData(false);
+  };
+
+  // ─── Derived data ──────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className="text-center py-5">
-        <Spinner animation="border" variant="primary" />
-        <p className="mt-2 text-muted">Cargando datos del dashboard...</p>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: colors.background }}>
+        <Loading text="Cargando dashboard global..." />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="text-center py-5 text-danger">
-        <p><strong>Error:</strong> {error}</p>
-        <button className="btn btn-primary" onClick={() => window.location.reload()}>
+      <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16, background: colors.background }}>
+        <div style={{ width: 56, height: 56, borderRadius: radius.md, background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <FiAlertCircle size={28} color="#ef4444" />
+        </div>
+        <p style={{ color: '#dc2626', fontWeight: 600, fontSize: 15 }}><strong>Error:</strong> {error}</p>
+        <button
+          onClick={handleRefresh}
+          onMouseEnter={(e) => { e.currentTarget.style.background = SUPER.primaryDark; e.currentTarget.style.transform = 'translateY(-1px)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = SUPER.primary; e.currentTarget.style.transform = 'translateY(0)'; }}
+          style={{ background: SUPER.primary, color: colors.white, border: 'none', padding: '10px 24px', borderRadius: '10px', fontWeight: 700, fontSize: 14, cursor: 'pointer', transition }}
+        >
           Reintentar
         </button>
       </div>
     );
   }
 
-  // Datos para gráficos (basados en métricas reales)
-  const roleDistribution = [
-    { name: 'Administradores', value: metrics?.totalAdministradores || 0 },
-    { name: 'Propietarios', value: metrics?.totalPropietarios || 0 },
-    // Si hay agentes de seguridad, se pueden agregar; asumimos que el resto son agentes
-    { name: 'Agentes Seguridad', value: Math.max(0, (metrics?.totalUsuarios || 0) - (metrics?.totalAdministradores || 0) - (metrics?.totalPropietarios || 0)) },
-  ].filter(item => item.value > 0);
-
-  // Datos de condominios activos/inactivos (si no vienen, los calculamos de la lista reciente)
-  const totalCondos = metrics?.totalCondominios || 0;
-  const activeCondos = recentCondos.filter(c => c.activo !== false).length || 0;
+  const totalCondos = allCondos.length;
+  const activeCondos = allCondos.filter((c) => c.activo !== false).length;
   const inactiveCondos = totalCondos - activeCondos;
-
   const condoStatusData = [
     { name: 'Activos', value: activeCondos },
     { name: 'Inactivos', value: inactiveCondos },
-  ].filter(item => item.value > 0);
+  ].filter((item) => item.value > 0);
 
-  // Datos de tendencia (simulados, pero se pueden reemplazar con datos reales si la API los entrega)
-  // Idealmente, la API debería devolver un historial de registros por mes.
-  // Simulamos con datos basados en fechas de creación de condominios recientes
-  const trendData = recentCondos
-    .slice(0, 6)
-    .map((c, i) => ({
-      name: `Mes ${i + 1}`,
-      condominios: Math.floor(Math.random() * 5) + 1, // Simulación
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
+  const lastCondos = [...recentCondos]
+    .sort((a, b) => new Date(b.fechaCreacion || 0) - new Date(a.fechaCreacion || 0))
+    .slice(0, 4);
+  const lastAdmins = recentAdmins.slice(0, 4);
 
-  // Si no hay datos de tendencia, usamos datos de ejemplo
-  const defaultTrend = [
-    { name: 'Ene', condominios: 2 },
-    { name: 'Feb', condominios: 3 },
-    { name: 'Mar', condominios: 1 },
-    { name: 'Abr', condominios: 4 },
-    { name: 'May', condominios: 2 },
-    { name: 'Jun', condominios: 5 },
-  ];
+  const adminTotal = allAdmins.length || metrics?.totalAdministradores || 0;
+  const adminsActive = allAdmins.filter((a) => a.activo).length;
+  const adminsInactive = adminTotal - adminsActive;
+  const propietariosTotal = allUsers.filter((u) => u.rol === 'PROPIETARIO').length || metrics?.totalPropietarios || 0;
+  const agentesTotal = allUsers.filter((u) => u.rol === 'AGENTE_SEGURIDAD').length || 0;
+  const usuariosTotal = allUsers.length || metrics?.totalUsuarios || 0;
 
-  const finalTrend = trendData.length > 0 ? trendData : defaultTrend;
-
-  // Estadísticas para tarjetas
   const stats = [
     {
-      title: 'Condominios',
-      value: totalCondos,
-      icon: <FiGrid size={24} />,
-      color: COLORS.primary,
-      subtitle: `${activeCondos} activos, ${inactiveCondos} inactivos`,
+      label: 'Condominios', value: totalCondos,
+      icon: <FiGrid size={22} />, ...STAT_COLORS[0],
+      detail: `${activeCondos} activos · ${inactiveCondos} inactivos`,
+      maxRef: totalCondos || 1,
     },
     {
-      title: 'Administradores',
-      value: metrics?.totalAdministradores || 0,
-      icon: <FiUsers size={24} />,
-      color: COLORS.success,
-      subtitle: 'Gestores de condominios',
+      label: 'Administradores', value: adminTotal,
+      icon: <FiUsers size={22} />, ...STAT_COLORS[1],
+      detail: `${adminsActive} activos · ${adminsInactive} inactivos`,
+      maxRef: adminTotal || 1,
     },
     {
-      title: 'Propietarios',
-      value: metrics?.totalPropietarios || 0,
-      icon: <FiUserCheck size={24} />,
-      color: COLORS.warning,
-      subtitle: 'Residentes registrados',
+      label: 'Propietarios', value: propietariosTotal,
+      icon: <FiUserCheck size={22} />, ...STAT_COLORS[2],
+      detail: 'Residentes registrados',
+      maxRef: propietariosTotal || 1,
     },
     {
-      title: 'Usuarios Totales',
-      value: metrics?.totalUsuarios || 0,
-      icon: <FiActivity size={24} />,
-      color: COLORS.purple,
-      subtitle: 'Todos los roles',
+      label: 'Usuarios totales', value: usuariosTotal,
+      icon: <FiActivity size={22} />, ...STAT_COLORS[3],
+      detail: 'Todos los roles',
+      maxRef: usuariosTotal || 1,
     },
   ];
 
-  // Formatear fecha
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '—';
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('es-ES', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
+  const roleData = [
+    { name: 'Administradores', value: adminTotal, color: CHART_COLORS[0] },
+    { name: 'Propietarios', value: propietariosTotal, color: CHART_COLORS[1] },
+    { name: 'Agentes', value: agentesTotal, color: CHART_COLORS[2] },
+  ].filter((d) => d.value > 0);
 
+  const chartHeight = isMobile ? 220 : 300;
+
+  // ─── Render ────────────────────────────────────────────────────────────────
   return (
-    <div style={{ padding: '1.5rem', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
-      {/* Encabezado */}
-      <div className="d-flex justify-content-between align-items-start mb-4">
-        <div>
-          <h1 style={{ fontWeight: 800, color: '#0f172a', marginBottom: '4px' }}>
-            Dashboard Global del Sistema
-          </h1>
+    <div style={{
+      padding: isMobile ? '16px' : '24px',
+      background: colors.background,
+      minHeight: '100vh',
+    }}>
+      {/* ─── Animated styles ──────────────────────────────────────────────── */}
+      <style>{`
+        @keyframes fadeSlideUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes pulseDot {
+          0%, 100% { opacity: 0.4; transform: scale(1); }
+          50%      { opacity: 1;   transform: scale(1.3); }
+        }
+        @keyframes shimmer {
+          0%   { background-position: -200% 0; }
+          100% { background-position: 200% 0; }
+        }
+        .sa-card      { animation: fadeSlideUp 0.45s ease both; }
+        .sa-card:nth-child(1) { animation-delay: 0.03s; }
+        .sa-card:nth-child(2) { animation-delay: 0.07s; }
+        .sa-card:nth-child(3) { animation-delay: 0.11s; }
+        .sa-card:nth-child(4) { animation-delay: 0.15s; }
+
+        .sa-chart     { animation: fadeSlideUp 0.5s ease both; animation-delay: 0.2s; }
+        .sa-chart2    { animation: fadeSlideUp 0.5s ease both; animation-delay: 0.25s; }
+        .sa-list      { animation: fadeSlideUp 0.5s ease both; animation-delay: 0.3s; }
+        .sa-list2     { animation: fadeSlideUp 0.5s ease both; animation-delay: 0.35s; }
+
+        .sa-list-item {
+          transition: all 0.2s ease;
+        }
+        .sa-list-item:hover {
+          background: ${colors.background};
+          padding-left: 8px;
+        }
+        .sa-list-item:last-child {
+          border-bottom: none;
+        }
+
+        .sa-stats-grid {
+          grid-template-columns: 1fr;
+        }
+        @media (min-width: 768px) {
+          .sa-stats-grid {
+            grid-template-columns: 1fr 1fr;
+          }
+        }
+        @media (min-width: 1024px) {
+          .sa-stats-grid {
+            grid-template-columns: repeat(4, 1fr);
+          }
+        }
+      `}</style>
+
+      {/* ─── Header ───────────────────────────────────────────────────────── */}
+      <div style={{
+        background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 50%, #e0e7ff 100%)',
+        borderRadius: radius.lg,
+        padding: isMobile ? '18px 20px' : '22px 28px',
+        marginBottom: '22px',
+        border: '1px solid rgba(124,58,237,0.12)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '14px',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+          <div style={{
+            width: 48, height: 48, borderRadius: radius.md,
+            background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(124,58,237,0.25)',
+          }}>
+            <FiTrendingUp size={22} color="#fff" />
+          </div>
+          <div>
+            <h1 style={{
+              margin: 0, fontWeight: 800, fontSize: isMobile ? '18px' : '22px',
+              color: '#1e293b', letterSpacing: '-0.03em',
+            }}>
+              Dashboard Global
+            </h1>
+            <p style={{
+              margin: '2px 0 0', fontSize: '13px', color: SUPER.primary, fontWeight: 600,
+            }}>
+              {metrics?.totalCondominios !== undefined
+                ? `${totalCondos} condominios · ${adminTotal} administradores`
+                : 'Panorama general del sistema'}
+            </p>
+          </div>
         </div>
-        <Badge
-          bg="primary"
-          style={{ fontSize: '0.85rem', padding: '16px 16px' }}>
-          <FiCalendar className="me-1" /> Actualizado: {new Date().toLocaleDateString()}
-        </Badge>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: 'rgba(255,255,255,0.75)', backdropFilter: 'blur(8px)',
+            padding: '8px 14px', borderRadius: '10px',
+            border: '1px solid rgba(124,58,237,0.1)',
+            fontSize: '12px', fontWeight: 600, color: colors.slateLight,
+          }}>
+            <FiCalendar size={13} color={SUPER.primary} />
+            {new Date().toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+          </div>
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            onMouseEnter={(e) => {
+              if (!refreshing) {
+                e.currentTarget.style.background = SUPER.primaryDark;
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 6px 20px rgba(124,58,237,0.3)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (!refreshing) {
+                e.currentTarget.style.background = SUPER.primary;
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 14px rgba(124,58,237,0.2)';
+              }
+            }}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6,
+              background: refreshing ? '#a78bfa' : SUPER.primary,
+              color: colors.white, border: 'none',
+              padding: '8px 18px', borderRadius: '10px',
+              fontSize: '13px', fontWeight: 700,
+              cursor: refreshing ? 'not-allowed' : 'pointer',
+              transition, boxShadow: '0 4px 14px rgba(124,58,237,0.2)',
+            }}
+          >
+            <FiRefreshCw
+              size={13}
+              style={{ animation: refreshing ? 'spin 0.8s linear infinite' : 'none' }}
+            />
+            <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+            {refreshing ? 'Actualizando...' : 'Actualizar'}
+          </button>
+        </div>
       </div>
 
-      {/* Tarjetas de estadísticas */}
-      <Row className="g-4 mb-4">
+      {/* ─── Stat cards ───────────────────────────────────────────────────── */}
+      <div className="sa-stats-grid" style={{
+        display: 'grid',
+        gap: '16px',
+        marginBottom: '22px',
+      }}>
         {stats.map((stat, idx) => (
-          <Col lg={3} md={6} key={idx}>
-            <Card className="border-0 shadow-sm h-100" style={{ transition: 'transform 0.2s' }}>
-              <Card.Body>
-                <div className="d-flex justify-content-between align-items-start">
-                  <div>
-                    <div className="text-muted small fw-bold text-uppercase tracking-wide">
-                      {stat.title}
-                    </div>
-                    <div className="fs-2 fw-bold mt-1" style={{ color: stat.color }}>
-                      {stat.value}
-                    </div>
-                    <div className="small text-muted mt-1">{stat.subtitle}</div>
+          <div
+            key={idx}
+            className="sa-card"
+            style={cardBase}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-4px)';
+              e.currentTarget.style.boxShadow = shadow.hover;
+              e.currentTarget.style.borderColor = stat.accent;
+              e.currentTarget.style.borderLeft = `3px solid ${stat.accent}`;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = shadow.sm;
+              e.currentTarget.style.borderColor = colors.border;
+              e.currentTarget.style.borderLeft = `1px solid ${colors.border}`;
+            }}
+          >
+            {/* Gradient accent bar */}
+            <div style={{
+              height: 3,
+              background: `linear-gradient(90deg, ${stat.gradient[0]}, ${stat.gradient[1]})`,
+            }} />
+            <div style={{ padding: '16px 18px 14px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{
+                    fontSize: '11px', fontWeight: 700, color: colors.slateLighter,
+                    textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: 4,
+                  }}>
+                    {stat.label}
                   </div>
-                  <div
-                    style={{
-                      background: `${stat.color}15`,
-                      color: stat.color,
-                      padding: '12px',
-                      borderRadius: '12px',
-                    }}
-                  >
-                    {stat.icon}
+                  <div style={{
+                    fontSize: isMobile ? '26px' : '30px', fontWeight: 800,
+                    color: colors.slate, lineHeight: 1.1, marginBottom: 2,
+                    letterSpacing: '-0.02em',
+                  }}>
+                    {stat.value}
+                  </div>
+                  <div style={{ fontSize: '12px', color: colors.slateLighter, fontWeight: 500 }}>
+                    {stat.detail}
                   </div>
                 </div>
-              </Card.Body>
-            </Card>
-          </Col>
+                <div style={{
+                  ...iconBox(stat.accent, stat.bg),
+                  width: 42, height: 42,
+                  transition,
+                }}>
+                  {stat.icon}
+                </div>
+              </div>
+              {/* Mini progress bar */}
+              <div style={{
+                marginTop: '12px',
+                height: 3,
+                borderRadius: 2,
+                background: '#f1f4f9',
+                overflow: 'hidden',
+              }}>
+                <div style={{
+                  width: `${Math.min(100, Math.max(5, (stat.value / Math.max(stat.maxRef, 1)) * 100))}%`,
+                  height: '100%',
+                  borderRadius: 2,
+                  background: `linear-gradient(90deg, ${stat.gradient[0]}, ${stat.gradient[1]})`,
+                  transition: 'width 1s ease',
+                }} />
+              </div>
+            </div>
+          </div>
         ))}
-      </Row>
+      </div>
 
-      {/* Gráficos */}
-      <Row className="g-4 mb-4">
-        {/* Gráfico de barras: Distribución de roles */}
-        <Col lg={8}>
-          <Card className="border-0 shadow-sm h-100">
-            <Card.Header className="bg-white fw-bold">
-              Distribución de usuarios por rol
-            </Card.Header>
-            <Card.Body>
-              {roleDistribution.length === 0 ? (
-                <p className="text-muted text-center">Sin datos para mostrar</p>
-              ) : (
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={roleDistribution}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
-                    <XAxis dataKey="name" stroke="#94a3b8" />
-                    <YAxis stroke="#94a3b8" />
-                    <Tooltip
-                      formatter={(value) => [`${value} usuarios`, 'Cantidad']}
-                      labelStyle={{ fontWeight: 600 }}
-                    />
-                    <Legend />
-                    <Bar
+      {/* ─── Charts row ───────────────────────────────────────────────────── */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isMobile ? '1fr' : '2.2fr 1fr',
+        gap: '16px',
+        marginBottom: '22px',
+      }}>
+        {/* Bar chart – Distribución de usuarios */}
+        <div className="sa-chart" style={cardBase}>
+          <div style={cardHeader}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={iconBox(SUPER.primary, SUPER.primaryBg)}>
+                <FiUsers size={16} />
+              </div>
+              <span style={{ fontWeight: 700, fontSize: '14px', color: colors.slate }}>Distribución por rol</span>
+            </div>
+            <span style={{ fontSize: '12px', color: colors.slateLighter, fontWeight: 600 }}>
+              {roleData.reduce((s, r) => s + r.value, 0)} usuarios
+            </span>
+          </div>
+          <div style={{ padding: '8px 4px 4px' }}>
+            {roleData.length === 0 ? (
+              <EmptyState icon={FiUsers} title="Sin datos" description="No hay usuarios registrados" />
+            ) : (
+              <ResponsiveContainer width="100%" height={chartHeight}>
+                <BarChart data={roleData} margin={{ top: 20, right: 16, left: -8, bottom: 8 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                  <XAxis
+                    dataKey="name"
+                    stroke="#94a3b8"
+                    tick={{ fontSize: 12, fontWeight: 600, fill: '#64748b' }}
+                    tickLine={false}
+                    axisLine={{ stroke: '#e8ecf1' }}
+                  />
+                  <YAxis
+                    stroke="#94a3b8"
+                    tick={{ fontSize: 11, fill: '#94a3b8' }}
+                    tickLine={false}
+                    axisLine={false}
+                    allowDecimals={false}
+                  />
+                  <Tooltip content={<BarTooltip />} cursor={{ fill: 'rgba(124,58,237,0.04)' }} />
+                  <Bar dataKey="value" name="Usuarios" radius={[6, 6, 0, 0]} barSize={isMobile ? 32 : 52}>
+                    {roleData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+        </div>
+
+        {/* Pie chart – Estado de condominios */}
+        <div className="sa-chart2" style={cardBase}>
+          <div style={cardHeader}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ ...iconBox('#10b981', '#ecfdf5') }}>
+                <FiGrid size={16} />
+              </div>
+              <span style={{ fontWeight: 700, fontSize: '14px', color: colors.slate }}>Estado de condominios</span>
+            </div>
+            <span style={{ fontSize: '12px', color: colors.slateLighter, fontWeight: 600 }}>
+              {totalCondos} total
+            </span>
+          </div>
+          <div style={{ padding: '16px 12px', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+            {condoStatusData.length === 0 ? (
+              <EmptyState icon={FiGrid} title="Sin datos" description="No hay condominios registrados" />
+            ) : (
+              <>
+                <ResponsiveContainer width="100%" height={isMobile ? 200 : 240}>
+                  <PieChart>
+                    <Pie
+                      data={condoStatusData}
+                      cx="50%" cy="50%"
+                      innerRadius={isMobile ? 42 : 60}
+                      outerRadius={isMobile ? 72 : 92}
+                      paddingAngle={4}
                       dataKey="value"
-                      fill={COLORS.primary}
-                      radius={[4, 4, 0, 0]}
-                      barSize={40}
+                      stroke="none"
                     >
-                      {roleDistribution.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                      {condoStatusData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={entry.name === 'Activos' ? '#10b981' : '#ef4444'}
+                        />
                       ))}
-                    </Bar>
-                  </BarChart>
+                    </Pie>
+                    <Tooltip content={<PieTooltip />} />
+                  </PieChart>
                 </ResponsiveContainer>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-
-        {/* Gráfico de torta: Estado de condominios */}
-        <Col lg={4}>
-          <Card className="border-0 shadow-sm h-100">
-            <Card.Header className="bg-white fw-bold">
-              Estado de condominios
-            </Card.Header>
-            <Card.Body className="d-flex flex-column align-items-center justify-content-center">
-              {condoStatusData.length === 0 ? (
-                <p className="text-muted text-center">Sin datos</p>
-              ) : (
-                <>
-                  <ResponsiveContainer width="100%" height={240}>
-                    <PieChart>
-                      <Pie
-                        data={condoStatusData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={90}
-                        paddingAngle={2}
-                        dataKey="value"
-                        label={({ name, percent }) =>
-                          `${name}: ${(percent * 100).toFixed(0)}%`
-                        }
-                        labelLine={false}
-                      >
-                        {condoStatusData.map((entry, index) => (
-                          <Cell
-                            key={`cell-${index}`}
-                            fill={entry.name === 'Activos' ? COLORS.success : COLORS.danger}
-                          />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="d-flex gap-3 mt-2">
-                    <div>
-                      <span className="badge bg-success me-1">●</span> Activos:{' '}
-                      <strong>{activeCondos}</strong>
+                <div style={{
+                  display: 'flex', gap: 20, marginTop: 8,
+                  flexWrap: 'wrap', justifyContent: 'center',
+                }}>
+                  {condoStatusData.map((entry) => (
+                    <div key={entry.name} style={{
+                      display: 'flex', alignItems: 'center', gap: 6,
+                      padding: '4px 12px', borderRadius: '999px',
+                      background: '#f8fafc', border: `1px solid ${colors.border}`,
+                    }}>
+                      <span style={{
+                        width: 8, height: 8, borderRadius: '50%',
+                        backgroundColor: entry.name === 'Activos' ? '#10b981' : '#ef4444',
+                        display: 'inline-block',
+                      }} />
+                      <span style={{ fontSize: '12px', color: colors.slateLight, fontWeight: 600 }}>
+                        {entry.name}: <strong style={{ color: colors.slate }}>{entry.value}</strong>
+                      </span>
                     </div>
-                    <div>
-                      <span className="badge bg-danger me-1">●</span> Inactivos:{' '}
-                      <strong>{inactiveCondos}</strong>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* ─── Lists row ────────────────────────────────────────────────────── */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr',
+        gap: '16px',
+        marginBottom: '22px',
+      }}>
+        {/* Últimos administradores */}
+        <div className="sa-list" style={cardBase}>
+          <div style={cardHeader}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={iconBox(SUPER.primary, SUPER.primaryBg)}>
+                <FiClipboard size={16} />
+              </div>
+              <span style={{ fontWeight: 700, fontSize: '14px', color: colors.slate }}>Últimos administradores</span>
+            </div>
+            <span style={{
+              background: SUPER.primaryBg,
+              color: SUPER.primary, fontSize: '11px', fontWeight: 700,
+              padding: '3px 10px', borderRadius: '999px',
+            }}>
+              {lastAdmins.length}
+            </span>
+          </div>
+          <div style={{ maxHeight: 360, overflowY: 'auto' }}>
+            {lastAdmins.length === 0 ? (
+              <EmptyState icon={FiUsers} title="Sin registros" description="No hay administradores registrados" />
+            ) : (
+              lastAdmins.map((admin, i) => (
+                <div key={admin.id || i} className="sa-list-item" style={{
+                  padding: '10px 18px',
+                  borderBottom: `1px solid ${colors.border}`,
+                  cursor: 'default', transition, textAlign: 'left',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{
+                      width: 36, height: 36, borderRadius: '10px',
+                      background: 'linear-gradient(135deg, #ede9fe, #e0e7ff)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0,
+                      color: SUPER.primary, fontWeight: 800, fontSize: '14px',
+                    }}>
+                      {(admin.nombres?.[0] || '?')}{(admin.apellidos?.[0] || '')}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: '14px', color: colors.slate, marginBottom: 1 }}>
+                        {admin.nombres} {admin.apellidos}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '12px', color: colors.slateLighter, display: 'flex', alignItems: 'center', gap: 3 }}>
+                          <FiMail size={10} /> {admin.correo}
+                        </span>
+                        {admin.nombreCondominio && (
+                          <>
+                            <span style={{ fontSize: '10px', color: colors.slateLighter }}>·</span>
+                            <span style={{ fontSize: '12px', color: colors.slateLighter }}>
+                              <FiBox size={10} style={{ marginRight: 2 }} />
+                              {admin.nombreCondominio}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                        <span style={{
+                          fontSize: '11px', fontWeight: 700, padding: '1px 8px',
+                          borderRadius: '999px',
+                          background: admin.activo ? '#ecfdf5' : '#f1f4f9',
+                          color: admin.activo ? '#059669' : '#64748b',
+                        }}>
+                          {admin.activo ? 'Activo' : 'Inactivo'}
+                        </span>
+                        <span style={{ fontSize: '11px', color: colors.slateLighter, display: 'flex', alignItems: 'center', gap: 3 }}>
+                          <FiClock size={10} /> {formatDate(admin.fechaCreacion)}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
 
-      {/* Tabla de actividad reciente */}
-      <Row className="g-4">
-        <Col lg={6}>
-          <Card className="border-0 shadow-sm">
-            <Card.Header className="bg-white fw-bold d-flex justify-content-between align-items-center">
-              <span>📋 Últimos administradores</span>
-              <Badge bg="primary" pill>
-                {recentAdmins.length}
-              </Badge>
-            </Card.Header>
-            <Card.Body style={{ maxHeight: '400px', overflowY: 'auto' }}>
-              {recentAdmins.length === 0 ? (
-                <p className="text-muted text-center">Sin registros</p>
-              ) : (
-                <ul className="list-unstyled m-0">
-                  {recentAdmins.map((admin) => (
-                    <li
-                      key={admin.id}
-                      className="d-flex justify-content-between align-items-center border-bottom py-3"
-                    >
-                      <div>
-                        <div className="fw-bold">
-                          {admin.nombres} {admin.apellidos}
-                        </div>
-                        <div className="small text-muted">
-                          {admin.correo} · {admin.nombreCondominio || 'Sin condominio'}
-                        </div>
+        {/* Últimos condominios */}
+        <div className="sa-list2" style={cardBase}>
+          <div style={cardHeader}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <div style={{ ...iconBox('#10b981', '#ecfdf5') }}>
+                <FiHome size={16} />
+              </div>
+              <span style={{ fontWeight: 700, fontSize: '14px', color: colors.slate }}>Últimos condominios</span>
+            </div>
+            <span style={{
+              background: SUPER.primaryBg,
+              color: SUPER.primary, fontSize: '11px', fontWeight: 700,
+              padding: '3px 10px', borderRadius: '999px',
+            }}>
+              {lastCondos.length}
+            </span>
+          </div>
+          <div style={{ maxHeight: 360, overflowY: 'auto' }}>
+            {lastCondos.length === 0 ? (
+              <EmptyState icon={FiHome} title="Sin registros" description="No hay condominios registrados" />
+            ) : (
+              lastCondos.map((c, i) => (
+                <div key={c.id || i} className="sa-list-item" style={{
+                  padding: '10px 18px',
+                  borderBottom: `1px solid ${colors.border}`,
+                  cursor: 'default', transition, textAlign: 'left',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    <div style={{
+                      width: 36, height: 36, borderRadius: '10px',
+                      background: 'linear-gradient(135deg, #d1fae5, #a7f3d0)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      flexShrink: 0,
+                      color: '#059669', fontWeight: 800, fontSize: '16px',
+                    }}>
+                      <FiBox size={16} />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 700, fontSize: '14px', color: colors.slate, marginBottom: 1 }}>
+                        {c.nombre}
                       </div>
-                      <div className="text-end">
-                        <Badge bg={admin.activo ? 'success' : 'secondary'}>
-                          {admin.activo ? 'Activo' : 'Inactivo'}
-                        </Badge>
-                        <div className="small text-muted mt-1">
-                          <FiClock size={12} className="me-1" />
-                          {formatDate(admin.fechaCreacion)}
-                        </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '12px', color: colors.slateLighter, display: 'flex', alignItems: 'center', gap: 3 }}>
+                          <FiMapPin size={10} /> {c.direccion || 'Sin dirección'}
+                        </span>
+                        {c.nombreCiudad && (
+                          <>
+                            <span style={{ fontSize: '10px', color: colors.slateLighter }}>·</span>
+                            <span style={{ fontSize: '12px', color: colors.slateLighter }}>{c.nombreCiudad}</span>
+                          </>
+                        )}
                       </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                        <span style={{
+                          fontSize: '11px', fontWeight: 700, padding: '1px 8px',
+                          borderRadius: '999px',
+                          background: c.activo !== false ? '#ecfdf5' : '#fef2f2',
+                          color: c.activo !== false ? '#059669' : '#dc2626',
+                        }}>
+                          {c.activo !== false ? 'Activo' : 'Inactivo'}
+                        </span>
+                        <span style={{ fontSize: '11px', color: colors.slateLighter, display: 'flex', alignItems: 'center', gap: 3 }}>
+                          <FiClock size={10} /> {formatDate(c.fechaCreacion)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
 
-        <Col lg={6}>
-          <Card className="border-0 shadow-sm">
-            <Card.Header className="bg-white fw-bold d-flex justify-content-between align-items-center">
-              <span>🏢 Últimos condominios</span>
-              <Badge bg="primary" pill>
-                {recentCondos.length}
-              </Badge>
-            </Card.Header>
-            <Card.Body style={{ maxHeight: '400px', overflowY: 'auto' }}>
-              {recentCondos.length === 0 ? (
-                <p className="text-muted text-center">Sin registros</p>
-              ) : (
-                <ul className="list-unstyled m-0">
-                  {recentCondos.map((c) => (
-                    <li
-                      key={c.id}
-                      className="d-flex justify-content-between align-items-center border-bottom py-3"
-                    >
-                      <div>
-                        <div className="fw-bold">{c.nombre}</div>
-                        <div className="small text-muted">
-                          {c.direccion} · {c.ciudad || 'Sin ciudad'}
-                        </div>
-                      </div>
-                      <div className="text-end">
-                        <Badge bg={c.activo ? 'success' : 'secondary'}>
-                          {c.activo ? 'Activo' : 'Inactivo'}
-                        </Badge>
-                        <div className="small text-muted mt-1">
-                          <FiClock size={12} className="me-1" />
-                          {formatDate(c.fechaCreacion)}
-                        </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Card.Body>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* Pie de página */}
-      <div className="mt-4 text-center text-muted small">
-        <span>
-          Dashboard actualizado automáticamente · Datos en tiempo real
-        </span>
+      {/* ─── Status footer ────────────────────────────────────────────────── */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        gap: 8, padding: '6px 0',
+        color: colors.slateLighter, fontSize: '12px', fontWeight: 500,
+      }}>
+        <span style={{
+          width: 6, height: 6, borderRadius: '50%',
+          background: '#10b981', display: 'inline-block',
+          animation: 'pulseDot 2s ease infinite',
+        }} />
+        Dashboard actualizado · Datos en tiempo real
+        <span style={{ width: 3, height: 3, borderRadius: '50%', background: colors.slateLighter, display: 'inline-block' }} />
+        <FiShield size={12} /> Sistema seguro
       </div>
     </div>
   );

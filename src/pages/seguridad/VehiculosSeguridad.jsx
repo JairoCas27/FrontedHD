@@ -11,9 +11,8 @@ export default function VehiculosSeguridad() {
   const buscarVehiculo = async () => {
     setMensaje(null);
     setResultado(null);
-    
     if (!placaBusqueda.trim()) {
-      setMensaje({ tipo: "warning", texto: "Ingrese una placa para buscar" });
+      toast.warning("Ingrese una placa para buscar");
       return;
     }
 

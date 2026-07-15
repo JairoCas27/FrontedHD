@@ -1,15 +1,17 @@
 // src/pages/propietario/PerfilPropietario.jsx
 
 import { useEffect, useState } from "react";
-import { User, Save } from "lucide-react";
+import { Save } from "lucide-react";
 import { getProfile, updateProfile } from "../../services/api";
-import { colors, radius, shadow } from "../../theme/colors";
+import { colors, radius } from "../../theme/colors";
 import SectionHeader from "../../components/common/SectionHeader";
 import InfoCard from "../../components/common/InfoCard";
 import ActionButton from "../../components/common/ActionButton";
 import FormField from "../../components/common/FormField";
 import Loading from "../../components/common/Loading";
 import { Toast, useToast } from "../../components/common/Toast";
+
+// ─── Constantes ──────────────────────────────────────────────────────────────
 
 const PAGE = {
   padding: "32px",
@@ -18,34 +20,145 @@ const PAGE = {
   fontFamily: "system-ui, sans-serif",
 };
 
+const INITIAL_ERRORS = {
+  nombres: "",
+  apellidos: "",
+  telefono: "",
+};
+
+const NOMBRE_PATTERN    = /^[A-Za-zÁáÉéÍíÓóÚúÑñÜü\s]{2,}$/;
+const NOMBRE_MAX_LENGTH = 50;
+
+// Teléfono Perú: exactamente 9 dígitos, empieza en 9
+const TELEFONO_PATTERN = /^9\d{8}$/;
+
+// ─── Validación ──────────────────────────────────────────────────────────────
+
+function validateForm({ nombres, apellidos, telefono }) {
+  const errors = { ...INITIAL_ERRORS };
+  let valid = true;
+
+  const nombresTrim = nombres?.trim() ?? "";
+  if (!nombresTrim) {
+    errors.nombres = "Este campo es obligatorio.";
+    valid = false;
+  } else if (nombresTrim.length > NOMBRE_MAX_LENGTH) {
+    errors.nombres = `Máximo ${NOMBRE_MAX_LENGTH} caracteres.`;
+    valid = false;
+  } else if (!NOMBRE_PATTERN.test(nombresTrim)) {
+    errors.nombres = "Solo letras, mínimo 2 caracteres.";
+    valid = false;
+  }
+
+  const apellidosTrim = apellidos?.trim() ?? "";
+  if (!apellidosTrim) {
+    errors.apellidos = "Este campo es obligatorio.";
+    valid = false;
+  } else if (apellidosTrim.length > NOMBRE_MAX_LENGTH) {
+    errors.apellidos = `Máximo ${NOMBRE_MAX_LENGTH} caracteres.`;
+    valid = false;
+  } else if (!NOMBRE_PATTERN.test(apellidosTrim)) {
+    errors.apellidos = "Solo letras, mínimo 2 caracteres.";
+    valid = false;
+  }
+
+  const telefonoTrim = telefono?.trim() ?? "";
+  if (telefonoTrim && !TELEFONO_PATTERN.test(telefonoTrim)) {
+    errors.telefono = "Debe tener 9 dígitos y empezar con 9. Ej: 987654321";
+    valid = false;
+  }
+
+  return { errors, valid };
+}
+
+// ─── Sub-componente: error de campo ──────────────────────────────────────────
+
+function FieldError({ message }) {
+  if (!message) return null;
+  return (
+    <p style={{ margin: "4px 0 0", fontSize: "12px", color: colors.red }}>
+      {message}
+    </p>
+  );
+}
+
+// ─── Sub-componente: fila de dato de solo lectura ─────────────────────────────
+
+function ReadOnlyRow({ label, value }) {
+  if (!value) return null;
+  return (
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        padding: "10px 0",
+        borderBottom: `1px solid ${colors.border}`,
+      }}
+    >
+      <span style={{ fontSize: "13px", color: colors.slateLight }}>{label}</span>
+      <span style={{ fontSize: "13px", fontWeight: 500, color: colors.slate }}>{value}</span>
+    </div>
+  );
+}
+
+// ─── Vista principal ──────────────────────────────────────────────────────────
+
 export default function PerfilPropietario() {
-  const [form, setForm] = useState({});
+  // Datos completos que devuelve el GET (solo lectura)
+  const [perfil,  setPerfil]  = useState(null);
+
+  // Solo los 3 campos que acepta el PUT
+  const [form,    setForm]    = useState({ nombres: "", apellidos: "", telefono: "" });
+  const [errors,  setErrors]  = useState(INITIAL_ERRORS);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [saving,  setSaving]  = useState(false);
+
   const { toast, showToast, clearToast } = useToast();
+
+  // ── Fetch inicial ────────────────────────────────────────────────────────
 
   useEffect(() => {
     getProfile()
-      .then((data) => setForm(data ?? {}))
+      .then((data) => {
+        setPerfil(data);
+        // Pre-cargar solo los campos editables
+        setForm({
+          nombres:   data.nombres   ?? "",
+          apellidos: data.apellidos ?? "",
+          telefono:  data.telefono  ?? "",
+        });
+      })
       .catch(() => showToast("Error al cargar perfil", "error"))
       .finally(() => setLoading(false));
   }, []);
 
-  const handleChange = (e) =>
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  // ── Handlers ─────────────────────────────────────────────────────────────
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) {
+      setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
 
   const handleSave = async () => {
-    const required = ["nombres", "apellidos", "email"];
-    for (const key of required) {
-      if (!form[key]?.trim()) {
-        showToast(`El campo "${key}" es requerido`, "error");
-        return;
-      }
-    }
+    const { errors: newErrors, valid } = validateForm(form);
+    setErrors(newErrors);
+    if (!valid) return;
+
     try {
       setSaving(true);
-      await updateProfile(form);
+      // Enviar únicamente los campos que el PUT acepta
+      await updateProfile({
+        nombres:   form.nombres.trim(),
+        apellidos: form.apellidos.trim(),
+        telefono:  form.telefono.trim(),
+      });
       showToast("Perfil actualizado correctamente", "success");
+      // Actualizar el perfil local con los nuevos valores
+      setPerfil((prev) => ({ ...prev, ...form }));
     } catch {
       showToast("Error al actualizar perfil", "error");
     } finally {
@@ -53,9 +166,13 @@ export default function PerfilPropietario() {
     }
   };
 
-  const initials = form.nombres && form.apellidos
-    ? `${form.nombres[0]}${form.apellidos[0]}`.toUpperCase()
+  // ── Derivados ─────────────────────────────────────────────────────────────
+
+  const initials = perfil?.nombres && perfil?.apellidos
+    ? `${perfil.nombres[0]}${perfil.apellidos[0]}`.toUpperCase()
     : "?";
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div style={PAGE}>
@@ -65,6 +182,8 @@ export default function PerfilPropietario() {
         <Loading />
       ) : (
         <InfoCard>
+
+          {/* Avatar + nombre actual */}
           <div style={{ display: "flex", alignItems: "center", gap: "20px", marginBottom: "28px" }}>
             <div
               style={{
@@ -86,86 +205,79 @@ export default function PerfilPropietario() {
             </div>
             <div>
               <p style={{ margin: 0, fontSize: "18px", fontWeight: 700, color: colors.slate }}>
-                {form.nombres} {form.apellidos}
+                {perfil?.nombres} {perfil?.apellidos}
               </p>
               <p style={{ margin: "2px 0 0", fontSize: "13px", color: colors.slateLight }}>
-                {form.email}
+                {perfil?.correo}
               </p>
             </div>
           </div>
 
+          {/* Datos de solo lectura */}
+          <div style={{ marginBottom: "24px" }}>
+            <p style={{ margin: "0 0 8px", fontSize: "12px", fontWeight: 600, color: colors.slateLighter, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+              Información de cuenta
+            </p>
+            <ReadOnlyRow label="Correo"    value={perfil?.correo} />
+            <ReadOnlyRow label="Rol"       value={perfil?.rol} />
+            <ReadOnlyRow label="Miembro desde" value={perfil?.fechaCreacion
+              ? new Date(perfil.fechaCreacion).toLocaleDateString("es-PE", { year: "numeric", month: "long", day: "numeric" })
+              : null}
+            />
+          </div>
+
+          {/* Separador */}
+          <div style={{ height: "1px", background: colors.border, margin: "4px 0 20px" }} />
+
+          {/* Campos editables */}
+          <p style={{ margin: "0 0 16px", fontSize: "12px", fontWeight: 600, color: colors.slateLighter, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+            Editar información
+          </p>
+
           <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-              <FormField
-                label="Nombres"
-                name="nombres"
-                value={form.nombres ?? ""}
-                onChange={handleChange}
-                placeholder="Juan"
-                required
-              />
-              <FormField
-                label="Apellidos"
-                name="apellidos"
-                value={form.apellidos ?? ""}
-                onChange={handleChange}
-                placeholder="Pérez"
-                required
-              />
+              <div>
+                <FormField
+                  label="Nombres"
+                  name="nombres"
+                  value={form.nombres}
+                  onChange={handleChange}
+                  placeholder="Juan"
+                  required
+                />
+                <FieldError message={errors.nombres} />
+              </div>
+              <div>
+                <FormField
+                  label="Apellidos"
+                  name="apellidos"
+                  value={form.apellidos}
+                  onChange={handleChange}
+                  placeholder="Pérez"
+                  required
+                />
+                <FieldError message={errors.apellidos} />
+              </div>
             </div>
 
-            <FormField
-              label="Correo electrónico"
-              name="email"
-              type="email"
-              value={form.email ?? ""}
-              onChange={handleChange}
-              placeholder="juan@email.com"
-              required
-            />
-
-            {form.telefono !== undefined && (
+            <div>
               <FormField
                 label="Teléfono"
                 name="telefono"
-                value={form.telefono ?? ""}
+                value={form.telefono}
                 onChange={handleChange}
-                placeholder="+51 999 000 000"
+                placeholder="987654321"
               />
-            )}
+              <FieldError message={errors.telefono} />
+            </div>
 
-            {form.tipoDocumento !== undefined && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-                <FormField
-                  label="Tipo de documento"
-                  name="tipoDocumento"
-                  value={form.tipoDocumento ?? ""}
-                  onChange={handleChange}
-                  placeholder="DNI"
-                />
-                <FormField
-                  label="Número de documento"
-                  name="numeroDocumento"
-                  value={form.numeroDocumento ?? ""}
-                  onChange={handleChange}
-                  placeholder="71234567"
-                />
-              </div>
-            )}
-
-            <div
-              style={{
-                height: "1px",
-                background: colors.border,
-                margin: "8px 0",
-              }}
-            />
-
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <div style={{ display: "flex", justifyContent: "flex-end", paddingTop: "4px" }}>
               <ActionButton icon={Save} onClick={handleSave} disabled={saving}>
                 {saving ? "Guardando..." : "Guardar cambios"}
               </ActionButton>
             </div>
+
           </div>
         </InfoCard>
       )}
