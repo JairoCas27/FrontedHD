@@ -404,6 +404,49 @@ export async function createAdminUser(data) {
     method: 'POST',
     body: JSON.stringify(data),
   });
+<<<<<<< HEAD
+ 
+export const deleteHomeownerTenant = (id) =>
+  safeFetch(`/api/homeowner/tenants/${id}`, { method: "DELETE" });
+ 
+export const getHomeownerLogs = () =>
+  safeFetch("/api/homeowner/logs");
+
+export const verifyVehicle = (plate) =>
+  safeFetch(`/api/security/vehicles/verify/${plate}`);
+
+export const registerEntry = (data) =>
+  safeFetch('/api/security/access-logs/entry', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const registerExit = (idRegistro) =>
+  safeFetch('/api/security/access-logs/exit', {
+    method: 'PUT',
+    body: JSON.stringify({ idRegistro }),
+  });
+
+export const getDashboardStatus = () =>
+  safeFetch('/api/security/dashboard/status');
+
+export const getParkingSlots = () =>
+  safeFetch('/api/security/parking-slots');
+
+export const getActiveCarts = () =>
+  safeFetch('/api/security/asset-loans/active-carts');
+
+export const createAssetLoan = (data) =>
+  safeFetch('/api/security/asset-loans', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+
+export const returnAsset = (id) =>
+  safeFetch(`/api/security/asset-loans/${id}/return`, {
+    method: 'PUT',
+  });
+=======
 }
 
 export async function updateAdminUser(id, data) {
@@ -637,3 +680,4 @@ export async function deleteAdminVehicle(id, condominioId) {
   const qs = condominioId ? `?condominioId=${condominioId}` : '';
   return safeFetch(`/api/homeowner/vehicles/${id}${qs}`, { method: 'DELETE' });
 }
+>>>>>>> main

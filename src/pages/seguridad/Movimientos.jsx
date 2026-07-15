@@ -180,8 +180,8 @@ export default function Movimientos() {
             <p style={{ fontSize: "0.85rem", margin: 0 }}>Los registros aparecerán aquí</p>
           </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
               <thead>
                 <tr style={{ backgroundColor: "#f8fafc" }}>
                   {["ID", "Tipo", "Descripción", "Fecha"].map((h) => (
