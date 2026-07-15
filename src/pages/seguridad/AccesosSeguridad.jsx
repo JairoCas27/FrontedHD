@@ -97,6 +97,8 @@ export default function AccesosSeguridad() {
   const [ocupante, setOcupante] = useState("PROPIETARIO");
   const [datosInquilino, setDatosInquilino] = useState("");
   const [estacionamientoInput, setEstacionamientoInput] = useState("");
+  const [mostrarModalCrear, setMostrarModalCrear] = useState(false);
+  const [estadoEstacionamiento, setEstadoEstacionamiento] = useState(null);
 
   const {
     vehiculoEncontrado,
@@ -113,6 +115,44 @@ export default function AccesosSeguridad() {
   const hayAccesoPendiente = !!ultimoLogId;
 
   const handleVerificar = () => verificarPlaca(placaInput);
+  
+const comprobarEstacionamiento = async (numero) => {
+    if (!numero.trim()) {
+      setEstadoEstacionamiento(null);
+      return;
+    }
+    try {
+      const existe = false; 
+      const disponible = true;
+      if (existe) {
+        if (disponible) {
+          setEstadoEstacionamiento("disponible");
+        } else {
+          setEstadoEstacionamiento("ocupado");
+        }
+      } else {
+        setMostrarModalCrear(true);
+      }
+    } catch (error) {
+      console.error("Error al validar estacionamiento:", error);
+    }
+  };
+
+  const handleConfirmarCrearEstacionamiento = async () => {
+    try {
+      console.log(`Estacionamiento N° ${estacionamientoInput} creado.`);
+      setEstadoEstacionamiento("disponible");
+      setMostrarModalCrear(false);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleCancelarCrearEstacionamiento = () => {
+    setEstacionamientoInput("");
+    setEstadoEstacionamiento(null);
+    setMostrarModalCrear(false);
+  };
 
   const handleEntrada = async () => {
     const ok = await registrarEntrada({
@@ -234,10 +274,27 @@ export default function AccesosSeguridad() {
                 ]}
               />
             </div>
+            <div style={{ flex: "1 1 180px", minWidth: "180px" }}>
+              <label style={estiloLabel}>N° Estacionamiento</label>
+              <input
+                type="text"
+                placeholder="Ej: 5"
+                style={estiloInput}
+                value={estacionamientoInput}
+                onChange={(e) => setEstacionamientoInput(e.target.value)}
+                onBlur={(e) => comprobarEstacionamiento(e.target.value)}
+              />
+              {estadoEstacionamiento === "disponible" && (
+                <span style={{ fontSize: "0.75rem", color: VERDE_OSCURO, fontWeight: 700, display: "block", marginTop: "0.25rem" }}>✓ Disponible</span>
+              )}
+              {estadoEstacionamiento === "ocupado" && (
+                <span style={{ fontSize: "0.75rem", color: ROJO, fontWeight: 700, display: "block", marginTop: "0.25rem" }}>⚠ Ocupado / Lleno</span>
+              )}
+            </div>
             <button
               onClick={handleEntrada}
-              disabled={loadingAcceso || !placaInput.trim() || hayAccesoPendiente}
-              style={{ ...estiloBoton(VERDE, loadingAcceso || !placaInput.trim() || hayAccesoPendiente), flex: "1 1 170px" }}
+              disabled={loadingAcceso || !placaInput.trim() || hayAccesoPendiente || estadoEstacionamiento === "ocupado"}
+              style={{ ...estiloBoton(VERDE, loadingAcceso || !placaInput.trim() || hayAccesoPendiente || estadoEstacionamiento === "ocupado"), flex: "1 1 170px" }}
             >
               <FiLogIn size={17} />
               {loadingAcceso ? "Registrando..." : "Registrar entrada"}
@@ -361,6 +418,36 @@ export default function AccesosSeguridad() {
           </div>
         )}
       </div>
-    </div>
+    </div>    
   );
 }
+{mostrarModalCrear && (
+      <div style={{ position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+        <div style={{ background: "#fff", padding: "2rem", borderRadius: "16px", boxShadow: "0 10px 25px rgba(0,0,0,0.1)", maxWidth: "400px", width: "100%", margin: "0 1rem", boxSizing: "border-box" }}>
+          
+          <h3 style={{ fontSize: "1.2rem", fontWeight: 800, color: TEXTO, margin: "0 0 0.5rem" }}>
+            Estacionamiento no encontrado
+          </h3>
+          
+          <p style={{ fontSize: "0.9rem", color: TEXTO_SUAVE, margin: "0 0 1.5rem", lineHeight: "1.4rem" }}>
+            El estacionamiento <b>N° {estacionamientoInput}</b> no está registrado en el sistema. ¿Deseas crearlo ahora mismo?
+          </p>
+          
+          <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.75rem" }}>
+            <button 
+              onClick={handleCancelarCrearEstacionamiento} 
+              style={{ padding: "0.6rem 1.2rem", border: "none", borderRadius: "8px", background: "#f1f5f9", color: TEXTO, fontWeight: 700, fontSize: "0.85rem", cursor: "pointer" }}
+            >
+              No, cancelar
+            </button>
+            <button 
+              onClick={handleConfirmarCrearEstacionamiento} 
+              style={{ padding: "0.6rem 1.2rem", border: "none", borderRadius: "8px", background: VERDE, color: "#fff", fontWeight: 700, fontSize: "0.85rem", cursor: "pointer" }}
+            >
+              Sí, crearlo
+            </button>
+          </div>
+
+        </div>
+      </div>
+    )}
