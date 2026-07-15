@@ -1,9 +1,15 @@
-import { useEffect, useState } from "react";
-import { Car, Plus, Trash2 } from "lucide-react";
+// src/pages/propietario/MisVehiculos.jsx
+
+import { useEffect, useState, useCallback } from "react";
+import { Car, Plus, Trash2, ParkingSquare, X, Pencil } from "lucide-react";
 import {
   getHomeownerVehicles,
   createHomeownerVehicle,
+  updateHomeownerVehicle,
   deleteHomeownerVehicle,
+  getHomeownerTenants,
+  getHomeownerParkingSpots,
+  assignHomeownerVehicleParking,
 } from "../../services/api";
 import { colors, radius, shadow, transition } from "../../theme/colors";
 import SectionHeader from "../../components/common/SectionHeader";
@@ -14,6 +20,8 @@ import ConfirmModal from "../../components/common/ConfirmModal";
 import Modal from "../../components/common/Modal";
 import FormField from "../../components/common/FormField";
 import { Toast, useToast } from "../../components/common/Toast";
+
+// ─── Constantes ───────────────────────────────────────────────────────────────
 
 const PAGE = {
   padding: "32px",
@@ -29,19 +37,276 @@ const GRID = {
 };
 
 const INITIAL_FORM = {
-  marca: "",
+  marca:       "",
+  modelo:      "",
+  color:       "",
+  placa:       "",
+  tipo:        "",
+  inquilinoId: "",
+};
+
+// El PUT solo acepta estos 4 campos
+const INITIAL_EDIT_FORM = {
+  marca:  "",
   modelo: "",
-  color: "",
-  placa: "",
-  tipo: "",
+  color:  "",
+  placa:  "",
+};
+
+const INITIAL_ERRORS = {
+  marca:  "",
+  modelo: "",
+  color:  "",
+  placa:  "",
+  tipo:   "",
+};
+
+const INITIAL_EDIT_ERRORS = {
+  marca:  "",
+  modelo: "",
+  color:  "",
+  placa:  "",
 };
 
 const TIPO_OPTIONS = [
-  { value: "AUTO", label: "Auto" },
-  { value: "MOTO", label: "Moto" },
+  { value: "AUTO",      label: "Auto"      },
+  { value: "CAMIONETA", label: "Camioneta" },
+  { value: "MOTO",      label: "Moto"      },
+  { value: "OTRO",      label: "Otro"      },
 ];
 
-function VehicleCard({ vehicle, onDelete }) {
+// ─── Validación y normalización ───────────────────────────────────────────────
+
+const PLACA_PATTERN  = /^[A-Z]{3}-\d{3}$|^[A-Z]\d[A-Z]-\d{3}$/;
+const NOMBRE_PATTERN = /^[A-Za-zÁáÉéÍíÓóÚúÑñÜü0-9\s\-\.]{2,}$/;
+const COLOR_PATTERN  = /^[A-Za-zÁáÉéÍíÓóÚúÑñÜü\s]{3,}$/;
+
+function capitalize(str) {
+  return str
+    .trim()
+    .toLowerCase()
+    .replace(/(?:^|\s)\S/g, (l) => l.toUpperCase());
+}
+
+function normalizePlaca(raw) {
+  const clean = raw.toUpperCase().replace(/\s/g, "");
+  if (clean.includes("-")) return clean;
+  if (clean.length >= 4) return `${clean.slice(0, 3)}-${clean.slice(3)}`;
+  return clean;
+}
+
+function validateAddForm(form) {
+  const errors = { ...INITIAL_ERRORS };
+  let valid = true;
+
+  if (!NOMBRE_PATTERN.test(form.marca.trim())) {
+    errors.marca = "Solo letras, números y espacios. Mínimo 2 caracteres.";
+    valid = false;
+  }
+  if (!NOMBRE_PATTERN.test(form.modelo.trim())) {
+    errors.modelo = "Solo letras, números y espacios. Mínimo 2 caracteres.";
+    valid = false;
+  }
+  if (!COLOR_PATTERN.test(form.color.trim())) {
+    errors.color = "Solo letras y espacios. Mínimo 3 caracteres.";
+    valid = false;
+  }
+  if (!PLACA_PATTERN.test(normalizePlaca(form.placa))) {
+    errors.placa = "Formato inválido. Ej: ABC-123 o A1B-234";
+    valid = false;
+  }
+  if (!form.tipo) {
+    errors.tipo = "Selecciona un tipo de vehículo.";
+    valid = false;
+  }
+
+  return { errors, valid };
+}
+
+function validateEditForm(form) {
+  const errors = { ...INITIAL_EDIT_ERRORS };
+  let valid = true;
+
+  if (!NOMBRE_PATTERN.test(form.marca.trim())) {
+    errors.marca = "Solo letras, números y espacios. Mínimo 2 caracteres.";
+    valid = false;
+  }
+  if (!NOMBRE_PATTERN.test(form.modelo.trim())) {
+    errors.modelo = "Solo letras, números y espacios. Mínimo 2 caracteres.";
+    valid = false;
+  }
+  if (!COLOR_PATTERN.test(form.color.trim())) {
+    errors.color = "Solo letras y espacios. Mínimo 3 caracteres.";
+    valid = false;
+  }
+  if (!PLACA_PATTERN.test(normalizePlaca(form.placa))) {
+    errors.placa = "Formato inválido. Ej: ABC-123 o A1B-234";
+    valid = false;
+  }
+
+  return { errors, valid };
+}
+
+// ─── Sub-componente: FieldError ───────────────────────────────────────────────
+
+function FieldError({ message }) {
+  if (!message) return null;
+  return (
+    <p style={{ margin: "4px 0 0", fontSize: "12px", color: colors.red }}>
+      {message}
+    </p>
+  );
+}
+
+// ─── Sub-componente: ParkingModal ─────────────────────────────────────────────
+
+function ParkingModal({ open, vehicle, spots, onClose, onSave, saving }) {
+  const [selected, setSelected] = useState(vehicle?.idEstacionamiento ?? null);
+
+  useEffect(() => {
+    setSelected(vehicle?.idEstacionamiento ?? null);
+  }, [vehicle]);
+
+  if (!open || !vehicle) return null;
+
+  const hasParking = !!vehicle.idEstacionamiento;
+
+  return (
+    <Modal
+      open={open}
+      title={hasParking ? "Cambiar estacionamiento" : "Asignar estacionamiento"}
+      onClose={onClose}
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+
+        {/* Info del vehículo */}
+        <div
+          style={{
+            background: colors.background,
+            borderRadius: radius.sm,
+            padding: "12px 16px",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+          }}
+        >
+          <Car size={16} color={colors.blue} />
+          <span style={{ fontSize: "14px", fontWeight: 600, color: colors.slate }}>
+            {vehicle.marca} {vehicle.modelo}
+          </span>
+          <span style={{ fontSize: "13px", color: colors.slateLight }}>
+            · {vehicle.placa}
+          </span>
+        </div>
+
+        {/* Lista de spots */}
+        {spots.length === 0 ? (
+          <p style={{ fontSize: "14px", color: colors.slateLight, textAlign: "center", padding: "16px 0" }}>
+            No hay estacionamientos disponibles para tu apartamento.
+          </p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "280px", overflowY: "auto" }}>
+            {spots.map((spot) => {
+              const isSelected = selected === spot.id;
+              const lleno = spot.cantidadActual >= spot.capacidadMaxima;
+
+              return (
+                <button
+                  key={spot.id}
+                  onClick={() => !lleno && setSelected(isSelected ? null : spot.id)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "12px 16px",
+                    borderRadius: radius.sm,
+                    border: `1px solid ${isSelected ? colors.orange : colors.border}`,
+                    background: isSelected ? colors.orangeLight : lleno ? colors.background : colors.white,
+                    cursor: lleno ? "not-allowed" : "pointer",
+                    fontFamily: "system-ui, sans-serif",
+                    transition,
+                    textAlign: "left",
+                    opacity: lleno ? 0.6 : 1,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <ParkingSquare size={16} color={isSelected ? colors.orange : lleno ? colors.slateLighter : colors.slateLight} />
+                    <div>
+                      <p style={{ margin: 0, fontSize: "14px", fontWeight: 500, color: isSelected ? colors.orange : colors.slate }}>
+                        Estacionamiento #{spot.numero}
+                      </p>
+                      <p style={{ margin: "2px 0 0", fontSize: "11px", color: colors.slateLighter }}>
+                        {spot.tipoVehiculo} · {spot.cantidadActual}/{spot.capacidadMaxima} ocupado{spot.cantidadActual !== 1 ? "s" : ""}
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                    {isSelected && (
+                      <span style={{ fontSize: "11px", fontWeight: 600, color: colors.orange }}>
+                        SELECCIONADO
+                      </span>
+                    )}
+                    {lleno && (
+                      <span style={{ fontSize: "11px", fontWeight: 600, color: colors.red }}>
+                        LLENO
+                      </span>
+                    )}
+                    {!lleno && !isSelected && spot.disponible && (
+                      <span style={{ fontSize: "11px", color: colors.green, fontWeight: 500 }}>
+                        Disponible
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Desasignar */}
+        {hasParking && (
+          <button
+            onClick={() => setSelected(null)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "10px 14px",
+              borderRadius: radius.sm,
+              border: `1px solid ${selected === null ? colors.red : colors.border}`,
+              background: selected === null ? colors.redLight : "transparent",
+              cursor: "pointer",
+              fontFamily: "system-ui, sans-serif",
+              color: selected === null ? colors.red : colors.slateLight,
+              fontSize: "13px",
+              transition,
+            }}
+          >
+            <X size={14} />
+            Desasignar estacionamiento actual (#{vehicle.idEstacionamiento})
+          </button>
+        )}
+
+        <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", paddingTop: "4px" }}>
+          <ActionButton variant="ghost" onClick={onClose} disabled={saving}>
+            Cancelar
+          </ActionButton>
+          <ActionButton
+            onClick={() => onSave(vehicle.id, selected)}
+            disabled={saving || selected === vehicle.idEstacionamiento}
+          >
+            {saving ? "Guardando..." : "Guardar"}
+          </ActionButton>
+        </div>
+
+      </div>
+    </Modal>
+  );
+}
+
+// ─── Sub-componente: VehicleCard ──────────────────────────────────────────────
+
+function VehicleCard({ vehicle, onDelete, onParking, onEdit }) {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -76,21 +341,56 @@ function VehicleCard({ vehicle, onDelete }) {
         >
           <Car size={22} color={colors.blue} />
         </div>
-        <button
-          onClick={() => onDelete(vehicle)}
-          style={{
-            background: hovered ? colors.redLight : "transparent",
-            border: "none",
-            cursor: "pointer",
-            borderRadius: "8px",
-            padding: "6px",
-            color: colors.red,
-            display: "flex",
-            transition,
-          }}
-        >
-          <Trash2 size={15} />
-        </button>
+        <div style={{ display: "flex", gap: "4px" }}>
+          <button
+            onClick={() => onEdit(vehicle)}
+            title="Editar vehículo"
+            style={{
+              background: hovered ? colors.blueLight : "transparent",
+              border: "none",
+              cursor: "pointer",
+              borderRadius: "8px",
+              padding: "6px",
+              color: colors.blue,
+              display: "flex",
+              transition,
+            }}
+          >
+            <Pencil size={15} />
+          </button>
+          <button
+            onClick={() => onParking(vehicle)}
+            title="Gestionar estacionamiento"
+            style={{
+              background: hovered ? colors.orangeLight : "transparent",
+              border: "none",
+              cursor: "pointer",
+              borderRadius: "8px",
+              padding: "6px",
+              color: colors.orange,
+              display: "flex",
+              transition,
+            }}
+          >
+            <ParkingSquare size={15} />
+          </button>
+          <button
+            onClick={() => onDelete(vehicle)}
+            title="Eliminar vehículo"
+            style={{
+              background: hovered ? colors.redLight : "transparent",
+              border: "none",
+              cursor: "pointer",
+              borderRadius: "8px",
+              padding: "6px",
+              color: colors.red,
+              display: "flex",
+              transition,
+            }}
+          >
+            <Trash2 size={15} />
+          </button>
+        </div>
       </div>
 
       <div>
@@ -102,27 +402,14 @@ function VehicleCard({ vehicle, onDelete }) {
         </p>
       </div>
 
-      <div
-        style={{
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: "10px",
-        }}
-      >
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
         {[
           { label: "Placa", value: vehicle.placa },
           { label: "Color", value: vehicle.color },
-          ...(vehicle.idEstacionamiento
-            ? [{ label: "Estacionamiento", value: `#${vehicle.idEstacionamiento}` }]
-            : []),
         ].map((item) => (
           <div
             key={item.label}
-            style={{
-              background: colors.background,
-              borderRadius: radius.sm,
-              padding: "10px 12px",
-            }}
+            style={{ background: colors.background, borderRadius: radius.sm, padding: "10px 12px" }}
           >
             <p style={{ margin: 0, fontSize: "11px", color: colors.slateLighter, textTransform: "uppercase", letterSpacing: "0.05em" }}>
               {item.label}
@@ -133,51 +420,228 @@ function VehicleCard({ vehicle, onDelete }) {
           </div>
         ))}
       </div>
+
+      <div>
+        {vehicle.idEstacionamiento ? (
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              fontSize: "12px",
+              background: colors.orangeLight,
+              color: colors.orange,
+              borderRadius: radius.xl,
+              padding: "4px 10px",
+              fontWeight: 600,
+            }}
+          >
+            <ParkingSquare size={12} />
+            Est. #{vehicle.idEstacionamiento}
+          </span>
+        ) : (
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              fontSize: "12px",
+              background: colors.background,
+              color: colors.slateLighter,
+              borderRadius: radius.xl,
+              padding: "4px 10px",
+            }}
+          >
+            <ParkingSquare size={12} />
+            Sin estacionamiento
+          </span>
+        )}
+      </div>
     </div>
   );
 }
 
+// ─── Sub-componente: campos comunes de formulario ─────────────────────────────
+
+function VehicleFields({ form, errors, onChange }) {
+  return (
+    <>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+        <div>
+          <FormField label="Marca" name="marca" value={form.marca} onChange={onChange} placeholder="Toyota" required />
+          <FieldError message={errors.marca} />
+        </div>
+        <div>
+          <FormField label="Modelo" name="modelo" value={form.modelo} onChange={onChange} placeholder="Corolla" required />
+          <FieldError message={errors.modelo} />
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+        <div>
+          <FormField label="Placa" name="placa" value={form.placa} onChange={onChange} placeholder="ABC-123" required />
+          <p style={{ margin: "3px 0 0", fontSize: "11px", color: colors.slateLighter }}>
+            Formato: ABC-123 o A1B-234
+          </p>
+          <FieldError message={errors.placa} />
+        </div>
+        <div>
+          <FormField label="Color" name="color" value={form.color} onChange={onChange} placeholder="Blanco" required />
+          <FieldError message={errors.color} />
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── Vista principal ──────────────────────────────────────────────────────────
+
 export default function MisVehiculos() {
-  const [vehicles, setVehicles] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showAdd, setShowAdd] = useState(false);
-  const [form, setForm] = useState(INITIAL_FORM);
-  const [saving, setSaving] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState(null);
-  const [deleting, setDeleting] = useState(false);
+  const [vehicles,      setVehicles]      = useState([]);
+  const [tenants,       setTenants]       = useState([]);
+  const [spots,         setSpots]         = useState([]);
+  const [loading,       setLoading]       = useState(true);
+
+  // Estado modal agregar
+  const [showAdd,       setShowAdd]       = useState(false);
+  const [addForm,       setAddForm]       = useState(INITIAL_FORM);
+  const [addErrors,     setAddErrors]     = useState(INITIAL_ERRORS);
+  const [saving,        setSaving]        = useState(false);
+
+  // Estado modal editar
+  const [editTarget,    setEditTarget]    = useState(null);
+  const [editForm,      setEditForm]      = useState(INITIAL_EDIT_FORM);
+  const [editErrors,    setEditErrors]    = useState(INITIAL_EDIT_ERRORS);
+  const [updating,      setUpdating]      = useState(false);
+
+  // Estado eliminar y parking
+  const [deleteTarget,  setDeleteTarget]  = useState(null);
+  const [deleting,      setDeleting]      = useState(false);
+  const [parkingTarget, setParkingTarget] = useState(null);
+  const [savingParking, setSavingParking] = useState(false);
+
   const { toast, showToast, clearToast } = useToast();
 
-  const fetchVehicles = () => {
+  // ── Fetch paralelo ────────────────────────────────────────────────────────
+
+  const fetchAll = useCallback(() => {
     setLoading(true);
-    getHomeownerVehicles()
-      .then((data) => setVehicles(Array.isArray(data) ? data : []))
-      .catch(() => showToast("Error al cargar vehículos", "error"))
+    Promise.all([
+      getHomeownerVehicles().catch(() => []),
+      getHomeownerTenants().catch(() => []),
+      getHomeownerParkingSpots().catch(() => []),
+    ])
+      .then(([v, t, s]) => {
+        setVehicles(Array.isArray(v) ? v : []);
+        setTenants(Array.isArray(t) ? t : []);
+        setSpots(Array.isArray(s) ? s : []);
+      })
+      .catch(() => showToast("Error al cargar datos", "error"))
       .finally(() => setLoading(false));
+  }, []);
+
+  useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  // ── Handlers agregar ──────────────────────────────────────────────────────
+
+  const handleAddChange = (e) => {
+    const { name, value } = e.target;
+    setAddForm((prev) => ({ ...prev, [name]: value }));
+    if (addErrors[name]) setAddErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  useEffect(() => { fetchVehicles(); }, []);
-
-  const handleChange = (e) =>
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleCloseAdd = () => {
+    setShowAdd(false);
+    setAddForm(INITIAL_FORM);
+    setAddErrors(INITIAL_ERRORS);
+  };
 
   const handleAdd = async () => {
-    if (!form.marca || !form.modelo || !form.placa || !form.tipo || !form.color) {
-      showToast("Completa todos los campos requeridos", "error");
-      return;
-    }
+    const normalized = {
+      ...addForm,
+      marca:  capitalize(addForm.marca),
+      modelo: capitalize(addForm.modelo),
+      color:  capitalize(addForm.color),
+      placa:  normalizePlaca(addForm.placa),
+    };
+    setAddForm(normalized);
+
+    const { errors: newErrors, valid } = validateAddForm(normalized);
+    setAddErrors(newErrors);
+    if (!valid) return;
+
     try {
       setSaving(true);
-      await createHomeownerVehicle(form);
+      await createHomeownerVehicle({
+        marca:   normalized.marca,
+        modelo:  normalized.modelo,
+        color:   normalized.color,
+        placa:   normalized.placa,
+        tipo:    normalized.tipo,
+        ...(normalized.inquilinoId ? { inquilinoId: Number(normalized.inquilinoId) } : {}),
+      });
       showToast("Vehículo agregado correctamente", "success");
-      setShowAdd(false);
-      setForm(INITIAL_FORM);
-      fetchVehicles();
-    } catch {
-      showToast("Error al agregar vehículo", "error");
+      handleCloseAdd();
+      fetchAll();
+    } catch (err) {
+      showToast(err.message || "Error al agregar vehículo", "error");
     } finally {
       setSaving(false);
     }
   };
+
+  // ── Handlers editar ───────────────────────────────────────────────────────
+
+  const handleOpenEdit = (vehicle) => {
+    setEditTarget(vehicle);
+    setEditForm({
+      marca:  vehicle.marca  ?? "",
+      modelo: vehicle.modelo ?? "",
+      color:  vehicle.color  ?? "",
+      placa:  vehicle.placa  ?? "",
+    });
+    setEditErrors(INITIAL_EDIT_ERRORS);
+  };
+
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm((prev) => ({ ...prev, [name]: value }));
+    if (editErrors[name]) setEditErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  const handleCloseEdit = () => {
+    setEditTarget(null);
+    setEditForm(INITIAL_EDIT_FORM);
+    setEditErrors(INITIAL_EDIT_ERRORS);
+  };
+
+  const handleEdit = async () => {
+    const normalized = {
+      marca:  capitalize(editForm.marca),
+      modelo: capitalize(editForm.modelo),
+      color:  capitalize(editForm.color),
+      placa:  normalizePlaca(editForm.placa),
+    };
+    setEditForm(normalized);
+
+    const { errors: newErrors, valid } = validateEditForm(normalized);
+    setEditErrors(newErrors);
+    if (!valid) return;
+
+    try {
+      setUpdating(true);
+      await updateHomeownerVehicle(editTarget.id, normalized);
+      showToast("Vehículo actualizado correctamente", "success");
+      handleCloseEdit();
+      fetchAll();
+    } catch (err) {
+      showToast(err.message || "Error al actualizar vehículo", "error");
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  // ── Handler eliminar ──────────────────────────────────────────────────────
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -186,13 +650,41 @@ export default function MisVehiculos() {
       await deleteHomeownerVehicle(deleteTarget.id);
       showToast("Vehículo eliminado", "success");
       setDeleteTarget(null);
-      fetchVehicles();
-    } catch {
-      showToast("Error al eliminar vehículo", "error");
+      fetchAll();
+    } catch (err) {
+      showToast(err.message || "Error al eliminar vehículo", "error");
     } finally {
       setDeleting(false);
     }
   };
+
+  // ── Handler estacionamiento ───────────────────────────────────────────────
+
+  const handleSaveParking = async (vehicleId, idEstacionamiento) => {
+    try {
+      setSavingParking(true);
+      await assignHomeownerVehicleParking(vehicleId, idEstacionamiento ?? null);
+      showToast(
+        idEstacionamiento ? "Estacionamiento asignado" : "Estacionamiento desasignado",
+        "success"
+      );
+      setParkingTarget(null);
+      fetchAll();
+    } catch (err) {
+      showToast(err.message || "Error al actualizar estacionamiento", "error");
+    } finally {
+      setSavingParking(false);
+    }
+  };
+
+  // ── Opciones inquilinos ───────────────────────────────────────────────────
+
+  const tenantOptions = tenants.map((t) => ({
+    value: String(t.id),
+    label: `${t.nombres} ${t.apellidos}`,
+  }));
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div style={PAGE}>
@@ -222,31 +714,51 @@ export default function MisVehiculos() {
       ) : (
         <div style={GRID}>
           {vehicles.map((v) => (
-            <VehicleCard key={v.id} vehicle={v} onDelete={setDeleteTarget} />
+            <VehicleCard
+              key={v.id}
+              vehicle={v}
+              onEdit={handleOpenEdit}
+              onDelete={setDeleteTarget}
+              onParking={setParkingTarget}
+            />
           ))}
         </div>
       )}
 
-      <Modal open={showAdd} title="Agregar vehículo" onClose={() => { setShowAdd(false); setForm(INITIAL_FORM); }}>
+      {/* ── Modal: Agregar vehículo ── */}
+      <Modal open={showAdd} title="Agregar vehículo" onClose={handleCloseAdd}>
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-            <FormField label="Marca" name="marca" value={form.marca} onChange={handleChange} placeholder="Toyota" required />
-            <FormField label="Modelo" name="modelo" value={form.modelo} onChange={handleChange} placeholder="Corolla" required />
+          <VehicleFields form={addForm} errors={addErrors} onChange={handleAddChange} />
+
+          <div>
+            <FormField
+              label="Tipo"
+              name="tipo"
+              value={addForm.tipo}
+              onChange={handleAddChange}
+              options={TIPO_OPTIONS}
+              required
+            />
+            <FieldError message={addErrors.tipo} />
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-            <FormField label="Placa" name="placa" value={form.placa} onChange={handleChange} placeholder="ABC123" required />
-            <FormField label="Color" name="color" value={form.color} onChange={handleChange} placeholder="Blanco" required />
-          </div>
-          <FormField
-            label="Tipo"
-            name="tipo"
-            value={form.tipo}
-            onChange={handleChange}
-            options={TIPO_OPTIONS}
-            required
-          />
-          <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", paddingTop: "8px" }}>
-            <ActionButton variant="ghost" onClick={() => { setShowAdd(false); setForm(INITIAL_FORM); }}>
+
+          {tenantOptions.length > 0 && (
+            <div>
+              <FormField
+                label="Asignar a inquilino (opcional)"
+                name="inquilinoId"
+                value={addForm.inquilinoId}
+                onChange={handleAddChange}
+                options={tenantOptions}
+              />
+              <p style={{ margin: "4px 0 0", fontSize: "12px", color: colors.slateLight }}>
+                Si no seleccionas un inquilino, el vehículo quedará a tu nombre.
+              </p>
+            </div>
+          )}
+
+          <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", paddingTop: "4px" }}>
+            <ActionButton variant="ghost" onClick={handleCloseAdd} disabled={saving}>
               Cancelar
             </ActionButton>
             <ActionButton onClick={handleAdd} disabled={saving}>
@@ -256,17 +768,76 @@ export default function MisVehiculos() {
         </div>
       </Modal>
 
+      {/* ── Modal: Editar vehículo ── */}
+      <Modal
+        open={!!editTarget}
+        title={editTarget ? `Editar · ${editTarget.marca} ${editTarget.modelo}` : "Editar vehículo"}
+        onClose={handleCloseEdit}
+      >
+        <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+          <VehicleFields form={editForm} errors={editErrors} onChange={handleEditChange} />
+
+          {/* Tipo no editable — el backend no lo acepta en PUT */}
+          {editTarget && (
+            <div
+              style={{
+                background: colors.background,
+                borderRadius: radius.sm,
+                padding: "10px 14px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
+              <span style={{ fontSize: "13px", color: colors.slateLight }}>Tipo</span>
+              <span style={{ fontSize: "13px", fontWeight: 500, color: colors.slate }}>
+                {editTarget.tipo}
+              </span>
+            </div>
+          )}
+
+          <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", paddingTop: "4px" }}>
+            <ActionButton variant="ghost" onClick={handleCloseEdit} disabled={updating}>
+              Cancelar
+            </ActionButton>
+            <ActionButton onClick={handleEdit} disabled={updating}>
+              {updating ? "Guardando..." : "Guardar cambios"}
+            </ActionButton>
+          </div>
+        </div>
+      </Modal>
+
+      {/* ── Modal: Estacionamiento ── */}
+      <ParkingModal
+        open={!!parkingTarget}
+        vehicle={parkingTarget}
+        spots={spots}
+        onClose={() => setParkingTarget(null)}
+        onSave={handleSaveParking}
+        saving={savingParking}
+      />
+
+      {/* ── Modal: Confirmar eliminación ── */}
       <ConfirmModal
         open={!!deleteTarget}
         title="Eliminar vehículo"
-        description={deleteTarget ? `¿Eliminar ${deleteTarget.marca} ${deleteTarget.modelo} (${deleteTarget.placa})?` : ""}
+        description={
+          deleteTarget
+            ? `¿Eliminar ${deleteTarget.marca} ${deleteTarget.modelo} (${deleteTarget.placa})?`
+            : ""
+        }
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
         loading={deleting}
       />
 
       <Toast toast={toast} onClose={clearToast} />
-      <style>{`@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }`}</style>
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }

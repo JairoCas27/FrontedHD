@@ -15,7 +15,7 @@ import {
   createAdminUser,
   deleteAdministrator,
   extractItems,
-} from '../../services/api'
+} from '../../services/SuperAdminApi'
 import { Spinner } from 'react-bootstrap'
 import { toast } from 'react-toastify'
 import ToggleSwitch from '../../components/common/ToggleSwitch'
@@ -25,9 +25,19 @@ import EncabezadoTabla from '../../components/EncabezadoTabla'
 const colorSuper = "rgb(124,58,237)"
 
 const globalResponsive = `
+@media (max-width: 900px) {
+  .global-detail-grid { grid-template-columns: 1fr !important; }
+}
 @media (max-width: 767px) {
   .global-card-padding { padding: 1rem !important; }
-  .global-search-wrap { width: 100% !important; max-width: 260px !important; }
+  .global-search-wrap { width: 100% !important; max-width: 100% !important; }
+  .global-modal-content { max-width: 95vw !important; }
+  .global-header-actions { width: 100% !important; }
+}
+@media (max-width: 600px) {
+  .global-card-padding { padding: 0.75rem !important; }
+  .global-search-wrap { width: 100% !important; max-width: 100% !important; }
+  .global-modal-content { max-width: 95vw !important; }
 }
 `
 
@@ -45,7 +55,7 @@ const btnStyle = {
 
 const modalOverlay = {
   position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-  backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1000,
+  backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1100,
   display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem"
 }
 
@@ -85,7 +95,7 @@ export default function UsuariosGlobales() {
   // ==================== TODOS TAB ====================
   const [filters, setFilters] = useState({ search: '', rol: '', estado: '', condominio: '' })
   const [sortOrder, setSortOrder] = useState('asc')
-  const [sortField, setSortField] = useState('nombre')
+  const [sortField, setSortField] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [detailItem, setDetailItem] = useState(null)
   const [showDetail, setShowDetail] = useState(false)
@@ -101,11 +111,12 @@ export default function UsuariosGlobales() {
   const [admins, setAdmins] = useState([])
   const [adminSearch, setAdminSearch] = useState('')
   const [adminCondoFilter, setAdminCondoFilter] = useState('')
-  const [adminSortField, setAdminSortField] = useState('nombre')
+  const [adminSortField, setAdminSortField] = useState('')
   const [adminSortOrder, setAdminSortOrder] = useState('asc')
   const [adminShowModal, setAdminShowModal] = useState(false)
   const [adminEditing, setAdminEditing] = useState(null)
   const [adminForm, setAdminForm] = useState({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', idCondominio: '' })
+  const [adminCondoText, setAdminCondoText] = useState('')
   const [adminSubmitting, setAdminSubmitting] = useState(false)
   const [adminDetailItem, setAdminDetailItem] = useState(null)
   const [adminShowDetail, setAdminShowDetail] = useState(false)
@@ -114,13 +125,14 @@ export default function UsuariosGlobales() {
   // ==================== AGENTES TAB ====================
   const [agentSearch, setAgentSearch] = useState('')
   const [agentCondoFilter, setAgentCondoFilter] = useState('')
-  const [agentSortField, setAgentSortField] = useState('nombre')
+  const [agentSortField, setAgentSortField] = useState('')
   const [agentSortOrder, setAgentSortOrder] = useState('asc')
   const [agentShowCreate, setAgentShowCreate] = useState(false)
   const [agentShowEdit, setAgentShowEdit] = useState(false)
   const [agentEditing, setAgentEditing] = useState(null)
   const [agentCreateForm, setAgentCreateForm] = useState({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', idCondominio: '' })
   const [agentEditForm, setAgentEditForm] = useState({ nombres: '', apellidos: '', telefono: '', idCondominio: '' })
+  const [agentEditCondoText, setAgentEditCondoText] = useState('')
   const [agentSubmitting, setAgentSubmitting] = useState(false)
   const [agentDetailItem, setAgentDetailItem] = useState(null)
   const [agentShowDetail, setAgentShowDetail] = useState(false)
@@ -129,13 +141,14 @@ export default function UsuariosGlobales() {
   // ==================== PROPIETARIOS TAB ====================
   const [ownerSearch, setOwnerSearch] = useState('')
   const [ownerCondoFilter, setOwnerCondoFilter] = useState('')
-  const [ownerSortField, setOwnerSortField] = useState('nombre')
+  const [ownerSortField, setOwnerSortField] = useState('')
   const [ownerSortOrder, setOwnerSortOrder] = useState('asc')
   const [ownerShowCreate, setOwnerShowCreate] = useState(false)
   const [ownerShowEdit, setOwnerShowEdit] = useState(false)
   const [ownerEditing, setOwnerEditing] = useState(null)
   const [ownerCreateForm, setOwnerCreateForm] = useState({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', idCondominio: '' })
   const [ownerEditForm, setOwnerEditForm] = useState({ nombres: '', apellidos: '', telefono: '', idCondominio: '' })
+  const [ownerEditCondoText, setOwnerEditCondoText] = useState('')
   const [ownerSubmitting, setOwnerSubmitting] = useState(false)
   const [ownerDetailItem, setOwnerDetailItem] = useState(null)
   const [ownerShowDetail, setOwnerShowDetail] = useState(false)
@@ -170,9 +183,9 @@ export default function UsuariosGlobales() {
       const usersList = extractItems(usersData)
       const condosList = extractItems(condosData)
       const adminsList = extractItems(adminsData)
-      setUsers(usersList)
+      setUsers([...usersList].sort((a, b) => (b.id || 0) - (a.id || 0)))
       setCondominios(condosList)
-      setAdmins(adminsList)
+      setAdmins([...adminsList].sort((a, b) => (b.id || 0) - (a.id || 0)))
       const occupied = new Set()
       adminsList.forEach(admin => {
         if (admin.activo && admin.idCondominio !== null && admin.idCondominio !== undefined) {
@@ -407,7 +420,7 @@ export default function UsuariosGlobales() {
         }
         createdAdminId = created?.id
       }
-      setAdminShowModal(false)
+      setAdminShowModal(false); setAdminCondoText('')
       setTimeout(() => loadData(createdAdminId), 300)
     } catch (err) {
       toast.error(`Error: ${err.message}`)
@@ -499,7 +512,7 @@ export default function UsuariosGlobales() {
         }
       }
       toast.success('Agente actualizado correctamente.')
-      setAgentShowEdit(false); setAgentEditing(null)
+      setAgentShowEdit(false); setAgentEditing(null); setAgentEditCondoText('')
       await loadData()
     } catch (err) {
       toast.error(`Error: ${err.message}`)
@@ -591,7 +604,7 @@ export default function UsuariosGlobales() {
         }
       }
       toast.success('Propietario actualizado correctamente.')
-      setOwnerShowEdit(false); setOwnerEditing(null)
+      setOwnerShowEdit(false); setOwnerEditing(null); setOwnerEditCondoText('')
       await loadData()
     } catch (err) {
       toast.error(`Error: ${err.message}`)
@@ -660,7 +673,7 @@ export default function UsuariosGlobales() {
 
   // ==================== RENDER: TAB BUTTONS ====================
   const renderTabs = () => (
-    <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>
+    <div className="global-tabs" style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>
       {[
         { key: 'todos', label: 'Globales' },
         { key: 'administradores', label: 'Administradores' },
@@ -686,15 +699,15 @@ export default function UsuariosGlobales() {
     if (!item) return null
     return (
       <div style={modalOverlay} onClick={onClose}>
-        <div style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
-          <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>{titulo || 'Detalle'}</h3>
+        <div className="global-modal-content" style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
+           <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+             <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>{titulo || 'Detalle'}</h3>
             <button onClick={onClose} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}>
               <FiX size={20} />
             </button>
           </div>
           <div style={{ padding: "1.5rem" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+            <div className="global-detail-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
               <div>
                 <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.025em" }}>ID</span>
                 <p style={{ margin: "0.2rem 0 0", fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>{item.id}</p>
@@ -823,7 +836,7 @@ export default function UsuariosGlobales() {
                 <span style={{ fontWeight: "700", fontSize: "0.9rem", color: "#1e293b" }}>
                   Usuarios <span style={{ color: "#94a3b8", fontWeight: "600" }}>({filteredAndSorted.length})</span>
                 </span>
-                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+                <div className="global-header-actions" style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
                   <button onClick={() => { setForm({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', idCondominio: '' }); setShowModal(true) }}
                     style={{ backgroundColor: colorSuper, color: "#ffffff", border: "none", padding: "0.4rem 0.85rem", borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" }}>
                     <FiPlus size={14} /> Nuevo Admin
@@ -939,7 +952,7 @@ export default function UsuariosGlobales() {
 
           {showModal && (
             <div style={modalOverlay} onClick={() => setShowModal(false)}>
-              <div style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
+              <div className="global-modal-content" style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>Nuevo Administrador de Condominio</h3>
                   <button onClick={() => setShowModal(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}><FiX size={20} /></button>
@@ -972,9 +985,9 @@ export default function UsuariosGlobales() {
                     </div>
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Asignar condominio</label>
-                      <DataList value={form.idCondominio} onChange={(e) => setForm({ ...form, idCondominio: e.target.value })} style={estiloInput}>
+                      <DataList value={condominios.find(c => String(c.id) === String(form.idCondominio))?.nombre || ''} onChange={(e) => { const s = condominios.find(c => c.nombre === e.target.value); if (s) setForm({ ...form, idCondominio: s.id }) }} style={estiloInput}>
                         <option value="">Sin asignar</option>
-                        {condominioOptions.map(c => (<option key={c.id} value={c.id} disabled={c.disabled}>{c.label}</option>))}
+                        {condominios.filter(c => !occupiedCondos.has(c.id)).map(c => (<option key={c.id} value={c.nombre} />))}
                       </DataList>
                     </div>
                   </div>
@@ -991,7 +1004,7 @@ export default function UsuariosGlobales() {
 
           {showPasswordModal && (
             <div style={modalOverlay} onClick={() => { setShowPasswordModal(false); setNewPassword(''); setPasswordError('') }}>
-              <div style={{ ...modalContent, maxWidth: "480px" }} onClick={(e) => e.stopPropagation()}>
+              <div className="global-modal-content" style={{ ...modalContent, maxWidth: "480px" }} onClick={(e) => e.stopPropagation()}>
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>Forzar cambio de contraseña</h3>
                   <button onClick={() => { setShowPasswordModal(false); setNewPassword(''); setPasswordError('') }} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}><FiX size={20} /></button>
@@ -1028,7 +1041,7 @@ export default function UsuariosGlobales() {
                 <span style={{ fontWeight: "700", fontSize: "0.9rem", color: "#1e293b" }}>
                   Administradores <span style={{ color: "#94a3b8", fontWeight: "600" }}>({adminFiltered.length})</span>
                 </span>
-                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+                <div className="global-header-actions" style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
                   <button onClick={() => { setAdminEditing(null); setAdminForm({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', idCondominio: '' }); setAdminShowModal(true) }}
                     style={{ backgroundColor: colorSuper, color: "#ffffff", border: "none", padding: "0.4rem 0.85rem", borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" }}>
                     <FiPlus size={14} /> Nuevo
@@ -1091,7 +1104,7 @@ export default function UsuariosGlobales() {
                               <FiEye size={14} />
                             </button>
                             <button style={{ ...btnStyle, backgroundColor: "rgba(245,158,11,0.15)", color: "#d97706", marginRight: "0.25rem" }}
-                              onClick={() => { setAdminEditing(a); setAdminForm({ nombres: a.nombres, apellidos: a.apellidos, correo: a.correo, telefono: a.telefono || '', contrasena: '', idCondominio: a.idCondominio?.toString() || '' }); setAdminShowModal(true) }} title="Editar">
+                              onClick={() => { setAdminEditing(a); setAdminForm({ nombres: a.nombres, apellidos: a.apellidos, correo: a.correo, telefono: a.telefono || '', contrasena: '', idCondominio: a.idCondominio?.toString() || '' }); setAdminCondoText(''); setAdminShowModal(true) }} title="Editar">
                               <FiEdit2 size={14} />
                             </button>
                             <button style={{ ...btnStyle, backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444" }}
@@ -1122,11 +1135,11 @@ export default function UsuariosGlobales() {
           />
 
           {adminShowModal && (
-            <div style={modalOverlay} onClick={() => setAdminShowModal(false)}>
-              <div style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
+            <div style={modalOverlay} onClick={() => { setAdminShowModal(false); setAdminCondoText('') }}>
+              <div className="global-modal-content" style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>{adminEditing ? 'Editar' : 'Nuevo'} administrador</h3>
-                  <button onClick={() => setAdminShowModal(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}><FiX size={20} /></button>
+                  <button onClick={() => { setAdminShowModal(false); setAdminCondoText('') }} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}><FiX size={20} /></button>
                 </div>
                 <form onSubmit={handleAdminSubmit}>
                   <div style={{ padding: "1.5rem" }}>
@@ -1155,9 +1168,9 @@ export default function UsuariosGlobales() {
                     )}
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Asignar condominio</label>
-                      <DataList value={adminForm.idCondominio} onChange={(e) => setAdminForm({ ...adminForm, idCondominio: e.target.value })} style={estiloInput}>
+                      <DataList value={adminCondoText} onChange={(e) => { setAdminCondoText(e.target.value); const s = condominios.find(c => c.nombre === e.target.value); if (s) setAdminForm({ ...adminForm, idCondominio: s.id }) }} style={estiloInput}>
                         <option value="">Sin asignar</option>
-                        {adminGetCondoOptions().map(c => (<option key={c.id} value={c.id} disabled={c.disabled}>{c.label}</option>))}
+                        {condominios.filter(c => !occupiedCondos.has(c.id) || (adminEditing && adminEditing.idCondominio === c.id)).map(c => (<option key={c.id} value={c.nombre} />))}
                       </DataList>
                       {adminEditing && adminForm.idCondominio && condominios.find(c => c.id === parseInt(adminForm.idCondominio, 10))?.activo === false && (
                         <small style={{ color: "#d97706", display: "flex", alignItems: "center", gap: "0.25rem", marginTop: "0.3rem", fontWeight: "600", fontSize: "0.7rem" }}>
@@ -1170,7 +1183,7 @@ export default function UsuariosGlobales() {
                     <button type="submit" disabled={adminSubmitting} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: adminSubmitting ? "#cbd5e1" : colorSuper, color: "#fff", fontWeight: "600", cursor: adminSubmitting ? "not-allowed" : "pointer", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
                       {adminSubmitting ? 'Guardando...' : <><FiCheck size={16} /> Guardar</>}
                     </button>
-                    <button type="button" onClick={() => setAdminShowModal(false)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
+                    <button type="button" onClick={() => { setAdminShowModal(false); setAdminCondoText('') }} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
                   </div>
                 </form>
               </div>
@@ -1188,7 +1201,7 @@ export default function UsuariosGlobales() {
                 <span style={{ fontWeight: "700", fontSize: "0.9rem", color: "#1e293b" }}>
                   Agentes de Seguridad <span style={{ color: "#94a3b8", fontWeight: "600" }}>({agentFiltered.length})</span>
                 </span>
-                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+                <div className="global-header-actions" style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
                   <button onClick={() => { setAgentCreateForm({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', idCondominio: '' }); setAgentShowCreate(true) }}
                     style={{ backgroundColor: colorSuper, color: "#ffffff", border: "none", padding: "0.4rem 0.85rem", borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" }}>
                     <FiPlus size={14} /> Nuevo Agente
@@ -1251,7 +1264,7 @@ export default function UsuariosGlobales() {
                               <FiEye size={14} />
                             </button>
                             <button style={{ ...btnStyle, backgroundColor: "rgba(245,158,11,0.15)", color: "#d97706", marginRight: "0.25rem" }}
-                              onClick={() => { setAgentEditing(u); setAgentEditForm({ nombres: u.nombres, apellidos: u.apellidos, telefono: u.telefono || '', idCondominio: u.idCondominio?.toString() || '' }); setAgentShowEdit(true) }} title="Editar">
+                              onClick={() => { setAgentEditing(u); setAgentEditForm({ nombres: u.nombres, apellidos: u.apellidos, telefono: u.telefono || '', idCondominio: u.idCondominio?.toString() || '' }); setAgentEditCondoText(''); setAgentShowEdit(true) }} title="Editar">
                               <FiEdit2 size={14} />
                             </button>
                             <button style={{ ...btnStyle, backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444" }}
@@ -1284,7 +1297,7 @@ export default function UsuariosGlobales() {
 
           {agentShowCreate && (
             <div style={modalOverlay} onClick={() => setAgentShowCreate(false)}>
-              <div style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
+              <div className="global-modal-content" style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>Nuevo Agente de Seguridad</h3>
                   <button onClick={() => setAgentShowCreate(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}><FiX size={20} /></button>
@@ -1313,9 +1326,9 @@ export default function UsuariosGlobales() {
                     </div>
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Condominio</label>
-                      <DataList value={agentCreateForm.idCondominio} onChange={(e) => setAgentCreateForm({ ...agentCreateForm, idCondominio: e.target.value })} required style={estiloInput}>
+                      <DataList value={condominios.find(c => String(c.id) === String(agentCreateForm.idCondominio))?.nombre || ''} onChange={(e) => { const s = condominios.find(c => c.nombre === e.target.value); if (s) setAgentCreateForm({ ...agentCreateForm, idCondominio: s.id }) }} required style={estiloInput}>
                         <option value="">Seleccione un condominio</option>
-                        {condominios.map(c => (<option key={c.id} value={c.id}>{c.nombre}</option>))}
+                        {condominios.map(c => (<option key={c.id} value={c.nombre} />))}
                       </DataList>
                     </div>
                   </div>
@@ -1331,11 +1344,11 @@ export default function UsuariosGlobales() {
           )}
 
           {agentShowEdit && (
-            <div style={modalOverlay} onClick={() => setAgentShowEdit(false)}>
-              <div style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
+            <div style={modalOverlay} onClick={() => { setAgentShowEdit(false); setAgentEditCondoText('') }}>
+              <div className="global-modal-content" style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>Editar Agente de Seguridad</h3>
-                  <button onClick={() => setAgentShowEdit(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}><FiX size={20} /></button>
+                  <button onClick={() => { setAgentShowEdit(false); setAgentEditCondoText('') }} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}><FiX size={20} /></button>
                 </div>
                 <form onSubmit={handleAgentEdit}>
                   <div style={{ padding: "1.5rem" }}>
@@ -1353,9 +1366,9 @@ export default function UsuariosGlobales() {
                     </div>
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Condominio</label>
-                      <DataList value={agentEditForm.idCondominio} onChange={(e) => setAgentEditForm({ ...agentEditForm, idCondominio: e.target.value })} style={estiloInput}>
+                      <DataList value={agentEditCondoText} onChange={(e) => { setAgentEditCondoText(e.target.value); const s = condominios.find(c => c.nombre === e.target.value); if (s) setAgentEditForm({ ...agentEditForm, idCondominio: s.id }) }} style={estiloInput}>
                         <option value="">Sin condominio</option>
-                        {condominios.map(c => (<option key={c.id} value={c.id}>{c.nombre}</option>))}
+                        {condominios.map(c => (<option key={c.id} value={c.nombre} />))}
                       </DataList>
                     </div>
                   </div>
@@ -1363,7 +1376,7 @@ export default function UsuariosGlobales() {
                     <button type="submit" disabled={agentSubmitting} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: agentSubmitting ? "#cbd5e1" : colorSuper, color: "#fff", fontWeight: "600", cursor: agentSubmitting ? "not-allowed" : "pointer", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
                       {agentSubmitting ? 'Guardando...' : <><FiCheck size={16} /> Guardar cambios</>}
                     </button>
-                    <button type="button" onClick={() => setAgentShowEdit(false)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
+                    <button type="button" onClick={() => { setAgentShowEdit(false); setAgentEditCondoText('') }} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
                   </div>
                 </form>
               </div>
@@ -1381,7 +1394,7 @@ export default function UsuariosGlobales() {
                 <span style={{ fontWeight: "700", fontSize: "0.9rem", color: "#1e293b" }}>
                   Propietarios <span style={{ color: "#94a3b8", fontWeight: "600" }}>({ownerFiltered.length})</span>
                 </span>
-                <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
+                <div className="global-header-actions" style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
                   <button onClick={() => { setOwnerCreateForm({ nombres: '', apellidos: '', correo: '', telefono: '', contrasena: '', idCondominio: '' }); setOwnerShowCreate(true) }}
                     style={{ backgroundColor: colorSuper, color: "#ffffff", border: "none", padding: "0.4rem 0.85rem", borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" }}>
                     <FiPlus size={14} /> Nuevo Propietario
@@ -1444,7 +1457,7 @@ export default function UsuariosGlobales() {
                               <FiEye size={14} />
                             </button>
                             <button style={{ ...btnStyle, backgroundColor: "rgba(245,158,11,0.15)", color: "#d97706", marginRight: "0.25rem" }}
-                              onClick={() => { setOwnerEditing(u); setOwnerEditForm({ nombres: u.nombres, apellidos: u.apellidos, telefono: u.telefono || '', idCondominio: u.idCondominio?.toString() || '' }); setOwnerShowEdit(true) }} title="Editar">
+                              onClick={() => { setOwnerEditing(u); setOwnerEditForm({ nombres: u.nombres, apellidos: u.apellidos, telefono: u.telefono || '', idCondominio: u.idCondominio?.toString() || '' }); setOwnerEditCondoText(''); setOwnerShowEdit(true) }} title="Editar">
                               <FiEdit2 size={14} />
                             </button>
                             <button style={{ ...btnStyle, backgroundColor: "rgba(239,68,68,0.1)", color: "#ef4444" }}
@@ -1477,7 +1490,7 @@ export default function UsuariosGlobales() {
 
           {ownerShowCreate && (
             <div style={modalOverlay} onClick={() => setOwnerShowCreate(false)}>
-              <div style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
+              <div className="global-modal-content" style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>Nuevo Propietario</h3>
                   <button onClick={() => setOwnerShowCreate(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}><FiX size={20} /></button>
@@ -1506,9 +1519,9 @@ export default function UsuariosGlobales() {
                     </div>
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Condominio</label>
-                      <DataList value={ownerCreateForm.idCondominio} onChange={(e) => setOwnerCreateForm({ ...ownerCreateForm, idCondominio: e.target.value })} required style={estiloInput}>
+                      <DataList value={condominios.find(c => String(c.id) === String(ownerCreateForm.idCondominio))?.nombre || ''} onChange={(e) => { const s = condominios.find(c => c.nombre === e.target.value); if (s) setOwnerCreateForm({ ...ownerCreateForm, idCondominio: s.id }) }} required style={estiloInput}>
                         <option value="">Seleccione un condominio</option>
-                        {condominios.map(c => (<option key={c.id} value={c.id}>{c.nombre}</option>))}
+                        {condominios.map(c => (<option key={c.id} value={c.nombre} />))}
                       </DataList>
                     </div>
                   </div>
@@ -1524,11 +1537,11 @@ export default function UsuariosGlobales() {
           )}
 
           {ownerShowEdit && (
-            <div style={modalOverlay} onClick={() => setOwnerShowEdit(false)}>
-              <div style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
+            <div style={modalOverlay} onClick={() => { setOwnerShowEdit(false); setOwnerEditCondoText('') }}>
+              <div className="global-modal-content" style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>Editar Propietario</h3>
-                  <button onClick={() => setOwnerShowEdit(false)} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}><FiX size={20} /></button>
+                  <button onClick={() => { setOwnerShowEdit(false); setOwnerEditCondoText('') }} style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}><FiX size={20} /></button>
                 </div>
                 <form onSubmit={handleOwnerEdit}>
                   <div style={{ padding: "1.5rem" }}>
@@ -1546,9 +1559,9 @@ export default function UsuariosGlobales() {
                     </div>
                     <div style={{ marginBottom: "0.85rem" }}>
                       <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Condominio</label>
-                      <DataList value={ownerEditForm.idCondominio} onChange={(e) => setOwnerEditForm({ ...ownerEditForm, idCondominio: e.target.value })} style={estiloInput}>
+                      <DataList value={ownerEditCondoText} onChange={(e) => { setOwnerEditCondoText(e.target.value); const s = condominios.find(c => c.nombre === e.target.value); if (s) setOwnerEditForm({ ...ownerEditForm, idCondominio: s.id }) }} style={estiloInput}>
                         <option value="">Sin condominio</option>
-                        {condominios.map(c => (<option key={c.id} value={c.id}>{c.nombre}</option>))}
+                        {condominios.map(c => (<option key={c.id} value={c.nombre} />))}
                       </DataList>
                     </div>
                   </div>
@@ -1556,7 +1569,7 @@ export default function UsuariosGlobales() {
                     <button type="submit" disabled={ownerSubmitting} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "none", backgroundColor: ownerSubmitting ? "#cbd5e1" : colorSuper, color: "#fff", fontWeight: "600", cursor: ownerSubmitting ? "not-allowed" : "pointer", fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.4rem" }}>
                       {ownerSubmitting ? 'Guardando...' : <><FiCheck size={16} /> Guardar cambios</>}
                     </button>
-                    <button type="button" onClick={() => setOwnerShowEdit(false)} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
+                    <button type="button" onClick={() => { setOwnerShowEdit(false); setOwnerEditCondoText('') }} style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>Cancelar</button>
                   </div>
                 </form>
               </div>

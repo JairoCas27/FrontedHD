@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getProfile, updateProfile, changePassword } from '../../services/api';
+import { getProfile, updateProfile, changePassword } from '../../services/SuperAdminApi';
 import { useAuth } from '../../context/AuthContext';
 import { toast } from 'react-toastify';
 import {
@@ -190,6 +190,17 @@ export default function PerfilSuperAdmin() {
           transform: translateY(-1px);
           box-shadow: 0 4px 14px rgba(245,158,11,0.25);
         }
+        .ps-btn-row {
+          display: flex;
+          justify-content: flex-end;
+        }
+        @media (max-width: 767px) {
+          .ps-card-body { padding: 16px !important; }
+          .ps-card-header { padding: 12px 16px !important; }
+          .ps-btn-row { flex-direction: column; }
+          .ps-btn-row button { width: 100%; }
+          .ps-info-row { flex-direction: column; align-items: flex-start !important; gap: 2px; }
+        }
       `}</style>
 
       <div style={{ maxWidth: '860px', margin: '0 auto' }}>
@@ -207,8 +218,8 @@ export default function PerfilSuperAdmin() {
           flexWrap: 'wrap',
         }}>
           <div style={{
-            width: 72,
-            height: 72,
+            width: isMobile ? 56 : 72,
+            height: isMobile ? 56 : 72,
             borderRadius: '50%',
             background: 'linear-gradient(135deg, #7c3aed, #6d28d9)',
             display: 'flex',
@@ -217,7 +228,7 @@ export default function PerfilSuperAdmin() {
             boxShadow: '0 4px 16px rgba(124,58,237,0.3), 0 0 0 4px rgba(124,58,237,0.1)',
             flexShrink: 0,
           }}>
-            <span style={{ color: '#fff', fontWeight: 800, fontSize: '24px', letterSpacing: '-0.02em' }}>
+            <span style={{ color: '#fff', fontWeight: 800, fontSize: isMobile ? '18px' : '24px', letterSpacing: '-0.02em' }}>
               {initials}
             </span>
           </div>
@@ -252,7 +263,7 @@ export default function PerfilSuperAdmin() {
 
           {/* ─── LEFT: Profile Data ──────────────────────────────────────── */}
           <div className="ps-card" style={cardBase}>
-            <div style={cardHeaderStyle}>
+            <div className="ps-card-header" style={cardHeaderStyle}>
               <div style={{
                 width: 32, height: 32, borderRadius: '8px',
                 background: SUPER.primaryBg, display: 'flex',
@@ -262,7 +273,7 @@ export default function PerfilSuperAdmin() {
               </div>
               Datos personales
             </div>
-            <form onSubmit={handleSubmit} style={{ padding: '20px 22px' }}>
+            <form onSubmit={handleSubmit} className="ps-card-body" style={{ padding: '20px 22px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div>
                   <label style={labelStyle} htmlFor="nombres">Nombres</label>
@@ -318,10 +329,9 @@ export default function PerfilSuperAdmin() {
                 </div>
               </div>
 
-              <div style={{
+              <div className="ps-btn-row" style={{
                 marginTop: '20px', paddingTop: '16px',
                 borderTop: `1px solid ${colors.border}`,
-                display: 'flex', justifyContent: 'flex-end',
               }}>
                 <button
                   type="submit"
@@ -352,7 +362,7 @@ export default function PerfilSuperAdmin() {
 
             {/* Password change */}
             <div className="ps-card" style={cardBase}>
-              <div style={cardHeaderStyle}>
+              <div className="ps-card-header" style={cardHeaderStyle}>
                 <div style={{
                   width: 32, height: 32, borderRadius: '8px',
                   background: 'rgba(245,158,11,0.12)', display: 'flex',
@@ -362,7 +372,7 @@ export default function PerfilSuperAdmin() {
                 </div>
                 Cambiar contraseña
               </div>
-              <form onSubmit={handlePasswordChange} style={{ padding: '18px 22px' }}>
+              <form onSubmit={handlePasswordChange} className="ps-card-body" style={{ padding: '18px 22px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
                   <div>
                     <label style={labelStyle} htmlFor="currentPassword">Contraseña actual</label>
@@ -461,10 +471,9 @@ export default function PerfilSuperAdmin() {
                   </div>
                 )}
 
-                <div style={{
+                <div className="ps-btn-row" style={{
                   marginTop: '16px', paddingTop: '14px',
                   borderTop: `1px solid ${colors.border}`,
-                  display: 'flex', justifyContent: 'flex-end',
                 }}>
                   <button
                     type="submit"
@@ -492,7 +501,7 @@ export default function PerfilSuperAdmin() {
 
             {/* Session info */}
             <div className="ps-card" style={cardBase}>
-              <div style={cardHeaderStyle}>
+              <div className="ps-card-header" style={cardHeaderStyle}>
                 <div style={{
                   width: 32, height: 32, borderRadius: '8px',
                   background: 'rgba(16,185,129,0.1)', display: 'flex',
@@ -502,9 +511,9 @@ export default function PerfilSuperAdmin() {
                 </div>
                 Información de sesión
               </div>
-              <div style={{ padding: '18px 22px' }}>
+              <div className="ps-card-body" style={{ padding: '18px 22px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{
+                  <div className="ps-info-row" style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     padding: '10px 12px', background: '#f8fafc', borderRadius: '8px',
                   }}>
@@ -516,7 +525,7 @@ export default function PerfilSuperAdmin() {
                       Hoy · Sesión activa
                     </span>
                   </div>
-                  <div style={{
+                  <div className="ps-info-row" style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     padding: '10px 12px', background: '#f8fafc', borderRadius: '8px',
                   }}>
@@ -532,7 +541,7 @@ export default function PerfilSuperAdmin() {
                       Super Administrador
                     </span>
                   </div>
-                  <div style={{
+                  <div className="ps-info-row" style={{
                     display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                     padding: '10px 12px', background: '#f8fafc', borderRadius: '8px',
                   }}>

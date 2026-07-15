@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   FiGrid, FiUsers, FiUserCheck, FiActivity,
   FiRefreshCw, FiBarChart2, FiHome, FiTruck,
-  FiCalendar, FiTrendingUp, FiMapPin, FiCheck, FiBox, FiLayers,
+  FiCalendar, FiTrendingUp, FiMapPin, FiCheck, FiBox, FiLayers, FiSearch,
 } from 'react-icons/fi';
 import {
   getSuperAdminDashboardMetrics,
@@ -10,7 +10,7 @@ import {
   getAdministrators,
   getAllUsers,
   getAdminDashboardMetrics,
-} from '../../services/api';
+} from '../../services/SuperAdminApi';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell,
@@ -144,14 +144,29 @@ export default function ReportesGlobales() {
   const [adminMetrics, setAdminMetrics] = useState(null);
   const [condoSeleccionado, setCondoSeleccionado] = useState('');
   const [showCardSelector, setShowCardSelector] = useState(true);
+  const [condoSearch, setCondoSearch] = useState('');
+
+  const filteredCondominios = useMemo(() => {
+    if (!condoSearch) return condominios
+    const q = condoSearch.toLowerCase()
+    return condominios.filter(c =>
+      (c.nombre?.toLowerCase() || '').includes(q) ||
+      (c.direccion?.toLowerCase() || '').includes(q) ||
+      (c.ciudad?.toLowerCase() || '').includes(q)
+    )
+  }, [condominios, condoSearch])
   const [loading, setLoading] = useState(true);
   const [loadingAdminMetrics, setLoadingAdminMetrics] = useState(false);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+  const [isTablet, setIsTablet] = useState(window.innerWidth >= 768 && window.innerWidth < 1024);
 
   useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+      setIsTablet(window.innerWidth >= 768 && window.innerWidth < 1024);
+    };
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -301,6 +316,22 @@ export default function ReportesGlobales() {
         .rg-chart3    { animation: fadeSlideUp 0.5s ease both; animation-delay: 0.3s; }
         .rg-chart4    { animation: fadeSlideUp 0.5s ease both; animation-delay: 0.35s; }
         .rg-metrics   { animation: fadeSlideUp 0.5s ease both; animation-delay: 0.4s; }
+        .rg-stats-grid { display: grid; gap: 16px; margin-bottom: 22px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); }
+        .rg-condo-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+        .rg-filter-bar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem; }
+        .rg-admin-metrics { display: grid; gap: 12px; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); }
+        /* .rg-table-scroll removed � no table elements in this component */
+        @media (max-width: 1023px) {
+          .rg-stats-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (max-width: 767px) {
+          .rg-stats-grid { grid-template-columns: 1fr; }
+          .rg-condo-grid { grid-template-columns: 1fr; }
+          .rg-admin-metrics { grid-template-columns: repeat(2, 1fr); }
+          .rg-filter-bar { flex-direction: column; align-items: stretch; }
+          .rg-filter-bar > * { width: 100%; }
+          .rg-filter-bar .rg-filter-search { width: 100%; }
+        }
       `}</style>
 
       <div style={{
@@ -386,12 +417,7 @@ export default function ReportesGlobales() {
         </div>
       </div>
 
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
-        gap: '16px',
-        marginBottom: '22px',
-      }}>
+      <div className="rg-stats-grid">
         {stats.map((stat, idx) => (
           <div
             key={idx}
@@ -726,12 +752,54 @@ export default function ReportesGlobales() {
 
         {(!condoSeleccionado || showCardSelector) && (
           <div style={{ padding: '20px' }}>
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))',
-              gap: '14px',
-            }}>
-              {condominios.map((c, idx) => {
+            <div className="rg-filter-bar" style={{ marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <div style={{
+                  backgroundColor: 'rgba(124,58,237,0.1)',
+                  padding: '0.6rem',
+                  borderRadius: '0.65rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <FiGrid size={20} color={SUPER.primary} />
+                </div>
+                <div>
+                  <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: '800', color: '#0f172a' }}>
+                    {condoSeleccionado ? 'Seleccionar otro condominio' : 'Selecciona un condominio'}
+                  </h2>
+                  <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>
+                    {condoSearch
+                      ? `${filteredCondominios.length} de ${condominios.length} condominios`
+                      : `${condominios.length} ${condominios.length === 1 ? 'condominio disponible' : 'condominios disponibles'}`
+                    }
+                  </span>
+                </div>
+              </div>
+
+              <div style={{ width: '260px', maxWidth: '100%', position: 'relative' }}>
+                <FiSearch size={14} style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+                <input
+                  type="text"
+                  placeholder="Buscar condominio..."
+                  value={condoSearch}
+                  onChange={e => setCondoSearch(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '0.5rem 0.5rem 0.5rem 2.2rem',
+                    borderRadius: '0.5rem',
+                    border: `1px solid ${colors.border}`,
+                    fontSize: '0.85rem',
+                    color: '#334155',
+                    backgroundColor: '#ffffff',
+                    outline: 'none',
+                    boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+            </div>
+            <div className="rg-condo-grid">
+              {filteredCondominios.map((c, idx) => {
                 const isSelected = String(c.id) === String(condoSeleccionado);
                 const [color1, color2] = coloresGradiente[idx % coloresGradiente.length];
 
@@ -853,6 +921,11 @@ export default function ReportesGlobales() {
                   </button>
                 );
               })}
+              {filteredCondominios.length === 0 && (
+                <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
+                  <p style={{ fontWeight: 600, margin: 0, fontSize: '0.9rem' }}>Ningún condominio coincide con tu búsqueda</p>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -904,11 +977,7 @@ export default function ReportesGlobales() {
                 description="No se pudieron cargar las métricas para este condominio."
               />
             ) : (
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))',
-                gap: '12px',
-              }}>
+              <div className="rg-admin-metrics">
                 {[
                   { label: 'Torres', value: adminMetrics.totalTorres || 0, icon: <FiLayers size={18} />, color: SUPER.primary, bg: SUPER.primaryBg },
                   { label: 'Pisos', value: adminMetrics.totalPisos || 0, icon: <FiBox size={18} />, color: '#3b82f6', bg: '#eff6ff' },

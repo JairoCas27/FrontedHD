@@ -23,7 +23,7 @@ import {
   getCondominiums,
   getAdministrators,
   getAllUsers,
-} from '../../services/api';
+} from '../../services/SuperAdminApi';
 import {
   BarChart,
   Bar,
@@ -327,6 +327,20 @@ export default function DashboardSuperAdmin() {
         .sa-list-item:last-child {
           border-bottom: none;
         }
+
+        .sa-stats-grid {
+          grid-template-columns: 1fr;
+        }
+        @media (min-width: 768px) {
+          .sa-stats-grid {
+            grid-template-columns: 1fr 1fr;
+          }
+        }
+        @media (min-width: 1024px) {
+          .sa-stats-grid {
+            grid-template-columns: repeat(4, 1fr);
+          }
+        }
       `}</style>
 
       {/* ─── Header ───────────────────────────────────────────────────────── */}
@@ -416,9 +430,8 @@ export default function DashboardSuperAdmin() {
       </div>
 
       {/* ─── Stat cards ───────────────────────────────────────────────────── */}
-      <div style={{
+      <div className="sa-stats-grid" style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))',
         gap: '16px',
         marginBottom: '22px',
       }}>

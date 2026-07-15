@@ -3,15 +3,21 @@ import { useSearchParams, useNavigate } from 'react-router-dom'
 import { FiHome, FiUser, FiUsers, FiGrid, FiSearch, FiMail, FiPhone, FiX, FiCheck, FiEye, FiUserPlus, FiAlertTriangle, FiRefreshCw, FiEdit3, FiTrash2, FiPlus, FiChevronDown, FiChevronRight, FiMapPin } from "react-icons/fi"
 import { toast } from 'react-toastify'
 import EncabezadoTabla from '../../components/EncabezadoTabla'
-import { getCondominiums, getAdminApartments, assignApartmentOwner, getAllUsers, getAdminAssets, assignAssetApartment, updateApartmentOccupants, createAdminStructureNode, deleteAdminStructureNode, extractItems } from '../../services/api'
+import DataList from '../../components/common/DataList'
+import { getCondominiums, getAdminApartments, assignApartmentOwner, getAllUsers, getAdminAssets, assignAssetApartment, updateAdminAssetStatus, updateApartmentOccupants, createAdminStructureNode, deleteAdminStructureNode, extractItems } from '../../services/SuperAdminApi'
 
 const colorSuper = "rgb(124,58,237)"
 
 const globalResponsive = `
-@media (max-width: 767px) {
-  .global-card-padding { padding: 1rem !important; }
+@media (max-width: 600px) {
+  .global-card-padding { padding: 0.75rem !important; }
   .global-table-wrap { overflow-x: auto !important; }
-  .global-search-wrap { width: 100% !important; max-width: 260px !important; }
+  .global-search-wrap { width: 100% !important; max-width: 100% !important; }
+  .gd-modal { max-width: 95vw !important; }
+}
+@media (max-width: 900px) {
+  .gd-grid-2, .gd-grid-3 { grid-template-columns: 1fr !important; }
+  .gd-form-row { grid-template-columns: 1fr !important; }
 }
 `
 
@@ -23,7 +29,7 @@ const estiloInput = {
 
 const modalOverlay = {
   position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-  backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1000,
+  backgroundColor: "rgba(0,0,0,0.5)", zIndex: 1100,
   display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem"
 }
 
@@ -52,8 +58,10 @@ export default function GlobalDepartamentos() {
   const [loading, setLoading] = useState(true)
   const [loadingApts, setLoadingApts] = useState(false)
   const [busqueda, setBusqueda] = useState('')
+  const [busquedaCondo, setBusquedaCondo] = useState('')
   const [modalAssign, setModalAssign] = useState(null)
   const [assignUserId, setAssignUserId] = useState('')
+  const [assignUserText, setAssignUserText] = useState('')
   const [assigning, setAssigning] = useState(false)
   const [modalDetail, setModalDetail] = useState(null)
   const [modalTenant, setModalTenant] = useState(null)
@@ -61,6 +69,7 @@ export default function GlobalDepartamentos() {
   const [addingTenant, setAddingTenant] = useState(false)
   const [modalParking, setModalParking] = useState(null)
   const [selectedParkingId, setSelectedParkingId] = useState('')
+  const [parkingText, setParkingText] = useState('')
   const [assigningParking, setAssigningParking] = useState(false)
   const [confirmRemoveTenantIdx, setConfirmRemoveTenantIdx] = useState(null)
   const [tenantDetail, setTenantDetail] = useState(null)
@@ -127,7 +136,15 @@ export default function GlobalDepartamentos() {
     setExpandedPisos({})
   }, [condoSeleccionado])
 
-
+  const filteredCondominios = useMemo(() => {
+    if (!busquedaCondo.trim()) return condominios;
+    const q = busquedaCondo.toLowerCase().trim();
+    return condominios.filter(c =>
+      (c.nombre || '').toLowerCase().includes(q) ||
+      (c.direccion || '').toLowerCase().includes(q) ||
+      (c.nombreCiudad || '').toLowerCase().includes(q)
+    );
+  }, [condominios, busquedaCondo]);
 
   useEffect(() => {
     if (highlightedAptId && apartments.length > 0) {
@@ -143,6 +160,8 @@ export default function GlobalDepartamentos() {
           if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' })
         }, 300)
       }
+      const timer = setTimeout(() => setHighlightedAptId(null), 3000)
+      return () => clearTimeout(timer)
     }
   }, [apartments, highlightedAptId])
 
@@ -189,6 +208,9 @@ export default function GlobalDepartamentos() {
     return mismoCondo && u.rol === 'PROPIETARIO'
   })
 
+  const propLabel = (u) => u ? `${u.nombres || ''} ${u.apellidos || ''}${u.email ? ` (${u.email})` : ''}` : ''
+  const parkingLabel = (p) => p ? `N° ${p.numero}${p.tipoVehiculo ? ` (${p.tipoVehiculo})` : ''}` : ''
+
   function getContacto(apt) {
     if (!apt.idPropietario) return null
     return allUsers.find(u => String(u.id) === String(apt.idPropietario)) || null
@@ -223,6 +245,7 @@ export default function GlobalDepartamentos() {
       }
       setModalAssign(null)
       setAssignUserId('')
+      setAssignUserText('')
     } catch (err) {
       toast.error(`Error al asignar: ${err.message}`)
     } finally {
@@ -336,11 +359,26 @@ export default function GlobalDepartamentos() {
     }
     setAssigningParking(true)
     try {
+      const currentParking = parkingAssets.find(p => String(p.idApartamento) === String(modalParking?.id))
+      if (currentParking) {
+        await assignAssetApartment(currentParking.id, null, condoSeleccionado)
+        await updateAdminAssetStatus(currentParking.id, {
+          tipo: 'ESTACIONAMIENTO', disponible: true, tipoVehiculo: currentParking.tipoVehiculo || 'AUTO'
+        }, condoSeleccionado)
+        setParkingAssets(prev => prev.map(p =>
+          String(p.id) === String(currentParking.id)
+            ? { ...p, idApartamento: null, disponible: true }
+            : p
+        ))
+      }
+      await updateAdminAssetStatus(selectedParkingId, {
+        tipo: 'ESTACIONAMIENTO', disponible: false, tipoVehiculo: parkingAssets.find(p => String(p.id) === String(selectedParkingId))?.tipoVehiculo || 'AUTO'
+      }, condoSeleccionado)
       await assignAssetApartment(selectedParkingId, modalParking.id, condoSeleccionado)
       toast.success('Estacionamiento asignado correctamente')
       setParkingAssets(prev => prev.map(p =>
         String(p.id) === String(selectedParkingId)
-          ? { ...p, idApartamento: modalParking.id }
+          ? { ...p, idApartamento: modalParking.id, disponible: false }
           : p
       ))
       if (modalDetail && String(modalDetail.id) === String(modalParking.id)) {
@@ -348,6 +386,7 @@ export default function GlobalDepartamentos() {
       }
       setModalParking(null)
       setSelectedParkingId('')
+      setParkingText('')
     } catch (err) {
       toast.error(`Error al asignar estacionamiento: ${err.message}`)
     } finally {
@@ -355,9 +394,11 @@ export default function GlobalDepartamentos() {
     }
   }
 
-  const parkingDisponibles = parkingAssets.filter(p =>
-    String(p.idApartamento) !== String(modalParking?.id) && p.disponible === true
-  )
+  const parkingDisponibles = parkingAssets.filter(p => {
+    if (p.disponible !== true) return false
+    const assignedToOther = p.idApartamento && String(p.idApartamento) !== String(modalParking?.id)
+    return !assignedToOther
+  })
 
   const btnStyle = {
     padding: "0.45rem 0.75rem", borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: "700",
@@ -463,221 +504,142 @@ export default function GlobalDepartamentos() {
       {/* --- CARDS GRID visible cuando no hay selección o se presiona 'Seleccionar otro condominio' --- */}
       {(!condoSeleccionado || showCardSelector) && (
         <div style={{ marginBottom: "2rem" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "1.25rem" }}>
+
+          {/* Encabezado con buscador de condominios */}
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem", marginBottom: "1.25rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+              <div style={{
+                backgroundColor: "rgba(124,58,237,0.1)",
+                padding: "0.65rem",
+                borderRadius: "0.75rem",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center"
+              }}>
+                <FiGrid size={22} color={colorSuper} />
+              </div>
+              <div>
+                <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: "800", color: "#0f172a" }}>
+                  {condoSeleccionado ? 'Condominio seleccionado' : 'Selecciona un condominio'}
+                </h2>
+                <span style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: "600" }}>
+                  {busquedaCondo
+                    ? `${filteredCondominios.length} de ${condominios.length} condominios`
+                    : `${filteredCondominios.length} ${filteredCondominios.length === 1 ? 'condominio disponible' : 'condominios disponibles'}`
+                  }
+                  {condoSeleccionado && ` · Haz clic en otro para cambiar`}
+                </span>
+              </div>
+            </div>
+
+            {/* Input de Búsqueda */}
+            <div style={{ width: "260px", maxWidth: "100%", position: "relative" }}>
+              <FiSearch size={14} style={{ position: "absolute", left: "0.8rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
+              <input
+                type="text"
+                placeholder="Buscar condominio..."
+                value={busquedaCondo}
+                onChange={(e) => setBusquedaCondo(e.target.value)}
+                style={{ ...estiloInput, paddingLeft: "2.2rem", paddingTop: "0.55rem", paddingBottom: "0.55rem", fontSize: "0.85rem" }}
+              />
+            </div>
+          </div>
+
+          {/* Grilla de Tarjetas */}
+          {filteredCondominios.length === 0 ? (
+            <div style={{ padding: "3rem", textAlign: "center", color: "#94a3b8", fontWeight: "600", backgroundColor: "#ffffff", borderRadius: "1rem", border: "1px dashed #cbd5e1" }}>
+              Ningún condominio coincide con tu búsqueda
+            </div>
+          ) : (
             <div style={{
-              backgroundColor: "rgba(124,58,237,0.1)",
-              padding: "0.65rem",
-              borderRadius: "0.75rem",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center"
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
+              gap: "1rem"
             }}>
-              <FiGrid size={22} color={colorSuper} />
-            </div>
-            <div>
-              <h2 style={{ margin: 0, fontSize: "1.1rem", fontWeight: "800", color: "#0f172a" }}>
-                {condoSeleccionado ? 'Condominio seleccionado' : 'Selecciona un condominio'}
-              </h2>
-              <span style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: "600" }}>
-                {condominios.length} {condominios.length === 1 ? 'condominio disponible' : 'condominios disponibles'}
-                {condoSeleccionado && ` · Haz clic en otro para cambiar`}
-              </span>
-            </div>
-          </div>
+              {filteredCondominios.map((c, idx) => {
+                const isSelected = String(c.id) === String(condoSeleccionado)
+                const [color1, color2] = coloresGradiente[idx % coloresGradiente.length]
 
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))",
-            gap: "1rem"
-          }}>
-            {condominios.map((c, idx) => {
-              const isSelected = String(c.id) === String(condoSeleccionado)
-              const [color1, color2] = coloresGradiente[idx % coloresGradiente.length]
-
-              return (
-                <button
-                  type="button"
-                  key={c.id}
-                  onClick={() => { setCondoSeleccionado(String(c.id)); setBusqueda(''); setShowCardSelector(false) }}
-                  id={`condo-card-${c.id}`}
-                  style={{
-                    background: isSelected
-                      ? `linear-gradient(145deg, #ffffff, ${color1}04)`
-                      : '#ffffff',
-                    border: isSelected
-                      ? `2px solid ${color1}`
-                      : '1.5px solid #e8ecf1',
-                    borderRadius: '1.25rem',
-                    boxShadow: isSelected
-                      ? `0 0 0 4px ${color1}15, 0 8px 32px ${color1}20, 0 2px 8px rgba(0,0,0,0.04)`
-                      : '0 2px 8px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.02)',
-                    cursor: 'pointer',
-                    display: 'block',
-                    fontFamily: 'inherit',
-                    fontSize: 'inherit',
-                    lineHeight: 'inherit',
-                    overflow: 'hidden',
-                    padding: 0,
-                    position: 'relative',
-                    textAlign: 'left',
-                    transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                    transform: isSelected ? 'scale(1.03) translateY(-2px)' : 'scale(1) translateY(0)',
-                    width: '100%',
-                    opacity: condoSeleccionado && !isSelected ? 0.55 : 1,
-                    filter: condoSeleccionado && !isSelected ? 'grayscale(0.3) saturate(0.7)' : 'none',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isSelected && !condoSeleccionado) {
-                      e.currentTarget.style.transform = 'scale(1.03) translateY(-3px)'
-                      e.currentTarget.style.boxShadow = `0 12px 40px ${color1}15, 0 4px 12px rgba(0,0,0,0.06)`
-                      e.currentTarget.style.borderColor = color1
-                    } else if (!isSelected) {
-                      e.currentTarget.style.transform = 'scale(1.02) translateY(-2px)'
-                      e.currentTarget.style.boxShadow = `0 8px 25px ${color1}10, 0 4px 10px rgba(0,0,0,0.04)`
-                      e.currentTarget.style.borderColor = '#cbd5e1'
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!isSelected) {
-                      e.currentTarget.style.transform = 'scale(1) translateY(0)'
-                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.02)'
-                      e.currentTarget.style.borderColor = '#e8ecf1'
-                    }
-                  }}
-                >
-                  {/* Barra decorativa superior con gradiente - más estilizada */}
-                  <div style={{
-                    height: '6px',
-                    background: `linear-gradient(90deg, ${color1}, ${color2}, ${color1})`,
-                    backgroundSize: '200% 100%',
-                    animation: isSelected ? 'gradientShift 3s ease infinite' : 'none',
-                    borderRadius: '1.25rem 1.25rem 0 0',
-                  }} />
-
-                  <div style={{ padding: '1.25rem 1.25rem 1.15rem' }}>
-                    {/* Icono con glow */}
-                    <div style={{
-                      width: '48px',
-                      height: '48px',
-                      borderRadius: '1rem',
-                      background: `linear-gradient(135deg, ${color1}18, ${color2}08)`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      marginBottom: '0.85rem',
-                      transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                      border: `1px solid ${color1}22`,
-                      boxShadow: isSelected ? `0 4px 12px ${color1}25, inset 0 1px 0 ${color1}11` : 'none',
-                    }}>
-                      <FiHome size={24} color={color1} style={{ filter: isSelected ? `drop-shadow(0 2px 4px ${color1}40)` : 'none' }} />
-                    </div>
-
-                    {/* Nombre con mejor tipografía */}
-                    <h3 style={{
-                      margin: 0,
-                      fontSize: '1rem',
-                      fontWeight: '800',
-                      color: '#0f172a',
-                      lineHeight: 1.35,
-                      marginBottom: '0.3rem',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
+                return (
+                  <button
+                    type="button"
+                    key={c.id}
+                    onClick={() => { setCondoSeleccionado(String(c.id)); setBusqueda(''); setShowCardSelector(false) }}
+                    id={`condo-card-${c.id}`}
+                    style={{
+                      background: isSelected ? `linear-gradient(145deg, #ffffff, ${color1}04)` : '#ffffff',
+                      border: isSelected ? `2px solid ${color1}` : '1.5px solid #e8ecf1',
+                      borderRadius: '1.25rem',
+                      boxShadow: isSelected ? `0 0 0 4px ${color1}15, 0 8px 32px ${color1}20, 0 2px 8px rgba(0,0,0,0.04)` : '0 2px 8px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.02)',
+                      cursor: 'pointer',
+                      display: 'block',
+                      fontFamily: 'inherit',
+                      fontSize: 'inherit',
+                      lineHeight: 'inherit',
                       overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      letterSpacing: '-0.01em',
-                    }}>
-                      {c.nombre}
-                    </h3>
-
-                    {/* Dirección */}
-                    {c.direccion && (
-                      <p style={{
-                        margin: 0,
-                        fontSize: '0.72rem',
-                        color: '#94a3b8',
-                        fontWeight: '500',
-                        marginBottom: '0.85rem',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                      }}>
-                        {c.direccion}
-                      </p>
-                    )}
-
-                    {/* Separador sutil */}
-                    <div style={{
-                      height: '1px',
-                      background: `linear-gradient(90deg, ${color1}22, transparent)`,
-                      marginBottom: '0.75rem',
-                    }} />
-
-                    {/* Footer con badges mejorados */}
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '0.4rem',
-                      flexWrap: 'wrap',
-                    }}>
-                      {c.nombreCiudad && (
-                        <span style={{
-                          fontSize: '0.6rem',
-                          fontWeight: '700',
-                          color: '#475569',
-                          backgroundColor: '#f1f4f9',
-                          padding: '0.2rem 0.55rem',
-                          borderRadius: '999px',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.25rem',
-                          border: '1px solid #e8ecf1',
-                          letterSpacing: '0.01em',
-                        }}>
-                          <FiMapPin size={8} color="#94a3b8" /> {c.nombreCiudad}
-                        </span>
-                      )}
-                      <span style={{
-                        fontSize: '0.6rem',
-                        fontWeight: '700',
-                        padding: '0.2rem 0.55rem',
-                        borderRadius: '999px',
-                        backgroundColor: c.activo !== false ? '#ecfdf5' : '#fef2f2',
-                        color: c.activo !== false ? '#059669' : '#dc2626',
-                        border: `1px solid ${c.activo !== false ? '#a7f3d0' : '#fecaca'}`,
-                        letterSpacing: '0.01em',
-                      }}>
-                        {c.activo !== false ? 'Activo' : 'Inactivo'}
-                      </span>
-                    </div>
-
-                    {/* Indicador de seleccionado animado */}
-                    {isSelected && (
-                      <div style={{
-                        position: 'absolute',
-                        top: '0.75rem',
-                        right: '0.75rem',
-                        width: '28px',
-                        height: '28px',
-                        borderRadius: '50%',
-                        background: `linear-gradient(135deg, ${color1}, ${color2})`,
-                        color: '#fff',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '0.65rem',
-                        fontWeight: '700',
-                        boxShadow: `0 3px 10px ${color1}40, 0 0 0 4px ${color1}15`,
-                        animation: 'cardSelectedPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                      }}>
-                        <FiCheck size={15} />
+                      padding: 0,
+                      position: 'relative',
+                      textAlign: 'left',
+                      transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      transform: isSelected ? 'scale(1.03) translateY(-2px)' : 'scale(1) translateY(0)',
+                      width: '100%',
+                      opacity: condoSeleccionado && !isSelected ? 0.55 : 1,
+                      filter: condoSeleccionado && !isSelected ? 'grayscale(0.3) saturate(0.7)' : 'none',
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!isSelected && !condoSeleccionado) {
+                        e.currentTarget.style.transform = 'scale(1.03) translateY(-3px)'
+                        e.currentTarget.style.boxShadow = `0 12px 40px ${color1}15, 0 4px 12px rgba(0,0,0,0.06)`
+                        e.currentTarget.style.borderColor = color1
+                      } else if (!isSelected) {
+                        e.currentTarget.style.transform = 'scale(1.02) translateY(-2px)'
+                        e.currentTarget.style.boxShadow = `0 8px 25px ${color1}10, 0 4px 10px rgba(0,0,0,0.04)`
+                        e.currentTarget.style.borderColor = '#cbd5e1'
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (!isSelected) {
+                        e.currentTarget.style.transform = 'scale(1) translateY(0)'
+                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.02)'
+                        e.currentTarget.style.borderColor = '#e8ecf1'
+                      }
+                    }}
+                  >
+                    <div style={{ height: '6px', background: `linear-gradient(90deg, ${color1}, ${color2}, ${color1})`, backgroundSize: '200% 100%', animation: isSelected ? 'gradientShift 3s ease infinite' : 'none', borderRadius: '1.25rem 1.25rem 0 0' }} />
+                    <div style={{ padding: '1.25rem 1.25rem 1.15rem' }}>
+                      <div style={{ width: '48px', height: '48px', borderRadius: '1rem', background: `linear-gradient(135deg, ${color1}18, ${color2}08)`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.85rem', transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)', border: `1px solid ${color1}22`, boxShadow: isSelected ? `0 4px 12px ${color1}25, inset 0 1px 0 ${color1}11` : 'none' }}>
+                        <FiHome size={24} color={color1} style={{ filter: isSelected ? `drop-shadow(0 2px 4px ${color1}40)` : 'none' }} />
                       </div>
-                    )}
-                  </div>
-                </button>
-              )
-            })}
-          </div>
+                      <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.35, marginBottom: '0.3rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', textOverflow: 'ellipsis', letterSpacing: '-0.01em' }}>
+                        {c.nombre}
+                      </h3>
+                      {c.direccion && (
+                        <p style={{ margin: 0, fontSize: '0.72rem', color: '#94a3b8', fontWeight: '500', marginBottom: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                          {c.direccion}
+                        </p>
+                      )}
+                      <div style={{ height: '1px', background: `linear-gradient(90deg, ${color1}22, transparent)`, marginBottom: '0.75rem' }} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                        {c.nombreCiudad && (
+                          <span style={{ fontSize: '0.6rem', fontWeight: '700', color: '#475569', backgroundColor: '#f1f4f9', padding: '0.2rem 0.55rem', borderRadius: '999px', display: 'inline-flex', alignItems: 'center', gap: '0.25rem', border: '1px solid #e8ecf1', letterSpacing: '0.01em' }}>
+                            <FiMapPin size={8} color="#94a3b8" /> {c.nombreCiudad}
+                          </span>
+                        )}
+                        <span style={{ fontSize: '0.6rem', fontWeight: '700', padding: '0.2rem 0.55rem', borderRadius: '999px', backgroundColor: c.activo !== false ? '#ecfdf5' : '#fef2f2', color: c.activo !== false ? '#059669' : '#dc2626', border: `1px solid ${c.activo !== false ? '#a7f3d0' : '#fecaca'}`, letterSpacing: '0.01em' }}>
+                          {c.activo !== false ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </div>
+                      {isSelected && (
+                        <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', width: '28px', height: '28px', borderRadius: '50%', background: `linear-gradient(135deg, ${color1}, ${color2})`, color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.65rem', fontWeight: '700', boxShadow: `0 3px 10px ${color1}40, 0 0 0 4px ${color1}15`, animation: 'cardSelectedPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)' }}>
+                          <FiCheck size={15} />
+                        </div>
+                      )}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -799,7 +761,7 @@ export default function GlobalDepartamentos() {
                           <span style={{ fontSize: "0.65rem", color: "#ef4444", fontWeight: 700 }}>{totalTorre - occupedTorre} libres</span>
                         </div>
                         {expanded && (
-                          <div style={{ overflowX: "auto" }}>
+                          <div className="global-table-wrap" style={{ overflowX: "auto" }}>
                             <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
                               <thead>
                                 <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: 700, fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
@@ -924,7 +886,7 @@ export default function GlobalDepartamentos() {
       {/* Detail Modal */}
       {modalDetail && (
         <div style={modalOverlay} onClick={() => setModalDetail(null)}>
-          <div style={{ ...modalContent, maxWidth: "640px" }} onClick={(e) => e.stopPropagation()}>
+          <div className="gd-modal" style={{ ...modalContent, maxWidth: "640px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>
                 Depto. {modalDetail.numero}
@@ -935,7 +897,7 @@ export default function GlobalDepartamentos() {
               </button>
             </div>
             <div style={{ padding: "1.5rem" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
+              <div className="gd-grid-3" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginBottom: "1.5rem" }}>
                 <div>
                   <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.025em" }}>Torre</span>
                   <p style={{ margin: "0.2rem 0 0", fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>{modalDetail.torreNombre || '---'}</p>
@@ -954,7 +916,7 @@ export default function GlobalDepartamentos() {
               <div style={{ borderTop: "1px solid #f1f5f9", paddingTop: "1rem", marginBottom: "1.5rem" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
                   <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.025em" }}>Propietario</span>
-                  <button onClick={() => { setModalAssign(modalDetail); setAssignUserId(modalDetail.idPropietario ? String(modalDetail.idPropietario) : '') }}
+                  <button onClick={() => { setModalAssign(modalDetail); setAssignUserId(''); setAssignUserText('') }}
                     style={{ ...btnStyle, backgroundColor: "rgba(124,58,237,0.1)", color: colorSuper, fontSize: "0.7rem" }}>
                     <FiEdit3 size={12} /> {modalDetail.idPropietario ? 'Cambiar' : 'Asignar'}
                   </button>
@@ -1058,8 +1020,8 @@ export default function GlobalDepartamentos() {
 
       {/* Assign Owner Modal */}
       {modalAssign && (
-        <div style={modalOverlay} onClick={() => setModalAssign(null)}>
-          <div style={modalContent} onClick={(e) => e.stopPropagation()}>
+        <div style={modalOverlay} onClick={() => { setModalAssign(null); setAssignUserId(''); setAssignUserText('') }}>
+          <div className="gd-modal" style={modalContent} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>{modalAssign.idPropietario ? 'Cambiar Propietario' : 'Asignar Propietario'}</h3>
               <button onClick={() => setModalAssign(null)}
@@ -1073,14 +1035,10 @@ export default function GlobalDepartamentos() {
                 {modalAssign.torreNombre && <> &mdash; Torre <strong>{modalAssign.torreNombre}</strong></>}
               </p>
               <label style={{ fontWeight: "700", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.5rem", display: "block" }}>Seleccionar propietario</label>
-              <select style={estiloInput} value={assignUserId} onChange={(e) => setAssignUserId(e.target.value)}>
+              <DataList value={assignUserText} onChange={(e) => { setAssignUserText(e.target.value); const s = propietariosDisponibles.find(u => propLabel(u) === e.target.value); if (s) setAssignUserId(s.id) }} style={estiloInput}>
                 <option value="">-- Seleccionar --</option>
-                {propietariosDisponibles.map(u => (
-                  <option key={u.id} value={u.id}>
-                    {u.nombres || ''} {u.apellidos || ''} {u.email ? `(${u.email})` : ''}
-                  </option>
-                ))}
-              </select>
+                {propietariosDisponibles.map(u => (<option key={u.id} value={propLabel(u)} />))}
+              </DataList>
               {propietariosDisponibles.length === 0 && (
                 <p style={{ marginTop: "0.75rem", fontSize: "0.8rem", color: "#ef4444", fontWeight: "600" }}>
                   No hay propietarios disponibles en este condominio.
@@ -1096,7 +1054,7 @@ export default function GlobalDepartamentos() {
                   }}>
                   {assigning ? 'Asignando...' : <><FiCheck size={16} /> Asignar</>}
                 </button>
-                <button onClick={() => setModalAssign(null)}
+                <button onClick={() => { setModalAssign(null); setAssignUserId(''); setAssignUserText('') }}
                   style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>
                   Cancelar
                 </button>
@@ -1109,7 +1067,7 @@ export default function GlobalDepartamentos() {
       {/* Add Tenant Modal */}
       {modalTenant && (
         <div style={modalOverlay} onClick={() => setModalTenant(null)}>
-          <div style={{ ...modalContent, maxWidth: "480px" }} onClick={(e) => e.stopPropagation()}>
+          <div className="gd-modal" style={{ ...modalContent, maxWidth: "480px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>{editingTenantIdx !== null ? 'Editar Inquilino' : 'Agregar Inquilino'}</h3>
               <button onClick={() => { setModalTenant(null); setEditingTenantIdx(null); setTenantForm({ nombres: '', apellidos: '', tipoDocumento: 'DNI', numeroDocumento: '' }) }}
@@ -1133,7 +1091,7 @@ export default function GlobalDepartamentos() {
                   <input type="text" value={tenantForm.apellidos} onChange={(e) => setTenantForm({ ...tenantForm, apellidos: e.target.value })}
                     style={estiloInput} placeholder="Apellidos del inquilino" />
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "0.5rem" }}>
+                <div className="gd-form-row" style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "0.5rem" }}>
                   <div>
                     <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Tipo Doc. *</label>
                     <select value={tenantForm.tipoDocumento} onChange={(e) => setTenantForm({ ...tenantForm, tipoDocumento: e.target.value })}
@@ -1173,11 +1131,11 @@ export default function GlobalDepartamentos() {
 
       {/* Assign Parking Modal */}
       {modalParking && (
-        <div style={modalOverlay} onClick={() => setModalParking(null)}>
-          <div style={{ ...modalContent, maxWidth: "480px" }} onClick={(e) => e.stopPropagation()}>
+        <div style={modalOverlay} onClick={() => { setModalParking(null); setSelectedParkingId(''); setParkingText('') }}>
+          <div className="gd-modal" style={{ ...modalContent, maxWidth: "480px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>Asignar Estacionamiento</h3>
-              <button onClick={() => setModalParking(null)}
+              <button onClick={() => { setModalParking(null); setSelectedParkingId(''); setParkingText('') }}
                 style={{ background: "none", border: "none", cursor: "pointer", padding: "0.25rem", borderRadius: "0.375rem", color: "#94a3b8", display: "flex" }}>
                 <FiX size={20} />
               </button>
@@ -1190,14 +1148,10 @@ export default function GlobalDepartamentos() {
               <label style={{ fontWeight: "700", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.5rem", display: "block" }}>
                 Estacionamientos disponibles
               </label>
-              <select style={estiloInput} value={selectedParkingId} onChange={(e) => setSelectedParkingId(e.target.value)}>
+              <DataList value={parkingText} onChange={(e) => { setParkingText(e.target.value); const s = parkingDisponibles.find(p => parkingLabel(p) === e.target.value); if (s) setSelectedParkingId(s.id) }} style={estiloInput}>
                 <option value="">-- Seleccionar --</option>
-                {parkingDisponibles.map(p => (
-                  <option key={p.id} value={p.id}>
-                    N° {p.numero}{p.tipoVehiculo ? ` (${p.tipoVehiculo})` : ''}
-                  </option>
-                ))}
-              </select>
+                {parkingDisponibles.map(p => (<option key={p.id} value={parkingLabel(p)} />))}
+              </DataList>
               {parkingDisponibles.length === 0 && (
                 <p style={{ marginTop: "0.75rem", fontSize: "0.8rem", color: "#ef4444", fontWeight: "600" }}>
                   No hay estacionamientos disponibles en este condominio.
@@ -1213,7 +1167,7 @@ export default function GlobalDepartamentos() {
                   }}>
                   {assigningParking ? 'Asignando...' : <><FiCheck size={16} /> Asignar</>}
                 </button>
-                <button onClick={() => setModalParking(null)}
+                <button onClick={() => { setModalParking(null); setSelectedParkingId(''); setParkingText('') }}
                   style={{ padding: "0.5rem 1.25rem", borderRadius: "0.5rem", border: "1px solid #e2e8f0", backgroundColor: "#fff", color: "#64748b", fontWeight: "600", cursor: "pointer", fontSize: "0.85rem" }}>
                   Cancelar
                 </button>
@@ -1225,7 +1179,7 @@ export default function GlobalDepartamentos() {
 
       {tenantDetail && (
         <div style={modalOverlay} onClick={() => setTenantDetail(null)}>
-          <div style={{ ...modalContent, maxWidth: "420px" }} onClick={(e) => e.stopPropagation()}>
+          <div className="gd-modal" style={{ ...modalContent, maxWidth: "420px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>Detalle del Inquilino</h3>
               <button onClick={() => setTenantDetail(null)}
@@ -1234,7 +1188,7 @@ export default function GlobalDepartamentos() {
               </button>
             </div>
             <div style={{ padding: "1.5rem" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <div className="gd-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                 <div>
                   <span style={{ fontSize: "0.7rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase" }}>Nombres</span>
                   <p style={{ margin: "0.2rem 0 0", fontWeight: "700", color: "#0f172a", fontSize: "0.9rem" }}>{tenantDetail.nombres || tenantDetail.nombre || '-'}</p>
@@ -1259,7 +1213,7 @@ export default function GlobalDepartamentos() {
 
       {confirmRemoveTenantIdx !== null && (
         <div style={modalOverlay} onClick={() => setConfirmRemoveTenantIdx(null)}>
-          <div style={{ ...modalContent, maxWidth: "400px" }} onClick={(e) => e.stopPropagation()}>
+          <div className="gd-modal" style={{ ...modalContent, maxWidth: "400px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", textAlign: "center" }}>
               <FiAlertTriangle size={40} style={{ color: "#ef4444", marginBottom: "1rem" }} />
               <h3 style={{ margin: "0 0 0.5rem", fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>¿Eliminar inquilino?</h3>
@@ -1282,7 +1236,7 @@ export default function GlobalDepartamentos() {
       {/* Create Apartment Modal */}
       {showCreateApt && (
         <div style={modalOverlay} onClick={() => { if (!creatingApt) { setShowCreateApt(false); setCreateAptForm({ numero: '', metraje: '', torreNombre: '', pisoNumero: '', derechoEstacionamiento: false }) } }}>
-          <div style={{ ...modalContent, maxWidth: "480px" }} onClick={(e) => e.stopPropagation()}>
+          <div className="gd-modal" style={{ ...modalContent, maxWidth: "480px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>Nuevo Departamento</h3>
               <button onClick={() => { setShowCreateApt(false); setCreateAptForm({ numero: '', metraje: '', torreNombre: '', pisoNumero: '', derechoEstacionamiento: false }) }}
@@ -1295,17 +1249,17 @@ export default function GlobalDepartamentos() {
               <div style={{ display: "flex", flexDirection: "column", gap: "0.85rem" }}>
                 <div>
                   <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Torre *</label>
-                  <select style={estiloInput} value={createAptForm.torreNombre} onChange={(e) => setCreateAptForm(f => ({ ...f, torreNombre: e.target.value, pisoNumero: '' }))}>
+                  <DataList value={createAptForm.torreNombre} onChange={(e) => setCreateAptForm(f => ({ ...f, torreNombre: e.target.value, pisoNumero: '' }))} style={estiloInput}>
                     <option value="">Seleccionar torre</option>
-                    {torres.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
+                    {torres.map(t => <option key={t} value={t} />)}
+                  </DataList>
                 </div>
                 <div>
                   <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Piso *</label>
-                  <select style={estiloInput} value={createAptForm.pisoNumero} onChange={(e) => setCreateAptForm(f => ({ ...f, pisoNumero: e.target.value }))} disabled={!createAptForm.torreNombre}>
+                  <DataList value={createAptForm.pisoNumero} onChange={(e) => setCreateAptForm(f => ({ ...f, pisoNumero: e.target.value }))} disabled={!createAptForm.torreNombre} style={estiloInput}>
                     <option value="">Seleccionar piso</option>
-                    {createAptForm.torreNombre && pisos.map(p => <option key={p} value={p}>Piso {p}</option>)}
-                  </select>
+                    {createAptForm.torreNombre && pisos.map(p => <option key={p} value={p} />)}
+                  </DataList>
                 </div>
                 <div>
                   <label style={{ fontWeight: "600", fontSize: "0.8rem", color: "#1e293b", marginBottom: "0.25rem", display: "block" }}>Número *</label>
@@ -1335,7 +1289,7 @@ export default function GlobalDepartamentos() {
       {/* Propietarios Modal */}
       {showOwnersModal && (
         <div style={modalOverlay} onClick={() => setShowOwnersModal(false)}>
-          <div style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
+          <div className="gd-modal" style={{ ...modalContent, maxWidth: "520px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontWeight: "800", color: "#0f172a", fontSize: "1.05rem" }}>
                 Propietarios de {condominios.find(c => c.id === Number(condoSeleccionado))?.nombre || ''}
@@ -1383,7 +1337,7 @@ export default function GlobalDepartamentos() {
       {/* Confirm Delete Department */}
       {confirmDeleteApt && (
         <div style={modalOverlay} onClick={() => setConfirmDeleteApt(null)}>
-          <div style={{ ...modalContent, maxWidth: "400px" }} onClick={(e) => e.stopPropagation()}>
+          <div className="gd-modal" style={{ ...modalContent, maxWidth: "400px" }} onClick={(e) => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", textAlign: "center" }}>
               <FiTrash2 size={40} color="#ef4444" style={{ marginBottom: "0.75rem" }} />
               <h3 style={{ margin: "0 0 0.5rem", fontWeight: "800", color: "#0f172a", fontSize: "1.1rem" }}>Eliminar Departamento</h3>

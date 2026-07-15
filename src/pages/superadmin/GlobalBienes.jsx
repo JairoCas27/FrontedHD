@@ -1,16 +1,40 @@
-﻿import React, { useState, useEffect, useCallback, useRef } from 'react'
+﻿import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { FiGrid, FiHome, FiTruck, FiPlus, FiX, FiEye, FiTrash2, FiCheck, FiAlertCircle, FiTool, FiUsers, FiRefreshCw, FiPrinter, FiLogIn, FiLogOut, FiSearch, FiCalendar, FiNavigation2, FiClock, FiSettings, FiSave, FiEdit3, FiUser, FiUserPlus, FiChevronUp, FiChevronDown, FiFileText, FiMapPin } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
+import DataList from '../../components/common/DataList'
 import {
   getCondominiums, getAdminAssets, createAdminAsset, updateAdminAssetStatus, deleteAdminAsset,
   getAdminApartments, extractItems, getAdminVehicles, getSecurityDashboard, getActiveCartLoans,
   registerVehicleEntry, registerVehicleExit, assignAssetApartment, getAdminAccessLogs, unassignVehicleFromSpot,
   registerCartLoan, returnCartLoan, createAdminVehicle, deleteAdminVehicle, getAllCartLoans
-} from '../../services/api'
+} from '../../services/SuperAdminApi'
 import JsBarcode from 'jsbarcode'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList } from 'recharts'
 
 const colorSuper = "rgb(124,58,237)"
+
+const brandModels = {
+  TOYOTA: ['4RUNNER', 'AGYA', 'CAMRY', 'COROLLA', 'ETIOS', 'FORTUNER', 'HILUX', 'LAND CRUISER', 'RAV4', 'YARIS'],
+  HONDA: ['ACCORD', 'CITY', 'CR-V', 'CIVIC', 'HR-V', 'ODYSSEY', 'PILOT'],
+  NISSAN: ['ALTIMA', 'FRONTIER', 'KICKS', 'MARCH', 'NP300', 'SENTRA', 'VERSA', 'X-TRAIL'],
+  CHEVROLET: ['AVEO', 'CAMARO', 'CAPTIVA', 'CRUZE', 'EQUINOX', 'GROOVE', 'ONIX', 'SAIL', 'SPARK', 'TRACKER', 'TRAILBLAZER'],
+  FORD: ['ECOSPORT', 'EDGE', 'ESCAPE', 'EXPLORER', 'F-150', 'FIESTA', 'FOCUS', 'MUSTANG', 'RANGER', 'TERRITORY'],
+  HYUNDAI: ['ACCENT', 'AZERA', 'CRETA', 'ELANTRA', 'GRAND I10', 'SANTA FE', 'SONATA', 'TUCSON', 'VENUE'],
+  VOLKSWAGEN: ['AMAROK', 'BEETLE', 'BORA', 'GOL', 'GOLF', 'JETTA', 'NIVUS', 'PASSAT', 'POLO', 'SANTANA', 'T-CROSS', 'TIGUAN', 'VENTO', 'VIRTUS'],
+  BMW: ['1 SERIES', '2 SERIES', '3 SERIES', '4 SERIES', '5 SERIES', 'X1', 'X3', 'X5', 'X6'],
+  'MERCEDES-BENZ': ['A-CLASS', 'B-CLASS', 'C-CLASS', 'CLA', 'E-CLASS', 'GLA', 'GLB', 'GLC', 'GLE', 'S-CLASS'],
+  AUDI: ['A1', 'A3', 'A4', 'A5', 'A6', 'Q2', 'Q3', 'Q5', 'Q7'],
+  KIA: ['CERATO', 'PICANTO', 'RIO', 'SELTOS', 'SORENTO', 'SOUL', 'SPORTAGE', 'STONIC'],
+  MAZDA: ['2', '3', '6', 'BT-50', 'CX-30', 'CX-3', 'CX-5', 'CX-9'],
+  SUZUKI: ['ALTO', 'BALENO', 'ERTIGA', 'GRAND VITARA', 'JIMNY', 'S-CROSS', 'SWIFT', 'VITARA'],
+  MITSUBISHI: ['ASX', 'ECLIPSE CROSS', 'LANCER', 'MONTERO SPORT', 'OUTLANDER', 'MIRAGE'],
+  RENAULT: ['CLIO', 'DUSTER', 'FLUENCE', 'KOLEOS', 'KWID', 'LOGAN', 'MEGANE', 'SANDERO', 'STEPWAY'],
+  PEUGEOT: ['2008', '208', '3008', '308', '5008', '508'],
+  CHERY: ['ARRIZO 5', 'ARRIZO 6', 'TIGGO 2', 'TIGGO 4', 'TIGGO 7', 'TIGGO 8', 'TIGGO 8 PRO'],
+  MG: ['HS', 'MG3', 'MG5', 'MG6', 'MG ZS', 'RX8'],
+  BYD: ['DOLPHIN', 'E2', 'E6', 'HAN', 'SEAL', 'TANG', 'YUAN PLUS'],
+  OTRO: ['OTRO'],
+}
 
 const styles = {
   container: { padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box" },
@@ -24,8 +48,10 @@ const styles = {
   btnDanger: { backgroundColor: "#ef4444", color: "#fff", border: "none", padding: "0.45rem 1rem", borderRadius: "0.5rem", fontSize: "0.8rem", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" },
   btnOutline: { backgroundColor: "#fff", color: "#475569", border: "1px solid #cbd5e1", padding: "0.45rem 1rem", borderRadius: "0.5rem", fontSize: "0.8rem", fontWeight: "600", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" },
   btnWarning: { backgroundColor: "#f59e0b", color: "#fff", border: "none", padding: "0.45rem 1rem", borderRadius: "0.5rem", fontSize: "0.8rem", fontWeight: "700", cursor: "pointer", display: "flex", alignItems: "center", gap: "0.35rem" },
-  modalOverlay: { position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.35)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" },
+  modalOverlay: { position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.35)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100, backdropFilter: "blur(4px)" },
   modalBox: { backgroundColor: "#fff", borderRadius: "1.25rem", width: "100%", maxWidth: "560px", boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)", maxHeight: "90vh", overflowY: "auto" },
+  modalContent: { padding: "1.5rem" },
+  formGroup: { marginBottom: "1rem" },
   tab: (active) => ({ padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer", border: "none", backgroundColor: active ? colorSuper : "#f1f5f9", color: active ? "#fff" : "#64748b", transition: "all 0.2s" }),
   badge: (bg, color) => ({ fontSize: "0.7rem", fontWeight: "700", padding: "0.2rem 0.5rem", borderRadius: "0.35rem", display: "inline-block", backgroundColor: bg, color }),
 }
@@ -64,7 +90,7 @@ const coloresGradiente = [
 ]
 
 const colorSwatch = (color) => {
-  const map = { ROJO: "#ef4444", AZUL: "#3b82f6", VERDE: "#10b981", NEGRO: "#0f172a", BLANCO: "#f8fafc", GRIS: "#94a3b8", PLATEADO: "#cbd5e1", AMARILLO: "#eab308", NARANJA: "#f97316", MARRON: "#92400e", ROSADO: "#ec4899", MORADO: colorSuper }
+  const map = { ROJO: "#ef4444", AZUL: "#3b82f6", VERDE: "#10b981", NEGRO: "#0f172a", BLANCO: "#f8fafc", GRIS: "#94a3b8", PLATEADO: "#cbd5e1", AMARILLO: "#eab308", NARANJA: "#f97316", MARRON: "#92400e", DORADO: "#b8860b", CELESTE: "#87ceeb", BEIGE: "#f5f5dc", VINO: "#722f37", ROSADO: "#ec4899", MORADO: colorSuper }
   return map[color?.toUpperCase()] || (color?.startsWith('#') ? color : `#${color}`) || "#cbd5e1"
 }
 
@@ -72,6 +98,17 @@ export default function GlobalBienes() {
   const [condominios, setCondominios] = useState([])
   const [condoId, setCondoId] = useState('')
   const [showCardSelector, setShowCardSelector] = useState(false)
+  const [condoSearch, setCondoSearch] = useState('')
+
+  const filteredCondominios = useMemo(() => {
+    if (!condoSearch) return condominios
+    const q = condoSearch.toLowerCase()
+    return condominios.filter(c =>
+      (c.nombre?.toLowerCase() || '').includes(q) ||
+      (c.direccion?.toLowerCase() || '').includes(q) ||
+      (c.ciudad?.toLowerCase() || '').includes(q)
+    )
+  }, [condominios, condoSearch])
   const [loading, setLoading] = useState(true)
   const [loadingData, setLoadingData] = useState(false)
   const [parking, setParking] = useState([])
@@ -91,18 +128,39 @@ export default function GlobalBienes() {
   const [configForm, setConfigForm] = useState({ id: '', tipoVehiculo: 'AUTO', capacidadMaxima: 2 })
   const [entryForm, setEntryForm] = useState({ placa: '', metodo: 'OCR', ocupante: 'PROPIETARIO', datosInquilino: '', idEstacionamiento: '' })
   const [entryFilters, setEntryFilters] = useState({ torre: '', piso: '', aptId: '' })
+  const [entryTorreText, setEntryTorreText] = useState('')
+  const [entryPisoText, setEntryPisoText] = useState('')
+  const [entryAptText, setEntryAptText] = useState('')
+  const [entryPlacaText, setEntryPlacaText] = useState('')
+  const [entryParkText, setEntryParkText] = useState('')
   const [reserveForm, setReserveForm] = useState({ placa: '', metodo: 'MANUAL', ocupante: 'PROPIETARIO', datosInquilino: '', idEstacionamiento: '', horas: 1 })
   const [reserveFilters, setReserveFilters] = useState({ torre: '', piso: '', aptId: '' })
+  const [reserveTorreText, setReserveTorreText] = useState('')
+  const [reservePisoText, setReservePisoText] = useState('')
+  const [reserveAptText, setReserveAptText] = useState('')
+  const [reservePlacaText, setReservePlacaText] = useState('')
+  const [reserveParkText, setReserveParkText] = useState('')
   const [entryOpen, setEntryOpen] = useState(false)
   const [exitOpen, setExitOpen] = useState(false)
   const [reserveOpen, setReserveOpen] = useState(false)
   const [exitForm, setExitForm] = useState({ idLogAcceso: '' })
+  const [exitLogText, setExitLogText] = useState('')
   const [assignForm, setAssignForm] = useState({ idEstacionamiento: '', idApartamento: '' })
+  const [assignParkingText, setAssignParkingText] = useState('')
+  const [assignAptText, setAssignAptText] = useState('')
+  const [assignParkingOpen, setAssignParkingOpen] = useState(false)
   const [vehicleForm, setVehicleForm] = useState({ id: null, marca: '', color: 'BLANCO', modelo: '', placa: '', tipo: 'AUTO', inquilinoId: '' })
+  const [vehInquilinoText, setVehInquilinoText] = useState('')
   const [cartLoanForm, setCartLoanForm] = useState({ codigoCarrito: '', idApartamento: '', numeroApartamento: '', nombreSolicitante: '', dniSolicitante: '', solicitante: 'PROPIETARIO', idPropietario: '', idInquilino: '' })
   const [cartFilters, setCartFilters] = useState({ torre: '', piso: '', aptId: '' })
+  const [cartOpen, setCartOpen] = useState(false)
+  const [cartCodigoCarritoText, setCartCodigoCarritoText] = useState('')
+  const [cartTorreText, setCartTorreText] = useState('')
+  const [cartPisoText, setCartPisoText] = useState('')
+  const [cartAptText, setCartAptText] = useState('')
   const [createForm, setCreateForm] = useState({ tipo: 'ESTACIONAMIENTO', codigo: '', numero: '', tipoVehiculo: 'AUTO', capacidadMaxima: 2 })
   const [assignVehicleForm, setAssignVehicleForm] = useState({ idEstacionamiento: '', idVehiculo: '' })
+  const [pickVehicleText, setPickVehicleText] = useState('')
   const [cartTicket, setCartTicket] = useState(null)
   const [allCartLoans, setAllCartLoans] = useState([])
   const [reservations, setReservations] = useState(() => {
@@ -110,7 +168,7 @@ export default function GlobalBienes() {
   })
   const barcodeRef = useRef(null)
   const toastTimer = useRef(null)
-  const PER_PAGE = 5
+  const PER_PAGE = 10
   const [logPage, setLogPage] = useState(1)
   const [logSearch, setLogSearch] = useState('')
   const [reservaPage, setReservaPage] = useState(1)
@@ -187,7 +245,7 @@ export default function GlobalBienes() {
         getActiveCartLoans(id).catch(() => []),
         getAllCartLoans(id).catch(() => [])
       ])
-      setParking(extractItems(p))
+      setParking(extractItems(p).sort((a, b) => (parseInt(a.numero, 10) || a.id) - (parseInt(b.numero, 10) || b.id)))
       setCarts(extractItems(c))
       setApartments(extractItems(a))
       setVehicles(Array.isArray(v) ? v : [])
@@ -355,6 +413,7 @@ export default function GlobalBienes() {
       setShowModal(null)
       setEntryForm({ placa: '', metodo: 'OCR', ocupante: 'PROPIETARIO', datosInquilino: '', idEstacionamiento: '' })
       setEntryFilters({ torre: '', piso: '', aptId: '' })
+      setEntryTorreText(''); setEntryPisoText(''); setEntryAptText(''); setEntryPlacaText(''); setEntryParkText('')
       loadData(condoId)
     } catch (e) { showToast('Error: ' + e.message, 'error') }
     finally { setSaving(false) }
@@ -368,7 +427,7 @@ export default function GlobalBienes() {
       await registerVehicleExit({ idLogAcceso: Number(exitForm.idLogAcceso) })
       showToast('Salida registrada')
       setShowModal(null)
-      setExitForm({ idLogAcceso: '' })
+      setExitForm({ idLogAcceso: '' }); setExitLogText('')
       loadData(condoId)
     } catch (e) { showToast('Error: ' + e.message, 'error') }
     finally { setSaving(false) }
@@ -385,7 +444,7 @@ export default function GlobalBienes() {
       await assignAssetApartment(Number(assignForm.idEstacionamiento), Number(assignForm.idApartamento), condoId)
       showToast('Estacionamiento asignado')
       setShowModal(null)
-      setAssignForm({ idEstacionamiento: '', idApartamento: '' })
+      setAssignForm({ idEstacionamiento: '', idApartamento: '' }); setAssignParkingText(''); setAssignAptText('')
       loadData(condoId)
     } catch (e) { showToast('Error: ' + e.message, 'error') }
     finally { setSaving(false) }
@@ -404,7 +463,28 @@ export default function GlobalBienes() {
       await createAdminVehicle(payload, condoId)
       showToast('Vehículo registrado')
       setShowModal(null)
-      setVehicleForm({ id: null, marca: '', color: 'BLANCO', modelo: '', placa: '', tipo: 'AUTO', inquilinoId: '' })
+      setVehicleForm({ id: null, marca: '', color: 'BLANCO', modelo: '', placa: '', tipo: 'AUTO', inquilinoId: '' }); setVehInquilinoText('')
+      loadData(condoId)
+    } catch (e) { showToast('Error: ' + e.message, 'error') }
+    finally { setSaving(false) }
+  }
+
+  const handleEditVehicle = async (e) => {
+    e.preventDefault()
+    if (!vehicleForm.marca || !vehicleForm.placa) return showToast('Completa marca y placa', 'error')
+    if (!vehicleForm.id) return showToast('Error: vehículo no identificado', 'error')
+    setSaving(true)
+    try {
+      const payload = {
+        marca: vehicleForm.marca, color: vehicleForm.color, modelo: vehicleForm.modelo,
+        placa: vehicleForm.placa.toUpperCase(), tipo: vehicleForm.tipo,
+      }
+      if (vehicleForm.inquilinoId) payload.inquilinoId = Number(vehicleForm.inquilinoId)
+      await deleteAdminVehicle(vehicleForm.id, condoId)
+      await createAdminVehicle(payload, condoId)
+      showToast('Vehículo actualizado')
+      setShowModal(null)
+      setVehicleForm({ id: null, marca: '', color: 'BLANCO', modelo: '', placa: '', tipo: 'AUTO', inquilinoId: '' }); setVehInquilinoText('')
       loadData(condoId)
     } catch (e) { showToast('Error: ' + e.message, 'error') }
     finally { setSaving(false) }
@@ -446,6 +526,7 @@ export default function GlobalBienes() {
       setShowModal(null)
       setCartLoanForm({ codigoCarrito: '', idApartamento: '', numeroApartamento: '', nombreSolicitante: '', dniSolicitante: '', solicitante: 'PROPIETARIO', idPropietario: '', idInquilino: '' })
       setCartFilters({ torre: '', piso: '', aptId: '' })
+      setCartCodigoCarritoText(''); setCartTorreText(''); setCartPisoText(''); setCartAptText('')
       loadData(condoId)
     } catch (e) { showToast('Error: ' + e.message, 'error') }
     finally { setSaving(false) }
@@ -473,7 +554,7 @@ export default function GlobalBienes() {
       }, condoId)
       showToast('Vehículo asignado al estacionamiento')
       setShowModal(null)
-      setAssignVehicleForm({ idEstacionamiento: '', idVehiculo: '' })
+      setAssignVehicleForm({ idEstacionamiento: '', idVehiculo: '' }); setPickVehicleText('')
       loadData(condoId)
     } catch (e) { showToast('Error: ' + e.message, 'error') }
     finally { setSaving(false) }
@@ -501,6 +582,16 @@ export default function GlobalBienes() {
         } catch (e) { console.error('Barcode error:', e) }
       }
     }, 100)
+  }
+
+  const openCartTicket = (loan) => {
+    const apt = apartments.find(a => String(a.id) === String(loan.idApartamento))
+    setCartTicket({
+      ...loan,
+      aptNumero: apt?.numero || '—',
+      aptTorre: apt?.torreNombre || '—',
+      aptPiso: apt?.pisoNumero || '—'
+    })
   }
 
   const printTicket = () => {
@@ -574,7 +665,7 @@ export default function GlobalBienes() {
             fontSize: "0.55rem", fontWeight: 700, color: isOcc ? "#fff" : "#10b981",
             transition: "all 0.15s"
           }}>
-            {isOcc ? '●' : '○'}
+            {isOcc ? '?' : '?'}
           </div>
         ))}
       </div>
@@ -584,9 +675,9 @@ export default function GlobalBienes() {
   if (loading) return <div style={{ ...styles.container, display: "flex", alignItems: "center", justifyContent: "center", color: "#94a3b8", fontWeight: 600 }}>Cargando...</div>
 
   return (
-    <div style={styles.container}>
+    <div style={styles.container} className="gb-container">
       {toast && (
-        <div style={{ position: "fixed", top: "1.5rem", right: "1.5rem", zIndex: 200, backgroundColor: toast.type === 'error' ? "#ef4444" : "#10b981", color: "#fff", padding: "0.75rem 1.25rem", borderRadius: "0.75rem", fontWeight: 700, fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.5rem", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.15)" }}>
+        <div style={{ position: "fixed", top: "1.5rem", right: "1.5rem", zIndex: 1300, backgroundColor: toast.type === 'error' ? "#ef4444" : "#10b981", color: "#fff", padding: "0.75rem 1.25rem", borderRadius: "0.75rem", fontWeight: 700, fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "0.5rem", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.15)" }}>
           {toast.type === 'error' ? <FiAlertCircle size={16} /> : <FiCheck size={16} />} {toast.msg}
         </div>
       )}
@@ -604,71 +695,89 @@ export default function GlobalBienes() {
           60% { transform: scale(1.2); opacity: 1; }
           100% { transform: scale(1); opacity: 1; }
         }
+        .gb-stats-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+        .gb-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .gb-grid-2 { grid-template-columns: 1fr 1fr; }
+        .gb-form-grid { grid-template-columns: 1fr 1fr; }
+        .gb-park-grid { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+        .gb-condo-grid { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+        @media (max-width: 900px) {
+          .gb-grid-2, .gb-grid-3 { grid-template-columns: 1fr !important; }
+          .gb-form-grid { grid-template-columns: 1fr !important; }
+        }
+        @media (max-width: 600px) {
+          .gb-stats-grid { grid-template-columns: 1fr !important; }
+          .gb-park-grid { grid-template-columns: 1fr !important; }
+          .gb-condo-grid { grid-template-columns: 1fr !important; }
+          .gb-container { padding: 1rem !important; }
+          .gb-modal-box { max-width: 95vw !important; margin: 0 0.5rem; }
+        }
       `}</style>
 
-        {/* --- VISTA COMPACTA (cuando ya hay un condominio seleccionado) --- */}
-        {condoId && !showCardSelector && (
-          <div style={{
-            background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)',
-            borderRadius: '1rem',
-            padding: '0.85rem 1.25rem',
-            marginBottom: '1.5rem',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            gap: '1rem',
-            border: '1px solid rgba(124,58,237,0.15)',
-            flexWrap: 'wrap'
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-              <div style={{
-                backgroundColor: 'rgba(124,58,237,0.12)',
-                padding: '0.6rem',
-                borderRadius: '0.75rem',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <FiGrid size={20} color={colorSuper} />
-              </div>
-              <div>
-                <div style={{ fontSize: '0.95rem', fontWeight: '800', color: '#0f172a' }}>{condo?.nombre || 'Condominio'}</div>
-                <div style={{ fontSize: '0.75rem', color: '#6d28d9', fontWeight: '600' }}>
-                  {condo?.direccion || ''} &mdash; {condominios.length} condominios
-                </div>
+      {/* --- VISTA COMPACTA (cuando ya hay un condominio seleccionado) --- */}
+      {condoId && !showCardSelector && (
+        <div style={{
+          background: 'linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%)',
+          borderRadius: '1rem',
+          padding: '0.85rem 1.25rem',
+          marginBottom: '1.5rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1rem',
+          border: '1px solid rgba(124,58,237,0.15)',
+          flexWrap: 'wrap'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <div style={{
+              backgroundColor: 'rgba(124,58,237,0.12)',
+              padding: '0.6rem',
+              borderRadius: '0.75rem',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}>
+              <FiGrid size={20} color={colorSuper} />
+            </div>
+            <div>
+              <div style={{ fontSize: '0.95rem', fontWeight: '800', color: '#0f172a' }}>{condo?.nombre || 'Condominio'}</div>
+              <div style={{ fontSize: '0.75rem', color: '#6d28d9', fontWeight: '600' }}>
+                {condo?.direccion || ''} &mdash; {condominios.length} condominios
               </div>
             </div>
-            <button
-              type="button"
-              onClick={() => setShowCardSelector(true)}
-              style={{
-                backgroundColor: 'rgba(124,58,237,0.1)',
-                color: colorSuper,
-                border: '1px solid rgba(124,58,237,0.2)',
-                padding: '0.5rem 1rem',
-                borderRadius: '0.65rem',
-                fontSize: '0.8rem',
-                fontWeight: '700',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                transition: 'all 0.2s ease',
-                whiteSpace: 'nowrap'
-              }}
-              onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.2)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
-              onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.1)'; e.currentTarget.style.transform = 'translateY(0)' }}
-            >
-              <FiGrid size={14} />
-              Seleccionar otro condominio
-            </button>
           </div>
-        )}
+          <button
+            type="button"
+            onClick={() => setShowCardSelector(true)}
+            style={{
+              backgroundColor: 'rgba(124,58,237,0.1)',
+              color: colorSuper,
+              border: '1px solid rgba(124,58,237,0.2)',
+              padding: '0.5rem 1rem',
+              borderRadius: '0.65rem',
+              fontSize: '0.8rem',
+              fontWeight: '700',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              transition: 'all 0.2s ease',
+              whiteSpace: 'nowrap'
+            }}
+            onMouseEnter={e => { e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.2)'; e.currentTarget.style.transform = 'translateY(-1px)' }}
+            onMouseLeave={e => { e.currentTarget.style.backgroundColor = 'rgba(124,58,237,0.1)'; e.currentTarget.style.transform = 'translateY(0)' }}
+          >
+            <FiGrid size={14} />
+            Seleccionar otro condominio
+          </button>
+        </div>
+      )}
 
-        {/* --- SELECTOR DE CONDOMINIOS (TARJETAS) --- */}
-        {(!condoId || showCardSelector) && (
-          <div style={{ marginBottom: '2rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1rem' }}>
+      {/* --- SELECTOR DE CONDOMINIOS (TARJETAS) --- */}
+      {(!condoId || showCardSelector) && (
+        <div style={{ marginBottom: '2rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <div style={{
                 backgroundColor: 'rgba(124,58,237,0.1)',
                 padding: '0.6rem',
@@ -684,200 +793,219 @@ export default function GlobalBienes() {
                   {condoId ? 'Seleccionar otro condominio' : 'Selecciona un condominio'}
                 </h2>
                 <span style={{ fontSize: '0.78rem', color: '#64748b', fontWeight: '600' }}>
-                  {condominios.length} {condominios.length === 1 ? 'condominio disponible' : 'condominios disponibles'}
+                  {condoSearch
+                    ? `${filteredCondominios.length} de ${condominios.length} condominios`
+                    : `${condominios.length} ${condominios.length === 1 ? 'condominio disponible' : 'condominios disponibles'}`
+                  }
                 </span>
               </div>
             </div>
 
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))',
-              gap: '1rem'
-            }}>
-              {condominios.map((c, idx) => {
-                const isSelected = String(c.id) === String(condoId)
-                const [color1, color2] = coloresGradiente[idx % coloresGradiente.length]
+            <div style={{ width: '260px', maxWidth: '100%', position: 'relative' }}>
+              <FiSearch size={14} style={{ position: 'absolute', left: '0.8rem', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+              <input
+                type="text"
+                placeholder="Buscar condominio..."
+                value={condoSearch}
+                onChange={e => setCondoSearch(e.target.value)}
+                style={{ ...styles.input, paddingLeft: '2.2rem', paddingTop: '0.55rem', paddingBottom: '0.55rem', fontSize: '0.85rem' }}
+              />
+            </div>
+          </div>
 
-                return (
-                  <button
-                    type="button"
-                    key={c.id}
-                    onClick={() => { setCondoId(String(c.id)); setShowCardSelector(false) }}
-                    style={{
-                      background: isSelected
-                        ? `linear-gradient(145deg, #ffffff, ${color1}04)`
-                        : '#ffffff',
-                      border: isSelected
-                        ? `2px solid ${color1}`
-                        : '1.5px solid #e8ecf1',
-                      borderRadius: '1.25rem',
-                      boxShadow: isSelected
-                        ? `0 0 0 4px ${color1}15, 0 8px 32px ${color1}20, 0 2px 8px rgba(0,0,0,0.04)`
-                        : '0 2px 8px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.02)',
-                      cursor: 'pointer',
-                      display: 'block',
-                      fontFamily: 'inherit',
-                      fontSize: 'inherit',
-                      lineHeight: 'inherit',
-                      overflow: 'hidden',
-                      padding: 0,
-                      position: 'relative',
-                      textAlign: 'left',
-                      transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                      transform: isSelected ? 'scale(1.03) translateY(-2px)' : 'scale(1) translateY(0)',
-                      width: '100%',
-                      opacity: condoId && !isSelected ? 0.55 : 1,
-                      filter: condoId && !isSelected ? 'grayscale(0.3) saturate(0.7)' : 'none',
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isSelected && !condoId) {
-                        e.currentTarget.style.transform = 'scale(1.03) translateY(-3px)'
-                        e.currentTarget.style.boxShadow = `0 12px 40px ${color1}15, 0 4px 12px rgba(0,0,0,0.06)`
-                        e.currentTarget.style.borderColor = color1
-                      } else if (!isSelected) {
-                        e.currentTarget.style.transform = 'scale(1.02) translateY(-2px)'
-                        e.currentTarget.style.boxShadow = `0 8px 25px ${color1}10, 0 4px 10px rgba(0,0,0,0.04)`
-                        e.currentTarget.style.borderColor = '#cbd5e1'
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      if (!isSelected) {
-                        e.currentTarget.style.transform = 'scale(1) translateY(0)'
-                        e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.02)'
-                        e.currentTarget.style.borderColor = '#e8ecf1'
-                      }
-                    }}
-                  >
-                    {/* Barra decorativa superior con gradiente */}
+          <div style={{
+            display: 'grid',
+            gap: '1rem'
+          }} className="gb-condo-grid">
+            {filteredCondominios.map((c, idx) => {
+              const isSelected = String(c.id) === String(condoId)
+              const [color1, color2] = coloresGradiente[idx % coloresGradiente.length]
+
+              return (
+                <button
+                  type="button"
+                  key={c.id}
+                  onClick={() => { setCondoId(String(c.id)); setShowCardSelector(false) }}
+                  style={{
+                    background: isSelected
+                      ? `linear-gradient(145deg, #ffffff, ${color1}04)`
+                      : '#ffffff',
+                    border: isSelected
+                      ? `2px solid ${color1}`
+                      : '1.5px solid #e8ecf1',
+                    borderRadius: '1.25rem',
+                    boxShadow: isSelected
+                      ? `0 0 0 4px ${color1}15, 0 8px 32px ${color1}20, 0 2px 8px rgba(0,0,0,0.04)`
+                      : '0 2px 8px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.02)',
+                    cursor: 'pointer',
+                    display: 'block',
+                    fontFamily: 'inherit',
+                    fontSize: 'inherit',
+                    lineHeight: 'inherit',
+                    overflow: 'hidden',
+                    padding: 0,
+                    position: 'relative',
+                    textAlign: 'left',
+                    transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                    transform: isSelected ? 'scale(1.03) translateY(-2px)' : 'scale(1) translateY(0)',
+                    width: '100%',
+                    opacity: condoId && !isSelected ? 0.55 : 1,
+                    filter: condoId && !isSelected ? 'grayscale(0.3) saturate(0.7)' : 'none',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isSelected && !condoId) {
+                      e.currentTarget.style.transform = 'scale(1.03) translateY(-3px)'
+                      e.currentTarget.style.boxShadow = `0 12px 40px ${color1}15, 0 4px 12px rgba(0,0,0,0.06)`
+                      e.currentTarget.style.borderColor = color1
+                    } else if (!isSelected) {
+                      e.currentTarget.style.transform = 'scale(1.02) translateY(-2px)'
+                      e.currentTarget.style.boxShadow = `0 8px 25px ${color1}10, 0 4px 10px rgba(0,0,0,0.04)`
+                      e.currentTarget.style.borderColor = '#cbd5e1'
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isSelected) {
+                      e.currentTarget.style.transform = 'scale(1) translateY(0)'
+                      e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03), 0 1px 2px rgba(0,0,0,0.02)'
+                      e.currentTarget.style.borderColor = '#e8ecf1'
+                    }
+                  }}
+                >
+                  {/* Barra decorativa superior con gradiente */}
+                  <div style={{
+                    height: '6px',
+                    background: `linear-gradient(90deg, ${color1}, ${color2}, ${color1})`,
+                    backgroundSize: '200% 100%',
+                    borderRadius: '1.25rem 1.25rem 0 0',
+                  }} />
+
+                  <div style={{ padding: '1.25rem 1.25rem 1.15rem' }}>
+                    {/* Icono con glow */}
                     <div style={{
-                      height: '6px',
-                      background: `linear-gradient(90deg, ${color1}, ${color2}, ${color1})`,
-                      backgroundSize: '200% 100%',
-                      borderRadius: '1.25rem 1.25rem 0 0',
-                    }} />
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '1rem',
+                      background: `linear-gradient(135deg, ${color1}18, ${color2}08)`,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      marginBottom: '0.85rem',
+                      transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                      border: `1px solid ${color1}22`,
+                    }}>
+                      <FiHome size={24} color={color1} />
+                    </div>
 
-                    <div style={{ padding: '1.25rem 1.25rem 1.15rem' }}>
-                      {/* Icono con glow */}
-                      <div style={{
-                        width: '48px',
-                        height: '48px',
-                        borderRadius: '1rem',
-                        background: `linear-gradient(135deg, ${color1}18, ${color2}08)`,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        marginBottom: '0.85rem',
-                        transition: 'all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
-                        border: `1px solid ${color1}22`,
-                      }}>
-                        <FiHome size={24} color={color1} />
-                      </div>
+                    {/* Nombre */}
+                    <h3 style={{
+                      margin: 0,
+                      fontSize: '1rem',
+                      fontWeight: '800',
+                      color: '#0f172a',
+                      lineHeight: 1.35,
+                      marginBottom: '0.3rem',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      letterSpacing: '-0.01em',
+                    }}>
+                      {c.nombre}
+                    </h3>
 
-                      {/* Nombre */}
-                      <h3 style={{
+                    {/* Dirección */}
+                    {c.direccion && (
+                      <p style={{
                         margin: 0,
-                        fontSize: '1rem',
-                        fontWeight: '800',
-                        color: '#0f172a',
-                        lineHeight: 1.35,
-                        marginBottom: '0.3rem',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
+                        fontSize: '0.72rem',
+                        color: '#94a3b8',
+                        fontWeight: '500',
+                        marginBottom: '0.85rem',
+                        whiteSpace: 'nowrap',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
-                        letterSpacing: '-0.01em',
                       }}>
-                        {c.nombre}
-                      </h3>
+                        {c.direccion}
+                      </p>
+                    )}
 
-                      {/* DirecciÃ³n */}
-                      {c.direccion && (
-                        <p style={{
-                          margin: 0,
-                          fontSize: '0.72rem',
-                          color: '#94a3b8',
-                          fontWeight: '500',
-                          marginBottom: '0.85rem',
-                          whiteSpace: 'nowrap',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                        }}>
-                          {c.direccion}
-                        </p>
-                      )}
+                    {/* Separador sutil */}
+                    <div style={{
+                      height: '1px',
+                      background: `linear-gradient(90deg, ${color1}22, transparent)`,
+                      marginBottom: '0.75rem',
+                    }} />
 
-                      {/* Separador sutil */}
-                      <div style={{
-                        height: '1px',
-                        background: `linear-gradient(90deg, ${color1}22, transparent)`,
-                        marginBottom: '0.75rem',
-                      }} />
-
-                      {/* Footer con badges */}
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '0.4rem',
-                        flexWrap: 'wrap',
-                      }}>
-                        {c.nombreCiudad && (
-                          <span style={{
-                            fontSize: '0.6rem',
-                            fontWeight: '700',
-                            color: '#475569',
-                            backgroundColor: '#f1f4f9',
-                            padding: '0.2rem 0.55rem',
-                            borderRadius: '999px',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.25rem',
-                            border: '1px solid #e8ecf1',
-                          }}>
-                            <FiMapPin size={8} color="#94a3b8" /> {c.nombreCiudad}
-                          </span>
-                        )}
+                    {/* Footer con badges */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.4rem',
+                      flexWrap: 'wrap',
+                    }}>
+                      {c.nombreCiudad && (
                         <span style={{
                           fontSize: '0.6rem',
                           fontWeight: '700',
+                          color: '#475569',
+                          backgroundColor: '#f1f4f9',
                           padding: '0.2rem 0.55rem',
                           borderRadius: '999px',
-                          backgroundColor: c.activo !== false ? '#ecfdf5' : '#fef2f2',
-                          color: c.activo !== false ? '#059669' : '#dc2626',
-                          border: `1px solid ${c.activo !== false ? '#a7f3d0' : '#fecaca'}`,
-                        }}>
-                          {c.activo !== false ? 'Activo' : 'Inactivo'}
-                        </span>
-                      </div>
-
-                      {/* Indicador de seleccionado */}
-                      {isSelected && (
-                        <div style={{
-                          position: 'absolute',
-                          top: '0.75rem',
-                          right: '0.75rem',
-                          width: '28px',
-                          height: '28px',
-                          borderRadius: '50%',
-                          background: `linear-gradient(135deg, ${color1}, ${color2})`,
-                          color: '#fff',
-                          display: 'flex',
+                          display: 'inline-flex',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.65rem',
-                          fontWeight: '700',
-                          boxShadow: `0 3px 10px ${color1}40, 0 0 0 4px ${color1}15`,
+                          gap: '0.25rem',
+                          border: '1px solid #e8ecf1',
                         }}>
-                          <FiCheck size={15} />
-                        </div>
+                          <FiMapPin size={8} color="#94a3b8" /> {c.nombreCiudad}
+                        </span>
                       )}
+                      <span style={{
+                        fontSize: '0.6rem',
+                        fontWeight: '700',
+                        padding: '0.2rem 0.55rem',
+                        borderRadius: '999px',
+                        backgroundColor: c.activo !== false ? '#ecfdf5' : '#fef2f2',
+                        color: c.activo !== false ? '#059669' : '#dc2626',
+                        border: `1px solid ${c.activo !== false ? '#a7f3d0' : '#fecaca'}`,
+                      }}>
+                        {c.activo !== false ? 'Activo' : 'Inactivo'}
+                      </span>
                     </div>
-                  </button>
-                )
-              })}
-            </div>
+
+                    {/* Indicador de seleccionado */}
+                    {isSelected && (
+                      <div style={{
+                        position: 'absolute',
+                        top: '0.75rem',
+                        right: '0.75rem',
+                        width: '28px',
+                        height: '28px',
+                        borderRadius: '50%',
+                        background: `linear-gradient(135deg, ${color1}, ${color2})`,
+                        color: '#fff',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.65rem',
+                        fontWeight: '700',
+                        boxShadow: `0 3px 10px ${color1}40, 0 0 0 4px ${color1}15`,
+                      }}>
+                        <FiCheck size={15} />
+                      </div>
+                    )}
+                  </div>
+                </button>
+              )
+            })}
+            {filteredCondominios.length === 0 && (
+              <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '3rem', color: '#94a3b8' }}>
+                <p style={{ fontWeight: 600, margin: 0 }}>Ningún condominio coincide con tu búsqueda</p>
+              </div>
+            )}
           </div>
-        )}
+        </div>
+      )}
       {!condoId ? (
         <div style={{ textAlign: "center", padding: "4rem", color: "#94a3b8", fontWeight: 600 }}>
           <FiGrid size={48} style={{ opacity: 0.3, marginBottom: "0.75rem" }} />
@@ -906,7 +1034,7 @@ export default function GlobalBienes() {
           {/* ===== DASHBOARD ===== */}
           {activeTab === 'dashboard' && (
             <>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
+              <div style={{ display: "grid", gap: "1rem", marginBottom: "1.5rem" }} className="gb-stats-grid">
                 <StatCard icon={<FiHome />} label="Estacionamientos" value={stats.totalParking} sub={`${stats.disponibleParking} libres · ${stats.ocupadoParking} ocupados`} color={colorSuper} />
                 <StatCard icon={<FiUsers />} label="Capacidad Total" value={stats.capacidadTotal} sub={`${stats.ocupacionActual} vehículos ahora (${stats.capacidadTotal > 0 ? ((stats.ocupacionActual / stats.capacidadTotal) * 100).toFixed(0) : 0}%)`} color="#3b82f6" />
                 <StatCard icon={<FiTruck />} label="Carritos" value={stats.totalCarts} sub={`${stats.cartDisponible} disp · ${stats.cartEnUso} uso · ${stats.cartMant} mant`} color={colorSuper} />
@@ -914,7 +1042,7 @@ export default function GlobalBienes() {
                 <StatCard icon={<FiLogIn />} label="Vehículos Dentro" value={stats.activeEntries.length} sub={`${stats.disponibleParking} spots libres`} color="#10b981" />
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
+              <div style={{ display: "grid" }} className="gb-grid-2">
                 <div style={styles.card}>
                   <div style={styles.cardHeader}>
                     <span style={{ fontWeight: 800, fontSize: "0.8rem", color: "#0f172a" }}>Ocupación de Estacionamientos</span>
@@ -995,7 +1123,7 @@ export default function GlobalBienes() {
               </div>
 
               {dashboard && (
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "1rem", marginTop: "1.5rem" }}>
+                <div className="gb-grid-3" style={{ display: "grid", gap: "1rem", marginTop: "1.5rem" }}>
                   <div style={styles.card}>
                     <div style={{ padding: "1.25rem", textAlign: "center" }}>
                       <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>Vehículos dentro</div>
@@ -1023,7 +1151,7 @@ export default function GlobalBienes() {
           {activeTab === 'mapa' && (
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               <div style={styles.card}>
-                <div style={styles.cardHeader}>
+                <div style={{ ...styles.cardHeader, cursor: "pointer" }} onClick={() => setAssignParkingOpen(!assignParkingOpen)}>
                   <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                     <FiGrid size={16} color={colorSuper} />
                     <span style={{ fontWeight: 800, fontSize: "0.9rem", color: "#0f172a" }}>Matriz de Estacionamientos</span>
@@ -1036,42 +1164,50 @@ export default function GlobalBienes() {
                     <span style={{ display: "flex", alignItems: "center", gap: "0.3rem", fontSize: "0.7rem", color: "#64748b" }}>
                       <span style={{ width: 12, height: 12, borderRadius: 2, backgroundColor: "rgba(239,68,68,0.7)", border: "1.5px solid #ef4444", display: "inline-block" }} /> Ocupado
                     </span>
-                    <button onClick={() => setShowModal('create')} style={styles.btnPrimary}><FiPlus size={14} /> Nuevo</button>
+                    <button onClick={(e) => { e.stopPropagation(); setShowModal('create') }} style={styles.btnPrimary}><FiPlus size={14} /> Nuevo</button>
+                    <span style={{ color: assignParkingOpen ? colorSuper : "#94a3b8", fontWeight: 700, fontSize: "0.8rem", transition: "transform 0.2s", transform: assignParkingOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
+                      {assignParkingOpen ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
+                    </span>
                   </div>
                 </div>
-                {/* Horizontal assign parking (spot → apartment) */}
-                <form onSubmit={handleAssignParking} style={{ padding: "0.75rem 1.25rem", display: "flex", alignItems: "flex-end", gap: "0.75rem", borderBottom: "1px solid #f1f5f9", backgroundColor: "#faf5ff" }}>
-                  <div style={{ flex: 1 }}>
-                    <label style={{ ...styles.label, fontSize: "0.6rem" }}>Estacionamiento</label>
-                    <select style={styles.select} value={assignForm.idEstacionamiento} onChange={e => setAssignForm(f => ({ ...f, idEstacionamiento: e.target.value }))} required>
-                      <option value="">Seleccionar estacionamiento</option>
-                      {parking.map(p => (
-                        <option key={p.id} value={p.id} disabled={!p.disponible || p.idApartamento != null}>
-                          #{p.numero || p.id} — {p.tipoVehiculo || 'Mixto'} {p.disponible && !p.idApartamento ? '🟢 Libre' : '🔴 Ocupado'}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div style={{ flex: 2 }}>
-                    <label style={{ ...styles.label, fontSize: "0.6rem" }}>Departamento</label>
-                    <select style={styles.select} value={assignForm.idApartamento} onChange={e => setAssignForm(f => ({ ...f, idApartamento: e.target.value }))} required>
-                      <option value="">Seleccionar apartamento</option>
-                      {apartments.filter(a => !parking.some(p => String(p.idApartamento) === String(a.id))).map(a => (
-                        <option key={a.id} value={a.id}>
-                          N° {a.numero}{a.torreNombre ? ` — ${a.torreNombre}` : ''} {parking.some(p => String(p.idApartamento) === String(a.id)) ? '(ya tiene spot)' : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <button type="submit" disabled={saving} style={{ ...styles.btnPrimary, padding: "0.5rem 1rem", whiteSpace: "nowrap", height: "fit-content" }}>
-                    {saving ? 'Asignando...' : <><FiHome size={14} /> Asignar Departamento</>}
-                  </button>
-                </form>
+                {assignParkingOpen && (
+                  <form onSubmit={handleAssignParking} style={{ padding: "0.75rem 1.25rem", display: "flex", alignItems: "flex-end", gap: "0.75rem", borderBottom: "1px solid #f1f5f9", backgroundColor: "#faf5ff" }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ ...styles.label, fontSize: "0.6rem" }}>Estacionamiento</label>
+                      {parking.filter(p => p.disponible && !p.idApartamento).length === 0 ? (
+                        <div style={{ ...styles.select, display: "flex", alignItems: "center", color: "#ef4444", fontSize: "0.75rem", fontWeight: "600" }}>No hay estacionamientos disponibles</div>
+                      ) : (
+                        <DataList value={assignParkingText} onChange={(e) => { setAssignParkingText(e.target.value); const s = parking.filter(p => p.disponible && !p.idApartamento).find(p => `${p.numero || `#${p.id}`} · ${p.tipoVehiculo || 'Mixto'}` === e.target.value); if (s) setAssignForm(f => ({ ...f, idEstacionamiento: String(s.id) })) }} required style={styles.select}>
+                          <option value="">Seleccionar estacionamiento</option>
+                          {parking.filter(p => p.disponible && !p.idApartamento).map(p => (
+                            <option key={p.id} value={`${p.numero || `#${p.id}`} · ${p.tipoVehiculo || 'Mixto'}`} />
+                          ))}
+                        </DataList>
+                      )}
+                    </div>
+                    <div style={{ flex: 2 }}>
+                      <label style={{ ...styles.label, fontSize: "0.6rem" }}>Departamento</label>
+                      {apartments.filter(a => !parking.some(p => String(p.idApartamento) === String(a.id))).length === 0 ? (
+                        <div style={{ ...styles.select, display: "flex", alignItems: "center", color: "#ef4444", fontSize: "0.75rem", fontWeight: "600" }}>No hay apartamentos disponibles</div>
+                      ) : (
+                        <DataList value={assignAptText} onChange={(e) => { setAssignAptText(e.target.value); const s = apartments.filter(a => !parking.some(p => String(p.idApartamento) === String(a.id))).find(a => `N° ${a.numero}${a.torreNombre ? ` · ${a.torreNombre}` : ''}` === e.target.value); if (s) setAssignForm(f => ({ ...f, idApartamento: String(s.id) })) }} required style={styles.select}>
+                          <option value="">Seleccionar apartamento</option>
+                          {apartments.filter(a => !parking.some(p => String(p.idApartamento) === String(a.id))).map(a => (
+                            <option key={a.id} value={`N° ${a.numero}${a.torreNombre ? ` · ${a.torreNombre}` : ''}`} />
+                          ))}
+                        </DataList>
+                      )}
+                    </div>
+                    <button type="submit" disabled={saving} style={{ ...styles.btnPrimary, padding: "0.5rem 1rem", whiteSpace: "nowrap", height: "fit-content" }}>
+                      {saving ? 'Asignando...' : <><FiHome size={14} /> Asignar Departamento</>}
+                    </button>
+                  </form>
+                )}
                 <div style={{ padding: "1.25rem" }}>
                   {parking.length === 0 ? (
                     <div style={{ textAlign: "center", padding: "2rem", color: "#94a3b8", fontSize: "0.85rem" }}>No hay estacionamientos registrados</div>
                   ) : (
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem" }}>
+                    <div className="gb-park-grid" style={{ display: "grid", gap: "1rem" }}>
                       {parking.map(p => {
                         const vehiclesInSpot = vehicles.filter(v => String(v.idEstacionamiento) === String(p.id))
                         const pct = p.capacidadMaxima > 0 ? ((p.cantidadActual || 0) / p.capacidadMaxima) * 100 : 0
@@ -1088,7 +1224,7 @@ export default function GlobalBienes() {
                                 <div style={{ fontSize: "1rem", fontWeight: 800, color: "#0f172a" }}>#{p.numero || p.id}</div>
                               </div>
                               <div style={{ fontSize: "0.65rem", color: "#94a3b8", marginBottom: "0.3rem" }}>
-                                {p.cantidadActual ?? 0}/{p.capacidadMaxima || '∞'} vehículos
+                                {p.cantidadActual ?? 0}/{p.capacidadMaxima || '8'} vehículos
                               </div>
                               <ParkingMatrix spot={p} occupiedCount={vehiclesInSpot.length} />
                               <div style={{ marginTop: "0.3rem" }}>
@@ -1130,7 +1266,7 @@ export default function GlobalBienes() {
                                 <FiEye size={11} /> Ver
                               </button>
                               {vehiclesInSpot.length < (p.capacidadMaxima ?? Infinity) && (
-                                <button onClick={(e) => { e.stopPropagation(); setAssignVehicleForm({ idEstacionamiento: p.id, idVehiculo: '' }); setShowModal('pickVehicle') }}
+                                <button onClick={(e) => { e.stopPropagation(); setAssignVehicleForm({ idEstacionamiento: p.id, idVehiculo: '' }); setPickVehicleText(''); setShowModal('pickVehicle') }}
                                   style={{ flex: 1, padding: "0.4rem", background: "none", border: "none", cursor: "pointer", color: "#10b981", fontSize: "0.65rem", borderRight: "1px solid #f1f5f9", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.2rem" }}>
                                   <FiUserPlus size={11} />
                                 </button>
@@ -1153,7 +1289,7 @@ export default function GlobalBienes() {
           {/* ===== GESTIÓN ===== */}
           {activeTab === 'gestion' && (
             <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
+              <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
                 <div style={styles.card}>
                   <div style={{ ...styles.cardHeader, cursor: "pointer" }} onClick={() => setEntryOpen(!entryOpen)}>
                     <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "#0f172a", display: "flex", alignItems: "center", gap: "0.4rem" }}>
@@ -1165,30 +1301,21 @@ export default function GlobalBienes() {
                   </div>
                   {entryOpen && (
                     <form onSubmit={handleRegisterEntry} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.5rem" }}>
-                        <select style={{ ...styles.select, fontSize: "0.7rem" }} value={entryFilters.torre} onChange={e => setEntryFilters(f => ({ ...f, torre: e.target.value, piso: '', aptId: '' }))}>
-                          <option value="">Torre</option>
-                          {towers.map(t => <option key={t} value={t}>{t}</option>)}
-                        </select>
-                        <select style={{ ...styles.select, fontSize: "0.7rem" }} value={entryFilters.piso} onChange={e => setEntryFilters(f => ({ ...f, piso: e.target.value, aptId: '' }))}>
-                          <option value="">Piso</option>
-                          {floors.map(f => <option key={f} value={f}>Piso {f}</option>)}
-                        </select>
-                        <select style={{ ...styles.select, fontSize: "0.7rem" }} value={entryFilters.aptId} onChange={e => {
-                          setEntryFilters(f => ({ ...f, aptId: e.target.value }))
-                          const apt = apartments.find(a => String(a.id) === e.target.value)
-                          if (apt) {
-                            if (apt.nombrePropietario) {
-                              setEntryForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: apt.nombrePropietario }))
-                            }
-                          } else {
-                            setEntryForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: '' }))
-                          }
-                        }}>
-                          <option value="">Departamento</option>
-                          {filteredApts.map(a => <option key={a.id} value={a.id}>N° {a.numero}</option>)}
-                        </select>
-                      </div>
+                      <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar torre</label>
+                      <DataList value={entryTorreText} onChange={e => { setEntryTorreText(e.target.value); setEntryFilters(f => ({ ...f, torre: e.target.value, piso: '', aptId: '' })) }} style={{ ...styles.select, fontSize: "0.7rem" }}>
+                        <option value="">Torre</option>
+                        {towers.map(t => <option key={t} value={t} />)}
+                      </DataList>
+                      <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar piso</label>
+                      <DataList value={entryPisoText} onChange={e => { setEntryPisoText(e.target.value); setEntryFilters(f => ({ ...f, piso: e.target.value, aptId: '' })) }} style={{ ...styles.select, fontSize: "0.7rem" }}>
+                        <option value="">Piso</option>
+                        {floors.map(f => <option key={f} value={f} />)}
+                      </DataList>
+                      <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar departamento</label>
+                      <DataList value={entryAptText} onChange={e => { setEntryAptText(e.target.value); const apt = apartments.find(a => `N° ${a.numero}` === e.target.value || String(a.numero) === e.target.value); if (apt) { setEntryFilters(f => ({ ...f, aptId: String(apt.id) })); if (apt.nombrePropietario) setEntryForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: apt.nombrePropietario })) } else { setEntryFilters(f => ({ ...f, aptId: '' })); setEntryForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: '' })) } }} style={{ ...styles.select, fontSize: "0.7rem" }}>
+                        <option value="">Departamento</option>
+                        {filteredApts.map(a => <option key={a.id} value={`N° ${a.numero}`} />)}
+                      </DataList>
                       {entryFilters.aptId && (() => {
                         const apt = apartments.find(a => String(a.id) === entryFilters.aptId)
                         if (!apt) return null
@@ -1201,46 +1328,45 @@ export default function GlobalBienes() {
                             if (sel) setEntryForm(f => ({ ...f, ocupante: sel.tipo, datosInquilino: sel.nombre }))
                           }}>
                             <option value="">Seleccionar ocupante de N° {apt.numero}</option>
-                            {occupants.map(o => <option key={o.nombre} value={o.nombre}>{o.label}{o.dni ? ` — DNI: ${o.dni}` : ''}</option>)}
+                            {occupants.map(o => <option key={o.nombre} value={o.nombre}>{o.label}{o.dni ? `  · DNI: ${o.dni}` : ''}</option>)}
                           </select>
                         ) : (
                           <div style={{ fontSize: "0.75rem", color: "#94a3b8", textAlign: "center", padding: "0.5rem" }}>Sin ocupantes registrados en N° {apt.numero}</div>
                         )
                       })()}
-                      <select style={styles.select} value={entryForm.placa} onChange={e => {
-                        const v = vehicles.find(x => x.placa === e.target.value)
-                        const owner = vehicleOwnerMap[v?.id]
-                        if (owner && !entryFilters.aptId) {
-                          setEntryForm(f => ({ ...f, placa: e.target.value, ocupante: owner.tipo, datosInquilino: owner.nombre }))
-                        } else {
-                          setEntryForm(f => ({ ...f, placa: e.target.value }))
-                        }
-                      }} required>
+                      <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar vehículo</label>
+                      <DataList value={entryPlacaText} onChange={e => { setEntryPlacaText(e.target.value); const v = vehicles.find(x => x.placa === e.target.value); const owner = vehicleOwnerMap[v?.id]; if (owner && !entryFilters.aptId) { setEntryForm(f => ({ ...f, placa: e.target.value, ocupante: owner.tipo, datosInquilino: owner.nombre })) } else { setEntryForm(f => ({ ...f, placa: e.target.value })) } }} required style={styles.select}>
                         <option value="">Seleccionar vehículo</option>
-                        {vehicles.filter(v => !v.idEstacionamiento).map(v => {
-                          const owner = vehicleOwnerMap[v.id]
-                          return <option key={v.id} value={v.placa}>{v.placa} — {v.marca} {v.modelo} ({v.tipo}){owner ? ` — ${owner.nombre}` : ''}</option>
-                        })}
-                      </select>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
-                        <select style={styles.select} value={entryForm.metodo} onChange={e => setEntryForm(f => ({ ...f, metodo: e.target.value }))}>
-                          <option value="OCR">OCR</option>
-                          <option value="MANUAL">Manual</option>
-                        </select>
-                        <select style={styles.select} value={entryForm.ocupante} onChange={e => setEntryForm(f => ({ ...f, ocupante: e.target.value }))}>
-                          <option value="PROPIETARIO">Propietario</option>
-                          <option value="INQUILINO">Inquilino</option>
-                        </select>
+                        {vehicles.filter(v => !v.idEstacionamiento).map(v => (
+                          <option key={v.id} value={v.placa} />
+                        ))}
+                      </DataList>
+                      <div className="gb-form-grid" style={{ display: "grid", gap: "0.75rem" }}>
+                        <div>
+                          <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Método</label>
+                          <select style={styles.select} value={entryForm.metodo} onChange={e => setEntryForm(f => ({ ...f, metodo: e.target.value }))}>
+                            <option value="OCR">OCR</option>
+                            <option value="MANUAL">Manual</option>
+                          </select>
+                        </div>
+                        <div>
+                          <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Tipo ocupante</label>
+                          <select style={styles.select} value={entryForm.ocupante} onChange={e => setEntryForm(f => ({ ...f, ocupante: e.target.value }))}>
+                            <option value="PROPIETARIO">Propietario</option>
+                            <option value="INQUILINO">Inquilino</option>
+                          </select>
+                        </div>
                       </div>
                       {entryForm.ocupante === 'INQUILINO' && (
                         <input style={styles.input} placeholder="Nombre del inquilino" value={entryForm.datosInquilino} onChange={e => setEntryForm(f => ({ ...f, datosInquilino: e.target.value }))} />
                       )}
-                      <select style={styles.select} value={entryForm.idEstacionamiento} onChange={e => setEntryForm(f => ({ ...f, idEstacionamiento: e.target.value }))}>
+                      <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar estacionamiento</label>
+                      <DataList value={entryParkText} onChange={e => { setEntryParkText(e.target.value); const s = parking.filter(p => (p.cantidadActual || 0) < p.capacidadMaxima).find(p => `#${p.numero} (${p.tipoVehiculo}) · ${p.cantidadActual || 0}/${p.capacidadMaxima}` === e.target.value); if (s) setEntryForm(f => ({ ...f, idEstacionamiento: String(s.id) })) }} style={styles.select}>
                         <option value="">Estacionamiento (auto)</option>
                         {parking.filter(p => (p.cantidadActual || 0) < p.capacidadMaxima).map(p => (
-                          <option key={p.id} value={p.id}>#{p.numero} ({p.tipoVehiculo}) — {p.cantidadActual || 0}/{p.capacidadMaxima}</option>
+                          <option key={p.id} value={`#${p.numero} (${p.tipoVehiculo}) · ${p.cantidadActual || 0}/${p.capacidadMaxima}`} />
                         ))}
-                      </select>
+                      </DataList>
                       {vehicles.length === 0 && <div style={{ fontSize: "0.75rem", color: "#ef4444" }}>No hay vehículos registrados en el sistema</div>}
                       <button type="submit" disabled={saving || vehicles.length === 0} style={{ ...styles.btnSuccess, width: "100%", justifyContent: "center", padding: "0.6rem" }}>
                         {saving ? 'Registrando...' : <><FiLogIn size={14} /> Registrar Entrada</>}
@@ -1260,14 +1386,13 @@ export default function GlobalBienes() {
                   </div>
                   {exitOpen && (
                     <form onSubmit={handleRegisterExit} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                      <select style={styles.select} value={exitForm.idLogAcceso} onChange={e => setExitForm(f => ({ ...f, idLogAcceso: e.target.value }))} required>
+                      <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar vehículo dentro</label>
+                      <DataList value={exitLogText} onChange={e => { setExitLogText(e.target.value); const s = stats.activeEntries.find(l => `${l.placa} · ${l.ocupante}  · Entrada: ${formatDate(l.fechaEntrada)}` === e.target.value); if (s) setExitForm(f => ({ ...f, idLogAcceso: String(s.id) })) }} required style={styles.select}>
                         <option value="">Seleccionar vehículo dentro</option>
                         {stats.activeEntries.map(l => (
-                          <option key={l.id} value={l.id}>
-                            {l.placa} — {l.ocupante} — Entrada: {formatDate(l.fechaEntrada)}
-                          </option>
+                          <option key={l.id} value={`${l.placa} · ${l.ocupante}  · Entrada: ${formatDate(l.fechaEntrada)}`} />
                         ))}
-                      </select>
+                      </DataList>
                       {(() => {
                         const sel = stats.activeEntries.find(l => String(l.id) === exitForm.idLogAcceso)
                         return sel ? (
@@ -1294,7 +1419,7 @@ export default function GlobalBienes() {
                       })()}
                       {stats.activeEntries.length === 0 && <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>No hay vehículos dentro</div>}
                       <button type="submit" disabled={saving || stats.activeEntries.length === 0} style={{ ...styles.btnDanger, width: "100%", justifyContent: "center", padding: "0.6rem" }}>
-                        {saving ? 'Registrando...' : <><FiLogOut size={14} /> Registrar Salida — {new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}</>}
+                        {saving ? 'Registrando...' : <><FiLogOut size={14} /> Registrar Salida  — {new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}</>}
                       </button>
                     </form>
                   )}
@@ -1325,7 +1450,7 @@ export default function GlobalBienes() {
                   )
                   const paged = paginate(filtered, logPage)
                   return (<>
-                    <div style={{ overflowX: "auto" }}>
+                    <div style={{ overflowX: "auto" }} className="gb-table-wrap">
                       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
                         <thead>
                           <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: 700, fontSize: "0.65rem", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
@@ -1335,7 +1460,6 @@ export default function GlobalBienes() {
                             <th style={{ padding: "0.75rem" }}>Vehículo</th>
                             <th style={{ padding: "0.75rem" }}>Estacionamiento</th>
                             <th style={{ padding: "0.75rem" }}>Ocupante</th>
-                            <th style={{ padding: "0.75rem" }}>Nombre</th>
                             <th style={{ padding: "0.75rem" }}>Entrada</th>
                             <th style={{ padding: "0.75rem" }}>Salida</th>
                             <th style={{ padding: "0.75rem" }}>Método</th>
@@ -1354,14 +1478,13 @@ export default function GlobalBienes() {
                                 <td style={{ padding: "0.75rem", fontWeight: 700, fontFamily: "monospace", fontSize: "0.75rem", color: colorSuper }}>TKT-{l.id}</td>
                                 <td style={{ padding: "0.75rem", fontWeight: 700, color: "#0f172a", fontFamily: "monospace" }}>{l.placa}</td>
                                 <td style={{ padding: "0.75rem", fontSize: "0.78rem" }}>{veh ? `${veh.marca} ${veh.modelo} (${veh.color})` : '—'}</td>
-                                <td style={{ padding: "0.75rem", fontSize: "0.78rem" }}>#{spot?.numero || '—'}{apt ? ` — N°${apt.numero}` : ''}</td>
+                                <td style={{ padding: "0.75rem", fontSize: "0.78rem" }}>#{spot?.numero || '—'}{apt ? ` · N°${apt.numero}` : ''}</td>
                                 <td style={{ padding: "0.75rem" }}>
                                   <span style={styles.badge(
                                     l.ocupante === 'PROPIETARIO' ? "rgba(16,185,129,0.1)" : l.ocupante === 'INQUILINO' ? "rgba(245,158,11,0.1)" : "rgba(59,130,246,0.1)",
                                     l.ocupante === 'PROPIETARIO' ? "#10b981" : l.ocupante === 'INQUILINO' ? "#f59e0b" : "#3b82f6"
                                   )}>{l.ocupante || '—'}</span>
                                 </td>
-                                <td style={{ padding: "0.75rem", fontSize: "0.78rem" }}>{l.datosInquilino || '—'}</td>
                                 <td style={{ padding: "0.75rem", fontSize: "0.75rem", color: "#64748b" }}>{formatDate(l.fechaEntrada)}</td>
                                 <td style={{ padding: "0.75rem", fontSize: "0.75rem", color: l.fechaSalida ? "#64748b" : "#10b981", fontWeight: l.fechaSalida ? 400 : 600 }}>
                                   {l.fechaSalida ? formatDate(l.fechaSalida) : <span style={{ color: "#10b981" }}>Dentro</span>}
@@ -1376,7 +1499,7 @@ export default function GlobalBienes() {
                               </tr>
                             )
                           })}
-                          {filtered.length === 0 && <tr><td colSpan={12} style={{ padding: "2rem", textAlign: "center", color: "#94a3b8" }}>Sin registros</td></tr>}
+                          {filtered.length === 0 && <tr><td colSpan={11} style={{ padding: "2rem", textAlign: "center", color: "#94a3b8" }}>Sin registros</td></tr>}
                         </tbody>
                       </table>
                     </div>
@@ -1421,38 +1544,30 @@ export default function GlobalBienes() {
                       showToast(`Reservado por ${reserveForm.horas}h`)
                       setReserveForm({ placa: '', metodo: 'MANUAL', ocupante: 'PROPIETARIO', datosInquilino: '', idEstacionamiento: '', horas: 1 })
                       setReserveFilters({ torre: '', piso: '', aptId: '' })
+                      setReserveTorreText(''); setReservePisoText(''); setReserveAptText(''); setReservePlacaText(''); setReserveParkText('')
                       loadData(condoId)
                     } catch (e) { showToast('Error: ' + e.message, 'error') }
                     finally { setSaving(false) }
                   }} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                     <div style={{ fontSize: "0.7rem", color: "#64748b" }}>Asigna un estacionamiento a un vehículo por tiempo limitado. Se registrará la entrada y se liberará automáticamente al vencer.</div>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.5rem" }}>
-                      <select style={{ ...styles.select, fontSize: "0.7rem" }} value={reserveFilters.torre} onChange={e => setReserveFilters(f => ({ ...f, torre: e.target.value, piso: '', aptId: '' }))}>
-                        <option value="">Torre</option>
-                        {towers.map(t => <option key={t} value={t}>{t}</option>)}
-                      </select>
-                      <select style={{ ...styles.select, fontSize: "0.7rem" }} value={reserveFilters.piso} onChange={e => setReserveFilters(f => ({ ...f, piso: e.target.value, aptId: '' }))}>
-                        <option value="">Piso</option>
-                        {floors.map(f => <option key={f} value={f}>Piso {f}</option>)}
-                      </select>
-                      <select style={{ ...styles.select, fontSize: "0.7rem" }} value={reserveFilters.aptId} onChange={e => {
-                        setReserveFilters(f => ({ ...f, aptId: e.target.value }))
-                        const apt = apartments.find(a => String(a.id) === e.target.value)
-                        if (apt) {
-                          if (apt.nombrePropietario) {
-                            setReserveForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: apt.nombrePropietario }))
-                          }
-                        } else {
-                          setReserveForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: '' }))
-                        }
-                      }}>
-                        <option value="">Departamento</option>
-                        {apartments.filter(a =>
-                          (!reserveFilters.torre || a.torreNombre === reserveFilters.torre) &&
-                          (!reserveFilters.piso || String(a.pisoNumero) === reserveFilters.piso)
-                        ).map(a => <option key={a.id} value={a.id}>N° {a.numero}</option>)}
-                      </select>
-                    </div>
+                    <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar torre</label>
+                    <DataList value={reserveTorreText} onChange={e => { setReserveTorreText(e.target.value); setReserveFilters(f => ({ ...f, torre: e.target.value, piso: '', aptId: '' })) }} style={{ ...styles.select, fontSize: "0.7rem" }}>
+                      <option value="">Torre</option>
+                      {towers.map(t => <option key={t} value={t} />)}
+                    </DataList>
+                    <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar piso</label>
+                    <DataList value={reservePisoText} onChange={e => { setReservePisoText(e.target.value); setReserveFilters(f => ({ ...f, piso: e.target.value, aptId: '' })) }} style={{ ...styles.select, fontSize: "0.7rem" }}>
+                      <option value="">Piso</option>
+                      {floors.map(f => <option key={f} value={f} />)}
+                    </DataList>
+                    <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar departamento</label>
+                    <DataList value={reserveAptText} onChange={e => { setReserveAptText(e.target.value); const apt = apartments.find(a => `N° ${a.numero}` === e.target.value || String(a.numero) === e.target.value); if (apt) { setReserveFilters(f => ({ ...f, aptId: String(apt.id) })); if (apt.nombrePropietario) setReserveForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: apt.nombrePropietario })) } else { setReserveFilters(f => ({ ...f, aptId: '' })); setReserveForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: '' })) } }} style={{ ...styles.select, fontSize: "0.7rem" }}>
+                      <option value="">Departamento</option>
+                      {apartments.filter(a =>
+                        (!reserveFilters.torre || a.torreNombre === reserveFilters.torre) &&
+                        (!reserveFilters.piso || String(a.pisoNumero) === reserveFilters.piso)
+                      ).map(a => <option key={a.id} value={`N° ${a.numero}`} />)}
+                    </DataList>
                     {reserveFilters.aptId && (() => {
                       const apt = apartments.find(a => String(a.id) === reserveFilters.aptId)
                       if (!apt) return null
@@ -1465,50 +1580,54 @@ export default function GlobalBienes() {
                           if (sel) setReserveForm(f => ({ ...f, ocupante: sel.tipo, datosInquilino: sel.nombre }))
                         }}>
                           <option value="">Seleccionar ocupante de N° {apt.numero}</option>
-                          {occupants.map(o => <option key={o.nombre} value={o.nombre}>{o.label}{o.dni ? ` — DNI: ${o.dni}` : ''}</option>)}
+                          {occupants.map(o => <option key={o.nombre} value={o.nombre}>{o.label}{o.dni ? `  · DNI: ${o.dni}` : ''}</option>)}
                         </select>
                       ) : (
                         <div style={{ fontSize: "0.75rem", color: "#94a3b8", textAlign: "center", padding: "0.5rem" }}>Sin ocupantes registrados en N° {apt.numero}</div>
                       )
                     })()}
-                    <select style={styles.select} value={reserveForm.placa} onChange={e => {
-                      const v = vehicles.find(x => x.placa === e.target.value)
-                      const owner = vehicleOwnerMap[v?.id]
-                      if (owner && !reserveFilters.aptId) {
-                        setReserveForm(f => ({ ...f, placa: e.target.value, ocupante: owner.tipo, datosInquilino: owner.nombre }))
-                      } else {
-                        setReserveForm(f => ({ ...f, placa: e.target.value }))
-                      }
-                    }} required>
+                    <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar vehículo</label>
+                    <DataList value={reservePlacaText} onChange={e => { setReservePlacaText(e.target.value); const v = vehicles.find(x => x.placa === e.target.value); const owner = vehicleOwnerMap[v?.id]; if (owner && !reserveFilters.aptId) { setReserveForm(f => ({ ...f, placa: e.target.value, ocupante: owner.tipo, datosInquilino: owner.nombre })) } else { setReserveForm(f => ({ ...f, placa: e.target.value })) } }} required style={styles.select}>
                       <option value="">Seleccionar vehículo</option>
-                      {vehicles.filter(v => !v.idEstacionamiento).map(v => {
-                        const owner = vehicleOwnerMap[v.id]
-                        return <option key={v.id} value={v.placa}>{v.placa} — {v.marca} {v.modelo} ({v.tipo}){owner ? ` — ${owner.nombre}` : ''}</option>
-                      })}
-                    </select>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
-                      <select style={styles.select} value={reserveForm.metodo} onChange={e => setReserveForm(f => ({ ...f, metodo: e.target.value }))}>
-                        <option value="OCR">OCR</option>
-                        <option value="MANUAL">Manual</option>
-                      </select>
-                      <select style={styles.select} value={reserveForm.ocupante} onChange={e => setReserveForm(f => ({ ...f, ocupante: e.target.value }))}>
-                        <option value="PROPIETARIO">Propietario</option>
-                        <option value="INQUILINO">Inquilino</option>
-                      </select>
+                      {vehicles.filter(v => !v.idEstacionamiento).map(v => (
+                        <option key={v.id} value={v.placa} />
+                      ))}
+                    </DataList>
+                    <div className="gb-form-grid" style={{ display: "grid", gap: "0.75rem" }}>
+                      <div>
+                        <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Método</label>
+                        <select style={styles.select} value={reserveForm.metodo} onChange={e => setReserveForm(f => ({ ...f, metodo: e.target.value }))}>
+                          <option value="OCR">OCR</option>
+                          <option value="MANUAL">Manual</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Tipo ocupante</label>
+                        <select style={styles.select} value={reserveForm.ocupante} onChange={e => setReserveForm(f => ({ ...f, ocupante: e.target.value }))}>
+                          <option value="PROPIETARIO">Propietario</option>
+                          <option value="INQUILINO">Inquilino</option>
+                        </select>
+                      </div>
                     </div>
                     {reserveForm.ocupante === 'INQUILINO' && (
                       <input style={styles.input} placeholder="Nombre del inquilino" value={reserveForm.datosInquilino} onChange={e => setReserveForm(f => ({ ...f, datosInquilino: e.target.value }))} />
                     )}
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
-                      <select style={styles.select} value={reserveForm.idEstacionamiento} onChange={e => setReserveForm(f => ({ ...f, idEstacionamiento: e.target.value }))} required>
-                        <option value="">Estacionamiento</option>
-                        {parking.filter(p => (p.cantidadActual || 0) < (p.capacidadMaxima ?? 1)).map(p => (
-                          <option key={p.id} value={p.id}>#{p.numero || p.id} — {p.tipoVehiculo || 'Mixto'} ({(p.capacidadMaxima || 1) - (p.cantidadActual || 0)} libres)</option>
-                        ))}
-                      </select>
-                      <select style={styles.select} value={reserveForm.horas} onChange={e => setReserveForm(f => ({ ...f, horas: Number(e.target.value) }))}>
-                        {[1, 2, 3, 4, 6, 8, 12, 24].map(h => <option key={h} value={h}>{h}h</option>)}
-                      </select>
+                    <div className="gb-form-grid" style={{ display: "grid", gap: "0.75rem" }}>
+                      <div>
+                        <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar estacionamiento</label>
+                        <DataList value={reserveParkText} onChange={e => { setReserveParkText(e.target.value); const s = parking.filter(p => (p.cantidadActual || 0) < (p.capacidadMaxima ?? 1)).find(p => `#${p.numero || p.id} · ${p.tipoVehiculo || 'Mixto'} (${(p.capacidadMaxima || 1) - (p.cantidadActual || 0)} libres)` === e.target.value); if (s) setReserveForm(f => ({ ...f, idEstacionamiento: String(s.id) })) }} required style={styles.select}>
+                          <option value="">Estacionamiento</option>
+                          {parking.filter(p => (p.cantidadActual || 0) < (p.capacidadMaxima ?? 1)).map(p => (
+                            <option key={p.id} value={`#${p.numero || p.id} · ${p.tipoVehiculo || 'Mixto'} (${(p.capacidadMaxima || 1) - (p.cantidadActual || 0)} libres)`} />
+                          ))}
+                        </DataList>
+                      </div>
+                      <div>
+                        <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Horas</label>
+                        <select style={styles.select} value={reserveForm.horas} onChange={e => setReserveForm(f => ({ ...f, horas: Number(e.target.value) }))}>
+                          {[1, 2, 3, 4, 6, 8, 12, 24].map(h => <option key={h} value={h}>{h}h</option>)}
+                        </select>
+                      </div>
                     </div>
                     <div style={{ fontSize: "0.7rem", color: "#94a3b8" }}>
                       <FiClock size={11} style={{ marginRight: "0.25rem" }} />
@@ -1541,7 +1660,7 @@ export default function GlobalBienes() {
                   )
                   const paged = paginate(reservasFiltradas, reservaPage)
                   return (<>
-                    <div style={{ overflowX: "auto" }}>
+                    <div style={{ overflowX: "auto" }} className="gb-table-wrap">
                       <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
                         <thead>
                           <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: 700, fontSize: "0.65rem", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
@@ -1616,7 +1735,7 @@ export default function GlobalBienes() {
                       style={{ ...styles.input, padding: "0.35rem 0.5rem 0.35rem 1.6rem", fontSize: "0.75rem", width: "180px" }} />
                   </div>
                   <button onClick={() => loadData(condoId)} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiRefreshCw size={16} /></button>
-                  <button onClick={() => { setVehicleForm({ id: null, marca: '', color: 'BLANCO', modelo: '', placa: '', tipo: 'AUTO', inquilinoId: '' }); setShowModal('vehicle') }} style={styles.btnPrimary}>
+                  <button onClick={() => { setVehicleForm({ id: null, marca: '', color: 'BLANCO', modelo: '', placa: '', tipo: 'AUTO', inquilinoId: '' }); setVehInquilinoText(''); setShowModal('vehicle') }} style={styles.btnPrimary}>
                     <FiPlus size={14} /> Agregar
                   </button>
                 </div>
@@ -1634,7 +1753,7 @@ export default function GlobalBienes() {
                 )
                 const paged = paginate(filtered, vehiclePage)
                 return (<>
-                  <div style={{ overflowX: "auto" }}>
+                  <div style={{ overflowX: "auto" }} className="gb-table-wrap">
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
                       <thead>
                         <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: 700, fontSize: "0.65rem", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
@@ -1667,6 +1786,10 @@ export default function GlobalBienes() {
                               <td style={{ padding: "0.75rem", color: "#64748b" }}>{spot ? `#${spot.numero || spot.id}` : '—'}</td>
                               <td style={{ padding: "0.75rem 1rem", textAlign: "right" }}>
                                 <div style={{ display: "flex", gap: "0.3rem", justifyContent: "flex-end" }}>
+                                  <button onClick={() => { const t = allTenantsList.find(x => String(x.id) === String(v.inquilinoId)); setVehInquilinoText(t ? `${t.nombres} ${t.apellidos} · ${t.numeroDocumento} (Apt ${t.apartamentoNumero})` : ''); setVehicleForm({ id: v.id, placa: v.placa, marca: v.marca, modelo: v.modelo, color: v.color, tipo: v.tipo, inquilinoId: v.inquilinoId ? String(v.inquilinoId) : '' }); setShowModal('vehicle') }}
+                                    style={{ background: "rgba(59,130,246,0.1)", color: "#3b82f6", border: "none", padding: "0.3rem 0.55rem", borderRadius: "0.4rem", fontSize: "0.7rem", fontWeight: 700, cursor: "pointer" }}>
+                                    <FiEdit3 size={13} />
+                                  </button>
                                   <button onClick={() => handleDeleteVehicle(v.id)}
                                     style={{ background: "rgba(239,68,68,0.1)", color: "#ef4444", border: "none", padding: "0.3rem 0.55rem", borderRadius: "0.4rem", fontSize: "0.7rem", fontWeight: 700, cursor: "pointer" }}>
                                     <FiTrash2 size={13} />
@@ -1687,7 +1810,7 @@ export default function GlobalBienes() {
 
           {/* ===== CARRITOS ===== */}
           {activeTab === 'carritos' && (<>
-            <div style={styles.card}>
+            <div style={{ ...styles.card, marginBottom: "1rem" }}>
               <div style={styles.cardHeader}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                   <FiTruck size={16} color={colorSuper} />
@@ -1711,7 +1834,7 @@ export default function GlobalBienes() {
                 )
                 const paged = paginate(filtered, cartPage)
                 return (<>
-                  <div style={{ overflowX: "auto" }}>
+                  <div style={{ overflowX: "auto" }} className="gb-table-wrap">
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
                       <thead>
                         <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: 700, fontSize: "0.65rem", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
@@ -1751,80 +1874,72 @@ export default function GlobalBienes() {
 
             <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
               <div style={styles.card}>
-                <div style={styles.cardHeader}>
+                <div style={{ ...styles.cardHeader, cursor: "pointer" }} onClick={() => setCartOpen(!cartOpen)}>
                   <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "#0f172a" }}>Préstamo de Carrito</span>
+                  <span style={{ color: cartOpen ? "#10b981" : "#94a3b8", fontWeight: 700, fontSize: "0.8rem", transition: "transform 0.2s", transform: cartOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
+                    {cartOpen ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
+                  </span>
                 </div>
-                <form onSubmit={handleCartLoan} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                  <select style={styles.select} value={cartLoanForm.codigoCarrito} onChange={e => setCartLoanForm(f => ({ ...f, codigoCarrito: e.target.value }))} required>
-                    <option value="">Seleccionar carrito</option>
-                    {carts.filter(c => c.estado === 'DISPONIBLE' && c.codigo).map(c => (
-                      <option key={c.id} value={c.codigo}>{c.codigo}</option>
-                    ))}
-                  </select>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.5rem" }}>
-                    <select style={{ ...styles.select, fontSize: "0.7rem" }} value={cartFilters.torre} onChange={e => setCartFilters(f => ({ ...f, torre: e.target.value, piso: '', aptId: '' }))}>
+                {cartOpen && (
+                  <form onSubmit={handleCartLoan} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+                    <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar carrito</label>
+                    <DataList value={cartCodigoCarritoText} onChange={e => { setCartCodigoCarritoText(e.target.value); setCartLoanForm(f => ({ ...f, codigoCarrito: e.target.value })) }} required style={styles.select}>
+                      <option value="">Seleccionar carrito</option>
+                      {carts.filter(c => c.estado === 'DISPONIBLE' && c.codigo).map(c => <option key={c.id} value={c.codigo} />)}
+                    </DataList>
+                    <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar torre</label>
+                    <DataList value={cartTorreText} onChange={e => { setCartTorreText(e.target.value); setCartFilters(f => ({ ...f, torre: e.target.value, piso: '', aptId: '' })) }} style={{ ...styles.select, fontSize: "0.7rem" }}>
                       <option value="">Torre</option>
-                      {towers.map(t => <option key={t} value={t}>{t}</option>)}
-                    </select>
-                    <select style={{ ...styles.select, fontSize: "0.7rem" }} value={cartFilters.piso} onChange={e => setCartFilters(f => ({ ...f, piso: e.target.value, aptId: '' }))}>
+                      {towers.map(t => <option key={t} value={t} />)}
+                    </DataList>
+                    <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar piso</label>
+                    <DataList value={cartPisoText} onChange={e => { setCartPisoText(e.target.value); setCartFilters(f => ({ ...f, piso: e.target.value, aptId: '' })) }} style={{ ...styles.select, fontSize: "0.7rem" }}>
                       <option value="">Piso</option>
-                      {[...new Set(apartments.filter(a => !cartFilters.torre || a.torreNombre === cartFilters.torre).map(a => a.pisoNumero).filter(Boolean))].map(f => <option key={f} value={f}>Piso {f}</option>)}
-                    </select>
-                    <select style={{ ...styles.select, fontSize: "0.7rem" }} value={cartFilters.aptId} onChange={e => {
-                      setCartFilters(f => ({ ...f, aptId: e.target.value }))
-                      const apt = apartments.find(a => String(a.id) === e.target.value)
-                      if (apt) {
-                        setCartLoanForm(f => ({
-                          ...f, idApartamento: e.target.value,
-                          numeroApartamento: apt.numero,
-                          idPropietario: apt.idPropietario || '',
-                          nombreSolicitante: apt.nombrePropietario || '',
-                          solicitante: 'PROPIETARIO',
-                          dniSolicitante: ''
-                        }))
-                      }
-                    }}>
+                      {[...new Set(apartments.filter(a => !cartFilters.torre || a.torreNombre === cartFilters.torre).map(a => a.pisoNumero).filter(Boolean))].map(f => <option key={f} value={f} />)}
+                    </DataList>
+                    <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar departamento</label>
+                    <DataList value={cartAptText} onChange={e => { setCartAptText(e.target.value); const apt = apartments.find(a => `N° ${a.numero}` === e.target.value || String(a.numero) === e.target.value); if (apt) { setCartFilters(f => ({ ...f, aptId: String(apt.id) })); setCartLoanForm(f => ({ ...f, idApartamento: String(apt.id), numeroApartamento: apt.numero, idPropietario: apt.idPropietario || '', nombreSolicitante: apt.nombrePropietario || '', solicitante: 'PROPIETARIO', dniSolicitante: '' })) } else { setCartFilters(f => ({ ...f, aptId: '' })); setCartLoanForm(f => ({ ...f, idApartamento: '', numeroApartamento: '', idPropietario: '', nombreSolicitante: '', solicitante: 'PROPIETARIO', dniSolicitante: '' })) } }} style={{ ...styles.select, fontSize: "0.7rem" }}>
                       <option value="">Departamento</option>
                       {apartments.filter(a =>
                         (!cartFilters.torre || a.torreNombre === cartFilters.torre) &&
                         (!cartFilters.piso || String(a.pisoNumero) === cartFilters.piso)
-                      ).map(a => <option key={a.id} value={a.id}>N° {a.numero}</option>)}
-                    </select>
-                  </div>
-                  {cartFilters.aptId && (() => {
-                    const apt = apartments.find(a => String(a.id) === cartFilters.aptId)
-                    if (!apt) return null
-                    const occupants = []
-                    if (apt.nombrePropietario) occupants.push({ label: `${apt.nombrePropietario} (Dueño)`, nombre: apt.nombrePropietario, tipo: 'PROPIETARIO', id: apt.idPropietario, dni: '' })
-                    if (apt.inquilinos) apt.inquilinos.forEach(inq => occupants.push({ label: `${inq.nombres} ${inq.apellidos} (Inquilino)`, nombre: `${inq.nombres} ${inq.apellidos}`, tipo: 'INQUILINO', id: inq.id, dni: inq.numeroDocumento }))
-                    return occupants.length > 0 ? (
-                      <select style={styles.select} value={`${cartLoanForm.solicitante}|${cartLoanForm.nombreSolicitante}`} onChange={e => {
-                        const sel = occupants.find(o => `${o.tipo}|${o.nombre}` === e.target.value)
-                        if (sel) setCartLoanForm(f => ({
-                          ...f,
-                          solicitante: sel.tipo,
-                          nombreSolicitante: sel.nombre,
-                          dniSolicitante: sel.dni || '',
-                          idPropietario: sel.tipo === 'PROPIETARIO' ? (sel.id || '') : '',
-                          idInquilino: sel.tipo === 'INQUILINO' ? (sel.id || '') : ''
-                        }))
-                      }}>
-                        <option value="">Seleccionar ocupante de N° {apt.numero}</option>
-                        {occupants.map(o => <option key={o.nombre} value={`${o.tipo}|${o.nombre}`}>{o.label}{o.dni ? ` — DNI: ${o.dni}` : ''}</option>)}
-                      </select>
-                    ) : (
-                      <div style={{ fontSize: "0.75rem", color: "#94a3b8", textAlign: "center", padding: "0.5rem" }}>Sin ocupantes registrados en N° {apt.numero}</div>
-                    )
-                  })()}
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                      ).map(a => <option key={a.id} value={`N° ${a.numero}`} />)}
+                    </DataList>
+                    {cartFilters.aptId && (() => {
+                      const apt = apartments.find(a => String(a.id) === cartFilters.aptId)
+                      if (!apt) return null
+                      const occupants = []
+                      if (apt.nombrePropietario) occupants.push({ label: `${apt.nombrePropietario} (Dueño)`, nombre: apt.nombrePropietario, tipo: 'PROPIETARIO', id: apt.idPropietario, dni: '' })
+                      if (apt.inquilinos) apt.inquilinos.forEach(inq => occupants.push({ label: `${inq.nombres} ${inq.apellidos} (Inquilino)`, nombre: `${inq.nombres} ${inq.apellidos}`, tipo: 'INQUILINO', id: inq.id, dni: inq.numeroDocumento }))
+                      return occupants.length > 0 ? (
+                        <select style={styles.select} value={`${cartLoanForm.solicitante}|${cartLoanForm.nombreSolicitante}`} onChange={e => {
+                          const sel = occupants.find(o => `${o.tipo}|${o.nombre}` === e.target.value)
+                          if (sel) setCartLoanForm(f => ({
+                            ...f,
+                            solicitante: sel.tipo,
+                            nombreSolicitante: sel.nombre,
+                            dniSolicitante: sel.dni || '',
+                            idPropietario: sel.tipo === 'PROPIETARIO' ? (sel.id || '') : '',
+                            idInquilino: sel.tipo === 'INQUILINO' ? (sel.id || '') : ''
+                          }))
+                        }}>
+                          <option value="">Seleccionar ocupante de N° {apt.numero}</option>
+                          {occupants.map(o => <option key={o.nombre} value={`${o.tipo}|${o.nombre}`}>{o.label}{o.dni ? `  · DNI: ${o.dni}` : ''}</option>)}
+                        </select>
+                      ) : (
+                        <div style={{ fontSize: "0.75rem", color: "#94a3b8", textAlign: "center", padding: "0.5rem" }}>Sin ocupantes registrados en N° {apt.numero}</div>
+                      )
+                    })()}
+                    <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Nombre del solicitante</label>
                     <input style={styles.input} placeholder="Nombre del solicitante" value={cartLoanForm.nombreSolicitante} onChange={e => setCartLoanForm(f => ({ ...f, nombreSolicitante: e.target.value }))} required />
+                    <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>DNI</label>
                     <input style={styles.input} placeholder="DNI" value={cartLoanForm.dniSolicitante} onChange={e => setCartLoanForm(f => ({ ...f, dniSolicitante: e.target.value }))} required />
-                  </div>
-                  {carts.filter(c => c.estado === 'DISPONIBLE').length === 0 && <div style={{ fontSize: "0.75rem", color: "#ef4444" }}>No hay carritos disponibles</div>}
-                  <button type="submit" disabled={saving || carts.filter(c => c.estado === 'DISPONIBLE').length === 0} style={{ ...styles.btnSuccess, width: "100%", justifyContent: "center", padding: "0.6rem" }}>
-                    {saving ? '...' : 'Prestar Carrito'}
-                  </button>
-                </form>
+                    {carts.filter(c => c.estado === 'DISPONIBLE').length === 0 && <div style={{ fontSize: "0.75rem", color: "#ef4444" }}>No hay carritos disponibles</div>}
+                    <button type="submit" disabled={saving || carts.filter(c => c.estado === 'DISPONIBLE').length === 0} style={{ ...styles.btnSuccess, width: "100%", justifyContent: "center", padding: "0.6rem" }}>
+                      {saving ? '...' : 'Prestar Carrito'}
+                    </button>
+                  </form>
+                )}
               </div>
 
               {activeLoans.length > 0 && (
@@ -1868,7 +1983,7 @@ export default function GlobalBienes() {
                     )
                     const paged = paginate(filtered, loanPage)
                     return (<>
-                      <div style={{ overflowX: "auto" }}>
+                      <div style={{ overflowX: "auto" }} className="gb-table-wrap">
                         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.72rem" }}>
                           <thead>
                             <tr style={{ backgroundColor: "#f8fafc", borderBottom: "2px solid #e2e8f0" }}>
@@ -1882,6 +1997,7 @@ export default function GlobalBienes() {
                               <th style={thStyle}>Préstamo</th>
                               <th style={thStyle}>Devolución</th>
                               <th style={thStyle}>Estado</th>
+                              <th style={{ ...thStyle, textAlign: "right" }}>Ticket</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1899,6 +2015,11 @@ export default function GlobalBienes() {
                                   <td style={tdStyle}>{fmtDate(loan.fechaPrestamo)}</td>
                                   <td style={tdStyle}>{loan.fechaDevolucion ? fmtDate(loan.fechaDevolucion) : '—'}</td>
                                   <td style={tdStyle}>{loan.fechaDevolucion ? <span style={styles.badge("#dcfce7", "#16a34a")}>Devuelto</span> : <span style={styles.badge("#fef3c7", "#d97706")}>Activo</span>}</td>
+                                  <td style={{ ...tdStyle, textAlign: "right" }}>
+                                    <button onClick={() => openCartTicket(loan)} style={{ background: "none", border: "none", cursor: "pointer", color: colorSuper }} title="Ver ticket">
+                                      <FiEye size={15} />
+                                    </button>
+                                  </td>
                                 </tr>
                               )
                             })}
@@ -1918,14 +2039,14 @@ export default function GlobalBienes() {
       {/* ===== CART TICKET MODAL ===== */}
       {cartTicket && (
         <div style={styles.modalOverlay} onClick={() => setCartTicket(null)}>
-          <div style={styles.modalBox} onClick={e => e.stopPropagation()}>
+          <div style={styles.modalBox} className="gb-modal-box" onClick={e => e.stopPropagation()}>
             <div style={{ padding: "1.5rem", textAlign: "center" }}>
               <div style={{ fontSize: "2rem", color: colorSuper, marginBottom: "0.5rem" }}><FiFileText /></div>
               <h3 style={{ margin: "0 0 0.25rem", fontSize: "1.1rem", fontWeight: 800, color: "#1e293b" }}>Comprobante de Préstamo</h3>
-              <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Préstamo de Carrito · #{cartTicket.id}</div>
+              <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Préstamo de Carrito  — #{cartTicket.id}</div>
             </div>
             <div style={{ padding: "0 1.5rem 1.5rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+              <div className="gb-form-grid" style={{ display: "grid", gap: "0.75rem" }}>
                 <div>
                   <div style={styles.label}>Carrito</div>
                   <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#0f172a" }}>{cartTicket.codigoCarrito}</div>
@@ -1935,7 +2056,7 @@ export default function GlobalBienes() {
                   <div style={{ fontSize: "0.85rem", color: "#0f172a" }}>{fmtDate(cartTicket.fechaPrestamo)}</div>
                 </div>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+              <div className="gb-form-grid" style={{ display: "grid", gap: "0.75rem" }}>
                 <div>
                   <div style={styles.label}>Solicitante</div>
                   <div style={{ fontSize: "0.85rem", color: "#0f172a" }}>{cartTicket.nombreSolicitante}</div>
@@ -1945,14 +2066,14 @@ export default function GlobalBienes() {
                   <div style={{ fontSize: "0.85rem", color: "#0f172a" }}>{cartTicket.dniSolicitante}</div>
                 </div>
               </div>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+              <div className="gb-form-grid" style={{ display: "grid", gap: "0.75rem" }}>
                 <div>
                   <div style={styles.label}>Departamento</div>
                   <div style={{ fontSize: "0.85rem", color: "#0f172a" }}>N° {cartTicket.aptNumero}</div>
                 </div>
                 <div>
                   <div style={styles.label}>Torre / Piso</div>
-                  <div style={{ fontSize: "0.85rem", color: "#0f172a" }}>{cartTicket.aptTorre}{cartTicket.aptPiso ? ` · Piso ${cartTicket.aptPiso}` : ''}</div>
+                  <div style={{ fontSize: "0.85rem", color: "#0f172a" }}>{cartTicket.aptTorre}{cartTicket.aptPiso ? `  · Piso ${cartTicket.aptPiso}` : ''}</div>
                 </div>
               </div>
             </div>
@@ -1966,7 +2087,7 @@ export default function GlobalBienes() {
       {/* ===== CREATE PARKING MODAL ===== */}
       {(showModal === 'create' || showModal === 'createCart') && (
         <div style={styles.modalOverlay} onClick={() => setShowModal(null)}>
-          <div style={styles.modalBox} onClick={e => e.stopPropagation()}>
+          <div style={styles.modalBox} className="gb-modal-box" onClick={e => e.stopPropagation()}>
             <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "#1e293b" }}>
                 {showModal === 'create' ? 'Nuevo Estacionamiento' : 'Nuevo Carrito'}
@@ -2013,35 +2134,40 @@ export default function GlobalBienes() {
 
       {/* ===== VEHICLE MODAL ===== */}
       {showModal === 'vehicle' && (
-        <div style={styles.modalOverlay} onClick={() => setShowModal(null)}>
-          <div style={styles.modalBox} onClick={e => e.stopPropagation()}>
+        <div style={styles.modalOverlay} onClick={() => { setShowModal(null); setVehicleForm({ id: null, marca: '', color: 'BLANCO', modelo: '', placa: '', tipo: 'AUTO', inquilinoId: '' }); setVehInquilinoText('') }}>
+          <div style={styles.modalBox} className="gb-modal-box" onClick={e => e.stopPropagation()}>
             <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "#1e293b" }}>
-                <FiNavigation2 size={16} style={{ marginRight: 8, verticalAlign: "middle" }} />Nuevo Vehículo
+                <FiNavigation2 size={16} style={{ marginRight: 8, verticalAlign: "middle" }} />{vehicleForm.id ? 'Editar Vehículo' : 'Nuevo Vehículo'}
               </h3>
-              <button onClick={() => setShowModal(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={18} /></button>
+              <button onClick={() => { setShowModal(null); setVehicleForm({ id: null, marca: '', color: 'BLANCO', modelo: '', placa: '', tipo: 'AUTO', inquilinoId: '' }); setVehInquilinoText('') }} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={18} /></button>
             </div>
-            <form onSubmit={handleCreateVehicle}>
-              <div style={{ padding: "1.5rem", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+            <form onSubmit={vehicleForm.id ? handleEditVehicle : handleCreateVehicle}>
+              <div className="gb-form-grid" style={{ padding: "1.5rem", display: "grid", gap: "1rem" }}>
                 <div>
                   <label style={styles.label}>Placa</label>
                   <input style={styles.input} placeholder="ABC-123" value={vehicleForm.placa} onChange={e => setVehicleForm(f => ({ ...f, placa: e.target.value }))} required />
                 </div>
                 <div>
                   <label style={styles.label}>Marca</label>
-                  <input style={styles.input} placeholder="Toyota" value={vehicleForm.marca} onChange={e => setVehicleForm(f => ({ ...f, marca: e.target.value }))} required />
+                  <DataList value={vehicleForm.marca} onChange={e => setVehicleForm(f => ({ ...f, marca: e.target.value.toUpperCase(), modelo: '' }))} required style={styles.select}>
+                    <option value="">Seleccionar marca</option>
+                    {Object.keys(brandModels).map(b => <option key={b} value={b} />)}
+                  </DataList>
                 </div>
                 <div>
                   <label style={styles.label}>Modelo</label>
-                  <input style={styles.input} placeholder="Corolla" value={vehicleForm.modelo} onChange={e => setVehicleForm(f => ({ ...f, modelo: e.target.value }))} />
+                  <DataList value={vehicleForm.modelo} onChange={e => setVehicleForm(f => ({ ...f, modelo: e.target.value.toUpperCase() }))} required={!!vehicleForm.marca} style={styles.select}>
+                    <option value="">Seleccionar modelo</option>
+                    {(brandModels[vehicleForm.marca] || []).map(m => <option key={m} value={m} />)}
+                  </DataList>
                 </div>
                 <div>
                   <label style={styles.label}>Color</label>
-                  <select style={styles.select} value={vehicleForm.color} onChange={e => setVehicleForm(f => ({ ...f, color: e.target.value }))}>
-                    {['BLANCO', 'NEGRO', 'ROJO', 'AZUL', 'VERDE', 'GRIS', 'PLATEADO', 'AMARILLO', 'NARANJA', 'MARRON'].map(c => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
-                  </select>
+                  <DataList value={vehicleForm.color} onChange={e => setVehicleForm(f => ({ ...f, color: e.target.value }))} required style={styles.select}>
+                    <option value="">Seleccionar color</option>
+                    {['BLANCO', 'NEGRO', 'ROJO', 'AZUL', 'VERDE', 'GRIS', 'PLATEADO', 'AMARILLO', 'NARANJA', 'MARRON', 'DORADO', 'CELESTE', 'BEIGE', 'VINO'].map(c => <option key={c} value={c} />)}
+                  </DataList>
                 </div>
                 <div>
                   <label style={styles.label}>Tipo</label>
@@ -2052,12 +2178,10 @@ export default function GlobalBienes() {
                 </div>
                 <div>
                   <label style={styles.label}>Asignar a inquilino (opcional)</label>
-                  <select style={styles.select} value={vehicleForm.inquilinoId} onChange={e => setVehicleForm(f => ({ ...f, inquilinoId: e.target.value }))}>
+                  <DataList value={vehInquilinoText} onChange={e => { setVehInquilinoText(e.target.value); const t = allTenantsList.find(x => `${x.nombres} ${x.apellidos} · ${x.numeroDocumento} (Apt ${x.apartamentoNumero})` === e.target.value); setVehicleForm(f => ({ ...f, inquilinoId: t ? String(t.id) : '' })) }} style={styles.select}>
                     <option value="">Propietario</option>
-                    {allTenantsList.map(t => (
-                      <option key={t.id} value={t.id}>{t.nombres} {t.apellidos} — {t.numeroDocumento} (Apt {t.apartamentoNumero})</option>
-                    ))}
-                  </select>
+                    {allTenantsList.map(t => <option key={t.id} value={`${t.nombres} ${t.apellidos} · ${t.numeroDocumento} (Apt ${t.apartamentoNumero})`} />)}
+                  </DataList>
                 </div>
               </div>
               <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: "0.75rem", backgroundColor: "#f8fafc" }}>
@@ -2074,7 +2198,7 @@ export default function GlobalBienes() {
       {/* ===== CONFIG MODAL ===== */}
       {showModal === 'config' && (
         <div style={styles.modalOverlay} onClick={() => setShowModal(null)}>
-          <div style={styles.modalBox} onClick={e => e.stopPropagation()}>
+          <div style={styles.modalBox} className="gb-modal-box" onClick={e => e.stopPropagation()}>
             <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "#1e293b" }}><FiTool size={16} style={{ marginRight: 8, verticalAlign: "middle" }} />Configurar Estacionamiento</h3>
               <button onClick={() => setShowModal(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={18} /></button>
@@ -2109,11 +2233,11 @@ export default function GlobalBienes() {
 
       {/* ===== PICK VEHICLE MODAL ===== */}
       {showModal === 'pickVehicle' && (
-        <div style={styles.modalOverlay} onClick={() => { setShowModal(null); setAssignVehicleForm({ idEstacionamiento: '', idVehiculo: '' }) }}>
-          <div style={{ ...styles.modalBox, maxWidth: "420px" }} onClick={e => e.stopPropagation()}>
+        <div style={styles.modalOverlay} onClick={() => { setShowModal(null); setAssignVehicleForm({ idEstacionamiento: '', idVehiculo: '' }); setPickVehicleText('') }}>
+          <div style={{ ...styles.modalBox, maxWidth: "420px" }} className="gb-modal-box" onClick={e => e.stopPropagation()}>
             <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "#1e293b" }}>Asignar Vehículo</h3>
-              <button onClick={() => { setShowModal(null); setAssignVehicleForm({ idEstacionamiento: '', idVehiculo: '' }) }} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={18} /></button>
+              <button onClick={() => { setShowModal(null); setAssignVehicleForm({ idEstacionamiento: '', idVehiculo: '' }); setPickVehicleText('') }} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={18} /></button>
             </div>
             <form onSubmit={handleAssignVehicleToSpot} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
               <div>
@@ -2122,12 +2246,12 @@ export default function GlobalBienes() {
               </div>
               <div>
                 <label style={styles.label}>Vehículo</label>
-                <select style={styles.select} value={assignVehicleForm.idVehiculo} onChange={e => setAssignVehicleForm(f => ({ ...f, idVehiculo: e.target.value }))} required>
+                <DataList value={pickVehicleText} onChange={e => { setPickVehicleText(e.target.value); const v = vehicles.filter(x => !x.idEstacionamiento).find(x => `${x.placa} · ${x.marca} ${x.modelo} (${x.tipo})` === e.target.value); setAssignVehicleForm(f => ({ ...f, idVehiculo: v ? v.placa : '' })) }} required style={styles.select}>
                   <option value="">Seleccionar vehículo</option>
                   {vehicles.filter(v => !v.idEstacionamiento).map(v => (
-                    <option key={v.id} value={v.placa}>{v.placa} — {v.marca} {v.modelo} ({v.tipo})</option>
+                    <option key={v.id} value={`${v.placa} · ${v.marca} ${v.modelo} (${v.tipo})`} />
                   ))}
-                </select>
+                </DataList>
               </div>
               {vehicles.filter(v => !v.idEstacionamiento).length === 0 && (
                 <div style={{ fontSize: "0.75rem", color: "#ef4444" }}>No hay vehículos disponibles</div>
@@ -2143,7 +2267,7 @@ export default function GlobalBienes() {
       {/* ===== DETAIL MODAL ===== */}
       {detailItem && (
         <div style={styles.modalOverlay} onClick={() => setDetailItem(null)}>
-          <div style={styles.modalBox} onClick={e => e.stopPropagation()}>
+          <div style={styles.modalBox} className="gb-modal-box" onClick={e => e.stopPropagation()}>
             <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "#1e293b" }}>
                 {detailItem.tipoVehiculo ? 'Estacionamiento' : 'Carrito'} #{detailItem.numero || detailItem.codigo || detailItem.id}
@@ -2163,7 +2287,7 @@ export default function GlobalBienes() {
                     </span>
                   </Row>
                   <Row label="Tipo de vehículo">{detailItem.tipoVehiculo || 'MIXTO'}</Row>
-                  <Row label="Capacidad máxima">{detailItem.capacidadMaxima ?? '∞'}</Row>
+                  <Row label="Capacidad máxima">{detailItem.capacidadMaxima ?? '8'}</Row>
                   <Row label="Ocupación actual">{detailItem.cantidadActual ?? 0}</Row>
                   <Row label="Apartamento">{detailItem.idApartamento ? aptLabel(detailItem.idApartamento) : '—'}</Row>
                   <Row label="Condominio">{condo?.nombre || '—'}</Row>
@@ -2230,7 +2354,6 @@ export default function GlobalBienes() {
                   { l: 'Vehículo', v: `${ticket.vehiculoMarca} ${ticket.vehiculoModelo}`.trim() },
                   { l: 'Placa', v: ticket.placa },
                   { l: 'Ocupante', v: ticket.ocupante || '—' },
-                  { l: 'Nombre', v: ticket.datosInquilino || '—' },
                   { l: 'Entrada', v: formatDate(ticket.fechaEntrada) },
                   { l: 'Salida', v: ticket.fechaSalida ? formatDate(ticket.fechaSalida) : 'En curso' },
                   { l: 'Método', v: ticket.metodo || '—' }
@@ -2243,7 +2366,7 @@ export default function GlobalBienes() {
               </div>
               <hr style={{ border: "1px dashed #d1d5db", margin: "0.5rem 0" }} />
               <div style={{ margin: "0.75rem 0" }}><canvas ref={barcodeRef} style={{ maxWidth: "100%" }} /></div>
-              <div style={{ fontSize: "0.65rem", color: "#94a3b8" }}>{condo?.nombre || 'SGC'} · {new Date().toLocaleDateString('es-PE')}</div>
+              <div style={{ fontSize: "0.65rem", color: "#94a3b8" }}>{condo?.nombre || 'SGC'}  — {new Date().toLocaleDateString('es-PE')}</div>
             </div>
             <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "center", gap: "0.75rem", backgroundColor: "#f8fafc" }}>
               <button onClick={printTicket} style={{ backgroundColor: colorSuper, color: "#fff", border: "none", padding: "0.5rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.4rem" }}>
