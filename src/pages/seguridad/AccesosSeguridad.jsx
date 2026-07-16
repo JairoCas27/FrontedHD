@@ -115,36 +115,62 @@ export default function AccesosSeguridad() {
   const hayAccesoPendiente = !!ultimoLogId;
 
   const handleVerificar = () => verificarPlaca(placaInput);
-  
+
+//Comprobación de estacionamiento con el backend
 const comprobarEstacionamiento = async (numero) => {
-    if (!numero.trim()) {
-      setEstadoEstacionamiento(null);
-      return;
-    }
-    try {
-      const existe = false; 
-      const disponible = true;
-      if (existe) {
-        if (disponible) {
-          setEstadoEstacionamiento("disponible");
-        } else {
-          setEstadoEstacionamiento("ocupado");
-        }
+  if (!numero.trim()) {
+    setEstadoEstacionamiento(null);
+    return;
+  }
+  
+  try {
+    // Llamada al servicio real mapeado en el backend
+    const respuesta = await fetch(`/api/security/parking-slots`);
+    const estacionamientos = await respuesta.json();
+
+    // Buscar si el número ingresado existe en la lista del condominio
+    const slotEncontrado = estacionamientos.find(
+      (slot) => slot.numero.toString() === numero.trim()
+    );
+
+    if (slotEncontrado) {
+      // Verificación (si está disponible)
+      if (slotEncontrado.disponible || slotEncontrado.estado === "LIBRE") {
+        setEstadoEstacionamiento("disponible");
       } else {
-        setMostrarModalCrear(true);
+        setEstadoEstacionamiento("ocupado");
+      }
+    } else {
+      // Si no existe, aparece el modal para crearlo
+      setMostrarModalCrear(true);
+    }
+  } catch (error) {
+    console.error("Error al validar estacionamiento con el servidor:", error);
+  }
+};
+
+const handleConfirmarCrearEstacionamiento = async () => {
+    try {
+      const respuesta = await fetch(`/api/security/parking-slots`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          numero: estacionamientoInput.trim(),
+          estado: "LIBRE", // O el parámetro que use tu API por defecto
+        }),
+      });
+
+      if (respuesta.ok) {
+        console.log(`Estacionamiento N° ${estacionamientoInput} registrado con éxito.`);
+        setEstadoEstacionamiento("disponible");
+        setMostrarModalCrear(false);
+      } else {
+        console.error("No se pudo crear el estacionamiento en el servidor");
       }
     } catch (error) {
-      console.error("Error al validar estacionamiento:", error);
-    }
-  };
-
-  const handleConfirmarCrearEstacionamiento = async () => {
-    try {
-      console.log(`Estacionamiento N° ${estacionamientoInput} creado.`);
-      setEstadoEstacionamiento("disponible");
-      setMostrarModalCrear(false);
-    } catch (error) {
-      console.error(error);
+      console.error("Error de red al intentar crear el estacionamiento:", error);
     }
   };
 
