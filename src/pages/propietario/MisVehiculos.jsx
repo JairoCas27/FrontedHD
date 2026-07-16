@@ -17,7 +17,6 @@ import Loading from "../../components/common/Loading";
 import EmptyState from "../../components/common/EmptyState";
 import ActionButton from "../../components/common/ActionButton";
 import ConfirmModal from "../../components/common/ConfirmModal";
-import ParkingModal from "../../components/common/ParkingModal";
 import Modal from "../../components/common/Modal";
 import FormField from "../../components/common/FormField";
 import { Toast, useToast } from "../../components/common/Toast";
@@ -46,6 +45,7 @@ const INITIAL_FORM = {
   inquilinoId: "",
 };
 
+// El PUT solo acepta estos 4 campos
 const INITIAL_EDIT_FORM = {
   marca:  "",
   modelo: "",
@@ -155,6 +155,152 @@ function FieldError({ message }) {
     <p style={{ margin: "4px 0 0", fontSize: "12px", color: colors.red }}>
       {message}
     </p>
+  );
+}
+
+// ─── Sub-componente: ParkingModal ─────────────────────────────────────────────
+
+function ParkingModal({ open, vehicle, spots, onClose, onSave, saving }) {
+  const [selected, setSelected] = useState(vehicle?.idEstacionamiento ?? null);
+
+  useEffect(() => {
+    setSelected(vehicle?.idEstacionamiento ?? null);
+  }, [vehicle]);
+
+  if (!open || !vehicle) return null;
+
+  const hasParking = !!vehicle.idEstacionamiento;
+
+  return (
+    <Modal
+      open={open}
+      title={hasParking ? "Cambiar estacionamiento" : "Asignar estacionamiento"}
+      onClose={onClose}
+    >
+      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+
+        {/* Info del vehículo */}
+        <div
+          style={{
+            background: colors.background,
+            borderRadius: radius.sm,
+            padding: "12px 16px",
+            display: "flex",
+            alignItems: "center",
+            gap: "10px",
+          }}
+        >
+          <Car size={16} color={colors.blue} />
+          <span style={{ fontSize: "14px", fontWeight: 600, color: colors.slate }}>
+            {vehicle.marca} {vehicle.modelo}
+          </span>
+          <span style={{ fontSize: "13px", color: colors.slateLight }}>
+            · {vehicle.placa}
+          </span>
+        </div>
+
+        {/* Lista de spots */}
+        {spots.length === 0 ? (
+          <p style={{ fontSize: "14px", color: colors.slateLight, textAlign: "center", padding: "16px 0" }}>
+            No hay estacionamientos disponibles para tu apartamento.
+          </p>
+        ) : (
+          <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "280px", overflowY: "auto" }}>
+            {spots.map((spot) => {
+              const isSelected = selected === spot.id;
+              const lleno = spot.cantidadActual >= spot.capacidadMaxima;
+
+              return (
+                <button
+                  key={spot.id}
+                  onClick={() => !lleno && setSelected(isSelected ? null : spot.id)}
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "space-between",
+                    padding: "12px 16px",
+                    borderRadius: radius.sm,
+                    border: `1px solid ${isSelected ? colors.orange : colors.border}`,
+                    background: isSelected ? colors.orangeLight : lleno ? colors.background : colors.white,
+                    cursor: lleno ? "not-allowed" : "pointer",
+                    fontFamily: "system-ui, sans-serif",
+                    transition,
+                    textAlign: "left",
+                    opacity: lleno ? 0.6 : 1,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                    <ParkingSquare size={16} color={isSelected ? colors.orange : lleno ? colors.slateLighter : colors.slateLight} />
+                    <div>
+                      <p style={{ margin: 0, fontSize: "14px", fontWeight: 500, color: isSelected ? colors.orange : colors.slate }}>
+                        Estacionamiento #{spot.numero}
+                      </p>
+                      <p style={{ margin: "2px 0 0", fontSize: "11px", color: colors.slateLighter }}>
+                        {spot.tipoVehiculo} · {spot.cantidadActual}/{spot.capacidadMaxima} ocupado{spot.cantidadActual !== 1 ? "s" : ""}
+                      </p>
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
+                    {isSelected && (
+                      <span style={{ fontSize: "11px", fontWeight: 600, color: colors.orange }}>
+                        SELECCIONADO
+                      </span>
+                    )}
+                    {lleno && (
+                      <span style={{ fontSize: "11px", fontWeight: 600, color: colors.red }}>
+                        LLENO
+                      </span>
+                    )}
+                    {!lleno && !isSelected && spot.disponible && (
+                      <span style={{ fontSize: "11px", color: colors.green, fontWeight: 500 }}>
+                        Disponible
+                      </span>
+                    )}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Desasignar */}
+        {hasParking && (
+          <button
+            onClick={() => setSelected(null)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              padding: "10px 14px",
+              borderRadius: radius.sm,
+              border: `1px solid ${selected === null ? colors.red : colors.border}`,
+              background: selected === null ? colors.redLight : "transparent",
+              cursor: "pointer",
+              fontFamily: "system-ui, sans-serif",
+              color: selected === null ? colors.red : colors.slateLight,
+              fontSize: "13px",
+              transition,
+            }}
+          >
+            <X size={14} />
+            Desasignar estacionamiento actual (#{vehicle.idEstacionamiento})
+          </button>
+        )}
+
+        <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", paddingTop: "4px" }}>
+          <ActionButton variant="ghost" onClick={onClose} disabled={saving}>
+            Cancelar
+          </ActionButton>
+          <ActionButton
+            onClick={() => onSave(vehicle.id, selected)}
+            disabled={saving || selected === vehicle.idEstacionamiento}
+          >
+            {saving ? "Guardando..." : "Guardar"}
+          </ActionButton>
+        </div>
+
+      </div>
+    </Modal>
   );
 }
 
@@ -512,26 +658,11 @@ export default function MisVehiculos() {
     }
   };
 
-  // ── Handler estacionamiento con lógica de reemplazo ───────────────────────
+  // ── Handler estacionamiento ───────────────────────────────────────────────
 
-  const handleSaveParking = async (vehicleId, idEstacionamiento, allVehicles, allSpots) => {
+  const handleSaveParking = async (vehicleId, idEstacionamiento) => {
     try {
       setSavingParking(true);
-
-      if (idEstacionamiento !== null) {
-        const spot = allSpots.find((s) => s.id === idEstacionamiento);
-        if (spot) {
-          const ocupantes = allVehicles.filter(
-            (v) => v.idEstacionamiento === idEstacionamiento && v.id !== vehicleId
-          );
-          if (ocupantes.length >= spot.capacidadMaxima) {
-            for (const v of ocupantes) {
-              await assignHomeownerVehicleParking(v.id, null);
-            }
-          }
-        }
-      }
-
       await assignHomeownerVehicleParking(vehicleId, idEstacionamiento ?? null);
       showToast(
         idEstacionamiento ? "Estacionamiento asignado" : "Estacionamiento desasignado",
@@ -646,6 +777,7 @@ export default function MisVehiculos() {
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <VehicleFields form={editForm} errors={editErrors} onChange={handleEditChange} />
 
+          {/* Tipo no editable — el backend no lo acepta en PUT */}
           {editTarget && (
             <div
               style={{
@@ -675,12 +807,11 @@ export default function MisVehiculos() {
         </div>
       </Modal>
 
-      {/* ── Modal: Estacionamiento — ahora usa componente externo ── */}
+      {/* ── Modal: Estacionamiento ── */}
       <ParkingModal
         open={!!parkingTarget}
         vehicle={parkingTarget}
         spots={spots}
-        vehicles={vehicles}
         onClose={() => setParkingTarget(null)}
         onSave={handleSaveParking}
         saving={savingParking}
