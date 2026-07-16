@@ -1,7 +1,7 @@
 // src/pages/propietario/MisVehiculos.jsx
 
 import { useEffect, useState, useCallback } from "react";
-import { Car, Plus, Trash2, ParkingSquare, X, Pencil } from "lucide-react";
+import { Car, Plus, Trash2, ParkingSquare, X, Pencil, AlertTriangle } from "lucide-react";
 import {
   getHomeownerVehicles,
   createHomeownerVehicle,
@@ -45,7 +45,6 @@ const INITIAL_FORM = {
   inquilinoId: "",
 };
 
-// El PUT solo acepta estos 4 campos
 const INITIAL_EDIT_FORM = {
   marca:  "",
   modelo: "",
@@ -147,6 +146,22 @@ function validateEditForm(form) {
   return { errors, valid };
 }
 
+// ─── Helpers de estacionamiento ───────────────────────────────────────────────
+
+// Cuántos vehículos (sin contar el actual) están asignados a un spot
+function countAssigned(vehicles, spotId, currentVehicleId) {
+  return vehicles.filter(
+    (v) => v.idEstacionamiento === spotId && v.id !== currentVehicleId
+  ).length;
+}
+
+// Vehículos asignados a un spot (sin contar el actual)
+function getOcupantes(vehicles, spotId, currentVehicleId) {
+  return vehicles.filter(
+    (v) => v.idEstacionamiento === spotId && v.id !== currentVehicleId
+  );
+}
+
 // ─── Sub-componente: FieldError ───────────────────────────────────────────────
 
 function FieldError({ message }) {
@@ -160,7 +175,7 @@ function FieldError({ message }) {
 
 // ─── Sub-componente: ParkingModal ─────────────────────────────────────────────
 
-function ParkingModal({ open, vehicle, spots, onClose, onSave, saving }) {
+function ParkingModal({ open, vehicle, spots, vehicles, onClose, onSave, saving }) {
   const [selected, setSelected] = useState(vehicle?.idEstacionamiento ?? null);
 
   useEffect(() => {
@@ -169,7 +184,10 @@ function ParkingModal({ open, vehicle, spots, onClose, onSave, saving }) {
 
   if (!open || !vehicle) return null;
 
-  const hasParking = !!vehicle.idEstacionamiento;
+  const hasParking    = !!vehicle.idEstacionamiento;
+  const selectedSpot  = spots.find((s) => s.id === selected) ?? null;
+  const ocupantes     = selectedSpot ? getOcupantes(vehicles, selectedSpot.id, vehicle.id) : [];
+  const willReplace   = selectedSpot && ocupantes.length >= selectedSpot.capacidadMaxima;
 
   return (
     <Modal
@@ -177,7 +195,7 @@ function ParkingModal({ open, vehicle, spots, onClose, onSave, saving }) {
       title={hasParking ? "Cambiar estacionamiento" : "Asignar estacionamiento"}
       onClose={onClose}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
 
         {/* Info del vehículo */}
         <div
@@ -195,7 +213,7 @@ function ParkingModal({ open, vehicle, spots, onClose, onSave, saving }) {
             {vehicle.marca} {vehicle.modelo}
           </span>
           <span style={{ fontSize: "13px", color: colors.slateLight }}>
-            · {vehicle.placa}
+            · {vehicle.placa} · {vehicle.tipo}
           </span>
         </div>
 
@@ -207,59 +225,107 @@ function ParkingModal({ open, vehicle, spots, onClose, onSave, saving }) {
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: "8px", maxHeight: "280px", overflowY: "auto" }}>
             {spots.map((spot) => {
-              const isSelected = selected === spot.id;
-              const lleno = spot.cantidadActual >= spot.capacidadMaxima;
+              const isSelected    = selected === spot.id;
+              const isActual      = vehicle.idEstacionamiento === spot.id;
+              const assigned      = countAssigned(vehicles, spot.id, vehicle.id);
+              const lleno         = assigned >= spot.capacidadMaxima;
+              const tipoDistinto  = spot.tipoVehiculo !== vehicle.tipo;
+              const disabled      = lleno && !isActual;
 
               return (
                 <button
                   key={spot.id}
-                  onClick={() => !lleno && setSelected(isSelected ? null : spot.id)}
+                  onClick={() => !disabled && setSelected(isActual ? spot.id : isSelected ? null : spot.id)}
                   style={{
                     display: "flex",
-                    alignItems: "center",
+                    alignItems: "flex-start",
                     justifyContent: "space-between",
                     padding: "12px 16px",
                     borderRadius: radius.sm,
-                    border: `1px solid ${isSelected ? colors.orange : colors.border}`,
-                    background: isSelected ? colors.orangeLight : lleno ? colors.background : colors.white,
-                    cursor: lleno ? "not-allowed" : "pointer",
+                    border: `1px solid ${isActual ? colors.blue : isSelected ? colors.orange : colors.border}`,
+                    background: isActual ? colors.blueLight : isSelected ? colors.orangeLight : disabled ? colors.background : colors.white,
+                    cursor: disabled ? "not-allowed" : "pointer",
                     fontFamily: "system-ui, sans-serif",
                     transition,
                     textAlign: "left",
-                    opacity: lleno ? 0.6 : 1,
+                    opacity: disabled ? 0.55 : 1,
+                    width: "100%",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                    <ParkingSquare size={16} color={isSelected ? colors.orange : lleno ? colors.slateLighter : colors.slateLight} />
+                  <div style={{ display: "flex", alignItems: "flex-start", gap: "10px" }}>
+                    <ParkingSquare
+                      size={16}
+                      color={isActual ? colors.blue : isSelected ? colors.orange : disabled ? colors.slateLighter : colors.slateLight}
+                      style={{ marginTop: "2px", flexShrink: 0 }}
+                    />
                     <div>
-                      <p style={{ margin: 0, fontSize: "14px", fontWeight: 500, color: isSelected ? colors.orange : colors.slate }}>
+                      <p style={{ margin: 0, fontSize: "14px", fontWeight: 500, color: isActual ? colors.blue : isSelected ? colors.orange : colors.slate }}>
                         Estacionamiento #{spot.numero}
                       </p>
                       <p style={{ margin: "2px 0 0", fontSize: "11px", color: colors.slateLighter }}>
-                        {spot.tipoVehiculo} · {spot.cantidadActual}/{spot.capacidadMaxima} ocupado{spot.cantidadActual !== 1 ? "s" : ""}
+                        Para {spot.tipoVehiculo} · {assigned}/{spot.capacidadMaxima} asignado{assigned !== 1 ? "s" : ""}
                       </p>
+                      {/* Advertencia de tipo distinto */}
+                      {tipoDistinto && !disabled && (
+                        <div style={{ display: "flex", alignItems: "center", gap: "4px", marginTop: "4px" }}>
+                          <AlertTriangle size={11} color={colors.orange} />
+                          <span style={{ fontSize: "11px", color: colors.orange }}>
+                            Espacio para {spot.tipoVehiculo} — tu vehículo es {vehicle.tipo}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px" }}>
-                    {isSelected && (
-                      <span style={{ fontSize: "11px", fontWeight: 600, color: colors.orange }}>
-                        SELECCIONADO
-                      </span>
-                    )}
-                    {lleno && (
-                      <span style={{ fontSize: "11px", fontWeight: 600, color: colors.red }}>
-                        LLENO
-                      </span>
-                    )}
-                    {!lleno && !isSelected && spot.disponible && (
-                      <span style={{ fontSize: "11px", color: colors.green, fontWeight: 500 }}>
-                        Disponible
-                      </span>
-                    )}
-                  </div>
+
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 600,
+                      padding: "2px 8px",
+                      borderRadius: radius.xl,
+                      background: isActual ? colors.blueLight : disabled ? colors.redLight : isSelected ? colors.orangeLight : colors.greenLight,
+                      color: isActual ? colors.blue : disabled ? colors.red : isSelected ? colors.orange : colors.green,
+                      whiteSpace: "nowrap",
+                      flexShrink: 0,
+                      marginLeft: "8px",
+                      marginTop: "2px",
+                    }}
+                  >
+                    {isActual ? "ACTUAL" : disabled ? "LLENO" : isSelected ? "SELECCIONADO" : "Disponible"}
+                  </span>
                 </button>
               );
             })}
+          </div>
+        )}
+
+        {/* Advertencia de reemplazo */}
+        {willReplace && (
+          <div
+            style={{
+              background: colors.orangeLight,
+              border: `1px solid ${colors.orangeBorder}`,
+              borderRadius: radius.sm,
+              padding: "12px 14px",
+              display: "flex",
+              gap: "10px",
+              alignItems: "flex-start",
+            }}
+          >
+            <AlertTriangle size={16} color={colors.orange} style={{ flexShrink: 0, marginTop: "1px" }} />
+            <div>
+              <p style={{ margin: 0, fontSize: "13px", fontWeight: 600, color: colors.orange }}>
+                Espacio lleno — se reemplazará un vehículo
+              </p>
+              <p style={{ margin: "4px 0 0", fontSize: "12px", color: colors.slateLight }}>
+                Al confirmar, se desasignará:
+              </p>
+              {ocupantes.map((v) => (
+                <p key={v.id} style={{ margin: "2px 0 0", fontSize: "12px", fontWeight: 500, color: colors.slate }}>
+                  · {v.marca} {v.modelo} ({v.placa})
+                </p>
+              ))}
+            </div>
           </div>
         )}
 
@@ -280,6 +346,7 @@ function ParkingModal({ open, vehicle, spots, onClose, onSave, saving }) {
               color: selected === null ? colors.red : colors.slateLight,
               fontSize: "13px",
               transition,
+              width: "100%",
             }}
           >
             <X size={14} />
@@ -292,10 +359,15 @@ function ParkingModal({ open, vehicle, spots, onClose, onSave, saving }) {
             Cancelar
           </ActionButton>
           <ActionButton
-            onClick={() => onSave(vehicle.id, selected)}
+            variant={willReplace ? "danger" : "primary"}
+            onClick={() => onSave(vehicle.id, selected, vehicles, spots)}
             disabled={saving || selected === vehicle.idEstacionamiento}
           >
-            {saving ? "Guardando..." : "Guardar"}
+            {saving
+              ? "Guardando..."
+              : willReplace
+                ? "Confirmar reemplazo"
+                : "Guardar"}
           </ActionButton>
         </div>
 
@@ -502,19 +574,16 @@ export default function MisVehiculos() {
   const [spots,         setSpots]         = useState([]);
   const [loading,       setLoading]       = useState(true);
 
-  // Estado modal agregar
   const [showAdd,       setShowAdd]       = useState(false);
   const [addForm,       setAddForm]       = useState(INITIAL_FORM);
   const [addErrors,     setAddErrors]     = useState(INITIAL_ERRORS);
   const [saving,        setSaving]        = useState(false);
 
-  // Estado modal editar
   const [editTarget,    setEditTarget]    = useState(null);
   const [editForm,      setEditForm]      = useState(INITIAL_EDIT_FORM);
   const [editErrors,    setEditErrors]    = useState(INITIAL_EDIT_ERRORS);
   const [updating,      setUpdating]      = useState(false);
 
-  // Estado eliminar y parking
   const [deleteTarget,  setDeleteTarget]  = useState(null);
   const [deleting,      setDeleting]      = useState(false);
   const [parkingTarget, setParkingTarget] = useState(null);
@@ -658,11 +727,26 @@ export default function MisVehiculos() {
     }
   };
 
-  // ── Handler estacionamiento ───────────────────────────────────────────────
+  // ── Handler estacionamiento con lógica de reemplazo ───────────────────────
 
-  const handleSaveParking = async (vehicleId, idEstacionamiento) => {
+  const handleSaveParking = async (vehicleId, idEstacionamiento, allVehicles, allSpots) => {
     try {
       setSavingParking(true);
+
+      if (idEstacionamiento !== null) {
+        const spot = allSpots.find((s) => s.id === idEstacionamiento);
+        if (spot) {
+          const ocupantes = allVehicles.filter(
+            (v) => v.idEstacionamiento === idEstacionamiento && v.id !== vehicleId
+          );
+          if (ocupantes.length >= spot.capacidadMaxima) {
+            for (const v of ocupantes) {
+              await assignHomeownerVehicleParking(v.id, null);
+            }
+          }
+        }
+      }
+
       await assignHomeownerVehicleParking(vehicleId, idEstacionamiento ?? null);
       showToast(
         idEstacionamiento ? "Estacionamiento asignado" : "Estacionamiento desasignado",
@@ -777,7 +861,6 @@ export default function MisVehiculos() {
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <VehicleFields form={editForm} errors={editErrors} onChange={handleEditChange} />
 
-          {/* Tipo no editable — el backend no lo acepta en PUT */}
           {editTarget && (
             <div
               style={{
@@ -812,6 +895,7 @@ export default function MisVehiculos() {
         open={!!parkingTarget}
         vehicle={parkingTarget}
         spots={spots}
+        vehicles={vehicles}
         onClose={() => setParkingTarget(null)}
         onSave={handleSaveParking}
         saving={savingParking}
