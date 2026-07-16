@@ -150,29 +150,50 @@ const comprobarEstacionamiento = async (numero) => {
 };
 
 const handleConfirmarCrearEstacionamiento = async () => {
-    try {
-      const respuesta = await fetch(`/api/security/parking-slots`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          numero: estacionamientoInput.trim(),
-          estado: "LIBRE", // O el parámetro que use tu API por defecto
-        }),
-      });
+  try {
+    // 1. Convertimos el input de texto a un número entero como lo pide el modelo de Java (Integer numero)
+    const numeroEntero = parseInt(estacionamientoInput.trim(), 10);
 
-      if (respuesta.ok) {
-        console.log(`Estacionamiento N° ${estacionamientoInput} registrado con éxito.`);
-        setEstadoEstacionamiento("disponible");
-        setMostrarModalCrear(false);
-      } else {
-        console.error("No se pudo crear el estacionamiento en el servidor");
-      }
-    } catch (error) {
-      console.error("Error de red al intentar crear el estacionamiento:", error);
+    if (isNaN(numeroEntero)) {
+      console.error("El número ingresado no es un valor entero válido.");
+      return;
     }
-  };
+
+    let idCondominioActual = localStorage.getItem("idCondominio") || localStorage.getItem("condominioId");
+
+    if (!idCondominioActual) {
+      const datosUsuario = localStorage.getItem("usuario") || localStorage.getItem("user");
+      if (datosUsuario) {
+        const usuarioParseado = JSON.parse(datosUsuario);
+        idCondominioActual = usuarioParseado.idCondominio || usuarioParseado.condominio?.id || usuarioParseado.condominioId;
+      }
+    }
+
+    const finalCondominioId = idCondominioActual ? parseInt(idCondominioActual, 10) : 1;
+
+    const respuesta = await fetch(`/api/security/parking-slots`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        numero: numeroEntero,
+        disponible: true,
+        idCondominio: finalCondominioId
+      }),
+    });
+
+    if (respuesta.ok) {
+      console.log(`Estacionamiento N° ${numeroEntero} registrado con éxito.`);
+      setEstadoEstacionamiento("disponible");
+      setMostrarModalCrear(false);
+    } else {
+      console.error("No se pudo crear el estacionamiento en el servidor. Verifica los parámetros.");
+    }
+  } catch (error) {
+    console.error("Error de red al intentar crear el estacionamiento:", error);
+  }
+};
 
   const handleCancelarCrearEstacionamiento = () => {
     setEstacionamientoInput("");
