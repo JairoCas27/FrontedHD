@@ -20,7 +20,7 @@ export function useAdminAssets() {
   const cargarEstacionamientos = useCallback(async (pagina = 0) => {
     try {
       setLoadingEstacionamientos(true);
-      const data = await getAdminAssets(`?type=ESTACIONAMIENTO&page=${pagina}&size=10`);
+      const data = await getAdminAssets('ESTACIONAMIENTO', pagina, 10);
       setEstacionamientos(data?.items || []);
       setTotalPaginasEstacionamientos(data?.totalPaginas || 0);
       setTotalEstacionamientos(data?.total || 0);
@@ -35,7 +35,7 @@ export function useAdminAssets() {
   const cargarCarritos = useCallback(async (pagina = 0) => {
     try {
       setLoadingCarritos(true);
-      const data = await getAdminAssets(`?type=CARRITO&page=${pagina}&size=10`);
+      const data = await getAdminAssets('CARRITO', pagina, 10);
       setCarritos(data?.items || []);
       setTotalPaginasCarritos(data?.totalPaginas || 0);
       setTotalCarritos(data?.total || 0);
