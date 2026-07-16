@@ -1,7 +1,7 @@
 // src/pages/propietario/MisVehiculos.jsx
 
 import { useEffect, useState, useCallback } from "react";
-import { Car, Plus, Trash2, ParkingSquare, Pencil } from "lucide-react";
+import { Car, Plus, Trash2, ParkingSquare, X, Pencil } from "lucide-react";
 import {
   getHomeownerVehicles,
   createHomeownerVehicle,
@@ -38,19 +38,34 @@ const GRID = {
 };
 
 const INITIAL_FORM = {
-  marca: "", modelo: "", color: "", placa: "", tipo: "", inquilinoId: "",
+  marca:       "",
+  modelo:      "",
+  color:       "",
+  placa:       "",
+  tipo:        "",
+  inquilinoId: "",
 };
 
 const INITIAL_EDIT_FORM = {
-  marca: "", modelo: "", color: "", placa: "",
+  marca:  "",
+  modelo: "",
+  color:  "",
+  placa:  "",
 };
 
 const INITIAL_ERRORS = {
-  marca: "", modelo: "", color: "", placa: "", tipo: "",
+  marca:  "",
+  modelo: "",
+  color:  "",
+  placa:  "",
+  tipo:   "",
 };
 
 const INITIAL_EDIT_ERRORS = {
-  marca: "", modelo: "", color: "", placa: "",
+  marca:  "",
+  modelo: "",
+  color:  "",
+  placa:  "",
 };
 
 const TIPO_OPTIONS = [
@@ -67,7 +82,10 @@ const NOMBRE_PATTERN = /^[A-Za-zÁáÉéÍíÓóÚúÑñÜü0-9\s\-\.]{2,}$/;
 const COLOR_PATTERN  = /^[A-Za-zÁáÉéÍíÓóÚúÑñÜü\s]{3,}$/;
 
 function capitalize(str) {
-  return str.trim().toLowerCase().replace(/(?:^|\s)\S/g, (l) => l.toUpperCase());
+  return str
+    .trim()
+    .toLowerCase()
+    .replace(/(?:^|\s)\S/g, (l) => l.toUpperCase());
 }
 
 function normalizePlaca(raw) {
@@ -77,8 +95,8 @@ function normalizePlaca(raw) {
   return clean;
 }
 
-function validateForm(form, incluirTipo = false) {
-  const errors = incluirTipo ? { ...INITIAL_ERRORS } : { ...INITIAL_EDIT_ERRORS };
+function validateAddForm(form) {
+  const errors = { ...INITIAL_ERRORS };
   let valid = true;
 
   if (!NOMBRE_PATTERN.test(form.marca.trim())) {
@@ -97,7 +115,7 @@ function validateForm(form, incluirTipo = false) {
     errors.placa = "Formato inválido. Ej: ABC-123 o A1B-234";
     valid = false;
   }
-  if (incluirTipo && !form.tipo) {
+  if (!form.tipo) {
     errors.tipo = "Selecciona un tipo de vehículo.";
     valid = false;
   }
@@ -105,44 +123,44 @@ function validateForm(form, incluirTipo = false) {
   return { errors, valid };
 }
 
-// ─── Sub-componentes ──────────────────────────────────────────────────────────
+function validateEditForm(form) {
+  const errors = { ...INITIAL_EDIT_ERRORS };
+  let valid = true;
+
+  if (!NOMBRE_PATTERN.test(form.marca.trim())) {
+    errors.marca = "Solo letras, números y espacios. Mínimo 2 caracteres.";
+    valid = false;
+  }
+  if (!NOMBRE_PATTERN.test(form.modelo.trim())) {
+    errors.modelo = "Solo letras, números y espacios. Mínimo 2 caracteres.";
+    valid = false;
+  }
+  if (!COLOR_PATTERN.test(form.color.trim())) {
+    errors.color = "Solo letras y espacios. Mínimo 3 caracteres.";
+    valid = false;
+  }
+  if (!PLACA_PATTERN.test(normalizePlaca(form.placa))) {
+    errors.placa = "Formato inválido. Ej: ABC-123 o A1B-234";
+    valid = false;
+  }
+
+  return { errors, valid };
+}
+
+// ─── Sub-componente: FieldError ───────────────────────────────────────────────
 
 function FieldError({ message }) {
   if (!message) return null;
-  return <p style={{ margin: "4px 0 0", fontSize: "12px", color: colors.red }}>{message}</p>;
-}
-
-function VehicleFields({ form, errors, onChange }) {
   return (
-    <>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-        <div>
-          <FormField label="Marca" name="marca" value={form.marca} onChange={onChange} placeholder="Toyota" required />
-          <FieldError message={errors.marca} />
-        </div>
-        <div>
-          <FormField label="Modelo" name="modelo" value={form.modelo} onChange={onChange} placeholder="Corolla" required />
-          <FieldError message={errors.modelo} />
-        </div>
-      </div>
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
-        <div>
-          <FormField label="Placa" name="placa" value={form.placa} onChange={onChange} placeholder="ABC-123" required />
-          <p style={{ margin: "3px 0 0", fontSize: "11px", color: colors.slateLighter }}>
-            Formato: ABC-123 o A1B-234
-          </p>
-          <FieldError message={errors.placa} />
-        </div>
-        <div>
-          <FormField label="Color" name="color" value={form.color} onChange={onChange} placeholder="Blanco" required />
-          <FieldError message={errors.color} />
-        </div>
-      </div>
-    </>
+    <p style={{ margin: "4px 0 0", fontSize: "12px", color: colors.red }}>
+      {message}
+    </p>
   );
 }
 
-function VehicleCard({ vehicle, onEdit, onDelete, onParking }) {
+// ─── Sub-componente: VehicleCard ──────────────────────────────────────────────
+
+function VehicleCard({ vehicle, onDelete, onParking, onEdit }) {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -164,33 +182,68 @@ function VehicleCard({ vehicle, onEdit, onDelete, onParking }) {
       }}
     >
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
-        <div style={{ width: "48px", height: "48px", borderRadius: radius.md, background: colors.blueLight, display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div
+          style={{
+            width: "48px",
+            height: "48px",
+            borderRadius: radius.md,
+            background: colors.blueLight,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
           <Car size={22} color={colors.blue} />
         </div>
         <div style={{ display: "flex", gap: "4px" }}>
-          {[
-            { icon: Pencil,       title: "Editar",              color: colors.blue,   bg: colors.blueLight,   action: () => onEdit(vehicle)    },
-            { icon: ParkingSquare,title: "Estacionamiento",     color: colors.orange, bg: colors.orangeLight, action: () => onParking(vehicle) },
-            { icon: Trash2,       title: "Eliminar",            color: colors.red,    bg: colors.redLight,    action: () => onDelete(vehicle)  },
-          ].map(({ icon: Icon, title, color, bg, action }) => (
-            <button
-              key={title}
-              onClick={action}
-              title={title}
-              style={{
-                background: hovered ? bg : "transparent",
-                border: "none",
-                cursor: "pointer",
-                borderRadius: "8px",
-                padding: "6px",
-                color,
-                display: "flex",
-                transition,
-              }}
-            >
-              <Icon size={15} />
-            </button>
-          ))}
+          <button
+            onClick={() => onEdit(vehicle)}
+            title="Editar vehículo"
+            style={{
+              background: hovered ? colors.blueLight : "transparent",
+              border: "none",
+              cursor: "pointer",
+              borderRadius: "8px",
+              padding: "6px",
+              color: colors.blue,
+              display: "flex",
+              transition,
+            }}
+          >
+            <Pencil size={15} />
+          </button>
+          <button
+            onClick={() => onParking(vehicle)}
+            title="Gestionar estacionamiento"
+            style={{
+              background: hovered ? colors.orangeLight : "transparent",
+              border: "none",
+              cursor: "pointer",
+              borderRadius: "8px",
+              padding: "6px",
+              color: colors.orange,
+              display: "flex",
+              transition,
+            }}
+          >
+            <ParkingSquare size={15} />
+          </button>
+          <button
+            onClick={() => onDelete(vehicle)}
+            title="Eliminar vehículo"
+            style={{
+              background: hovered ? colors.redLight : "transparent",
+              border: "none",
+              cursor: "pointer",
+              borderRadius: "8px",
+              padding: "6px",
+              color: colors.red,
+              display: "flex",
+              transition,
+            }}
+          >
+            <Trash2 size={15} />
+          </button>
         </div>
       </div>
 
@@ -198,32 +251,100 @@ function VehicleCard({ vehicle, onEdit, onDelete, onParking }) {
         <p style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: colors.slate }}>
           {vehicle.marca} {vehicle.modelo}
         </p>
-        <p style={{ margin: "2px 0 0", fontSize: "13px", color: colors.slateLight }}>{vehicle.tipo}</p>
+        <p style={{ margin: "2px 0 0", fontSize: "13px", color: colors.slateLight }}>
+          {vehicle.tipo}
+        </p>
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
-        {[{ label: "Placa", value: vehicle.placa }, { label: "Color", value: vehicle.color }].map((item) => (
-          <div key={item.label} style={{ background: colors.background, borderRadius: radius.sm, padding: "10px 12px" }}>
+        {[
+          { label: "Placa", value: vehicle.placa },
+          { label: "Color", value: vehicle.color },
+        ].map((item) => (
+          <div
+            key={item.label}
+            style={{ background: colors.background, borderRadius: radius.sm, padding: "10px 12px" }}
+          >
             <p style={{ margin: 0, fontSize: "11px", color: colors.slateLighter, textTransform: "uppercase", letterSpacing: "0.05em" }}>
               {item.label}
             </p>
-            <p style={{ margin: "2px 0 0", fontSize: "13px", fontWeight: 600, color: colors.slate }}>{item.value}</p>
+            <p style={{ margin: "2px 0 0", fontSize: "13px", fontWeight: 600, color: colors.slate }}>
+              {item.value}
+            </p>
           </div>
         ))}
       </div>
 
       <div>
         {vehicle.idEstacionamiento ? (
-          <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "12px", background: colors.orangeLight, color: colors.orange, borderRadius: radius.xl, padding: "4px 10px", fontWeight: 600 }}>
-            <ParkingSquare size={12} /> Est. #{vehicle.idEstacionamiento}
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              fontSize: "12px",
+              background: colors.orangeLight,
+              color: colors.orange,
+              borderRadius: radius.xl,
+              padding: "4px 10px",
+              fontWeight: 600,
+            }}
+          >
+            <ParkingSquare size={12} />
+            Est. #{vehicle.idEstacionamiento}
           </span>
         ) : (
-          <span style={{ display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "12px", background: colors.background, color: colors.slateLighter, borderRadius: radius.xl, padding: "4px 10px" }}>
-            <ParkingSquare size={12} /> Sin estacionamiento
+          <span
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "5px",
+              fontSize: "12px",
+              background: colors.background,
+              color: colors.slateLighter,
+              borderRadius: radius.xl,
+              padding: "4px 10px",
+            }}
+          >
+            <ParkingSquare size={12} />
+            Sin estacionamiento
           </span>
         )}
       </div>
     </div>
+  );
+}
+
+// ─── Sub-componente: campos comunes de formulario ─────────────────────────────
+
+function VehicleFields({ form, errors, onChange }) {
+  return (
+    <>
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+        <div>
+          <FormField label="Marca" name="marca" value={form.marca} onChange={onChange} placeholder="Toyota" required />
+          <FieldError message={errors.marca} />
+        </div>
+        <div>
+          <FormField label="Modelo" name="modelo" value={form.modelo} onChange={onChange} placeholder="Corolla" required />
+          <FieldError message={errors.modelo} />
+        </div>
+      </div>
+
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+        <div>
+          <FormField label="Placa" name="placa" value={form.placa} onChange={onChange} placeholder="ABC-123" required />
+          <p style={{ margin: "3px 0 0", fontSize: "11px", color: colors.slateLighter }}>
+            Formato: ABC-123 o A1B-234
+          </p>
+          <FieldError message={errors.placa} />
+        </div>
+        <div>
+          <FormField label="Color" name="color" value={form.color} onChange={onChange} placeholder="Blanco" required />
+          <FieldError message={errors.color} />
+        </div>
+      </div>
+    </>
   );
 }
 
@@ -234,19 +355,28 @@ export default function MisVehiculos() {
   const [tenants,       setTenants]       = useState([]);
   const [spots,         setSpots]         = useState([]);
   const [loading,       setLoading]       = useState(true);
+
+  // Estado modal agregar
   const [showAdd,       setShowAdd]       = useState(false);
   const [addForm,       setAddForm]       = useState(INITIAL_FORM);
   const [addErrors,     setAddErrors]     = useState(INITIAL_ERRORS);
   const [saving,        setSaving]        = useState(false);
+
+  // Estado modal editar
   const [editTarget,    setEditTarget]    = useState(null);
   const [editForm,      setEditForm]      = useState(INITIAL_EDIT_FORM);
   const [editErrors,    setEditErrors]    = useState(INITIAL_EDIT_ERRORS);
   const [updating,      setUpdating]      = useState(false);
+
+  // Estado eliminar y parking
   const [deleteTarget,  setDeleteTarget]  = useState(null);
   const [deleting,      setDeleting]      = useState(false);
   const [parkingTarget, setParkingTarget] = useState(null);
   const [savingParking, setSavingParking] = useState(false);
-  const { toast, showToast, clearToast }  = useToast();
+
+  const { toast, showToast, clearToast } = useToast();
+
+  // ── Fetch paralelo ────────────────────────────────────────────────────────
 
   const fetchAll = useCallback(() => {
     setLoading(true);
@@ -266,7 +396,7 @@ export default function MisVehiculos() {
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
-  // ── Agregar ───────────────────────────────────────────────────────────────
+  // ── Handlers agregar ──────────────────────────────────────────────────────
 
   const handleAddChange = (e) => {
     const { name, value } = e.target;
@@ -274,26 +404,34 @@ export default function MisVehiculos() {
     if (addErrors[name]) setAddErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  const handleCloseAdd = () => { setShowAdd(false); setAddForm(INITIAL_FORM); setAddErrors(INITIAL_ERRORS); };
+  const handleCloseAdd = () => {
+    setShowAdd(false);
+    setAddForm(INITIAL_FORM);
+    setAddErrors(INITIAL_ERRORS);
+  };
 
   const handleAdd = async () => {
     const normalized = {
       ...addForm,
-      marca: capitalize(addForm.marca),
+      marca:  capitalize(addForm.marca),
       modelo: capitalize(addForm.modelo),
-      color: capitalize(addForm.color),
-      placa: normalizePlaca(addForm.placa),
+      color:  capitalize(addForm.color),
+      placa:  normalizePlaca(addForm.placa),
     };
     setAddForm(normalized);
-    const { errors: newErrors, valid } = validateForm(normalized, true);
+
+    const { errors: newErrors, valid } = validateAddForm(normalized);
     setAddErrors(newErrors);
     if (!valid) return;
 
     try {
       setSaving(true);
       await createHomeownerVehicle({
-        marca: normalized.marca, modelo: normalized.modelo,
-        color: normalized.color, placa: normalized.placa, tipo: normalized.tipo,
+        marca:   normalized.marca,
+        modelo:  normalized.modelo,
+        color:   normalized.color,
+        placa:   normalized.placa,
+        tipo:    normalized.tipo,
         ...(normalized.inquilinoId ? { inquilinoId: Number(normalized.inquilinoId) } : {}),
       });
       showToast("Vehículo agregado correctamente", "success");
@@ -306,11 +444,16 @@ export default function MisVehiculos() {
     }
   };
 
-  // ── Editar ────────────────────────────────────────────────────────────────
+  // ── Handlers editar ───────────────────────────────────────────────────────
 
   const handleOpenEdit = (vehicle) => {
     setEditTarget(vehicle);
-    setEditForm({ marca: vehicle.marca ?? "", modelo: vehicle.modelo ?? "", color: vehicle.color ?? "", placa: vehicle.placa ?? "" });
+    setEditForm({
+      marca:  vehicle.marca  ?? "",
+      modelo: vehicle.modelo ?? "",
+      color:  vehicle.color  ?? "",
+      placa:  vehicle.placa  ?? "",
+    });
     setEditErrors(INITIAL_EDIT_ERRORS);
   };
 
@@ -320,15 +463,22 @@ export default function MisVehiculos() {
     if (editErrors[name]) setEditErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  const handleCloseEdit = () => { setEditTarget(null); setEditForm(INITIAL_EDIT_FORM); setEditErrors(INITIAL_EDIT_ERRORS); };
+  const handleCloseEdit = () => {
+    setEditTarget(null);
+    setEditForm(INITIAL_EDIT_FORM);
+    setEditErrors(INITIAL_EDIT_ERRORS);
+  };
 
   const handleEdit = async () => {
     const normalized = {
-      marca: capitalize(editForm.marca), modelo: capitalize(editForm.modelo),
-      color: capitalize(editForm.color), placa: normalizePlaca(editForm.placa),
+      marca:  capitalize(editForm.marca),
+      modelo: capitalize(editForm.modelo),
+      color:  capitalize(editForm.color),
+      placa:  normalizePlaca(editForm.placa),
     };
     setEditForm(normalized);
-    const { errors: newErrors, valid } = validateForm(normalized, false);
+
+    const { errors: newErrors, valid } = validateEditForm(normalized);
     setEditErrors(newErrors);
     if (!valid) return;
 
@@ -345,7 +495,7 @@ export default function MisVehiculos() {
     }
   };
 
-  // ── Eliminar ──────────────────────────────────────────────────────────────
+  // ── Handler eliminar ──────────────────────────────────────────────────────
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -362,7 +512,7 @@ export default function MisVehiculos() {
     }
   };
 
-  // ── Estacionamiento con lógica de reemplazo ───────────────────────────────
+  // ── Handler estacionamiento con lógica de reemplazo ───────────────────────
 
   const handleSaveParking = async (vehicleId, idEstacionamiento, allVehicles, allSpots) => {
     try {
@@ -371,11 +521,9 @@ export default function MisVehiculos() {
       if (idEstacionamiento !== null) {
         const spot = allSpots.find((s) => s.id === idEstacionamiento);
         if (spot) {
-          // Vehículos en ese spot excluyendo el actual
           const ocupantes = allVehicles.filter(
             (v) => v.idEstacionamiento === idEstacionamiento && v.id !== vehicleId
           );
-          // Si está lleno, desasignar los anteriores primero (reemplazo)
           if (ocupantes.length >= spot.capacidadMaxima) {
             for (const v of ocupantes) {
               await assignHomeownerVehicleParking(v.id, null);
@@ -398,17 +546,25 @@ export default function MisVehiculos() {
     }
   };
 
+  // ── Opciones inquilinos ───────────────────────────────────────────────────
+
   const tenantOptions = tenants.map((t) => ({
     value: String(t.id),
     label: `${t.nombres} ${t.apellidos}`,
   }));
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <div style={PAGE}>
       <SectionHeader
         title="Mis Vehículos"
         subtitle={`${vehicles.length} vehículo${vehicles.length !== 1 ? "s" : ""} registrado${vehicles.length !== 1 ? "s" : ""}`}
-        action={<ActionButton icon={Plus} onClick={() => setShowAdd(true)}>Agregar vehículo</ActionButton>}
+        action={
+          <ActionButton icon={Plus} onClick={() => setShowAdd(true)}>
+            Agregar vehículo
+          </ActionButton>
+        }
       />
 
       {loading ? (
@@ -418,40 +574,70 @@ export default function MisVehiculos() {
           icon={Car}
           title="Sin vehículos registrados"
           description="Agrega tu primer vehículo para gestionarlo desde aquí."
-          action={<ActionButton icon={Plus} onClick={() => setShowAdd(true)}>Agregar vehículo</ActionButton>}
+          action={
+            <ActionButton icon={Plus} onClick={() => setShowAdd(true)}>
+              Agregar vehículo
+            </ActionButton>
+          }
         />
       ) : (
         <div style={GRID}>
           {vehicles.map((v) => (
-            <VehicleCard key={v.id} vehicle={v} onEdit={handleOpenEdit} onDelete={setDeleteTarget} onParking={setParkingTarget} />
+            <VehicleCard
+              key={v.id}
+              vehicle={v}
+              onEdit={handleOpenEdit}
+              onDelete={setDeleteTarget}
+              onParking={setParkingTarget}
+            />
           ))}
         </div>
       )}
 
-      {/* Modal: Agregar */}
+      {/* ── Modal: Agregar vehículo ── */}
       <Modal open={showAdd} title="Agregar vehículo" onClose={handleCloseAdd}>
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <VehicleFields form={addForm} errors={addErrors} onChange={handleAddChange} />
+
           <div>
-            <FormField label="Tipo" name="tipo" value={addForm.tipo} onChange={handleAddChange} options={TIPO_OPTIONS} required />
+            <FormField
+              label="Tipo"
+              name="tipo"
+              value={addForm.tipo}
+              onChange={handleAddChange}
+              options={TIPO_OPTIONS}
+              required
+            />
             <FieldError message={addErrors.tipo} />
           </div>
+
           {tenantOptions.length > 0 && (
             <div>
-              <FormField label="Asignar a inquilino (opcional)" name="inquilinoId" value={addForm.inquilinoId} onChange={handleAddChange} options={tenantOptions} />
+              <FormField
+                label="Asignar a inquilino (opcional)"
+                name="inquilinoId"
+                value={addForm.inquilinoId}
+                onChange={handleAddChange}
+                options={tenantOptions}
+              />
               <p style={{ margin: "4px 0 0", fontSize: "12px", color: colors.slateLight }}>
                 Si no seleccionas un inquilino, el vehículo quedará a tu nombre.
               </p>
             </div>
           )}
+
           <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", paddingTop: "4px" }}>
-            <ActionButton variant="ghost" onClick={handleCloseAdd} disabled={saving}>Cancelar</ActionButton>
-            <ActionButton onClick={handleAdd} disabled={saving}>{saving ? "Guardando..." : "Guardar vehículo"}</ActionButton>
+            <ActionButton variant="ghost" onClick={handleCloseAdd} disabled={saving}>
+              Cancelar
+            </ActionButton>
+            <ActionButton onClick={handleAdd} disabled={saving}>
+              {saving ? "Guardando..." : "Guardar vehículo"}
+            </ActionButton>
           </div>
         </div>
       </Modal>
 
-      {/* Modal: Editar */}
+      {/* ── Modal: Editar vehículo ── */}
       <Modal
         open={!!editTarget}
         title={editTarget ? `Editar · ${editTarget.marca} ${editTarget.modelo}` : "Editar vehículo"}
@@ -459,20 +645,37 @@ export default function MisVehiculos() {
       >
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <VehicleFields form={editForm} errors={editErrors} onChange={handleEditChange} />
+
           {editTarget && (
-            <div style={{ background: colors.background, borderRadius: radius.sm, padding: "10px 14px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div
+              style={{
+                background: colors.background,
+                borderRadius: radius.sm,
+                padding: "10px 14px",
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+              }}
+            >
               <span style={{ fontSize: "13px", color: colors.slateLight }}>Tipo</span>
-              <span style={{ fontSize: "13px", fontWeight: 500, color: colors.slate }}>{editTarget.tipo}</span>
+              <span style={{ fontSize: "13px", fontWeight: 500, color: colors.slate }}>
+                {editTarget.tipo}
+              </span>
             </div>
           )}
+
           <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", paddingTop: "4px" }}>
-            <ActionButton variant="ghost" onClick={handleCloseEdit} disabled={updating}>Cancelar</ActionButton>
-            <ActionButton onClick={handleEdit} disabled={updating}>{updating ? "Guardando..." : "Guardar cambios"}</ActionButton>
+            <ActionButton variant="ghost" onClick={handleCloseEdit} disabled={updating}>
+              Cancelar
+            </ActionButton>
+            <ActionButton onClick={handleEdit} disabled={updating}>
+              {updating ? "Guardando..." : "Guardar cambios"}
+            </ActionButton>
           </div>
         </div>
       </Modal>
 
-      {/* Modal: Estacionamiento */}
+      {/* ── Modal: Estacionamiento — ahora usa componente externo ── */}
       <ParkingModal
         open={!!parkingTarget}
         vehicle={parkingTarget}
@@ -483,18 +686,27 @@ export default function MisVehiculos() {
         saving={savingParking}
       />
 
-      {/* Modal: Confirmar eliminación */}
+      {/* ── Modal: Confirmar eliminación ── */}
       <ConfirmModal
         open={!!deleteTarget}
         title="Eliminar vehículo"
-        description={deleteTarget ? `¿Eliminar ${deleteTarget.marca} ${deleteTarget.modelo} (${deleteTarget.placa})?` : ""}
+        description={
+          deleteTarget
+            ? `¿Eliminar ${deleteTarget.marca} ${deleteTarget.modelo} (${deleteTarget.placa})?`
+            : ""
+        }
         onConfirm={handleDelete}
         onCancel={() => setDeleteTarget(null)}
         loading={deleting}
       />
 
       <Toast toast={toast} onClose={clearToast} />
-      <style>{`@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }`}</style>
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </div>
   );
 }
