@@ -55,37 +55,16 @@ export function useAdminStructure() {
     }
   };
 
-  // Función mejorada con más validaciones y logs
-  const agregarDepartamento = async (apartmentData) => {
+  const agregarDepartamento = async (apartmentData, pisoEncontrado) => {
     try {
       setError(null);
       console.log('Datos recibidos:', apartmentData);
-
-      // Validar datos
-      if (!apartmentData.numero || !apartmentData.idPiso) {
-        throw new Error('Faltan datos obligatorios: número y piso');
-      }
-
-      // Obtener la estructura actualizada
-      const estructuraActual = await cargarEstructura();
-      const listaTorres = Array.isArray(estructuraActual)
-          ? estructuraActual
-          : (estructuraActual?.torres || []);
-
-      console.log('Estructura actual:', listaTorres);
-
-      // Buscar el piso por ID
-      const pisoEncontrado = listaTorres
-          .flatMap(t => (t.pisos || []).map(p => ({ ...p, torre: t })))
-          .find(p => p.id === parseInt(apartmentData.idPiso));
-
-      if (!pisoEncontrado) {
-        console.error('Piso no encontrado con ID:', apartmentData.idPiso);
-        console.log('Pisos disponibles:', listaTorres.flatMap(t => t.pisos || []).map(p => ({ id: p.id, nombre: p.nombre })));
-        throw new Error('El piso seleccionado ya no existe. Por favor recarga la página.');
-      }
-
       console.log('Piso encontrado:', pisoEncontrado);
+
+      // Validar que tenemos los datos necesarios
+      if (!apartmentData.numero || !pisoEncontrado) {
+        throw new Error('Faltan datos obligatorios: número de departamento o piso');
+      }
 
       // Verificar si el número ya existe en este piso
       const apartamentosExistentes = pisoEncontrado.apartamentos || [];
@@ -97,22 +76,21 @@ export function useAdminStructure() {
         throw new Error(`El departamento ${apartmentData.numero} ya existe en ${pisoEncontrado.torre.nombre} - ${pisoEncontrado.nombre || `Piso ${pisoEncontrado.numero}`}`);
       }
 
-      // CORRECCIÓN: Enviar el payload correcto
+      // Definir el payload exacto que pide Swagger para /api/admin/structure/nodes
       const payload = {
         tipo: "APARTAMENTO",
-        nombre: `Apartamento ${apartmentData.numero}`,
-        nombreTorre: pisoEncontrado.torre.nombre,
+        nombre: `Dpto ${apartmentData.numero}`,
+        nombreTorre: pisoEncontrado.torreNombre || "Torre Desconocida",
         numero: parseInt(apartmentData.numero),
         numeroPiso: pisoEncontrado.numero,
         numeroApartamento: parseInt(apartmentData.numero),
-        metraje: parseFloat(apartmentData.metraje) || 0,
-        // Algunos backends esperan campo adicional
-        pisoId: parseInt(apartmentData.idPiso) // Por si acaso
+        metraje: parseFloat(apartmentData.metraje) || 0
       };
 
-      console.log('Enviando payload:', payload);
+      console.log('Enviando payload a /api/admin/structure/nodes:', payload);
 
-      const response = await createApartment(payload);
+      // Usar createAdminStructureNode
+      const response = await createAdminStructureNode(payload);
       console.log('Respuesta del servidor:', response);
 
       // Esperar un momento para que el backend procese
