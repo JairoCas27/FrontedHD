@@ -378,8 +378,9 @@ function ParkingModal({ open, vehicle, spots, vehicles, onClose, onSave, saving 
 
 // ─── Sub-componente: VehicleCard ──────────────────────────────────────────────
 
-function VehicleCard({ vehicle, onDelete, onParking, onEdit }) {
+function VehicleCard({ vehicle, onDelete, onParking, onEdit, spots }) {
   const [hovered, setHovered] = useState(false);
+  const spot = spots.find((s) => s.id === vehicle.idEstacionamiento);
 
   return (
     <div
@@ -509,7 +510,7 @@ function VehicleCard({ vehicle, onDelete, onParking, onEdit }) {
             }}
           >
             <ParkingSquare size={12} />
-            Est. #{vehicle.idEstacionamiento}
+            Est. #{spot?.numero ?? vehicle.idEstacionamiento}
           </span>
         ) : (
           <span
@@ -801,6 +802,7 @@ export default function MisVehiculos() {
             <VehicleCard
               key={v.id}
               vehicle={v}
+              spots={spots}
               onEdit={handleOpenEdit}
               onDelete={setDeleteTarget}
               onParking={setParkingTarget}
