@@ -1,11 +1,12 @@
 // src/pages/propietario/MiApartamento.jsx
 
 import { useEffect, useState, useCallback } from "react";
-import { Building2, Car, Users, CheckCircle, XCircle, Maximize2, ParkingSquare } from "lucide-react";
+import { Building2, Car, Users, CheckCircle, XCircle, Maximize2, ParkingSquare, RefreshCw } from "lucide-react";
 import { getHomeownerApartment, getHomeownerParkingSpots } from "../../services/api";
 import { colors, radius, shadow, transition } from "../../theme/colors";
 import InfoCard from "../../components/common/InfoCard";
 import SectionHeader from "../../components/common/SectionHeader";
+import ActionButton from "../../components/common/ActionButton";
 import Loading from "../../components/common/Loading";
 import EmptyState from "../../components/common/EmptyState";
 
@@ -239,11 +240,15 @@ function ParkingCard({ spot }) {
 // ─── Vista principal ──────────────────────────────────────────────────────────
 
 export default function MiApartamento() {
-  const [apt,     setApt]     = useState(null);
-  const [spots,   setSpots]   = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [apt,        setApt]        = useState(null);
+  const [spots,      setSpots]      = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
-  useEffect(() => {
+  const fetchAll = useCallback((isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+
     Promise.all([
       getHomeownerApartment(),
       getHomeownerParkingSpots().catch(() => []),
@@ -253,8 +258,21 @@ export default function MiApartamento() {
         setSpots(Array.isArray(spotsData) ? spotsData : []);
       })
       .catch(console.error)
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        setRefreshing(false);
+      });
   }, []);
+
+  // Carga inicial
+  useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  // Refresca al volver a esta pestaña desde otra vista
+  useEffect(() => {
+    const handleFocus = () => fetchAll(true);
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [fetchAll]);
 
   if (loading) {
     return (
@@ -279,6 +297,16 @@ export default function MiApartamento() {
       <SectionHeader
         title="Mi Apartamento"
         subtitle={`${apt.torreNombre} · Piso ${apt.pisoNumero} · Apto ${apt.numero}`}
+        action={
+          <ActionButton
+            variant="secondary"
+            icon={RefreshCw}
+            onClick={() => fetchAll(true)}
+            disabled={refreshing}
+          >
+            {refreshing ? "Actualizando..." : "Actualizar"}
+          </ActionButton>
+        }
       />
 
       <div
@@ -289,11 +317,11 @@ export default function MiApartamento() {
           marginBottom: "24px",
         }}
       >
-        {/* Columna izquierda — datos generales */}
+        {/* Columna izquierda */}
         <InfoCard title="Datos del apartamento">
-          <DetailRow label="Número"  value={apt.numero}       icon={Building2} />
-          <DetailRow label="Torre"   value={apt.torreNombre}  icon={Building2} />
-          <DetailRow label="Piso"    value={apt.pisoNumero}   icon={Building2} />
+          <DetailRow label="Número"  value={apt.numero}          icon={Building2} />
+          <DetailRow label="Torre"   value={apt.torreNombre}     icon={Building2} />
+          <DetailRow label="Piso"    value={apt.pisoNumero}      icon={Building2} />
           <DetailRow label="Metraje" value={`${apt.metraje} m²`} icon={Maximize2} />
           <DetailRow label="Total vehículos"  value={apt.totalVehiculos}  icon={Car}   />
           <DetailRow label="Total inquilinos" value={apt.totalInquilinos} icon={Users} />
@@ -323,12 +351,15 @@ export default function MiApartamento() {
           </div>
         </InfoCard>
 
-        {/* Columna derecha — listas */}
+        {/* Columna derecha */}
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-
-          {/* Estacionamientos */}
+        
+        {/* Estacionamientos */}
           {spots.length > 0 && (
             <InfoCard title={`Estacionamientos (${spots.length})`}>
+              <p style={{ margin: "0 0 12px", fontSize: "12px", color: colors.slateLighter }}>
+                La ocupación la gestiona el módulo de seguridad al registrar ingresos y salidas.
+              </p>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 {spots.map((spot) => (
                   <ParkingCard key={spot.id} spot={spot} />
@@ -337,7 +368,7 @@ export default function MiApartamento() {
             </InfoCard>
           )}
 
-          {/* Vehículos */}
+        {/* Vehículos */}
           <InfoCard title={`Vehículos (${apt.vehiculos?.length ?? 0})`}>
             {apt.vehiculos?.length === 0 ? (
               <EmptyState icon={Car} title="Sin vehículos registrados" />
