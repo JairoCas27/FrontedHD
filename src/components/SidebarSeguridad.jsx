@@ -1,15 +1,15 @@
 import SidebarLayout from "./SidebarLayout";
-import { FiActivity, FiUserCheck, FiTruck, FiList, FiBell, FiUser } from "react-icons/fi";
+import { FiHome, FiActivity, FiGrid, FiShoppingCart, FiClock, FiUser } from "react-icons/fi";
 import { useSidebarUser } from "../hooks/useSidebarUser";
 
 const menuItems = [
-  { section: "Operaciones" },
+  { section: "Panel Principal" },
+  { title: "Dashboard", icon: <FiHome size={20} />, path: "/seguridad/dashboard" },
   { title: "Accesos", icon: <FiActivity size={20} />, path: "/seguridad/accesos" },
-  { title: "Estacionamientos", icon: <FiTruck size={20} />, path: "/seguridad/vehiculos" },
-  { title: "Carritos", icon: <FiUserCheck size={20} />, path: "/seguridad/visitas" },
-  { section: "Historial" },
-  { title: "Movimientos", icon: <FiList size={20} />, path: "/seguridad/movimientos" },
-  { section: "Sistema" },
+  { title: "Mapa Parqueo", icon: <FiGrid size={20} />, path: "/seguridad/mapa-parqueo" },
+  { title: "Préstamos", icon: <FiShoppingCart size={20} />, path: "/seguridad/prestamos" },
+  { title: "Movimientos", icon: <FiClock size={20} />, path: "/seguridad/movimientos" },
+  { section: "Cuenta" },
   { title: "Perfil", icon: <FiUser size={20} />, path: "/seguridad/perfil" },
 ]
 
