@@ -13,7 +13,7 @@ export function useAdminApartments(idCondominio) {
     try {
       setLoading(true);
       // 2. Llama a la función pasando los valores separados (NO UN STRING)
-      const data = await getAdminApartments(idCondominio, pagina, tamanoPagina);
+      const data = await getAdminApartments(pagina, tamanoPagina);
       setDepartamentos(data?.items || []);
       setMeta({
         total: data?.total ?? 0,

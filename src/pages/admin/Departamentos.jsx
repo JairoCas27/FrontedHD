@@ -1,8 +1,9 @@
-import React, { useState, useMemo } from 'react'
+import React, { useState, useMemo, useEffect } from 'react'
 import { FiHome, FiUserCheck, FiX, FiSearch, FiChevronLeft, FiChevronRight, FiShield, FiLock } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import { useAdminApartments } from '../../hooks/Admin/useAdminApartments'
 import { useAdminUsers } from '../../hooks/Admin/useAdminUsers'
+import { getAdminStructure } from '../../services/api'
 
 export default function Departamentos() {
   const colorAdmin = "rgb(52,151,195)"
@@ -18,6 +19,20 @@ export default function Departamentos() {
   const [busquedaPropietario, setBusquedaPropietario] = useState('')
   const [mostrarListaPropietarios, setMostrarListaPropietarios] = useState(false)
   const [guardando, setGuardando] = useState(false)
+  const [torres, setTorres] = useState([])
+
+  useEffect(() => {
+    async function cargarTorres() {
+      try {
+        const estructura = await getAdminStructure();
+        setTorres(estructura.torres || []);
+      } catch (error) {
+        console.error("Error cargando torres:", error);
+      }
+    }
+
+    cargarTorres();
+  }, []);
 
   const deptosFiltrados = (departamentos || []).filter(d => {
     if (filtroTorre !== 'todos') {
@@ -48,10 +63,8 @@ export default function Departamentos() {
     return (usuarios || []).find(u => u.id?.toString() === idPropietarioSeleccionado?.toString())
   }, [usuarios, idPropietarioSeleccionado])
 
-  // 🔴 CAMBIO 1: Eliminar la guarda que bloqueaba la ejecución
   const handleOpenAssignModal = (depto) => {
     setDeptoSeleccionado(depto)
-    // Opcional: Mantener el nombre anterior en el buscador al abrir
     setIdPropietarioSeleccionado(depto.idPropietario || '')
     setBusquedaPropietario(depto.nombrePropietario || '')
     setMostrarListaPropietarios(false)
@@ -143,9 +156,15 @@ export default function Departamentos() {
                   onChange={(e) => setFiltroTorre(e.target.value)}
               >
                 <option value="todos">Todas las Torres</option>
-                <option value="A">Torre A</option>
-                <option value="B">Torre B</option>
-                <option value="C">Torre C</option>
+
+                {torres.map((torre) => (
+                    <option
+                        key={torre.id}
+                        value={torre.nombre}
+                    >
+                      {torre.nombre}
+                    </option>
+                ))}
               </select>
             </div>
 
@@ -218,7 +237,6 @@ export default function Departamentos() {
                           </div>
                         </div>
 
-                        {/* 🔴 CAMBIO 2: Eliminar el atributo disabled={tienePropietario} */}
                         <button
                             onClick={() => handleOpenAssignModal(depto)}
                             style={{
