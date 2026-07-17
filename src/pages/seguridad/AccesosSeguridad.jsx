@@ -96,6 +96,7 @@ export default function AccesosSeguridad() {
   const [metodo, setMetodo] = useState("MANUAL");
   const [ocupante, setOcupante] = useState("PROPIETARIO");
   const [datosInquilino, setDatosInquilino] = useState("");
+  const [estacionamientoInput, setEstacionamientoInput] = useState("");
 
   const {
     vehiculoEncontrado,
@@ -119,11 +120,13 @@ export default function AccesosSeguridad() {
       metodo,
       ocupante,
       datosInquilino: ocupante === "INQUILINO" ? datosInquilino : "",
+      estacionamiento: estacionamientoInput,
     });
     if (ok) {
       setPlacaInput("");
       setOcupante("PROPIETARIO");
       setDatosInquilino("");
+      setEstacionamientoInput("");
       resetVehiculo();
     }
   };
@@ -294,65 +297,67 @@ export default function AccesosSeguridad() {
           </div>
         ) : (
           <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ backgroundColor: FONDO }}>
-                  {["Placa", "Ocupante", "Método", "Entrada", "Salida", "Estado"].map((h) => (
-                    <th key={h} style={{ padding: "0.9rem 1rem", textAlign: "center", fontSize: "0.72rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {accesos.map((acceso) => {
-                  const enCurso = !acceso.fechaSalida;
-                  return (
-                    <tr key={acceso.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                      <td style={{ padding: "0.9rem 1rem", fontFamily: "monospace", fontWeight: 700, letterSpacing: "1px", color: "#334155", textAlign: "center" }}>
-                        {acceso.placa}
-                      </td>
-                      <td style={{ padding: "0.9rem 1rem", color: TEXTO_SUAVE, fontSize: "0.9rem", textAlign: "center" }}>
-                        <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", gap: "0.15rem" }}>
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", fontWeight: 600, color: TEXTO }}>
-                            <FiUser size={14} color="#94a3b8" />
-                            {acceso.ocupante}
-                          </span>
-                          {acceso.datosInquilino && (
-                            <span style={{ fontSize: "0.78rem", color: "#94a3b8" }}>{acceso.datosInquilino}</span>
-                          )}
-                        </div>
-                      </td>
-                      <td style={{ padding: "0.9rem 1rem", textAlign: "center" }}>
-                        <span style={{
-                          padding: "0.32rem 0.75rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 700,
-                          backgroundColor: "#e0e7ff", color: "#3730a3",
-                        }}>
-                          {acceso.metodo}
-                        </span>
-                      </td>
-                      <td style={{ padding: "0.9rem 1rem", fontSize: "0.85rem", color: TEXTO, textAlign: "center" }}>
-                        {formatFecha(acceso.fechaEntrada)}
-                      </td>
-                      <td style={{ padding: "0.9rem 1rem", fontSize: "0.85rem", color: TEXTO, textAlign: "center" }}>
-                        {formatFecha(acceso.fechaSalida)}
-                      </td>
-                      <td style={{ padding: "0.9rem 1rem", textAlign: "center" }}>
-                        <span style={{
-                          padding: "0.32rem 0.75rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 700,
-                          backgroundColor: enCurso ? "#dcfce7" : "#fee2e2",
-                          color: enCurso ? "#166534" : "#991b1b",
-                          display: "inline-flex", alignItems: "center", gap: "0.35rem",
-                        }}>
-                          {enCurso ? <FiLogIn size={12} /> : <FiLogOut size={12} />}
-                          {enCurso ? "En el condominio" : "Salió"}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+<table style={{ width: "100%", borderCollapse: "collapse" }}>
+  <thead>
+    <tr style={{ backgroundColor: FONDO }}>
+      {["Estacionamiento", "Placa", "Ocupante", "Método", "Entrada", "Salida", "Estado"].map((h) => (
+        <th key={h} style={{ padding: "0.9rem 1rem", textAlign: "center", fontSize: "0.72rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          {h}
+        </th>
+      ))}
+    </tr>
+  </thead>
+  <tbody>
+    {accesos.map((acceso) => {
+      const enCurso = !acceso.fechaSalida;
+      return (
+        <tr key={acceso.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
+          {/* Columna Estacionamiento */}
+          <td style={{ padding: "0.9rem 1rem", fontWeight: 700, color: VERDE_OSCURO, textAlign: "center", fontSize: "0.95rem" }}>
+            {acceso.estacionamiento || "—"}
+          </td>
+          {/* Columna Placa */}
+          <td style={{ padding: "0.9rem 1rem", fontFamily: "monospace", fontWeight: 700, letterSpacing: "1px", color: "#334155", textAlign: "center" }}>
+            {acceso.placa}
+          </td>
+          {/* Columna Ocupante */}
+          <td style={{ padding: "0.9rem 1rem", color: TEXTO_SUAVE, fontSize: "0.9rem", textAlign: "center" }}>
+            <div style={{ display: "inline-flex", flexDirection: "column", alignItems: "center", gap: "0.15rem" }}>
+              <span style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", fontWeight: 600, color: TEXTO }}>
+                <FiUser size={14} color="#94a3b8" />
+                {acceso.ocupante}
+              </span>
+              {acceso.datosInquilino && (
+                <span style={{ fontSize: "0.78rem", color: "#94a3b8" }}>{acceso.datosInquilino}</span>
+              )}
+            </div>
+          </td>
+          {/* Columna Método */}
+          <td style={{ padding: "0.9rem 1rem", textAlign: "center" }}>
+            <span style={{ padding: "0.32rem 0.75rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 700, backgroundColor: "#e0e7ff", color: "#3730a3" }}>
+              {acceso.metodo}
+            </span>
+          </td>
+          {/* Columna Entrada */}
+          <td style={{ padding: "0.9rem 1rem", fontSize: "0.85rem", color: TEXTO, textAlign: "center" }}>
+            {formatFecha(acceso.fechaEntrada)}
+          </td>
+          {/* Columna Salida */}
+          <td style={{ padding: "0.9rem 1rem", fontSize: "0.85rem", color: TEXTO, textAlign: "center" }}>
+            {formatFecha(acceso.fechaSalida)}
+          </td>
+          {/* Columna Estado */}
+          <td style={{ padding: "0.9rem 1rem", textAlign: "center" }}>
+            <span style={{ padding: "0.32rem 0.75rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 700, backgroundColor: enCurso ? "#dcfce7" : "#fee2e2", color: enCurso ? "#166534" : "#991b1b", display: "inline-flex", alignItems: "center", gap: "0.35rem" }}>
+              {enCurso ? <FiLogIn size={12} /> : <FiLogOut size={12} />}
+              {enCurso ? "En el condominio" : "Salió"}
+            </span>
+          </td>
+        </tr>
+      );
+    })}
+  </tbody>
+</table>
           </div>
         )}
       </div>

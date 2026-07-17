@@ -1,11 +1,12 @@
 // src/pages/propietario/MiApartamento.jsx
 
-import { useEffect, useState } from "react";
-import { Building2, Car, Users, CheckCircle, XCircle, Maximize2 } from "lucide-react";
-import { getHomeownerApartment } from "../../services/api";
+import { useEffect, useState, useCallback } from "react";
+import { Building2, Car, Users, CheckCircle, XCircle, Maximize2, ParkingSquare, RefreshCw } from "lucide-react";
+import { getHomeownerApartment, getHomeownerParkingSpots, getHomeownerVehicles } from "../../services/api";
 import { colors, radius, shadow, transition } from "../../theme/colors";
 import InfoCard from "../../components/common/InfoCard";
 import SectionHeader from "../../components/common/SectionHeader";
+import ActionButton from "../../components/common/ActionButton";
 import Loading from "../../components/common/Loading";
 import EmptyState from "../../components/common/EmptyState";
 
@@ -15,6 +16,8 @@ const PAGE = {
   margin: "0 auto",
   fontFamily: "system-ui, sans-serif",
 };
+
+// ─── Sub-componentes ──────────────────────────────────────────────────────────
 
 function DetailRow({ label, value, icon: Icon }) {
   return (
@@ -37,8 +40,11 @@ function DetailRow({ label, value, icon: Icon }) {
   );
 }
 
-function VehicleCard({ v }) {
+function VehicleCard({ v, spots }) {
   const [hovered, setHovered] = useState(false);
+  // Cruzar idEstacionamiento con spots para mostrar número visual
+  const spot = spots.find((s) => s.id === v.idEstacionamiento);
+
   return (
     <div
       onMouseEnter={() => setHovered(true)}
@@ -90,7 +96,7 @@ function VehicleCard({ v }) {
             whiteSpace: "nowrap",
           }}
         >
-          Est. #{v.idEstacionamiento}
+          Est. #{spot?.numero ?? v.idEstacionamiento}
         </span>
       )}
     </div>
@@ -147,16 +153,128 @@ function TenantCard({ t }) {
   );
 }
 
+function ParkingCard({ spot }) {
+  const [hovered, setHovered] = useState(false);
+  const lleno = spot.cantidadActual >= spot.capacidadMaxima;
+  const ocupacionPct = spot.capacidadMaxima > 0
+    ? Math.round((spot.cantidadActual / spot.capacidadMaxima) * 100)
+    : 0;
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: colors.white,
+        borderRadius: radius.md,
+        padding: "18px 20px",
+        border: `1px solid ${hovered ? colors.orangeBorder : colors.border}`,
+        boxShadow: hovered ? shadow.md : shadow.sm,
+        transform: hovered ? "translateY(-2px)" : "none",
+        transition,
+        display: "flex",
+        alignItems: "center",
+        gap: "16px",
+      }}
+    >
+      <div
+        style={{
+          width: "42px",
+          height: "42px",
+          borderRadius: radius.sm,
+          background: lleno ? colors.redLight : colors.greenLight,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          flexShrink: 0,
+        }}
+      >
+        <ParkingSquare size={20} color={lleno ? colors.red : colors.green} />
+      </div>
+
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <p style={{ margin: 0, fontWeight: 600, color: colors.slate, fontSize: "14px" }}>
+          Estacionamiento #{spot.numero}
+        </p>
+        <p style={{ margin: "2px 0 0", fontSize: "12px", color: colors.slateLight }}>
+          {spot.tipoVehiculo} · {spot.cantidadActual}/{spot.capacidadMaxima} ocupado{spot.cantidadActual !== 1 ? "s" : ""}
+        </p>
+        <div
+          style={{
+            marginTop: "8px",
+            height: "4px",
+            borderRadius: "2px",
+            background: colors.border,
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              height: "100%",
+              width: `${ocupacionPct}%`,
+              borderRadius: "2px",
+              background: lleno ? colors.red : ocupacionPct > 60 ? colors.orange : colors.green,
+              transition,
+            }}
+          />
+        </div>
+      </div>
+
+      <span
+        style={{
+          fontSize: "11px",
+          fontWeight: 600,
+          padding: "3px 8px",
+          borderRadius: radius.xl,
+          background: lleno ? colors.redLight : colors.greenLight,
+          color: lleno ? colors.red : colors.green,
+          whiteSpace: "nowrap",
+          flexShrink: 0,
+        }}
+      >
+        {lleno ? "Lleno" : "Disponible"}
+      </span>
+    </div>
+  );
+}
+
+// ─── Vista principal ──────────────────────────────────────────────────────────
+
 export default function MiApartamento() {
-  const [apt, setApt] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [apt,        setApt]        = useState(null);
+  const [spots,      setSpots]      = useState([]);
+  const [vehicles,   setVehicles]   = useState([]);
+  const [loading,    setLoading]    = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchAll = useCallback((isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+
+    Promise.all([
+      getHomeownerApartment(),
+      getHomeownerParkingSpots().catch(() => []),
+      getHomeownerVehicles().catch(() => []),
+    ])
+      .then(([aptData, spotsData, vehiclesData]) => {
+        setApt(aptData);
+        setSpots(Array.isArray(spotsData) ? spotsData : []);
+        setVehicles(Array.isArray(vehiclesData) ? vehiclesData : []);
+      })
+      .catch(console.error)
+      .finally(() => {
+        setLoading(false);
+        setRefreshing(false);
+      });
+  }, []);
+
+  useEffect(() => { fetchAll(); }, [fetchAll]);
 
   useEffect(() => {
-    getHomeownerApartment()
-      .then(setApt)
-      .catch(console.error)
-      .finally(() => setLoading(false));
-  }, []);
+    const handleFocus = () => fetchAll(true);
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [fetchAll]);
 
   if (loading) {
     return (
@@ -181,6 +299,16 @@ export default function MiApartamento() {
       <SectionHeader
         title="Mi Apartamento"
         subtitle={`${apt.torreNombre} · Piso ${apt.pisoNumero} · Apto ${apt.numero}`}
+        action={
+          <ActionButton
+            variant="secondary"
+            icon={RefreshCw}
+            onClick={() => fetchAll(true)}
+            disabled={refreshing}
+          >
+            {refreshing ? "Actualizando..." : "Actualizar"}
+          </ActionButton>
+        }
       />
 
       <div
@@ -191,12 +319,13 @@ export default function MiApartamento() {
           marginBottom: "24px",
         }}
       >
+        {/* Columna izquierda */}
         <InfoCard title="Datos del apartamento">
-          <DetailRow label="Número" value={apt.numero} icon={Building2} />
-          <DetailRow label="Torre" value={apt.torreNombre} icon={Building2} />
-          <DetailRow label="Piso" value={apt.pisoNumero} icon={Building2} />
+          <DetailRow label="Número"  value={apt.numero}          icon={Building2} />
+          <DetailRow label="Torre"   value={apt.torreNombre}     icon={Building2} />
+          <DetailRow label="Piso"    value={apt.pisoNumero}      icon={Building2} />
           <DetailRow label="Metraje" value={`${apt.metraje} m²`} icon={Maximize2} />
-          <DetailRow label="Total vehículos" value={apt.totalVehiculos} icon={Car} />
+          <DetailRow label="Total vehículos"  value={vehicles.length}     icon={Car}   />
           <DetailRow label="Total inquilinos" value={apt.totalInquilinos} icon={Users} />
           <div
             style={{
@@ -224,14 +353,29 @@ export default function MiApartamento() {
           </div>
         </InfoCard>
 
+        {/* Columna derecha */}
         <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-          <InfoCard title={`Vehículos (${apt.vehiculos?.length ?? 0})`}>
-            {apt.vehiculos?.length === 0 ? (
+
+          {spots.length > 0 && (
+            <InfoCard title={`Estacionamientos (${spots.length})`}>
+              <p style={{ margin: "0 0 12px", fontSize: "12px", color: colors.slateLighter }}>
+                La ocupación la gestiona el módulo de seguridad al registrar ingresos y salidas.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {spots.map((spot) => (
+                  <ParkingCard key={spot.id} spot={spot} />
+                ))}
+              </div>
+            </InfoCard>
+          )}
+
+          <InfoCard title={`Vehículos (${vehicles.length})`}>
+            {vehicles.length === 0 ? (
               <EmptyState icon={Car} title="Sin vehículos registrados" />
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                {apt.vehiculos.map((v) => (
-                  <VehicleCard key={v.id} v={v} />
+                {vehicles.map((v) => (
+                  <VehicleCard key={v.id} v={v} spots={spots} />
                 ))}
               </div>
             )}
@@ -248,6 +392,7 @@ export default function MiApartamento() {
               </div>
             )}
           </InfoCard>
+
         </div>
       </div>
     </div>

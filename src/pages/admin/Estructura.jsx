@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, useMemo } from 'react'
 import { FiGitCommit, FiTrash2, FiFolder, FiX, FiInfo, FiPlus, FiLoader, FiAlertCircle } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import { useAdminStructure } from '../../hooks/Admin/useAdminStructure'
 
 export default function Estructura() {
   const colorAdmin = "rgb(52,151,195)"
-  const { estructura, loading, insertarNodo, eliminarNodo, agregarDepartamento, refrescar, error } = useAdminStructure()
+  const { estructura, loading, insertarNodo, eliminarNodo, agregarDepartamento, } = useAdminStructure()
 
   const [showModal, setShowModal] = useState(false)
   const [showApartmentModal, setShowApartmentModal] = useState(false)
@@ -26,14 +26,16 @@ export default function Estructura() {
       : (estructura?.torres || [])
 
   // Obtener todos los pisos disponibles
-  const todosLosPisos = listaTorres.flatMap(torre =>
-      (torre.pisos || []).map(piso => ({
-        ...piso,
-        torreNombre: torre.nombre,
-        torreId: torre.id,
-        apartamentos: piso.apartamentos || []
-      }))
-  )
+  const todosLosPisos = useMemo(() => {
+    return listaTorres.flatMap(torre =>
+        (torre.pisos || []).map(piso => ({
+          ...piso,
+          torreNombre: torre.nombre,
+          torreId: torre.id,
+          apartamentos: piso.apartamentos || []
+        }))
+    );
+  }, [listaTorres]);
 
   // Actualizar departamentos existentes cuando cambia el piso seleccionado
   useEffect(() => {
@@ -46,13 +48,6 @@ export default function Estructura() {
       setDepartamentosExistentes([]);
     }
   }, [nuevoDepartamento.idPiso, todosLosPisos]);
-
-  // Forzar recarga cuando se abre el modal
-  useEffect(() => {
-    if (showApartmentModal) {
-      refrescar();
-    }
-  }, [showApartmentModal, refrescar])
 
   const handleAddNode = async (e) => {
     e.preventDefault()
@@ -128,11 +123,15 @@ export default function Estructura() {
     }
 
     try {
-      console.log('Creando departamento:', nuevoDepartamento);
+      // Encontrar el piso seleccionado
+      const pisoSeleccionado = todosLosPisos.find(p => p.id === parseInt(nuevoDepartamento.idPiso));
 
-      await new Promise(resolve => setTimeout(resolve, 200));
+      if (!pisoSeleccionado) {
+        throw new Error('Piso no encontrado');
+      }
 
-      await agregarDepartamento(nuevoDepartamento)
+      // Llamada SIMPLIFICADA al hook - pasamos los datos y el piso encontrado
+      await agregarDepartamento(nuevoDepartamento, pisoSeleccionado);
 
       setSuccessMessage(`Departamento ${nuevoDepartamento.numero} creado exitosamente`)
       setShowApartmentModal(false)
@@ -147,16 +146,7 @@ export default function Estructura() {
 
     } catch (error) {
       console.error("Error al agregar departamento:", error)
-
-      if (error.message.includes('duplicate') || error.message.includes('unique')) {
-        setErrorMessage(`El número de departamento ${nuevoDepartamento.numero} ya existe en este piso.`)
-      } else if (error.message.includes('Piso no encontrado')) {
-        setErrorMessage('El piso seleccionado no existe. Por favor recarga la página.')
-      } else if (error.message.includes('ya existe')) {
-        setErrorMessage(error.message)
-      } else {
-        setErrorMessage(`${error.message || 'Error al crear el departamento. Verifica los datos.'}`)
-      }
+      setErrorMessage(error.message || 'Error al crear el departamento. Verifica los datos.')
     } finally {
       setIsSubmitting(false)
     }
@@ -199,7 +189,7 @@ export default function Estructura() {
   }
 
   return (
-      <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
+      <div className="estructura-container" style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
 
         {/* Mensajes de éxito/error */}
         {successMessage && (
@@ -252,7 +242,7 @@ export default function Estructura() {
         ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem", width: "100%" }}>
               {listaTorres.map((torre) => (
-                  <div key={torre.id} style={{ backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "1rem", padding: "1.5rem", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.01)" }}>
+                  <div key={torre.id} className="torre-card" style={{ backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "1rem", padding: "1.5rem", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.01)" }}>
 
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: "1rem", marginBottom: "1rem" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -274,7 +264,7 @@ export default function Estructura() {
 
                     <div style={{ display: "flex", flexDirection: "column", gap: "1rem", paddingLeft: "1.25rem", borderLeft: "2px dashed #cbd5e1" }}>
                       {torre.pisos?.map((piso) => (
-                          <div key={piso.id} style={{ backgroundColor: "#f8fafc", padding: "1rem", borderRadius: "0.75rem", border: "1px solid #e2e8f0" }}>
+                          <div key={piso.id} className="piso-card" style={{ backgroundColor: "#f8fafc", padding: "1rem", borderRadius: "0.75rem", border: "1px solid #e2e8f0" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
                               <div style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontWeight: "700", color: "#334155", fontSize: "0.9rem" }}>
                                 <FiGitCommit style={{ color: "#94a3b8" }} />
@@ -284,12 +274,14 @@ export default function Estructura() {
                         </span>
                               </div>
 
+
                               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                                 <button
                                     onClick={() => {
                                       setNuevoDepartamento({ ...nuevoDepartamento, idPiso: piso.id });
                                       setShowApartmentModal(true);
                                     }}
+                                    className="btn-agregar-dpto"
                                     style={{
                                       backgroundColor: colorAdmin,
                                       color: "white",
@@ -299,7 +291,9 @@ export default function Estructura() {
                                       cursor: "pointer",
                                       display: "flex",
                                       alignItems: "center",
-                                      gap: "5px"
+                                      gap: "5px",
+                                      fontSize: "0.75rem",
+                                      whiteSpace: "nowrap"
                                     }}
                                 >
                                   <FiPlus size={14} />
@@ -317,7 +311,7 @@ export default function Estructura() {
                               </div>
                             </div>
 
-                            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", paddingLeft: "1rem" }}>
+                            <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", paddingLeft: "0.5rem" }}>
                               {piso.apartamentos && piso.apartamentos.length > 0 ? (
                                   piso.apartamentos.map((dpto, idx) => (
                                       <span key={dpto.id || idx} style={{
@@ -365,8 +359,8 @@ export default function Estructura() {
 
         {/* Modal para Torres/Pisos */}
         {showModal && (
-            <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" }}>
-              <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "420px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.08)", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+            <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)", padding: "1rem" }}>
+              <div className="modal-content" style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "420px", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.08)", border: "1px solid #e2e8f0", overflow: "hidden" }}>
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: "800", color: "#1e293b" }}>Agregar Nuevo Nodo Estructural</h3>
                   <button
@@ -467,8 +461,8 @@ export default function Estructura() {
 
         {/* Modal para Departamentos */}
         {showApartmentModal && (
-            <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" }}>
-              <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "480px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.08)", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+            <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)", padding: "1rem" }}>
+              <div className="modal-content" style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "480px", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.08)", border: "1px solid #e2e8f0", overflow: "hidden" }}>
 
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: "800", color: "#1e293b" }}>
@@ -632,7 +626,39 @@ export default function Estructura() {
         .spinner {
           animation: spin 1s linear infinite;
         }
-      `}</style>
+        
+        @media (max-width: 768px) {
+    .estructura-container {
+      padding: 1rem !important;
+    }
+    .torre-card {
+      padding: 1rem !important;
+    }
+    .piso-card {
+      padding: 0.75rem !important;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .estructura-container {
+      padding: 0.75rem !important;
+    }
+    .modal-content {
+      max-width: 95% !important;
+      margin: 0 0.5rem !important;
+    }
+    .torre-card {
+      padding: 0.75rem !important;
+    }
+    .piso-card {
+      padding: 0.5rem !important;
+    }
+    .btn-agregar-dpto {
+      font-size: 0.7rem !important;
+      padding: 0.3rem 0.6rem !important;
+    }
+  }
+`}</style>
       </div>
   )
 }
