@@ -1,223 +1,186 @@
-import { useState, useEffect } from "react";
-import { FiActivity, FiFilter, FiLogIn, FiLogOut, FiCalendar, FiSearch, FiUser } from "react-icons/fi";
-import { getSecurityDashboardStatus } from "../../services/api";
+import { useState, useEffect, useCallback } from 'react'
+import { FiActivity, FiFilter, FiSearch, FiCalendar, FiRefreshCw, FiX, FiLogIn, FiUser, FiCheck, FiAlertCircle } from "react-icons/fi"
+import EncabezadoTabla from '../../components/EncabezadoTabla'
+import { getDashboardStatus } from '../../services/SeguridadApi'
 
-function formatFecha(str) {
-  if (!str) return "—";
-  try {
-    return new Date(str).toLocaleString("es-PE", {
-      day: "2-digit",
-      month: "2-digit",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
-    });
-  } catch {
-    return str;
-  }
+// ==================== CONSTANTES ====================
+const VERDE = "#10b981"
+const VERDE_CLARO = "rgba(16,185,129,0.12)"
+const ROJO = "#ef4444"
+const AMARILLO = "#f59e0b"
+const TEXTO = "#0f172a"
+const TEXTO_SUAVE = "#475569"
+const TEXTO_LIGHT = "#94a3b8"
+const FONDO = "#f8fafc"
+const BORDE = "#e2e8f0"
+
+const styles = {
+  container: { padding: "2rem", backgroundColor: FONDO, minHeight: "100vh", width: "100%", boxSizing: "border-box" },
+  card: { backgroundColor: "#fff", borderRadius: "1rem", border: `1px solid ${BORDE}`, overflow: "hidden", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" },
+  input: { width: "100%", padding: "0.65rem 0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", color: TEXTO, backgroundColor: "#fff", boxSizing: "border-box", outline: "none" },
+  label: { display: "block", fontSize: "0.7rem", fontWeight: "700", color: TEXTO_SUAVE, marginBottom: "0.35rem", textTransform: "uppercase", letterSpacing: "0.04em" },
+  select: { width: "100%", padding: "0.65rem 0.75rem", borderRadius: "0.5rem", border: "1px solid #cbd5e1", fontSize: "0.9rem", color: TEXTO, backgroundColor: "#fff", outline: "none" },
+  badge: (bg, color) => ({ fontSize: "0.7rem", fontWeight: "700", padding: "0.22rem 0.55rem", borderRadius: "0.35rem", display: "inline-flex", alignItems: "center", gap: "0.25rem", backgroundColor: bg, color }),
+  btnOutline: { backgroundColor: "#fff", color: TEXTO_SUAVE, border: `1px solid #cbd5e1`, padding: "0.45rem 1rem", borderRadius: "0.5rem", fontSize: "0.8rem", fontWeight: "600", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.35rem", transition: "all 0.2s" },
+}
+
+const thStyle = { padding: "0.55rem 0.75rem", textAlign: "left", fontWeight: 700, color: TEXTO_SUAVE, fontSize: "0.65rem", textTransform: "uppercase", whiteSpace: "nowrap" }
+const tdStyle = { padding: "0.55rem 0.75rem", color: TEXTO, whiteSpace: "nowrap" }
+
+const fmtDate = (iso) => {
+  if (!iso) return '—'
+  try { const d = new Date(iso); return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}` } catch { return iso }
 }
 
 export default function Movimientos() {
-  const [movimientos, setMovimientos] = useState([]);
-  const [stats, setStats] = useState({ totalEstacionamientos: 0, estacionamientosOcupados: 0, prestamosActivos: 0 });
-  const [filtroTipo, setFiltroTipo] = useState("TODOS");
-  const [filtroDesc, setFiltroDesc] = useState("");
-  const [filtroFecha, setFiltroFecha] = useState("");
-  const [loading, setLoading] = useState(true);
+  const [toast, setToast] = useState(null)
+  const showToast = (msg, type = 'success') => { setToast({ msg, type }); setTimeout(() => setToast(null), 3500) }
+  const [loading, setLoading] = useState(true)
+  const [dashboard, setDashboard] = useState(null)
+  const [filtroTipo, setFiltroTipo] = useState("TODOS")
+  const [filtroDesc, setFiltroDesc] = useState("")
+  const [filtroFecha, setFiltroFecha] = useState("")
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setLoading(true);
-      try {
-        const data = await getSecurityDashboardStatus();
-        setMovimientos(data.movimientosRecientes || []);
-        setStats({
-          totalEstacionamientos: data.totalEstacionamientos,
-          estacionamientosOcupados: data.estacionamientosOcupados,
-          prestamosActivos: data.prestamosActivos,
-        });
-      } catch {
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchData();
-  }, []);
+  const loadData = useCallback(async () => {
+    setLoading(true)
+    try {
+      const d = await getDashboardStatus()
+      setDashboard(d)
+    } catch { showToast("Error al cargar movimientos", "error") }
+    finally { setLoading(false) }
+  }, [])
 
-  const movimientosFiltrados = movimientos.filter((m) => {
-    const coincideTipo = filtroTipo === "TODOS" || m.tipo?.toUpperCase() === filtroTipo;
-    const coincideDesc = !filtroDesc || m.descripcion?.toLowerCase().includes(filtroDesc.toLowerCase());
-    const coincideFecha = !filtroFecha || (m.fecha && m.fecha.startsWith(filtroFecha));
-    return coincideTipo && coincideDesc && coincideFecha;
-  });
+  useEffect(() => { loadData() }, [loadData])
 
-  const estiloTh = {
-    padding: "0.85rem 1rem",
-    textAlign: "center",
-    fontSize: "0.72rem",
-    fontWeight: 700,
-    color: "#94a3b8",
-    textTransform: "uppercase",
-    letterSpacing: "0.06em",
-  };
+  const movimientos = dashboard?.movimientosRecientes || []
 
-  const estiloTd = {
-    padding: "0.85rem 1rem",
-    color: "#64748b",
-    fontSize: "0.9rem",
-    textAlign: "center",
-    verticalAlign: "middle",
-  };
+  const filtrados = movimientos.filter(m => {
+    if (filtroTipo !== "TODOS" && m.tipo?.toUpperCase() !== filtroTipo) return false
+    if (filtroDesc && !m.descripcion?.toLowerCase().includes(filtroDesc.toLowerCase())) return false
+    if (filtroFecha && !m.fecha?.startsWith(filtroFecha)) return false
+    return true
+  })
 
-  const estiloLabel = {
-    display: "block",
-    fontSize: "0.72rem",
-    fontWeight: 700,
-    color: "#94a3b8",
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
-    marginBottom: "0.4rem",
-  };
-
-  const estiloInput = {
-    width: "100%",
-    padding: "0.65rem 0.75rem",
-    borderRadius: "8px",
-    border: "1px solid #e2e8f0",
-    fontSize: "0.9rem",
-    outline: "none",
-    background: "#f8fafc",
-    color: "#1e293b",
-    boxSizing: "border-box",
-  };
-
-  const statCard = (label, value, color = "#1e293b") => (
-    <div style={{ background: "#fff", borderRadius: "12px", padding: "1.5rem", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", textAlign: "center" }}>
-      <p style={{ fontSize: "0.72rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.5rem", margin: "0 0 0.5rem" }}>{label}</p>
-      <p style={{ fontSize: "1.8rem", fontWeight: 800, color, margin: 0 }}>{value}</p>
-    </div>
-  );
+  const hayFiltros = filtroTipo !== "TODOS" || filtroDesc || filtroFecha
 
   return (
-    <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", boxSizing: "border-box" }}>
-      <div style={{ marginBottom: "2rem" }}>
-        <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>Movimientos</h1>
-        <p style={{ color: "#64748b", marginTop: "0.25rem", fontSize: "0.95rem" }}>Historial de actividad reciente del condominio</p>
-      </div>
+    <div style={styles.container}>
+      <style>{`
+        @keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: slideIn 0.3s ease both; }
+      `}</style>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
-        {statCard("Estacionamientos", stats.totalEstacionamientos)}
-        {statCard("Ocupados", stats.estacionamientosOcupados, "#ef4444")}
-        {statCard("Préstamos Activos", stats.prestamosActivos, "#10b981")}
-      </div>
+      {/* TOAST */}
+      {toast && (
+        <div style={{
+          position: "fixed", top: "1.5rem", right: "1.5rem", zIndex: 1300,
+          backgroundColor: toast.type === 'error' ? ROJO : VERDE,
+          color: "#fff", padding: "0.85rem 1.25rem", borderRadius: "0.75rem",
+          fontWeight: 700, fontSize: "0.85rem", display: "flex", alignItems: "center",
+          gap: "0.6rem", boxShadow: "0 10px 25px -5px rgba(0,0,0,0.2)",
+          animation: "slideIn 0.3s ease",
+        }}>
+          {toast.type === 'error' ? <FiAlertCircle size={18} /> : <FiCheck size={18} />}
+          {toast.msg}
+        </div>
+      )}
 
-      <div style={{ background: "#fff", borderRadius: "16px", padding: "1.5rem", boxShadow: "0 2px 12px rgba(0,0,0,0.06)", marginBottom: "2rem" }}>
-        <h5 style={{ fontWeight: 700, color: "#1e293b", margin: "0 0 1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <FiFilter size={18} color="#64748b" />
-          Filtros
-        </h5>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "1rem" }}>
-          <div>
-            <label style={estiloLabel}>Tipo</label>
-            <select style={estiloInput} value={filtroTipo} onChange={(e) => setFiltroTipo(e.target.value)}>
-              <option value="TODOS">Todos</option>
-              <option value="ENTRADA">Entrada</option>
-              <option value="SALIDA">Salida</option>
-              <option value="PRESTAMO">Préstamo</option>
-              <option value="DEVOLUCION">Devolución</option>
-            </select>
-          </div>
-          <div>
-            <label style={estiloLabel}>Descripción</label>
-            <div style={{ position: "relative" }}>
-              <FiSearch size={14} color="#94a3b8" style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)" }} />
-              <input
-                type="text"
-                placeholder="Buscar..."
-                value={filtroDesc}
-                onChange={(e) => setFiltroDesc(e.target.value)}
-                style={{ ...estiloInput, paddingLeft: "2rem" }}
-              />
+      <EncabezadoTabla
+        titulo="Movimientos"
+        subtitulo={`${movimientos.length} registros de acceso vehicular`}
+        action={
+          <button onClick={loadData} disabled={loading}
+            style={{ ...styles.btnOutline, padding: "0.5rem 1rem", opacity: loading ? 0.6 : 1 }}
+            onMouseEnter={e => e.currentTarget.style.backgroundColor = "#f1f5f9"}
+            onMouseLeave={e => e.currentTarget.style.backgroundColor = "#fff"}>
+            <FiRefreshCw size={14} /> {loading ? "..." : "Actualizar"}
+          </button>
+        }
+      />
+
+      <div className="fade-in">
+        {/* Filtros */}
+        <div style={{ ...styles.card, marginBottom: "1rem" }}>
+          <div style={{ padding: "0.85rem 1.25rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.85rem", flexWrap: "wrap" }}>
+              <span style={{ fontWeight: 700, fontSize: "0.85rem", color: TEXTO, display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                <FiFilter size={14} color={TEXTO_LIGHT} /> Filtros
+              </span>
+              {hayFiltros && (
+                <button onClick={() => { setFiltroTipo("TODOS"); setFiltroDesc(""); setFiltroFecha("") }}
+                  style={{ ...styles.btnOutline, padding: "0.25rem 0.75rem", fontSize: "0.7rem" }}>
+                  <FiX size={12} /> Limpiar
+                </button>
+              )}
             </div>
-          </div>
-          <div>
-            <label style={estiloLabel}>Fecha</label>
-            <div style={{ position: "relative" }}>
-              <FiCalendar size={14} color="#94a3b8" style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)" }} />
-              <input
-                type="date"
-                value={filtroFecha}
-                onChange={(e) => setFiltroFecha(e.target.value)}
-                style={{ ...estiloInput, paddingLeft: "2rem" }}
-              />
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "0.85rem" }}>
+              <div>
+                <label style={styles.label}>Tipo</label>
+                <select value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)} style={styles.select}>
+                  <option value="TODOS">Todos</option>
+                  <option value="VEHICULAR">Vehicular</option>
+                </select>
+              </div>
+              <div>
+                <label style={styles.label}>Descripción</label>
+                <div style={{ position: "relative" }}>
+                  <FiSearch size={12} color={TEXTO_LIGHT} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)" }} />
+                  <input type="text" placeholder="Buscar..." value={filtroDesc} onChange={e => setFiltroDesc(e.target.value)}
+                    style={{ ...styles.input, paddingLeft: "2rem" }} />
+                </div>
+              </div>
+              <div>
+                <label style={styles.label}>Fecha</label>
+                <div style={{ position: "relative" }}>
+                  <FiCalendar size={12} color={TEXTO_LIGHT} style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)" }} />
+                  <input type="date" value={filtroFecha} onChange={e => setFiltroFecha(e.target.value)}
+                    style={{ ...styles.input, paddingLeft: "2rem" }} />
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div style={{ background: "#fff", borderRadius: "16px", padding: "2rem", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
-          <h5 style={{ fontWeight: 700, color: "#1e293b", margin: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
-            <FiActivity size={20} color="#64748b" />
-            Registro de Movimientos
-          </h5>
-          <span style={{ padding: "0.35rem 0.75rem", backgroundColor: "#f1f5f9", borderRadius: "20px", fontSize: "0.85rem", fontWeight: 600, color: "#64748b" }}>
-            {movimientosFiltrados.length} registros
-          </span>
-        </div>
-
-        {loading ? (
-          <div style={{ textAlign: "center", padding: "3rem 2rem", color: "#94a3b8" }}>
-            <FiActivity size={36} style={{ marginBottom: "1rem", opacity: 0.35, display: "block", margin: "0 auto 1rem" }} />
-            <p style={{ fontWeight: 600, margin: 0 }}>Cargando movimientos...</p>
+        {/* Tabla de movimientos */}
+        <div style={{ ...styles.card }}>
+          <div style={{ padding: "0.85rem 1.25rem", borderBottom: `1px solid ${BORDE}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontWeight: 700, fontSize: "0.85rem", color: TEXTO, display: "flex", alignItems: "center", gap: "0.4rem" }}>
+              <FiActivity size={14} color={TEXTO_LIGHT} /> Registro de Movimientos
+            </span>
+            <span style={{ fontSize: "0.7rem", color: TEXTO_LIGHT, fontWeight: 600 }}>{filtrados.length} registros</span>
           </div>
-        ) : movimientosFiltrados.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "3rem 2rem", color: "#94a3b8" }}>
-            <FiActivity size={40} style={{ display: "block", margin: "0 auto 1rem", opacity: 0.35 }} />
-            <p style={{ fontSize: "1rem", fontWeight: 600, margin: "0 0 0.25rem" }}>Sin movimientos registrados</p>
-            <p style={{ fontSize: "0.85rem", margin: 0 }}>Los registros aparecerán aquí</p>
-          </div>
-        ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ backgroundColor: "#f8fafc" }}>
-                  {["ID", "Tipo", "Descripción", "Fecha"].map((h) => (
-                    <th key={h} style={estiloTh}>{h}</th>
+          {filtrados.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "2.5rem", color: TEXTO_LIGHT }}>
+              <FiActivity size={32} style={{ opacity: 0.3, marginBottom: "0.5rem" }} />
+              <p style={{ fontWeight: 600, fontSize: "0.9rem", margin: 0 }}>
+                {hayFiltros ? "Sin resultados con los filtros aplicados" : "Sin movimientos registrados"}
+              </p>
+            </div>
+          ) : (
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead><tr style={{ backgroundColor: FONDO }}>
+                  {["ID", "Tipo", "Descripción", "Fecha"].map(h => <th key={h} style={thStyle}>{h}</th>)}
+                </tr></thead>
+                <tbody>
+                  {filtrados.map(m => (
+                    <tr key={m.id} style={{ borderBottom: `1px solid #f1f5f9` }}>
+                      <td style={{ ...tdStyle, fontWeight: 700, fontFamily: "monospace" }}>#{m.id}</td>
+                      <td style={tdStyle}>
+                        <span style={{ ...styles.badge(VERDE_CLARO, "#166534") }}>
+                          <FiLogIn size={10} style={{ marginRight: 3 }} /> {m.tipo}
+                        </span>
+                      </td>
+                      <td style={tdStyle}><FiUser size={12} style={{ marginRight: 4, color: TEXTO_LIGHT }} />{m.descripcion}</td>
+                      <td style={{ ...tdStyle, fontSize: "0.8rem", color: TEXTO_LIGHT }}>{fmtDate(m.fecha)}</td>
+                    </tr>
                   ))}
-                </tr>
-              </thead>
-              <tbody>
-                {movimientosFiltrados.map((m) => (
-                  <tr key={m.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                    <td style={{ ...estiloTd, fontWeight: 700, color: "#1e293b", fontFamily: "monospace" }}>#{m.id}</td>
-                    <td style={estiloTd}>
-                      <span style={{
-                        padding: "0.3rem 0.7rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 700,
-                        backgroundColor: m.tipo?.toUpperCase() === "ENTRADA" ? "#dcfce7" : m.tipo?.toUpperCase() === "SALIDA" ? "#fee2e2" : "#dbeafe",
-                        color: m.tipo?.toUpperCase() === "ENTRADA" ? "#166534" : m.tipo?.toUpperCase() === "SALIDA" ? "#991b1b" : "#1e40af",
-                        display: "inline-flex", alignItems: "center", gap: "0.3rem",
-                      }}>
-                        {m.tipo?.toUpperCase() === "ENTRADA" ? <FiLogIn size={11} /> : m.tipo?.toUpperCase() === "SALIDA" ? <FiLogOut size={11} /> : <FiActivity size={11} />}
-                        {m.tipo}
-                      </span>
-                    </td>
-                    <td style={estiloTd}>
-                      <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
-                        <FiUser size={14} color="#94a3b8" />
-                        {m.descripcion}
-                      </div>
-                    </td>
-                    <td style={estiloTd}>{formatFecha(m.fecha)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
-  );
+  )
 }

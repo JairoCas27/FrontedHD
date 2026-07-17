@@ -45,9 +45,10 @@ import GlobalBienes from "./pages/superadmin/GlobalBienes"
 
 import GlobalConfiguracion from "./pages/superadmin/GlobalConfiguracion"
 
-import AccesosSeguridad from "./pages/seguridad/AccesosSeguridad"
-import VisitasSeguridad from "./pages/seguridad/VisitasSeguridad"
-import VehiculosSeguridad from "./pages/seguridad/VehiculosSeguridad"
+import DashboardSeguridad from "./pages/seguridad/DashboardSeguridad"
+import Accesos from "./pages/seguridad/Accesos"
+import MapaParqueo from "./pages/seguridad/MapaParqueo"
+import Prestamos from "./pages/seguridad/Prestamos"
 import Movimientos from "./pages/seguridad/Movimientos"
 import PerfilSeguridad from "./pages/seguridad/PerfilSeguridad"
 
@@ -108,11 +109,12 @@ function App() {
         </Route>
 
         <Route element={<AppLayout Sidebar={SidebarSeguridad} allowedRole="seguridad" />}>
-          <Route path="/seguridad/accesos" element={<AccesosSeguridad />} />
-          <Route path="/seguridad/visitas" element={<VisitasSeguridad />} />
-          <Route path="/seguridad/vehiculos" element={<VehiculosSeguridad />} />
-          <Route path="/seguridad/movimientos" element={<Movimientos />} />
           <Route path="/seguridad/perfil" element={<PerfilSeguridad />} />
+          <Route path="/seguridad/dashboard" element={<DashboardSeguridad />} />
+          <Route path="/seguridad/accesos" element={<Accesos />} />
+          <Route path="/seguridad/mapa-parqueo" element={<MapaParqueo />} />
+          <Route path="/seguridad/prestamos" element={<Prestamos />} />
+          <Route path="/seguridad/movimientos" element={<Movimientos />} />
         </Route>
 
         <Route element={<AppLayout Sidebar={SidebarPropietario} allowedRole="propietario" />}>

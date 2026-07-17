@@ -1,365 +1,580 @@
-import { useState, useEffect } from "react";
-import { FiUser, FiMail, FiShield, FiSave, FiLock, FiKey, FiX, FiEye, FiEyeOff, FiHash, FiCheckCircle, FiActivity } from "react-icons/fi";
-import { toast } from "react-toastify";
-import { getCurrentUser, changePassword } from "../../services/api";
+import { useState, useEffect } from 'react';
+import { getProfile, updateProfile, changePassword } from '../../services/api';
+import { toast } from 'react-toastify';
+import {
+  FiUser, FiMail, FiPhone, FiLock, FiEye, FiEyeOff,
+  FiShield, FiCalendar, FiMonitor, FiGlobe, FiCheckCircle,
+  FiSave, FiTrendingUp,
+} from 'react-icons/fi';
+import { colors, radius, shadow, transition } from '../../theme/colors';
+import Loading from '../../components/common/Loading';
 
-const VERDE = "#16a34a";
-const VERDE_SUAVE = "#f0fdf4";
-const BORDE = "#e5e7eb";
-const TEXTO = "#111827";
-const TEXTO_SUAVE = "#6b7280";
-const FONDO = "#fafafa";
-
-const estiloLabel = {
-  display: "block",
-  fontSize: "0.7rem",
-  fontWeight: 600,
-  color: "#9ca3af",
-  textTransform: "uppercase",
-  letterSpacing: "0.06em",
-  marginBottom: "0.5rem",
+const SEG = {
+  primary: '#16a34a',
+  primaryDark: '#15803d',
+  primaryBg: 'rgba(22,163,74,0.08)',
 };
 
-const estiloInput = {
-  width: "100%",
-  padding: "0.75rem 2.75rem 0.75rem 1rem",
-  borderRadius: "10px",
-  border: `1.5px solid ${BORDE}`,
-  fontSize: "0.9rem",
-  outline: "none",
-  background: "#ffffff",
-  color: TEXTO,
-  boxSizing: "border-box",
-  transition: "border-color 0.15s ease, box-shadow 0.15s ease",
+const cardBase = {
+  background: colors.white,
+  borderRadius: radius.lg,
+  border: `1px solid ${colors.border}`,
+  boxShadow: shadow.sm,
+  transition: 'all 0.25s ease',
+  overflow: 'hidden',
 };
 
-const tarjeta = {
-  background: "#ffffff",
-  borderRadius: "16px",
-  border: `1px solid ${BORDE}`,
+const cardHeaderStyle = {
+  padding: '16px 22px',
+  borderBottom: `1px solid ${colors.border}`,
+  display: 'flex',
+  alignItems: 'center',
+  gap: '10px',
+  fontWeight: 700,
+  fontSize: '14px',
+  color: colors.slate,
 };
 
-function evaluarFortaleza(pass) {
-  if (!pass) return { nivel: 0, texto: "", color: BORDE };
-  let puntos = 0;
-  if (pass.length >= 6) puntos++;
-  if (pass.length >= 10) puntos++;
-  if (/[A-Z]/.test(pass) && /[a-z]/.test(pass)) puntos++;
-  if (/[0-9]/.test(pass) && /[^A-Za-z0-9]/.test(pass)) puntos++;
-  const niveles = [
-    { texto: "Muy débil", color: "#ef4444" },
-    { texto: "Débil", color: "#f97316" },
-    { texto: "Aceptable", color: "#eab308" },
-    { texto: "Fuerte", color: "#22c55e" },
-    { texto: "Muy fuerte", color: "#16a34a" },
-  ];
-  return { nivel: puntos, ...niveles[puntos] };
-}
+const inputStyle = {
+  width: '100%',
+  padding: '10px 14px',
+  borderRadius: radius.sm,
+  border: '1px solid #cbd5e1',
+  fontSize: '14px',
+  color: colors.slate,
+  backgroundColor: colors.white,
+  boxSizing: 'border-box',
+  outline: 'none',
+  transition,
+};
 
-function PasswordInput({ label, name, value, onChange, placeholder, focused, onFocus, onBlur }) {
-  const [visible, setVisible] = useState(false);
-  return (
-    <div>
-      <label style={estiloLabel}>{label}</label>
-      <div style={{ position: "relative" }}>
-        <input
-          type={visible ? "text" : "password"}
-          name={name}
-          value={value}
-          onChange={onChange}
-          onFocus={onFocus}
-          onBlur={onBlur}
-          style={{
-            ...estiloInput,
-            borderColor: focused ? VERDE : BORDE,
-            boxShadow: focused ? `0 0 0 3px ${VERDE_SUAVE}` : "none",
-          }}
-          placeholder={placeholder}
-          autoComplete="new-password"
-        />
-        <button
-          type="button"
-          onClick={() => setVisible((v) => !v)}
-          style={{
-            position: "absolute", right: "0.85rem", top: "50%", transform: "translateY(-50%)",
-            background: "none", border: "none", cursor: "pointer", color: "#9ca3af", display: "flex",
-          }}
-        >
-          {visible ? <FiEyeOff size={16} /> : <FiEye size={16} />}
-        </button>
-      </div>
-    </div>
-  );
-}
+const labelStyle = {
+  display: 'block',
+  fontSize: '12px',
+  fontWeight: 700,
+  color: colors.slateLight,
+  marginBottom: '6px',
+  letterSpacing: '0.02em',
+};
 
 export default function PerfilSeguridad() {
-  const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState({});
   const [loading, setLoading] = useState(true);
-  const [showPasswordForm, setShowPasswordForm] = useState(false);
-  const [loadingPassword, setLoadingPassword] = useState(false);
-  const [campoEnfocado, setCampoEnfocado] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [passwordData, setPasswordData] = useState({
-    contrasenaActual: "",
-    nuevaContrasena: "",
-    confirmar: "",
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: '',
   });
+  const [showPasswords, setShowPasswords] = useState({ current: false, new: false, confirm: false });
+  const [passwordError, setPasswordError] = useState('');
+  const [passwordSubmitting, setPasswordSubmitting] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      setLoading(true);
-      try {
-        const data = await getCurrentUser();
-        setUser(data);
-      } catch (err) {
-        toast.error(err.message || "Error al cargar el perfil");
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchUser();
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  const handlePasswordChange = (e) => {
-    const { name, value } = e.target;
-    setPasswordData((prev) => ({ ...prev, [name]: value }));
+  useEffect(() => {
+    getProfile()
+      .then(data => setProfile(data))
+      .catch(err => toast.error(`Error al cargar perfil: ${err.message}`))
+      .finally(() => setLoading(false));
+  }, []);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    try {
+      const updated = await updateProfile(profile);
+      setProfile(updated);
+      toast.success('Perfil actualizado correctamente.');
+    } catch (err) {
+      toast.error(`Error: ${err.message}`);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const handleSubmitPassword = async (e) => {
+  const handlePasswordChange = async (e) => {
     e.preventDefault();
-    if (!passwordData.contrasenaActual || !passwordData.nuevaContrasena || !passwordData.confirmar) {
-      toast.warning("Completa todos los campos");
+    setPasswordError('');
+
+    if (!passwordData.currentPassword || passwordData.currentPassword.length < 6) {
+      setPasswordError('La contraseña actual debe tener al menos 6 caracteres.');
       return;
     }
-    if (passwordData.nuevaContrasena !== passwordData.confirmar) {
-      toast.warning("Las contraseñas no coinciden");
+    if (!passwordData.newPassword || passwordData.newPassword.length < 8) {
+      setPasswordError('La nueva contraseña debe tener al menos 8 caracteres.');
       return;
     }
-    if (passwordData.nuevaContrasena.length < 6) {
-      toast.warning("La contraseña debe tener al menos 6 caracteres");
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError('Las contraseñas no coinciden.');
       return;
     }
-    setLoadingPassword(true);
+    if (passwordData.currentPassword === passwordData.newPassword) {
+      setPasswordError('La nueva contraseña debe ser diferente a la actual.');
+      return;
+    }
+
+    setPasswordSubmitting(true);
     try {
       await changePassword({
-        contrasenaActual: passwordData.contrasenaActual,
-        nuevaContrasena: passwordData.nuevaContrasena,
+        contrasenaActual: passwordData.currentPassword,
+        nuevaContrasena: passwordData.newPassword,
       });
-      toast.success("Contraseña actualizada correctamente");
-      setShowPasswordForm(false);
-      setPasswordData({ contrasenaActual: "", nuevaContrasena: "", confirmar: "" });
+      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      toast.success('Contraseña cambiada correctamente.');
     } catch (err) {
-      toast.error(err.message || "Error al cambiar la contraseña");
+      setPasswordError(err.message);
+      toast.error(`Error: ${err.message}`);
     } finally {
-      setLoadingPassword(false);
+      setPasswordSubmitting(false);
     }
   };
 
-  const iniciales = user
-    ? `${user.nombres?.charAt(0) ?? ""}${user.apellidos?.charAt(0) ?? ""}`.toUpperCase()
-    : "?";
-
-  const fortaleza = evaluarFortaleza(passwordData.nuevaContrasena);
-  const coincide = passwordData.nuevaContrasena && passwordData.confirmar && passwordData.nuevaContrasena === passwordData.confirmar;
+  const togglePasswordVisibility = (field) => {
+    setShowPasswords((prev) => ({ ...prev, [field]: !prev[field] }));
+  };
 
   if (loading) {
     return (
-      <div style={{ padding: "2rem", backgroundColor: FONDO, minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.85rem" }}>
-          <div style={{ width: "34px", height: "34px", border: `3px solid ${BORDE}`, borderTopColor: VERDE, borderRadius: "50%", animation: "girar 0.7s linear infinite" }} />
-          <p style={{ color: TEXTO_SUAVE, fontWeight: 500, margin: 0, fontSize: "0.9rem" }}>Cargando perfil...</p>
-        </div>
-        <style>{`@keyframes girar { to { transform: rotate(360deg); } }`}</style>
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: colors.background }}>
+        <Loading text="Cargando perfil..." />
       </div>
     );
   }
 
+  const initials = ((profile.nombres?.[0] || '') + (profile.apellidos?.[0] || '')).toUpperCase() || '?';
+
   return (
-    <div style={{ padding: "2.5rem", backgroundColor: FONDO, minHeight: "100vh", boxSizing: "border-box" }}>
-      <div style={{ maxWidth: "1080px", margin: "0 auto" }}>
-        <div style={{ marginBottom: "2rem" }}>
-          <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: TEXTO, margin: 0, letterSpacing: "-0.01em" }}>Mi perfil</h1>
-          <p style={{ color: TEXTO_SUAVE, marginTop: "0.3rem", fontSize: "0.9rem" }}>Gestiona tu información personal y seguridad de la cuenta</p>
+    <div style={{
+      padding: isMobile ? '16px' : '24px',
+      background: colors.background,
+      minHeight: '100vh',
+    }}>
+      <style>{`
+        @keyframes fadeSlideUp {
+          from { opacity: 0; transform: translateY(16px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes pulseDot {
+          0%, 100% { opacity: 0.4; transform: scale(1); }
+          50%      { opacity: 1;   transform: scale(1.3); }
+        }
+        .ps-card {
+          animation: fadeSlideUp 0.45s ease both;
+        }
+        .ps-card:nth-child(1) { animation-delay: 0.05s; }
+        .ps-card:nth-child(2) { animation-delay: 0.1s; }
+        .ps-card:nth-child(3) { animation-delay: 0.15s; }
+        .ps-input:focus {
+          border-color: ${SEG.primary} !important;
+          box-shadow: 0 0 0 3px ${SEG.primaryBg} !important;
+        }
+        .ps-input:hover {
+          border-color: #94a3b8;
+        }
+        .ps-btn { transition: ${transition}; }
+        .ps-btn:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 14px rgba(22,163,74,0.25);
+        }
+        .ps-btn-warning:hover {
+          transform: translateY(-1px);
+          box-shadow: 0 4px 14px rgba(22,163,74,0.25);
+        }
+        .ps-btn-row {
+          display: flex;
+          justify-content: flex-end;
+        }
+        @media (max-width: 767px) {
+          .ps-card-body { padding: 16px !important; }
+          .ps-card-header { padding: 12px 16px !important; }
+          .ps-btn-row { flex-direction: column; }
+          .ps-btn-row button { width: 100%; }
+          .ps-info-row { flex-direction: column; align-items: flex-start !important; gap: 2px; }
+        }
+      `}</style>
+
+      <div style={{ maxWidth: '860px', margin: '0 auto' }}>
+
+        {/* ─── Profile Header ────────────────────────────────────────────── */}
+        <div style={{
+          background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #bbf7d0 100%)',
+          borderRadius: radius.lg,
+          padding: isMobile ? '20px' : '28px 32px',
+          marginBottom: '22px',
+          border: '1px solid rgba(22,163,74,0.12)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '20px',
+          flexWrap: 'wrap',
+        }}>
+          <div style={{
+            width: isMobile ? 56 : 72,
+            height: isMobile ? 56 : 72,
+            borderRadius: '50%',
+            background: 'linear-gradient(135deg, #16a34a, #15803d)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 16px rgba(22,163,74,0.3), 0 0 0 4px rgba(22,163,74,0.1)',
+            flexShrink: 0,
+          }}>
+            <span style={{ color: '#fff', fontWeight: 800, fontSize: isMobile ? '18px' : '24px', letterSpacing: '-0.02em' }}>
+              {initials}
+            </span>
+          </div>
+          <div style={{ flex: 1, minWidth: 0, textAlign: 'left' }}>
+            <h1 style={{
+              margin: 0, fontWeight: 800, fontSize: isMobile ? '20px' : '24px',
+              color: colors.slate, letterSpacing: '-0.03em',
+            }}>
+              {profile.nombres || 'Usuario'} {profile.apellidos || ''}
+            </h1>
+            <p style={{
+              margin: '3px 0 0', fontSize: '14px', color: '#d97706', fontWeight: 600,
+              display: 'flex', alignItems: 'center', gap: '6px',
+            }}>
+              <FiShield size={14} /> Agente de Seguridad
+            </p>
+            <p style={{
+              margin: '2px 0 0', fontSize: '13px', color: '#15803d', fontWeight: 500,
+            }}>
+              {profile.correo || 'Sin correo'}
+            </p>
+          </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: "1.5rem", alignItems: "start" }}>
+        {/* ─── Two-column layout ──────────────────────────────────────────── */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? '1fr' : '1.2fr 1fr',
+          gap: '18px',
+          marginBottom: '18px',
+        }}>
 
-          <div style={{ ...tarjeta, padding: "2rem 1.5rem", textAlign: "center", position: "sticky", top: "1.5rem" }}>
-            <div style={{
-              width: "84px", height: "84px", borderRadius: "50%",
-              backgroundColor: VERDE_SUAVE, display: "flex",
-              alignItems: "center", justifyContent: "center",
-              color: VERDE, fontSize: "1.6rem", fontWeight: 700,
-              margin: "0 auto 1.1rem", border: `2px solid ${VERDE}`,
-            }}>
-              {iniciales}
-            </div>
-            <h3 style={{ margin: "0 0 0.3rem", color: TEXTO, fontWeight: 700, fontSize: "1.05rem" }}>
-              {user?.nombres} {user?.apellidos}
-            </h3>
-            <p style={{ margin: "0 0 0.9rem", color: TEXTO_SUAVE, fontSize: "0.85rem" }}>
-              {user?.correo}
-            </p>
-            <div style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", padding: "0.3rem 0.8rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 600, backgroundColor: VERDE_SUAVE, color: VERDE }}>
-              <span style={{ width: "6px", height: "6px", borderRadius: "50%", backgroundColor: VERDE }} />
-              Cuenta activa
-            </div>
-
-            <div style={{ borderTop: `1px solid ${BORDE}`, marginTop: "1.5rem", paddingTop: "1.5rem", textAlign: "left" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.9rem" }}>
-                <FiShield size={14} color={TEXTO_SUAVE} />
-                <span style={{ fontSize: "0.83rem", color: TEXTO_SUAVE }}>Rol</span>
-                <span style={{ marginLeft: "auto", fontSize: "0.83rem", fontWeight: 600, color: TEXTO }}>{user?.rol ?? "—"}</span>
+          {/* ─── LEFT: Profile Data ──────────────────────────────────────── */}
+          <div className="ps-card" style={cardBase}>
+            <div className="ps-card-header" style={cardHeaderStyle}>
+              <div style={{
+                width: 32, height: 32, borderRadius: '8px',
+                background: SEG.primaryBg, display: 'flex',
+                alignItems: 'center', justifyContent: 'center', color: SEG.primary,
+              }}>
+                <FiUser size={16} />
               </div>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
-                <FiHash size={14} color={TEXTO_SUAVE} />
-                <span style={{ fontSize: "0.83rem", color: TEXTO_SUAVE }}>ID</span>
-                <span style={{ marginLeft: "auto", fontSize: "0.83rem", fontWeight: 600, color: TEXTO, fontFamily: "monospace" }}>#{user?.id}</span>
-              </div>
+              Datos personales
             </div>
-          </div>
-
-          <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-
-            <div style={{ ...tarjeta, padding: "1.75rem" }}>
-              <h5 style={{ fontWeight: 700, color: TEXTO, margin: "0 0 1.25rem", fontSize: "0.95rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                <FiUser size={16} color={VERDE} />
-                Información personal
-              </h5>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1.25rem" }}>
-                {[
-                  { icon: FiUser, label: "Nombre completo", value: `${user?.nombres ?? ""} ${user?.apellidos ?? ""}` },
-                  { icon: FiMail, label: "Correo electrónico", value: user?.correo },
-                  { icon: FiActivity, label: "Estado", value: "Activa" },
-                ].map(({ icon: Icon, label, value }) => (
-                  <div key={label} style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center" }}>
-                    <p style={estiloLabel}>{label}</p>
-                    <p style={{ margin: 0, color: TEXTO, fontWeight: 500, display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem", fontSize: "0.9rem" }}>
-                      <Icon size={14} color={TEXTO_SUAVE} style={{ flexShrink: 0 }} />
-                      {value}
-                    </p>
-                  </div>
-                ))}
+            <form onSubmit={handleSubmit} className="ps-card-body" style={{ padding: '20px 22px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div>
+                  <label style={labelStyle} htmlFor="nombres">Nombres</label>
+                  <input
+                    id="nombres"
+                    className="ps-input"
+                    type="text"
+                    value={profile.nombres || ''}
+                    onChange={(e) => setProfile({ ...profile, nombres: e.target.value })}
+                    style={inputStyle}
+                    placeholder="Tus nombres"
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle} htmlFor="apellidos">Apellidos</label>
+                  <input
+                    id="apellidos"
+                    className="ps-input"
+                    type="text"
+                    value={profile.apellidos || ''}
+                    onChange={(e) => setProfile({ ...profile, apellidos: e.target.value })}
+                    style={inputStyle}
+                    placeholder="Tus apellidos"
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle} htmlFor="correo">
+                    <FiMail size={12} style={{ marginRight: 4 }} /> Correo electrónico
+                  </label>
+                  <input
+                    id="correo"
+                    className="ps-input"
+                    type="email"
+                    value={profile.correo || ''}
+                    onChange={(e) => setProfile({ ...profile, correo: e.target.value })}
+                    style={inputStyle}
+                    placeholder="correo@ejemplo.com"
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle} htmlFor="telefono">
+                    <FiPhone size={12} style={{ marginRight: 4 }} /> Teléfono
+                  </label>
+                  <input
+                    id="telefono"
+                    className="ps-input"
+                    type="text"
+                    value={profile.telefono || ''}
+                    onChange={(e) => setProfile({ ...profile, telefono: e.target.value })}
+                    style={inputStyle}
+                    placeholder="Teléfono (opcional)"
+                  />
+                </div>
               </div>
-            </div>
 
-            <div style={{ ...tarjeta, padding: "1.75rem" }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: showPasswordForm ? "1.5rem" : 0 }}>
-                <h5 style={{ fontWeight: 700, color: TEXTO, margin: 0, fontSize: "0.95rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                  <FiLock size={16} color={VERDE} />
-                  Seguridad de la cuenta
-                </h5>
+              <div className="ps-btn-row" style={{
+                marginTop: '20px', paddingTop: '16px',
+                borderTop: `1px solid ${colors.border}`,
+              }}>
                 <button
-                  onClick={() => setShowPasswordForm((v) => !v)}
+                  type="submit"
+                  disabled={submitting}
+                  className="ps-btn"
+                  onMouseEnter={(e) => { if (!submitting) { e.currentTarget.style.background = SEG.primaryDark; } }}
+                  onMouseLeave={(e) => { if (!submitting) { e.currentTarget.style.background = SEG.primary; } }}
                   style={{
-                    padding: "0.55rem 1.1rem",
-                    backgroundColor: showPasswordForm ? "#f3f4f6" : TEXTO,
-                    color: showPasswordForm ? TEXTO_SUAVE : "#fff",
-                    border: "none",
-                    borderRadius: "9px",
-                    fontWeight: 600,
-                    fontSize: "0.83rem",
-                    cursor: "pointer",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.4rem",
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    padding: '10px 22px', borderRadius: '10px',
+                    border: 'none',
+                    background: submitting ? '#86efac' : SEG.primary,
+                    color: '#fff', fontWeight: 700, fontSize: '14px',
+                    cursor: submitting ? 'not-allowed' : 'pointer',
+                    transition,
+                    boxShadow: '0 4px 14px rgba(22,163,74,0.2)',
                   }}
                 >
-                  {showPasswordForm ? <><FiX size={14} /> Cancelar</> : <><FiKey size={14} /> Cambiar contraseña</>}
+                  <FiSave size={16} />
+                  {submitting ? 'Guardando...' : 'Guardar cambios'}
                 </button>
               </div>
+            </form>
+          </div>
 
-              {showPasswordForm && (
-                <form onSubmit={handleSubmitPassword} style={{ animation: "aparecer 0.2s ease both" }}>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-                    <PasswordInput
-                      label="Contraseña actual"
-                      name="contrasenaActual"
-                      value={passwordData.contrasenaActual}
-                      onChange={handlePasswordChange}
-                      placeholder="Ingresa tu contraseña actual"
-                      focused={campoEnfocado === "contrasenaActual"}
-                      onFocus={() => setCampoEnfocado("contrasenaActual")}
-                      onBlur={() => setCampoEnfocado("")}
-                    />
+          {/* ─── RIGHT COLUMN ────────────────────────────────────────────── */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
-                      <div>
-                        <PasswordInput
-                          label="Nueva contraseña"
-                          name="nuevaContrasena"
-                          value={passwordData.nuevaContrasena}
-                          onChange={handlePasswordChange}
-                          placeholder="Mínimo 6 caracteres"
-                          focused={campoEnfocado === "nuevaContrasena"}
-                          onFocus={() => setCampoEnfocado("nuevaContrasena")}
-                          onBlur={() => setCampoEnfocado("")}
-                        />
-                        {passwordData.nuevaContrasena && (
-                          <div style={{ marginTop: "0.6rem" }}>
-                            <div style={{ display: "flex", gap: "4px", marginBottom: "0.35rem" }}>
-                              {[0, 1, 2, 3].map((i) => (
-                                <div key={i} style={{ flex: 1, height: "4px", borderRadius: "2px", backgroundColor: i < fortaleza.nivel ? fortaleza.color : BORDE, transition: "background-color 0.2s ease" }} />
-                              ))}
-                            </div>
-                            <span style={{ fontSize: "0.72rem", fontWeight: 600, color: fortaleza.color }}>{fortaleza.texto}</span>
-                          </div>
-                        )}
-                      </div>
-
-                      <div>
-                        <PasswordInput
-                          label="Confirmar contraseña"
-                          name="confirmar"
-                          value={passwordData.confirmar}
-                          onChange={handlePasswordChange}
-                          placeholder="Repite la nueva contraseña"
-                          focused={campoEnfocado === "confirmar"}
-                          onFocus={() => setCampoEnfocado("confirmar")}
-                          onBlur={() => setCampoEnfocado("")}
-                        />
-                        {passwordData.confirmar && (
-                          <div style={{ marginTop: "0.6rem", display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                            <FiCheckCircle size={13} color={coincide ? VERDE : "#ef4444"} />
-                            <span style={{ fontSize: "0.72rem", fontWeight: 600, color: coincide ? VERDE : "#ef4444" }}>
-                              {coincide ? "Las contraseñas coinciden" : "No coinciden"}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div style={{ display: "flex", justifyContent: "flex-end", paddingTop: "0.5rem" }}>
+            {/* Password change */}
+            <div className="ps-card" style={cardBase}>
+              <div className="ps-card-header" style={cardHeaderStyle}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: '8px',
+                  background: 'rgba(22,163,74,0.12)', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center', color: '#16a34a',
+                }}>
+                  <FiLock size={16} />
+                </div>
+                Cambiar contraseña
+              </div>
+              <form onSubmit={handlePasswordChange} className="ps-card-body" style={{ padding: '18px 22px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                  <div>
+                    <label style={labelStyle} htmlFor="currentPassword">Contraseña actual</label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        id="currentPassword"
+                        className="ps-input"
+                        type={showPasswords.current ? 'text' : 'password'}
+                        value={passwordData.currentPassword}
+                        onChange={(e) => setPasswordData({ ...passwordData, currentPassword: e.target.value })}
+                        style={{ ...inputStyle, paddingRight: '40px' }}
+                        placeholder="••••••••"
+                        minLength={6}
+                        required
+                      />
                       <button
-                        type="submit"
-                        disabled={loadingPassword}
+                        type="button"
+                        onClick={() => togglePasswordVisibility('current')}
                         style={{
-                          padding: "0.75rem 1.6rem",
-                          backgroundColor: loadingPassword ? "#d1d5db" : VERDE,
-                          color: "#fff",
-                          border: "none",
-                          borderRadius: "10px",
-                          fontWeight: 700,
-                          fontSize: "0.88rem",
-                          cursor: loadingPassword ? "not-allowed" : "pointer",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "0.5rem",
+                          position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          color: colors.slateLighter, padding: '4px', display: 'flex',
                         }}
                       >
-                        <FiSave size={15} />
-                        {loadingPassword ? "Guardando..." : "Guardar contraseña"}
+                        {showPasswords.current ? <FiEyeOff size={16} /> : <FiEye size={16} />}
                       </button>
                     </div>
                   </div>
-                </form>
-              )}
+                  <div>
+                    <label style={labelStyle} htmlFor="newPassword">Nueva contraseña</label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        id="newPassword"
+                        className="ps-input"
+                        type={showPasswords.new ? 'text' : 'password'}
+                        value={passwordData.newPassword}
+                        onChange={(e) => setPasswordData({ ...passwordData, newPassword: e.target.value })}
+                        style={{ ...inputStyle, paddingRight: '40px' }}
+                        placeholder="Mínimo 8 caracteres"
+                        minLength={8}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => togglePasswordVisibility('new')}
+                        style={{
+                          position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          color: colors.slateLighter, padding: '4px', display: 'flex',
+                        }}
+                      >
+                        {showPasswords.new ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                      </button>
+                    </div>
+                    <small style={{ color: '#94a3b8', fontSize: '11px', display: 'block', marginTop: '4px' }}>
+                      Mínimo 8 caracteres
+                    </small>
+                  </div>
+                  <div>
+                    <label style={labelStyle} htmlFor="confirmPassword">Confirmar nueva contraseña</label>
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        id="confirmPassword"
+                        className="ps-input"
+                        type={showPasswords.confirm ? 'text' : 'password'}
+                        value={passwordData.confirmPassword}
+                        onChange={(e) => setPasswordData({ ...passwordData, confirmPassword: e.target.value })}
+                        style={{ ...inputStyle, paddingRight: '40px' }}
+                        placeholder="Repite la nueva contraseña"
+                        minLength={8}
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => togglePasswordVisibility('confirm')}
+                        style={{
+                          position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)',
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          color: colors.slateLighter, padding: '4px', display: 'flex',
+                        }}
+                      >
+                        {showPasswords.confirm ? <FiEyeOff size={16} /> : <FiEye size={16} />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {passwordError && (
+                  <div style={{
+                    marginTop: '12px', padding: '10px 14px',
+                    borderRadius: '8px', fontSize: '13px', fontWeight: 600,
+                    background: '#fef2f2', color: '#dc2626',
+                    border: '1px solid rgba(239,68,68,0.2)',
+                  }}>
+                    {passwordError}
+                  </div>
+                )}
+
+                <div className="ps-btn-row" style={{
+                  marginTop: '16px', paddingTop: '14px',
+                  borderTop: `1px solid ${colors.border}`,
+                }}>
+                  <button
+                    type="submit"
+                    disabled={passwordSubmitting}
+                    className="ps-btn-warning"
+                    onMouseEnter={(e) => { if (!passwordSubmitting) { e.currentTarget.style.background = '#15803d'; } }}
+                    onMouseLeave={(e) => { if (!passwordSubmitting) { e.currentTarget.style.background = '#16a34a'; } }}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '8px',
+                      padding: '10px 20px', borderRadius: '10px',
+                      border: 'none',
+                      background: passwordSubmitting ? '#86efac' : '#16a34a',
+                      color: '#fff', fontWeight: 700, fontSize: '13px',
+                      cursor: passwordSubmitting ? 'not-allowed' : 'pointer',
+                      transition,
+                      boxShadow: '0 4px 14px rgba(22,163,74,0.2)',
+                    }}
+                  >
+                    <FiLock size={15} />
+                    {passwordSubmitting ? 'Cambiando...' : 'Actualizar contraseña'}
+                  </button>
+                </div>
+              </form>
+            </div>
+
+            {/* Session info */}
+            <div className="ps-card" style={cardBase}>
+              <div className="ps-card-header" style={cardHeaderStyle}>
+                <div style={{
+                  width: 32, height: 32, borderRadius: '8px',
+                  background: 'rgba(16,185,129,0.1)', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center', color: '#10b981',
+                }}>
+                  <FiMonitor size={16} />
+                </div>
+                Información de sesión
+              </div>
+              <div className="ps-card-body" style={{ padding: '18px 22px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div className="ps-info-row" style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '10px 12px', background: '#f8fafc', borderRadius: '8px',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: colors.slateLight, fontSize: '13px' }}>
+                      <FiCalendar size={14} />
+                      <span>Último acceso</span>
+                    </div>
+                    <span style={{ fontWeight: 600, fontSize: '13px', color: colors.slate }}>
+                      Hoy · Sesión activa
+                    </span>
+                  </div>
+                  <div className="ps-info-row" style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '10px 12px', background: '#f8fafc', borderRadius: '8px',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: colors.slateLight, fontSize: '13px' }}>
+                      <FiGlobe size={14} />
+                      <span>Rol</span>
+                    </div>
+                    <span style={{
+                      fontWeight: 700, fontSize: '12px', padding: '2px 10px',
+                      borderRadius: '999px',
+                      background: SEG.primaryBg, color: SEG.primary,
+                    }}>
+                      Agente de Seguridad
+                    </span>
+                  </div>
+                  <div className="ps-info-row" style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '10px 12px', background: '#f8fafc', borderRadius: '8px',
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: colors.slateLight, fontSize: '13px' }}>
+                      <FiTrendingUp size={14} />
+                      <span>Estado</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{
+                        width: 8, height: 8, borderRadius: '50%',
+                        background: '#10b981', display: 'inline-block',
+                        animation: 'pulseDot 2s ease infinite',
+                      }} />
+                      <span style={{ fontWeight: 600, fontSize: '13px', color: '#10b981' }}>Activo</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
           </div>
         </div>
-      </div>
 
-      <style>{`@keyframes aparecer { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }`}</style>
+        {/* ─── Footer ────────────────────────────────────────────────────── */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          gap: 8, padding: '6px 0',
+          color: colors.slateLighter, fontSize: '12px', fontWeight: 500,
+        }}>
+          <FiCheckCircle size={12} color="#10b981" />
+          Perfil sincronizado · Datos personales protegidos
+          <span style={{ width: 3, height: 3, borderRadius: '50%', background: colors.slateLighter, display: 'inline-block' }} />
+          <FiShield size={12} /> Conexión segura
+        </div>
+
+      </div>
     </div>
   );
 }
