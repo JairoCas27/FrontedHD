@@ -58,7 +58,7 @@ export default function Accesos() {
   const [loadingLogs, setLoadingLogs] = useState(false)
   const [logPage, setLogPage] = useState(1)
   const [logSearch, setLogSearch] = useState('')
-  const PER_PAGE = 15
+  const PER_PAGE = 10
 
   // ========== MODALES ==========
   const [detailItem, setDetailItem] = useState(null)

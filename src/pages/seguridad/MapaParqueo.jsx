@@ -5,6 +5,7 @@ import {
   FiCamera, FiArrowUp, FiArrowDown, FiActivity, FiEye,
 } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
+import DataList from '../../components/common/DataList'
 import { listParkingSlots, getDashboardStatus, verifyVehicleByPlate, listVehiclesWithoutSpot, registerVehicleExit, getAccessLogs } from '../../services/SeguridadApi'
 
 const VERDE = "#059669"
@@ -168,6 +169,17 @@ export default function MapaParqueo() {
     }
   }, [selectedSpot])
 
+  // Sync selectedSpot when parking data refreshes (real-time updates after vehicle removal)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    if (selectedSpot && parking.length > 0) {
+      const updated = parking.find(s => String(s.id) === String(selectedSpot.id))
+      if (updated) {
+        setSelectedSpot(updated)
+      }
+    }
+  }, [parking])
+
   const stats = useMemo(() => ({
     totalParking: parking.length || dashboard?.totalEstacionamientos || 0,
     ocupados: parking.filter(p => !p.disponible).length,
@@ -192,6 +204,27 @@ export default function MapaParqueo() {
     }
     return result
   }, [filtered])
+
+  // All known vehicles across all spots + unassigned, for datalist suggestions
+  const allKnownVehicles = useMemo(() => {
+    const seen = new Set()
+    const vehicles = []
+    parking.forEach(s => {
+      ;(s.vehiculos || []).forEach(v => {
+        if (!seen.has(v.placa)) {
+          seen.add(v.placa)
+          vehicles.push({ ...v, spotNumero: s.numero })
+        }
+      })
+    })
+    ;(unassignedVehicles || []).forEach(v => {
+      if (!seen.has(v.placa)) {
+        seen.add(v.placa)
+        vehicles.push({ ...v, spotNumero: null })
+      }
+    })
+    return vehicles
+  }, [parking, unassignedVehicles])
 
   const handleVerificarVehiculo = async () => {
     if (!verifyPlate.trim()) return showToast("Ingresa una placa", "warning")
@@ -468,6 +501,7 @@ export default function MapaParqueo() {
                 onClose={closeDetailPanel}
                 unassignedVehicles={unassignedVehicles}
                 onRemoveVehicle={handleRemoveVehicleFromSpot}
+                allKnownVehicles={allKnownVehicles}
               />
             )}
           </div>
@@ -700,7 +734,7 @@ function SpotCard({ spot, isSelected, onClick, onRemoveVehicle }) {
   )
 }
 
-function SpotDetailPanel({ spot, verifyPlate, setVerifyPlate, vehiculoDetail, loadingVerify, onVerify, onClose, unassignedVehicles, onRemoveVehicle }) {
+function SpotDetailPanel({ spot, verifyPlate, setVerifyPlate, vehiculoDetail, loadingVerify, onVerify, onClose, unassignedVehicles, onRemoveVehicle, allKnownVehicles }) {
   const ocupado = !spot.disponible
   const pct = spot.capacidadMaxima ? Math.round((spot.cantidadActual / spot.capacidadMaxima) * 100) : 0
   const icon = getVehicleIcon(spot.tipoVehiculo)
@@ -727,7 +761,7 @@ function SpotDetailPanel({ spot, verifyPlate, setVerifyPlate, vehiculoDetail, lo
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <span style={{ fontSize: "1.3rem" }}>{icon}</span>
             <div>
-              <div style={{ fontWeight: 800, fontSize: "0.9rem", color: TEXTO, fontFamily: "monospace" }}>Est. #{spot.numero}</div>
+              <div style={{ fontWeight: 800, fontSize: "0.9rem", color: TEXTO, fontFamily: "monospace" }}>Estacionamiento #{spot.numero}</div>
               <div style={{ fontSize: "0.65rem", color: TEXTO_LIGHT, fontWeight: 600 }}>{spot.tipoVehiculo || 'Libre'}</div>
             </div>
           </div>
@@ -830,22 +864,29 @@ function SpotDetailPanel({ spot, verifyPlate, setVerifyPlate, vehiculoDetail, lo
                 </option>
               ))}
             </select>
-          )}
-          <div style={{ display: "flex", gap: "0.35rem" }}>
-            <div style={{ position: "relative", flex: 1 }}>
-              <input
-                type="text" placeholder="ABC-123" value={verifyPlate}
-                onChange={e => setVerifyPlate(e.target.value.toUpperCase())}
-                onKeyDown={e => e.key === "Enter" && onVerify()}
-                onFocus={e => { e.currentTarget.style.borderColor = VERDE; e.currentTarget.style.boxShadow = `0 0 0 3px ${VERDE_CLARO}` }}
-                onBlur={e => { e.currentTarget.style.borderColor = "#cbd5e1"; e.currentTarget.style.boxShadow = "none" }}
-                style={{
-                  ...styles.input, padding: "0.4rem 0.55rem", fontSize: "0.72rem",
-                  fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.08em",
-                  width: "100%",
-                }}
-              />
-            </div>
+          )}            <div style={{ display: "flex", gap: "0.35rem" }}>
+              <div style={{ position: "relative", flex: 1 }}>
+                <DataList
+                  value={verifyPlate}
+                  onChange={e => setVerifyPlate(e.target.value.toUpperCase())}
+                  placeholder="ABC-123"
+                  onKeyDown={e => e.key === "Enter" && onVerify()}
+                  onFocus={e => { e.currentTarget.style.borderColor = VERDE; e.currentTarget.style.boxShadow = `0 0 0 3px ${VERDE_CLARO}` }}
+                  onBlur={e => { e.currentTarget.style.borderColor = "#cbd5e1"; e.currentTarget.style.boxShadow = "none" }}
+                  style={{
+                    ...styles.input, padding: "0.4rem 0.55rem", fontSize: "0.72rem",
+                    fontFamily: "monospace", fontWeight: 700, letterSpacing: "0.08em",
+                    width: "100%",
+                  }}
+                >
+                  <option value="">— Buscar vehículo por placa —</option>
+                  {(allKnownVehicles || []).map(v => (
+                    <option key={v.placa} value={v.placa}>
+                      {v.placa} · {v.marca || ''} {v.modelo || ''} · {v.color || ''}{v.spotNumero ? ` · #${v.spotNumero}` : ''}
+                    </option>
+                  ))}
+                </DataList>
+              </div>
             <button onClick={onVerify} disabled={loadingVerify || !verifyPlate.trim()}
               style={{
                 ...styles.btnPrimary, padding: "0.4rem 0.65rem", fontSize: "0.68rem",
