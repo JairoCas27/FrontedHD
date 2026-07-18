@@ -22,6 +22,7 @@ const BORDE = "#e2e8f0"
 
 const styles = {
   container: { padding: "2rem", backgroundColor: FONDO, minHeight: "100vh", width: "100%", boxSizing: "border-box" },
+  containerMobile: { padding: "1rem", backgroundColor: FONDO, minHeight: "100vh", width: "100%", boxSizing: "border-box" },
   card: { backgroundColor: "#fff", borderRadius: "1.25rem", border: `1px solid ${BORDE}`, overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.03)" },
   label: { fontSize: "0.72rem", fontWeight: 700, color: TEXTO_SUAVE, textTransform: "uppercase", letterSpacing: "0.5px" },
   btnOutline: { backgroundColor: "#fff", color: TEXTO_SUAVE, border: `1px solid #cbd5e1`, padding: "0.45rem 1rem", borderRadius: "0.5rem", fontSize: "0.8rem", fontWeight: "600", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "0.35rem", transition: "all 0.2s" },
@@ -107,7 +108,7 @@ export default function DashboardSeguridad() {
   }
 
   return (
-    <div style={styles.container}>
+    <div className="ds-container" style={styles.container}>
       <style>{`
         @keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         .fade-in { animation: slideIn 0.35s ease both; }
@@ -117,6 +118,16 @@ export default function DashboardSeguridad() {
         .quick-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(0,0,0,0.08); }
         .hover-row { transition: background 0.15s; cursor: default; }
         .hover-row:hover { background: #f8fafc; }
+        @media (max-width: 768px) {
+          .ds-container { padding: 1rem !important; }
+          .ds-header { flex-direction: column !important; align-items: stretch !important; gap: 1rem !important; }
+          .ds-header-right { flex-direction: row !important; justify-content: space-between !important; }
+          .ds-two-col, .ds-bottom-row { grid-template-columns: 1fr !important; }
+          .ds-grid-actions { grid-template-columns: 1fr !important; }
+        }
+        @media (min-width: 769px) and (max-width: 1024px) {
+          .ds-two-col { grid-template-columns: 1fr !important; }
+        }
       `}</style>
 
       {toast && (
@@ -133,7 +144,7 @@ export default function DashboardSeguridad() {
       )}
 
       {/* HEADER */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
+      <div className="ds-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
         <div>
           <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.2rem" }}>
             <div style={{ backgroundColor: VERDE_CLARO, padding: "0.4rem", borderRadius: "0.5rem", display: "flex" }}>
@@ -145,7 +156,7 @@ export default function DashboardSeguridad() {
             Panel de monitoreo en tiempo real
           </p>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+        <div className="ds-header-right" style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
           <Clock />
           <button onClick={loadData}
             style={{ ...styles.btnOutline, padding: "0.5rem 0.75rem" }}
@@ -191,7 +202,7 @@ export default function DashboardSeguridad() {
       </div>
 
       {/* TWO-COLUMN LAYOUT */}
-      <div className="fade-in" style={{ animationDelay: "100ms", display: "grid", gap: "1.5rem", gridTemplateColumns: "1fr 1.2fr", marginBottom: "1.5rem" }}>
+      <div className="fade-in ds-two-col" style={{ animationDelay: "100ms", display: "grid", gap: "1.5rem", gridTemplateColumns: "1fr 1.2fr", marginBottom: "1.5rem" }}>
         
         {/* LEFT: Occupancy Chart */}
         <div style={{ ...styles.card }}>
@@ -225,7 +236,7 @@ export default function DashboardSeguridad() {
       </div>
 
       {/* BOTTOM ROW */}
-      <div className="fade-in" style={{ animationDelay: "160ms", display: "grid", gap: "1.5rem", gridTemplateColumns: "1fr 1fr" }}>
+      <div className="fade-in ds-bottom-row" style={{ animationDelay: "160ms", display: "grid", gap: "1.5rem", gridTemplateColumns: "1fr 1fr" }}>
         
         {/* Active Loans */}
         <div style={{ ...styles.card }}>
@@ -277,7 +288,7 @@ export default function DashboardSeguridad() {
               <FiActivity size={14} color={TEXTO_LIGHT} /> Acciones Rápidas
             </span>
           </div>
-          <div style={{ padding: "1rem 1.25rem", display: "grid", gap: "0.65rem", gridTemplateColumns: "1fr 1fr" }}>
+          <div className="ds-grid-actions" style={{ padding: "1rem 1.25rem", display: "grid", gap: "0.65rem", gridTemplateColumns: "1fr 1fr" }}>
             <QuickActionBtn icon={<FiLogIn size={16} />} label="Registrar Entrada" desc="Vehículo" color={VERDE} onClick={() => navigate('/seguridad/accesos')} />
             <QuickActionBtn icon={<FiLogOut size={16} />} label="Registrar Salida" desc="Vehículo" color={ROJO} onClick={() => navigate('/seguridad/accesos')} />
             <QuickActionBtn icon={<FiShoppingCart size={16} />} label="Nuevo Préstamo" desc="Carrito" color={AMARILLO} onClick={() => navigate('/seguridad/prestamos')} />
