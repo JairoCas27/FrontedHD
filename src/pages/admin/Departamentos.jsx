@@ -8,10 +8,10 @@ import { getAdminStructure } from '../../services/api'
 export default function Departamentos() {
   const colorAdmin = "rgb(52,151,195)"
 
-  const { departamentos, loading, meta, pagina, asignarPropietario, irAPagina, paginaSiguiente, paginaAnterior } = useAdminApartments()
+  const [filtroTorre, setFiltroTorre] = useState('todos')
+  const { departamentos, loading, meta, pagina, asignarPropietario, irAPagina, paginaSiguiente, paginaAnterior } = useAdminApartments(null, filtroTorre)
   const { usuarios } = useAdminUsers()
 
-  const [filtroTorre, setFiltroTorre] = useState('todos')
   const [busqueda, setBusqueda] = useState('')
   const [showModal, setShowModal] = useState(false)
   const [deptoSeleccionado, setDeptoSeleccionado] = useState(null)
@@ -102,6 +102,11 @@ export default function Departamentos() {
     }
   }
 
+  const handleCambioTorre = (e) => {
+    setFiltroTorre(e.target.value);
+    irAPagina(0); // Esto es CRÍTICO para evitar que la página 5 de la Torre A falle al cambiar a la Torre B
+  };
+
   const estiloInput = {
     width: "100%",
     padding: "0.65rem 0.75rem",
@@ -153,14 +158,14 @@ export default function Departamentos() {
               <select
                   style={estiloInput}
                   value={filtroTorre}
-                  onChange={(e) => setFiltroTorre(e.target.value)}
+                  onChange={handleCambioTorre} // Cambiamos el onChange aquí
               >
                 <option value="todos">Todas las Torres</option>
 
                 {torres.map((torre) => (
                     <option
                         key={torre.id}
-                        value={torre.nombre}
+                        value={torre.id} // Asegúrate que el value sea el ID
                     >
                       {torre.nombre}
                     </option>
@@ -191,7 +196,7 @@ export default function Departamentos() {
         ) : (
             <>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))", gap: "1.5rem" }}>
-                {deptosFiltrados.map((depto) => {
+                {departamentos.map((depto) => {
                   const tienePropietario = !!depto.nombrePropietario;
                   const tieneInquilinos = depto.inquilinos && depto.inquilinos.length > 0;
                   const estadoCalculado = tienePropietario || tieneInquilinos ? "Habitado" : "Desocupado";

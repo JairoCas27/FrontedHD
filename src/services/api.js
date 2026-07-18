@@ -312,8 +312,14 @@ export async function getAdminDashboardMetrics(condominioId) {
   return safeFetch(`/api/admin/dashboard/metrics${qs}`);
 }
 
-export async function getAdminApartments(page = 0, size = 100) {
+export async function getAdminApartments(page = 0, size = 9, torreId = null) {
   const params = new URLSearchParams({ page, size });
+
+  // Si se proporciona un torreId, lo añadimos a los parámetros
+  if (torreId) {
+    params.append('torreId', torreId);
+  }
+
   return safeFetch(`/api/admin/apartments?${params.toString()}`);
 }
 

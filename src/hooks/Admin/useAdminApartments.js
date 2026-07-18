@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { getAdminApartments, assignApartmentOwner, updateApartmentOccupants } from '../../services/api';
 
 // 1. Recibe el idCondominio como argumento del hook
-export function useAdminApartments(idCondominio) {
+export function useAdminApartments(idCondominio, filtroTorreId) {
   const [departamentos, setDepartamentos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [pagina, setPagina] = useState(0);
@@ -13,7 +13,8 @@ export function useAdminApartments(idCondominio) {
     try {
       setLoading(true);
       // 2. Llama a la función pasando los valores separados (NO UN STRING)
-      const data = await getAdminApartments(pagina, tamanoPagina);
+      const torreParam = filtroTorreId === 'todos' ? null : filtroTorreId;
+      const data = await getAdminApartments(pagina, tamanoPagina, torreParam);
       setDepartamentos(data?.items || []);
       setMeta({
         total: data?.total ?? 0,
@@ -27,7 +28,7 @@ export function useAdminApartments(idCondominio) {
     } finally {
       setLoading(false);
     }
-  }, [pagina, idCondominio]); // Añade idCondominio a las dependencias
+  }, [pagina, idCondominio, filtroTorreId]); // Añade idCondominio a las dependencias
 
   useEffect(() => {
     cargarDepartamentos();
