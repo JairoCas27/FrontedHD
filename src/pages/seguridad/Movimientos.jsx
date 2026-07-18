@@ -64,10 +64,16 @@ export default function Movimientos() {
   const hayFiltros = filtroTipo !== "TODOS" || filtroDesc || filtroFecha
 
   return (
-    <div style={styles.container}>
+    <div className="mv-container" style={styles.container}>
       <style>{`
         @keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         .fade-in { animation: slideIn 0.3s ease both; }
+        @media (max-width: 768px) {
+          .mv-container { padding: 1rem !important; }
+          .mv-filters-grid { grid-template-columns: 1fr !important; }
+          .mv-table table { font-size: 0.7rem !important; }
+          .mv-table th, .mv-table td { padding: 0.4rem 0.5rem !important; }
+        }
       `}</style>
 
       {/* TOAST */}
@@ -113,7 +119,7 @@ export default function Movimientos() {
                 </button>
               )}
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "0.85rem" }}>
+            <div className="mv-filters-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(180px, 1fr))", gap: "0.85rem" }}>
               <div>
                 <label style={styles.label}>Tipo</label>
                 <select value={filtroTipo} onChange={e => setFiltroTipo(e.target.value)} style={styles.select}>
@@ -157,7 +163,7 @@ export default function Movimientos() {
               </p>
             </div>
           ) : (
-            <div style={{ overflowX: "auto" }}>
+            <div className="mv-table" style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead><tr style={{ backgroundColor: FONDO }}>
                   {["ID", "Tipo", "Descripción", "Fecha"].map(h => <th key={h} style={thStyle}>{h}</th>)}
