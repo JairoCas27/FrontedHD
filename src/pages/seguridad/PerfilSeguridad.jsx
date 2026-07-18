@@ -150,7 +150,7 @@ export default function PerfilSeguridad() {
   const initials = ((profile.nombres?.[0] || '') + (profile.apellidos?.[0] || '')).toUpperCase() || '?';
 
   return (
-    <div style={{
+    <div className="ps-container" style={{
       padding: isMobile ? '16px' : '24px',
       background: colors.background,
       minHeight: '100vh',
@@ -197,10 +197,12 @@ export default function PerfilSeguridad() {
           .ps-btn-row { flex-direction: column; }
           .ps-btn-row button { width: 100%; }
           .ps-info-row { flex-direction: column; align-items: flex-start !important; gap: 2px; }
+          .ps-container { padding: 12px !important; }
+          .ps-max-width { max-width: 100% !important; }
         }
       `}</style>
 
-      <div style={{ maxWidth: '860px', margin: '0 auto' }}>
+      <div className="ps-max-width" style={{ maxWidth: '860px', margin: '0 auto' }}>
 
         {/* ─── Profile Header ────────────────────────────────────────────── */}
         <div style={{
