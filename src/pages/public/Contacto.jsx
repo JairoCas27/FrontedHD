@@ -1,5 +1,6 @@
 import "bootstrap/dist/css/bootstrap.min.css"
 import Hero from "../../components/Hero"
+import FAQ from "../../components/FAQ"
 import { useState } from "react"
 import parkingContact from "../../images/parking-contact.jpg"
 
@@ -19,6 +20,29 @@ function Contacto() {
     e.preventDefault()
     setFormData({ name: "", email: "", message: "" })
   }
+
+  const faqs = [
+    {
+      pregunta: "¿Qué funcionalidades incluye el sistema?",
+      respuesta:
+        "Urbania incluye gestión de condominios, residentes, accesos vehiculares, estacionamientos, carritos compartidos y reportes en tiempo real."
+    },
+    {
+      pregunta: "¿Puedo cambiar de plan en cualquier momento?",
+      respuesta:
+        "Sí, puedes escalar o reducir tu plan sin pérdida de información ni interrupción del servicio."
+    },
+    {
+      pregunta: "¿El sistema soporta reconocimiento de placas?",
+      respuesta:
+        "Sí, los planes Business y Enterprise permiten integración con sistemas LPR para control automático de vehículos."
+    },
+    {
+      pregunta: "¿Es posible administrar varios condominios?",
+      respuesta:
+        "Sí, el plan Enterprise está diseñado para gestión multi-condominio con control centralizado."
+    }
+  ]
 
   return (
     <>
@@ -129,6 +153,17 @@ function Contacto() {
               Enviar mensaje
             </button>
           </form>
+        </div>
+      </section>
+
+      <FAQ items={faqs} />
+
+      <section className="py-5 text-center bg-white">
+        <div className="container">
+          <h3 className="fw-bold">¿Necesitas una solución a medida?</h3>
+          <p className="text-muted">
+            Podemos adaptar Urbania según el número de condominios, usuarios y módulos que requieras.
+          </p>
         </div>
       </section>
     </>

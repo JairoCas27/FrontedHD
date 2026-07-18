@@ -114,17 +114,6 @@ function Navbar() {
 
             <Nav.Link
               as={Link}
-              to="/precios"
-              style={linkStyle("precios")}
-              onClick={() => setExpanded(false)}
-              onMouseEnter={() => setHovered("precios")}
-              onMouseLeave={() => setHovered(null)}
-            >
-              Planes
-            </Nav.Link>
-
-            <Nav.Link
-              as={Link}
               to="/contacto"
               style={linkStyle("contacto")}
               onClick={() => setExpanded(false)}

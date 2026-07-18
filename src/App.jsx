@@ -16,7 +16,6 @@ import SidebarSuperAdmin from "./components/SidebarSuperAdmin"
 import Inicio from "./pages/public/Inicio"
 import Nosotros from "./pages/public/Nosotros"
 import Servicios from "./pages/public/Servicios"
-import Precios from "./pages/public/Precios"
 import Contacto from "./pages/public/Contacto"
 import Register from "./pages/public/Register"
 import Login from "./pages/public/Login"
@@ -71,7 +70,6 @@ function App() {
           <Route path="/inicio" element={<Inicio />} />
           <Route path="/nosotros" element={<Nosotros />} />
           <Route path="/servicios" element={<Servicios />} />
-          <Route path="/precios" element={<Precios />} />
           <Route path="/contacto" element={<Contacto />} />
           <Route path="/register" element={<Register />} />
           <Route path="/privacidad" element={<Privacidad />} />

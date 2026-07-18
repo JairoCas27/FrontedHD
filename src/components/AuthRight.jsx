@@ -131,17 +131,6 @@ function AuthRight({ accentColor, accentColorDark, onSubmit, phase, ease, resetT
           </div>
 
           <div style={{ ...fadeUp(phase >= 3, "0.05s"), display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "clamp(12px, 1.5vh, 22px)" }}>
-            <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", fontSize: "0.85rem", color: "#475569", fontWeight: 500, userSelect: "none" }}>
-              <input
-                id="recuerdame"
-                name="recuerdame"
-                type="checkbox"
-                checked={recuerdame}
-                onChange={(e) => setRecuerdame(e.target.checked)}
-                style={{ width: "16px", height: "16px", accentColor: accentColor, cursor: "pointer" }}
-              />
-              Recuérdame
-            </label>
             <span
               onClick={() => setOpenForgot(true)}
               style={{ fontSize: "0.85rem", color: accentColor, fontWeight: 600, cursor: "pointer" }}
