@@ -75,7 +75,7 @@ function Navbar2() {
           ¿Aún no eres cliente?
         </span>
 
-        <Link to="/precios" style={{ textDecoration: "none" }}>
+        <Link to="contacto#contact-section" style={{ textDecoration: "none" }}>
           <button
             style={{
               padding: "8px 14px",
@@ -92,7 +92,7 @@ function Navbar2() {
             onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
             onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
           >
-            Ver planes
+            Contáctanos
           </button>
         </Link>
 

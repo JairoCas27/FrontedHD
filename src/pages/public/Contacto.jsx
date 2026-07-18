@@ -1,15 +1,27 @@
 import "bootstrap/dist/css/bootstrap.min.css"
 import Hero from "../../components/Hero"
 import FAQ from "../../components/FAQ"
-import { useState } from "react"
+import { useState, useEffect, useLayoutEffect } from "react"
+import { useLocation } from "react-router-dom"
 import parkingContact from "../../images/parking-contact.jpg"
 
 function Contacto() {
+  const location = useLocation()
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     message: ""
   })
+
+  useLayoutEffect(() => {
+    if (location.hash === "#contact-form") {
+      const el = document.getElementById("contact-form")
+      if (el) {
+        const top = el.getBoundingClientRect().top + window.scrollY
+        window.scrollTo(0, top)
+      }
+    }
+  }, [location])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -56,6 +68,7 @@ function Contacto() {
       />
 
       <section
+        id="contact-form"
         className="py-5"
         style={{
           background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)"

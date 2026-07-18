@@ -146,12 +146,12 @@ function Footer() {
             <Col lg={2} md={6} className="footer-col">
               <h5 className="footer-title">Producto</h5>
               <Link to="/servicios">Funcionalidades</Link>
-              <Link to="/precios">Planes</Link>
+              <Link to="/contacto#contact-form">Planes</Link>
             </Col>
 
             <Col lg={2} md={6} className="footer-col">
               <h5 className="footer-title">Soporte</h5>
-              <Link to="/contacto">Contáctanos</Link>
+              <Link to="/contacto#contact-form">Contáctanos</Link>
               <Link to="/terminos">Términos</Link>
               <Link to="/privacidad">Privacidad</Link>
             </Col>
