@@ -25,7 +25,7 @@ export default function AppLayout({ Sidebar, allowedRole }) {
 
   return (
     <PrivateRoute allowedRole={allowedRole}>
-      <div style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f1f5f9' }}>
+      <div className="al-layout" style={{ display: 'flex', minHeight: '100vh', backgroundColor: '#f1f5f9' }}>
         {isMobile && isOpen && (
           <div
             onClick={() => setIsOpen(false)}
@@ -38,34 +38,14 @@ export default function AppLayout({ Sidebar, allowedRole }) {
           />
         )}
         <Sidebar isOpen={isOpen} setIsOpen={setIsOpen} />
-        <div style={{
+        <div className="al-content" style={{
           flexGrow: 1,
-          marginLeft: isOpen ? '240px' : '72px',
+          marginLeft: isMobile ? '0' : (isOpen ? '240px' : '72px'),
           transition: 'margin-left 0.35s ease',
-          padding: isMobile ? '1rem' : '2rem',
+          padding: isMobile ? '4.5rem 1rem 1rem' : '2rem',
           minWidth: 0,
           overflowX: 'hidden',
         }}>
-          {isMobile && !isOpen && (
-            <button
-              onClick={() => setIsOpen(true)}
-              style={{
-                background: 'none',
-                border: 'none',
-                padding: '0.5rem 0',
-                marginBottom: '1rem',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                color: '#475569',
-                fontSize: '1.25rem',
-              }}
-              aria-label="Abrir menú"
-            >
-              <FiMenu />
-            </button>
-          )}
           <Outlet />
         </div>
       </div>
