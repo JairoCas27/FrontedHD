@@ -17,7 +17,6 @@ import Inicio from "./pages/public/Inicio"
 import Nosotros from "./pages/public/Nosotros"
 import Servicios from "./pages/public/Servicios"
 import Contacto from "./pages/public/Contacto"
-import Register from "./pages/public/Register"
 import Login from "./pages/public/Login"
 import Privacidad from "./pages/public/Privacidad"
 import Terminos from "./pages/public/Terminos"
@@ -71,7 +70,6 @@ function App() {
           <Route path="/nosotros" element={<Nosotros />} />
           <Route path="/servicios" element={<Servicios />} />
           <Route path="/contacto" element={<Contacto />} />
-          <Route path="/register" element={<Register />} />
           <Route path="/privacidad" element={<Privacidad />} />
           <Route path="/terminos" element={<Terminos />} />
         </Route>
