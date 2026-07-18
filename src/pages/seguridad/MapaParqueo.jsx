@@ -264,7 +264,7 @@ export default function MapaParqueo() {
   }
 
   return (
-    <div style={styles.container}>
+    <div className="mp-container" style={styles.container}>
       <style>{`
         @keyframes fadeSlideIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes slideInRight { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
@@ -281,6 +281,21 @@ export default function MapaParqueo() {
         .aisle-line { border: none; border-top: 1.5px dashed #cbd5e1; margin: 0; }
         .filter-btn { transition: all 0.15s ease; }
         .filter-btn:hover { filter: brightness(0.95); }
+        @media (max-width: 768px) {
+          .mp-container { padding: 1rem !important; }
+          .mp-content-grid { grid-template-columns: 1fr !important; }
+          .mp-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .mp-spot-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; max-width: 100% !important; }
+          .mp-filters-wrap { flex-direction: column !important; align-items: stretch !important; }
+          .mp-search-input { width: 100% !important; }
+          .mp-detail-panel { position: static !important; }
+          .mp-table table { font-size: 0.6rem !important; }
+          .mp-table th, .mp-table td { padding: 0.35rem 0.4rem !important; }
+        }
+        @media (max-width: 480px) {
+          .mp-stats-grid { grid-template-columns: 1fr 1fr !important; }
+          .mp-spot-grid { grid-template-columns: 1fr 1fr !important; }
+        }
       `}</style>
 
       {toast && (
@@ -312,7 +327,7 @@ export default function MapaParqueo() {
 
       <div className="fade-in">
         {/* ─── Stats Cards ─── */}
-        <div style={{ display: "grid", gap: "0.75rem", gridTemplateColumns: "repeat(auto-fit, minmax(155px, 1fr))", marginBottom: "0.75rem" }}>
+        <div className="mp-stats-grid" style={{ display: "grid", gap: "0.75rem", gridTemplateColumns: "repeat(auto-fit, minmax(155px, 1fr))", marginBottom: "0.75rem" }}>
           {[
             { label: "Total Espacios", value: stats.totalParking, color: "#1e293b", bg: "linear-gradient(135deg, #f8fafc, #f1f5f9)", icon: <FiGrid size={15} />, accent: "#64748b", iconBg: "#e2e8f0" },
             { label: "Disponibles", value: stats.disponibles, color: VERDE_OSCURO, bg: "linear-gradient(135deg, #f0fdf4, #dcfce7)", icon: <FiCheck size={15} />, accent: VERDE, iconBg: VERDE_CLARO },
@@ -359,7 +374,7 @@ export default function MapaParqueo() {
 
         {/* ─── Filter & Controls ─── */}
         <div style={{ ...styles.card, marginBottom: "0.75rem" }}>
-          <div style={{ padding: "0.6rem 1rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.4rem" }}>
+          <div className="mp-filters-wrap" style={{ padding: "0.6rem 1rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "0.4rem" }}>
             <div style={{ display: "flex", gap: "0.3rem", alignItems: "center" }}>
               {["mapa", "tabla"].map(m => (
                 <button key={m} onClick={() => setViewMode(m)}
@@ -392,6 +407,7 @@ export default function MapaParqueo() {
                 <input type="text" placeholder="N°..." value={searchN} onChange={e => setSearchN(e.target.value.replace(/\D/g, ""))}
                   onFocus={e => { e.currentTarget.style.borderColor = VERDE; e.currentTarget.style.boxShadow = `0 0 0 2px ${VERDE_CLARO}` }}
                   onBlur={e => { e.currentTarget.style.borderColor = "#cbd5e1"; e.currentTarget.style.boxShadow = "none" }}
+                  className="mp-search-input"
                   style={{ ...styles.input, padding: "0.2rem 0.5rem 0.2rem 1.2rem", fontSize: "0.68rem", width: "50px" }} />
               </div>
             </div>
@@ -409,7 +425,7 @@ export default function MapaParqueo() {
 
         {/* ─── Main Content ─── */}
         {viewMode === "mapa" ? (
-          <div style={{ display: "grid", gap: "1.25rem", gridTemplateColumns: selectedSpot ? "1fr 340px" : "1fr", transition: "grid-template-columns 0.3s" }}>
+          <div className="mp-content-grid" style={{ display: "grid", gap: "1.25rem", gridTemplateColumns: selectedSpot ? "1fr 340px" : "1fr", transition: "grid-template-columns 0.3s" }}>
             <div style={{ ...styles.card }}>
               <div style={{ padding: "0.75rem 1rem", borderBottom: `1px solid ${BORDE}`, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ fontWeight: 700, color: TEXTO, fontSize: "0.78rem", display: "flex", alignItems: "center", gap: "0.35rem" }}>
@@ -447,7 +463,7 @@ export default function MapaParqueo() {
 
                   {rows.map((row, rowIdx) => (
                     <div key={rowIdx}>
-                      <div style={{
+                      <div className="mp-spot-grid" style={{
                         display: "grid", gridTemplateColumns: `repeat(${Math.min(row.length, 4)}, 1fr)`, gap: "16px",
                         maxWidth: "1100px", margin: "0 auto",
                       }}>
@@ -506,7 +522,7 @@ export default function MapaParqueo() {
             )}
           </div>
         ) : (
-          <div style={{ ...styles.card, borderRadius: "0.75rem" }}>
+          <div className="mp-table" style={{ ...styles.card, borderRadius: "0.75rem" }}>
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
@@ -744,7 +760,7 @@ function SpotDetailPanel({ spot, verifyPlate, setVerifyPlate, vehiculoDetail, lo
   const statusBg = ocupado ? "#fef2f2" : "#f0fdf4"
 
   return (
-    <div className="slide-right" style={{
+    <div className="slide-right mp-detail-panel" style={{
       background: "#fff", borderRadius: "0.85rem", border: `1px solid ${BORDE}`,
       boxShadow: "0 4px 16px rgba(0,0,0,0.06)", overflow: "hidden",
       position: "sticky", top: "1rem", alignSelf: "start",
