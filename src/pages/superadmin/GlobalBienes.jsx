@@ -158,6 +158,11 @@ export default function GlobalBienes() {
   const [allCartLoans, setAllCartLoans] = useState([])
   const barcodeRef = useRef(null)
   const toastTimer = useRef(null)
+  const [now, setNow] = useState(Date.now())
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(id)
+  }, [])
   const PER_PAGE = 10
   const [logPage, setLogPage] = useState(1)
   const [logSearch, setLogSearch] = useState('')
@@ -224,7 +229,7 @@ export default function GlobalBienes() {
         getAdminAssets(id, 'CARRITO', 0, 100),
         getAdminApartments(id).catch(() => ({ items: [] })),
         getAdminVehicles(id).catch(() => []),
-        getAdminAccessLogs(id, { type: 'VEHICULAR', page: 0, size: 50 }).catch(() => ({ content: [] })),
+        getAdminAccessLogs(id, { type: 'VEHICULAR', page: 0, size: 500 }).catch(() => ({ content: [] })),
         getSecurityDashboard(id).catch(() => null),
         getActiveCartLoans(id).catch(() => []),
         getAllCartLoans(id).catch(() => [])
@@ -248,7 +253,37 @@ export default function GlobalBienes() {
 
   const condo = condominios.find(c => String(c.id) === String(condoId))
 
-  const occupiedParkingIds = new Set(parking.filter(p => (p.cantidadActual || 0) > 0).map(p => String(p.id)))
+  const activeLogEntries = React.useMemo(() => logs.filter(l => !l.fechaSalida), [logs])
+
+  const enrichedParking = React.useMemo(() => {
+    if (!parking.length) return []
+    return parking.map(slot => {
+      const vehiculosEnSlot = activeLogEntries
+        .filter(l => String(l.idEstacionamiento) === String(slot.id))
+        .map(l => ({
+          id: l.idVehiculo || l.id,
+          idLogAcceso: l.id,
+          placa: l.placa,
+          marca: l.marca || '',
+          modelo: l.modelo || '',
+          color: l.color || '',
+          tipo: l.tipoVehiculo || l.tipo || '',
+          idEstacionamiento: l.idEstacionamiento,
+          fechaEntrada: l.fechaEntrada,
+        }))
+      const cantidadReal = vehiculosEnSlot.length
+      return {
+        ...slot,
+        vehiculos: vehiculosEnSlot,
+        cantidadActual: cantidadReal,
+        disponible: slot.capacidadMaxima
+          ? cantidadReal < slot.capacidadMaxima
+          : cantidadReal < 1,
+      }
+    })
+  }, [parking, activeLogEntries])
+
+  const occupiedParkingIds = new Set(enrichedParking.filter(p => p.cantidadActual > 0).map(p => String(p.id)))
 
   const allOccupants = React.useMemo(() => {
     const names = []
@@ -302,11 +337,11 @@ export default function GlobalBienes() {
   }, [apartments])
 
   const stats = {
-    totalParking: parking.length,
-    disponibleParking: parking.filter(p => !vehicles.some(v => String(v.idEstacionamiento) === String(p.id))).length,
-    ocupadoParking: parking.filter(p => vehicles.some(v => String(v.idEstacionamiento) === String(p.id))).length,
-    capacidadTotal: parking.reduce((s, p) => s + (p.capacidadMaxima || 0), 0),
-    ocupacionActual: parking.reduce((s, p) => s + (p.cantidadActual || 0), 0),
+    totalParking: enrichedParking.length,
+    disponibleParking: enrichedParking.filter(p => p.disponible).length,
+    ocupadoParking: enrichedParking.filter(p => !p.disponible).length,
+    capacidadTotal: enrichedParking.reduce((s, p) => s + (p.capacidadMaxima || 0), 0),
+    ocupacionActual: enrichedParking.reduce((s, p) => s + (p.cantidadActual || 0), 0),
     totalCarts: carts.length,
     cartDisponible: carts.filter(c => c.estado === 'DISPONIBLE').length,
     cartEnUso: carts.filter(c => c.estado === 'EN_USO').length,
@@ -485,6 +520,9 @@ export default function GlobalBienes() {
   const handleUnassignVehicle = async (vehicle) => {
     try {
       await unassignVehicleFromSpot(vehicle.id, condoId)
+      if (vehicle.idLogAcceso) {
+        await registerVehicleExit({ idLogAcceso: Number(vehicle.idLogAcceso) })
+      }
       showToast('Vehículo retirado del estacionamiento')
       loadData(condoId)
     } catch (e) { showToast('Error: ' + e.message, 'error') }
@@ -1036,7 +1074,7 @@ export default function GlobalBienes() {
                 <StatCard icon={<FiUsers />} label="Capacidad Total" value={stats.capacidadTotal} sub={`${stats.ocupacionActual} vehículos ahora (${stats.capacidadTotal > 0 ? ((stats.ocupacionActual / stats.capacidadTotal) * 100).toFixed(0) : 0}%)`} color="#3b82f6" />
                 <StatCard icon={<FiTruck />} label="Préstamos" value={stats.totalCarts} sub={`${stats.cartDisponible} disp · ${stats.cartEnUso} uso · ${stats.cartMant} mant`} color={colorSuper} />
                 <StatCard icon={<FiNavigation2 />} label="Vehículos Registrados" value={stats.totalVehicles} color="#f59e0b" />
-                <StatCard icon={<FiLogIn />} label="Vehículos Dentro" value={stats.activeEntries.length} sub={`${stats.disponibleParking} spots libres`} color="#10b981" />
+                <StatCard icon={<FiLogIn />} label="Vehículos Dentro" value={activeLogEntries.length} sub={`${stats.disponibleParking} spots libres`} color="#10b981" />
               </div>
 
               <div style={{ display: "grid" }} className="gb-grid-2">
@@ -1052,7 +1090,7 @@ export default function GlobalBienes() {
                   </div>
                   <div style={{ padding: "0.75rem 0.5rem 0 0.5rem" }}>
                     <ResponsiveContainer width="100%" height={200}>
-                      <BarChart data={parking.slice(0, 20).map(p => {
+                      <BarChart data={enrichedParking.slice(0, 20).map(p => {
                         const cap = p.capacidadMaxima || 1
                         const occ = p.cantidadActual || 0
                         const free = Math.max(cap - occ, 0)
@@ -1087,7 +1125,7 @@ export default function GlobalBienes() {
                         />
                         <Bar dataKey="disponible" stackId="stack" radius={[0, 0, 0, 0]} maxBarSize={36} fill="#10b981" />
                         <Bar dataKey="ocupado" stackId="stack" radius={[6, 6, 0, 0]} maxBarSize={36}>
-                          {parking.slice(0, 20).map(p => {
+                          {enrichedParking.slice(0, 20).map(p => {
                             const pct = p.capacidadMaxima > 0 ? ((p.cantidadActual || 0) / p.capacidadMaxima) * 100 : 0
                             return <Cell key={p.id} fill={pct >= 80 ? "#ef4444" : pct > 0 ? "#f59e0b" : "#10b981"} />
                           })}
@@ -1103,9 +1141,9 @@ export default function GlobalBienes() {
                     <span style={{ fontWeight: 800, fontSize: "0.8rem", color: "#0f172a" }}>Vehículos dentro ahora</span>
                   </div>
                   <div style={{ maxHeight: "200px", overflowY: "auto" }}>
-                    {stats.activeEntries.length === 0 ? (
+                    {activeLogEntries.length === 0 ? (
                       <div style={{ padding: "1.5rem", textAlign: "center", color: "#94a3b8", fontSize: "0.8rem" }}>Ningún vehículo dentro</div>
-                    ) : stats.activeEntries.slice(0, 10).map(l => (
+                    ) : activeLogEntries.slice(0, 10).map(l => (
                       <div key={l.id} style={{ padding: "0.5rem 1rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <div>
                           <span style={{ fontWeight: 700, fontSize: "0.8rem", color: "#0f172a", fontFamily: "monospace" }}>{l.placa}</span>
@@ -1114,7 +1152,7 @@ export default function GlobalBienes() {
                         <span style={{ fontSize: "0.65rem", color: "#3b82f6" }}>{formatDate(l.fechaEntrada)}</span>
                       </div>
                     ))}
-                    {stats.activeEntries.length > 10 && <div style={{ padding: "0.5rem", textAlign: "center", fontSize: "0.7rem", color: "#94a3b8" }}>+{stats.activeEntries.length - 10} más</div>}
+                    {activeLogEntries.length > 10 && <div style={{ padding: "0.5rem", textAlign: "center", fontSize: "0.7rem", color: "#94a3b8" }}>+{activeLogEntries.length - 10} más</div>}
                   </div>
                 </div>
               </div>
@@ -1124,7 +1162,7 @@ export default function GlobalBienes() {
                   <div style={styles.card}>
                     <div style={{ padding: "1.25rem", textAlign: "center" }}>
                       <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>Vehículos dentro</div>
-                      <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "#10b981" }}>{dashboard.vehiculosDentro ?? stats.activeEntries.length}</div>
+                      <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "#10b981" }}>{dashboard.vehiculosDentro ?? activeLogEntries.length}</div>
                     </div>
                   </div>
                   <div style={styles.card}>
@@ -1205,8 +1243,8 @@ export default function GlobalBienes() {
                     <div style={{ textAlign: "center", padding: "2rem", color: "#94a3b8", fontSize: "0.85rem" }}>No hay estacionamientos registrados</div>
                   ) : (
                     <div className="gb-park-grid" style={{ display: "grid", gap: "1rem" }}>
-                      {parking.map(p => {
-                        const vehiclesInSpot = vehicles.filter(v => String(v.idEstacionamiento) === String(p.id))
+                      {enrichedParking.map(p => {
+                        const vehiclesInSpot = p.vehiculos || []
                         const pct = p.capacidadMaxima > 0 ? ((p.cantidadActual || 0) / p.capacidadMaxima) * 100 : 0
                         return (
                           <div key={p.id} style={{
@@ -1216,12 +1254,12 @@ export default function GlobalBienes() {
                             <div style={{ padding: "0.75rem" }}>
                               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.3rem" }}>
                                 <div style={{ fontSize: "0.6rem", fontWeight: 700, color: vehiclesInSpot.length === 0 ? "#10b981" : "#ef4444", textTransform: "uppercase" }}>
-                                  {vehiclesInSpot.length === 0 ? 'Disponible' : 'Ocupado'} · {p.tipoVehiculo || 'MIXTO'}
+                                  {vehiclesInSpot.length === 0 ? 'Disponible' : vehiclesInSpot.length >= (p.capacidadMaxima || 1) ? 'LLENO' : 'Ocupado'} · {p.tipoVehiculo || 'MIXTO'}
                                 </div>
                                 <div style={{ fontSize: "1rem", fontWeight: 800, color: "#0f172a" }}>#{p.numero || p.id}</div>
                               </div>
                               <div style={{ fontSize: "0.65rem", color: "#94a3b8", marginBottom: "0.3rem" }}>
-                                {p.cantidadActual ?? 0}/{p.capacidadMaxima || '8'} vehículos
+                                {p.cantidadActual ?? 0}/{p.capacidadMaxima || '∞'} vehículos
                               </div>
                               <ParkingMatrix spot={p} occupiedCount={vehiclesInSpot.length} />
                               <div style={{ marginTop: "0.3rem" }}>
@@ -1236,8 +1274,8 @@ export default function GlobalBienes() {
                             {vehiclesInSpot.length > 0 && (
                               <div style={{ borderTop: "1px solid #e2e8f0", backgroundColor: "#f8fafc", padding: "0.5rem 0.75rem" }}>
                                 <div style={{ fontSize: "0.6rem", fontWeight: 700, color: "#64748b", marginBottom: "0.3rem" }}>Vehículos:</div>
-                                {vehiclesInSpot.map(v => (
-                                  <div key={v.id} style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.7rem", color: "#334155", marginBottom: "0.2rem" }}>
+                                {vehiclesInSpot.map((v, vi) => (
+                                  <div key={v.id || vi} style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.7rem", color: "#334155", marginBottom: "0.2rem" }}>
                                     <span style={{
                                       display: "inline-block", width: 8, height: 8, borderRadius: "50%",
                                       backgroundColor: colorSwatch(v.color), border: "1px solid #e2e8f0"
@@ -1384,28 +1422,33 @@ export default function GlobalBienes() {
                   {exitOpen && (
                     <form onSubmit={handleRegisterExit} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
                       <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar vehículo dentro</label>
-                      <DataList value={exitLogText} onChange={e => { setExitLogText(e.target.value); const s = stats.activeEntries.find(l => `${l.placa} · ${l.ocupante}  · Entrada: ${formatDate(l.fechaEntrada)}` === e.target.value); if (s) setExitForm(f => ({ ...f, idLogAcceso: String(s.id) })) }} required style={styles.select}>
-                        <option value="">Seleccionar vehículo dentro</option>
-                        {stats.activeEntries.map(l => (
-                          <option key={l.id} value={`${l.placa} · ${l.ocupante}  · Entrada: ${formatDate(l.fechaEntrada)}`} />
-                        ))}
-                      </DataList>
                       {(() => {
-                        const sel = stats.activeEntries.find(l => String(l.id) === exitForm.idLogAcceso)
+                        const vehiclesInside = enrichedParking.flatMap(p => p.vehiculos || [])
+                        return (
+                          <DataList value={exitLogText} onChange={e => { setExitLogText(e.target.value); const s = vehiclesInside.find(v => `${v.placa} · Entrada: ${formatDate(v.fechaEntrada)}` === e.target.value); if (s) setExitForm(f => ({ ...f, idLogAcceso: String(s.idLogAcceso) })) }} required style={styles.select}>
+                            <option value="">Seleccionar vehículo dentro</option>
+                            {vehiclesInside.map(v => (
+                              <option key={v.idLogAcceso} value={`${v.placa} · Entrada: ${formatDate(v.fechaEntrada)}`} />
+                            ))}
+                          </DataList>
+                        )
+                      })()}
+                      {(() => {
+                        const vehiclesInside = enrichedParking.flatMap(p => p.vehiculos || [])
+                        const sel = vehiclesInside.find(v => String(v.idLogAcceso) === exitForm.idLogAcceso)
                         return sel ? (
                           <div style={{ fontSize: "0.75rem", backgroundColor: "#fef2f2", padding: "0.75rem", borderRadius: "0.5rem", color: "#991b1b" }}>
                             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.25rem" }}>
                               <span><strong>Vehículo:</strong> {sel.placa}</span>
-                              <span><strong>Método:</strong> {sel.metodo}</span>
+                              <span><strong>Estacionamiento:</strong> #{enrichedParking.find(p => p.vehiculos?.some(v => v.idLogAcceso === sel.idLogAcceso))?.numero || '—'}</span>
                             </div>
                             <div style={{ display: "flex", justifyContent: "space-between" }}>
-                              <span><strong>Ocupante:</strong> {sel.ocupante}</span>
                               <span><strong>Entrada:</strong> {formatDate(sel.fechaEntrada)}</span>
                             </div>
                             <div style={{ marginTop: "0.25rem", fontSize: "0.65rem", color: "#dc2626" }}>
                               <FiClock size={11} style={{ marginRight: "0.25rem" }} />
-                              Tiempo transcurrido: {sel.fechaEntrada ? (() => {
-                                const diff = Date.now() - new Date(sel.fechaEntrada).getTime()
+                               Tiempo transcurrido: {sel.fechaEntrada ? (() => {
+                                 const diff = now - new Date(sel.fechaEntrada).getTime()
                                 const h = Math.floor(diff / 3600000)
                                 const m = Math.floor((diff % 3600000) / 60000)
                                 return `${h}h ${m}m`
@@ -1414,8 +1457,8 @@ export default function GlobalBienes() {
                           </div>
                         ) : null
                       })()}
-                      {stats.activeEntries.length === 0 && <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>No hay vehículos dentro</div>}
-                      <button type="submit" disabled={saving || stats.activeEntries.length === 0} style={{ ...styles.btnDanger, width: "100%", justifyContent: "center", padding: "0.6rem" }}>
+                      {enrichedParking.flatMap(p => p.vehiculos || []).length === 0 && <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>No hay vehículos dentro</div>}
+                      <button type="submit" disabled={saving || enrichedParking.flatMap(p => p.vehiculos || []).length === 0} style={{ ...styles.btnDanger, width: "100%", justifyContent: "center", padding: "0.6rem" }}>
                         {saving ? 'Registrando...' : <><FiLogOut size={14} /> Registrar Salida  — {new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}</>}
                       </button>
                     </form>
