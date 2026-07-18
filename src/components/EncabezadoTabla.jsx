@@ -1,9 +1,9 @@
 import React from 'react';
 import { FiPlus } from 'react-icons/fi';
 
-export default function EncabezadoTabla({ titulo, subtitulo, botonTexto, onBotonClick, accentColor = "rgb(52,151,195)" }) {
+export default function EncabezadoTabla({ titulo, subtitulo, botonTexto, onBotonClick, action, accentColor = "rgb(52,151,195)" }) {
   return (
-    <div style={{ 
+    <div className="et-header" style={{ 
       display: 'flex', 
       justifyContent: 'space-between', 
       alignItems: 'center', 
@@ -11,8 +11,9 @@ export default function EncabezadoTabla({ titulo, subtitulo, botonTexto, onBoton
       width: '100%',
       textAlign: 'left'
     }}>
+      <style>{`@media (max-width: 768px) { .et-header { flex-direction: column !important; align-items: flex-start !important; gap: 0.75rem !important; } .et-title { font-size: 1.2rem !important; } }`}</style>
       <div>
-        <h1 style={{ fontSize: '1.6rem', fontWeight: '800', color: '#1e293b', margin: 0 }}>
+        <h1 className="et-title" style={{ fontSize: '1.6rem', fontWeight: '800', color: '#1e293b', margin: 0 }}>
           {titulo}
         </h1>
         {subtitulo && (
@@ -22,7 +23,9 @@ export default function EncabezadoTabla({ titulo, subtitulo, botonTexto, onBoton
         )}
       </div>
 
-      {botonTexto && (
+      {action && <div>{action}</div>}
+
+      {!action && botonTexto && (
         <button 
           onClick={onBotonClick}
           style={{
