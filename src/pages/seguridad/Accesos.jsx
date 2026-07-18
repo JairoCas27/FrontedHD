@@ -349,7 +349,7 @@ export default function Accesos() {
   )
 
   return (
-    <div style={styles.container}>
+    <div className="ac-container" style={styles.container}>
       <style>{`
         @keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
@@ -357,6 +357,15 @@ export default function Accesos() {
         .spin { animation: spin 1s linear infinite; }
         .btn-hover:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16,185,129,0.3); }
         .btn-hover-red:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(239,68,68,0.3); }
+        @media (max-width: 768px) {
+          .ac-container { padding: 1rem !important; }
+          .ac-forms-grid { grid-template-columns: 1fr !important; }
+          .ac-buscar-input { width: 100% !important; }
+          .ac-modal-box { max-width: 95vw !important; margin: 0 0.5rem !important; }
+          .ac-ticket-modal { max-width: 95vw !important; }
+          .ac-log-table table { font-size: 0.7rem !important; }
+          .ac-log-table th, .ac-log-table td { padding: 0.4rem 0.5rem !important; }
+        }
       `}</style>
 
       {/* TOAST */}
@@ -380,7 +389,7 @@ export default function Accesos() {
       />
 
       {/* ===== DOS FORMULARIOS EN GRID ===== */}
-      <div className="fade-in" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem", marginBottom: "1.5rem" }}>
+      <div className="fade-in ac-forms-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem", marginBottom: "1.5rem" }}>
 
         {/* ============ FORMULARIO 1: ENTRADA ============ */}
         <div style={{ ...styles.card, background: "linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%)" }}>
@@ -438,13 +447,14 @@ export default function Accesos() {
             {/* Resultado vehículo */}
             {vehiculo && (
               <div style={{ padding: "0.75rem 1rem", borderRadius: "0.65rem", backgroundColor: "#f0fdf4", border: "1px solid #86efac", marginBottom: "0.65rem" }}>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.25rem 1rem", fontSize: "0.82rem", color: "#065f46" }}>
+                <div className="ac-vehiculo-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.25rem 1rem", fontSize: "0.82rem", color: "#065f46" }}>
                   <span><b>Dueño:</b> {vehiculo.nombrePropietario || 'Sin propietario'}</span>
                   <span><b>Placa:</b> <span style={{ fontFamily: "monospace", fontWeight: 700 }}>{vehiculo.placa}</span></span>
                   <span><b>Modelo:</b> {vehiculo.modelo}</span>
                   <span><b>Color:</b> {vehiculo.color}</span>
                   <span><b>Tipo:</b> {vehiculo.tipo}</span>
                 </div>
+                <style>{`@media (max-width: 768px) { .ac-vehiculo-grid { grid-template-columns: 1fr !important; } }`}</style>
               </div>
             )}
 
@@ -637,6 +647,7 @@ export default function Accesos() {
             <div style={{ position: "relative" }}>
               <FiSearch size={13} style={{ position: "absolute", left: "0.5rem", top: "50%", transform: "translateY(-50%)", color: TEXTO_LIGHT }} />
               <input type="text" placeholder="Buscar placa, vehículo..." value={logSearch} onChange={e => { setLogSearch(e.target.value); setLogPage(1) }}
+                className="ac-buscar-input"
                 style={{ ...styles.input, padding: "0.35rem 0.5rem 0.35rem 1.6rem", fontSize: "0.75rem", width: "180px" }} />
             </div>
             <button onClick={cargarAccessLogs} style={{ background: "none", border: "none", cursor: "pointer", color: TEXTO_LIGHT }} title="Recargar">
@@ -657,7 +668,7 @@ export default function Accesos() {
           </div>
         ) : (
           <>
-            <div style={{ overflowX: "auto" }}>
+            <div className="ac-log-table" style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
                 <thead>
                   <tr style={{ backgroundColor: FONDO }}>
@@ -742,7 +753,7 @@ export default function Accesos() {
         <div style={{
           position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.35)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100, backdropFilter: "blur(4px)"
         }} onClick={() => setDetailItem(null)}>
-          <div style={{
+          <div className="ac-modal-box" style={{
             backgroundColor: "#fff", borderRadius: "1.25rem", width: "100%", maxWidth: "560px",
             boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)", maxHeight: "90vh", overflowY: "auto"
           }} onClick={e => e.stopPropagation()}>
@@ -797,7 +808,7 @@ export default function Accesos() {
         <div style={{
           position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.35)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1100, backdropFilter: "blur(4px)"
         }} onClick={() => setTicket(null)}>
-          <div style={{
+          <div className="ac-ticket-modal" style={{
             backgroundColor: "#fff", borderRadius: "1.25rem", width: "100%", maxWidth: "440px",
             boxShadow: "0 25px 50px -12px rgba(0,0,0,0.25)", maxHeight: "90vh", overflowY: "auto"
           }} onClick={e => e.stopPropagation()}>
