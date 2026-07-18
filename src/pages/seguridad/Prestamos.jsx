@@ -269,11 +269,24 @@ export default function Prestamos() {
   }
 
   return (
-    <div style={styles.container}>
+    <div className="pr-container" style={styles.container}>
       <style>{`
         @keyframes slideIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         .fade-in { animation: slideIn 0.3s ease both; }
         .btn-hover:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(245,158,11,0.3); }
+        @media (max-width: 768px) {
+          .pr-container { padding: 1rem !important; }
+          .pr-stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .pr-form-grid { grid-template-columns: 1fr !important; }
+          .pr-search-input { width: 100% !important; }
+          .pr-tabs-wrap { flex-wrap: wrap !important; }
+          .pr-modal-box { max-width: 95vw !important; margin: 0 0.5rem !important; }
+          .pr-table table { font-size: 0.65rem !important; }
+          .pr-table th, .pr-table td { padding: 0.4rem 0.5rem !important; }
+        }
+        @media (max-width: 480px) {
+          .pr-stats-grid { grid-template-columns: 1fr 1fr !important; }
+        }
       `}</style>
 
       {toast && (
@@ -303,7 +316,7 @@ export default function Prestamos() {
         }
       />
 
-      <div style={{ display: "flex", gap: "0.35rem", marginBottom: "1rem", flexWrap: "wrap" }}>
+      <div className="pr-tabs-wrap" style={{ display: "flex", gap: "0.35rem", marginBottom: "1rem", flexWrap: "wrap" }}>
         {[
           { id: "gestion", label: "Gestión", icon: <FiTruck size={13} /> },
           { id: "history", label: "Historial", icon: <FiCalendar size={13} /> },
@@ -321,7 +334,7 @@ export default function Prestamos() {
           <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
 
             {/* Stats bar */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "0.75rem" }}>
+            <div className="pr-stats-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "0.75rem" }}>
               {[
                 { label: "Carritos", value: carts.length, color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
                 { label: "Disponibles", value: carts.filter(c => c.estado === 'DISPONIBLE').length, color: "#10b981", bg: "rgba(16,185,129,0.1)" },
@@ -353,7 +366,7 @@ export default function Prestamos() {
                 </span>
               </div>
               {formOpen && (
-                <form onSubmit={handleSubmit} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.85rem" }}>
+                <form onSubmit={handleSubmit} className="pr-form-grid" style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.85rem" }}>
                   <div>
                     <label style={styles.label}>Carrito</label>
                     <DataList value={cartCodigoText} onChange={e => { setCartCodigoText(e.target.value); setForm(f => ({ ...f, codigoCarrito: e.target.value })) }} required style={styles.select}>
@@ -454,7 +467,7 @@ export default function Prestamos() {
                   <p style={{ fontWeight: 600, fontSize: "0.85rem", margin: 0 }}>Sin préstamos activos</p>
                 </div>
               ) : (
-                <div style={{ overflowX: "auto" }}>
+                <div className="pr-table" style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead><tr style={{ backgroundColor: "#f8fafc" }}>
                       {["Carrito", "Solicitante", "DNI", "Fecha", "Acción"].map(h => <th key={h} style={thStyle}>{h}</th>)}
@@ -491,6 +504,7 @@ export default function Prestamos() {
                 <div style={{ position: "relative" }}>
                   <FiSearch size={13} style={{ position: "absolute", left: "0.5rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
                   <input type="text" placeholder="Buscar carrito..." value={cartSearch} onChange={e => { setCartSearch(e.target.value); setCartPage(1) }}
+                    className="pr-search-input"
                     style={{ ...styles.input, padding: "0.35rem 0.5rem 0.35rem 1.6rem", fontSize: "0.75rem", width: "160px" }} />
                 </div>
               </div>
@@ -501,7 +515,7 @@ export default function Prestamos() {
                 </div>
               ) : (
                 <>
-                  <div style={{ overflowX: "auto" }}>
+                  <div className="pr-table" style={{ overflowX: "auto" }}>
                     <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
                       <thead>
                         <tr style={{ backgroundColor: "#f8fafc", borderBottom: "1px solid #e2e8f0" }}>
@@ -562,7 +576,7 @@ export default function Prestamos() {
               </div>
             ) : (
               <>
-                <div style={{ overflowX: "auto" }}>
+                <div className="pr-table" style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.72rem" }}>
                     <thead>
                       <tr style={{ backgroundColor: "#f8fafc", borderBottom: "2px solid #e2e8f0" }}>
@@ -627,7 +641,7 @@ export default function Prestamos() {
       {/* ===== TICKET MODAL ===== */}
       {ticket && (
         <div style={styles.modalOverlay} onClick={() => setTicket(null)}>
-          <div style={{ ...styles.modalBox, maxWidth: "420px" }} onClick={e => e.stopPropagation()}>
+          <div className="pr-modal-box" style={{ ...styles.modalBox, maxWidth: "420px" }} onClick={e => e.stopPropagation()}>
             <div style={{ padding: "1rem 1.25rem", borderBottom: "1px solid #e2e8f0", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <h3 style={{ margin: 0, fontSize: "0.95rem", fontWeight: 800, color: "#0f172a", display: "flex", alignItems: "center", gap: "0.5rem" }}>
                 <FiFileText size={15} color={COLOR} />
