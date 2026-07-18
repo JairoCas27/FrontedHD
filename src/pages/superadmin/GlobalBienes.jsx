@@ -93,7 +93,7 @@ const colorSwatch = (color) => {
   const map = { ROJO: "#ef4444", AZUL: "#3b82f6", VERDE: "#10b981", NEGRO: "#0f172a", BLANCO: "#f8fafc", GRIS: "#94a3b8", PLATEADO: "#cbd5e1", AMARILLO: "#eab308", NARANJA: "#f97316", MARRON: "#92400e", DORADO: "#b8860b", CELESTE: "#87ceeb", BEIGE: "#f5f5dc", VINO: "#722f37", ROSADO: "#ec4899", MORADO: colorSuper }
   return map[color?.toUpperCase()] || (color?.startsWith('#') ? color : `#${color}`) || "#cbd5e1"
 }
-const hexToRgba = (hex, a) => { const h=hex.replace('#',''); const r=parseInt(h.substring(0,2),16); const g=parseInt(h.substring(2,4),16); const b=parseInt(h.substring(4,6),16); return `rgba(${r},${g},${b},${a})` }
+const hexToRgba = (hex, a) => { const h = hex.replace('#', ''); const r = parseInt(h.substring(0, 2), 16); const g = parseInt(h.substring(2, 4), 16); const b = parseInt(h.substring(4, 6), 16); return `rgba(${r},${g},${b},${a})` }
 
 export default function GlobalBienes() {
   const [condominios, setCondominios] = useState([])
@@ -134,16 +134,8 @@ export default function GlobalBienes() {
   const [entryAptText, setEntryAptText] = useState('')
   const [entryPlacaText, setEntryPlacaText] = useState('')
   const [entryParkText, setEntryParkText] = useState('')
-  const [reserveForm, setReserveForm] = useState({ placa: '', metodo: 'MANUAL', ocupante: 'PROPIETARIO', datosInquilino: '', idEstacionamiento: '', horas: 1 })
-  const [reserveFilters, setReserveFilters] = useState({ torre: '', piso: '', aptId: '' })
-  const [reserveTorreText, setReserveTorreText] = useState('')
-  const [reservePisoText, setReservePisoText] = useState('')
-  const [reserveAptText, setReserveAptText] = useState('')
-  const [reservePlacaText, setReservePlacaText] = useState('')
-  const [reserveParkText, setReserveParkText] = useState('')
   const [entryOpen, setEntryOpen] = useState(false)
   const [exitOpen, setExitOpen] = useState(false)
-  const [reserveOpen, setReserveOpen] = useState(false)
   const [exitForm, setExitForm] = useState({ idLogAcceso: '' })
   const [exitLogText, setExitLogText] = useState('')
   const [assignForm, setAssignForm] = useState({ idEstacionamiento: '', idApartamento: '' })
@@ -164,16 +156,11 @@ export default function GlobalBienes() {
   const [pickVehicleText, setPickVehicleText] = useState('')
   const [cartTicket, setCartTicket] = useState(null)
   const [allCartLoans, setAllCartLoans] = useState([])
-  const [reservations, setReservations] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('reservations') || '[]') } catch { return [] }
-  })
   const barcodeRef = useRef(null)
   const toastTimer = useRef(null)
   const PER_PAGE = 10
   const [logPage, setLogPage] = useState(1)
   const [logSearch, setLogSearch] = useState('')
-  const [reservaPage, setReservaPage] = useState(1)
-  const [reservaSearch, setReservaSearch] = useState('')
   const [vehiclePage, setVehiclePage] = useState(1)
   const [vehicleSearch, setVehicleSearch] = useState('')
   const [cartPage, setCartPage] = useState(1)
@@ -227,10 +214,6 @@ export default function GlobalBienes() {
     getCondominiums().then(d => setCondominios(extractItems(d))).catch(() => { })
       .finally(() => setLoading(false))
   }, [])
-
-  useEffect(() => {
-    localStorage.setItem('reservations', JSON.stringify(reservations))
-  }, [reservations])
 
   const loadData = useCallback(async (id) => {
     if (!id) return
@@ -593,6 +576,15 @@ export default function GlobalBienes() {
       aptTorre: apt?.torreNombre || '—',
       aptPiso: apt?.pisoNumero || '—'
     })
+    setTimeout(() => {
+      if (barcodeRef.current) {
+        try {
+          JsBarcode(barcodeRef.current, `CTKT-${loan.id}-${loan.codigoCarrito}-${new Date(loan.fechaPrestamo).getTime()}`, {
+            format: "CODE128", width: 2, height: 60, displayValue: true, fontSize: 14, margin: 10
+          })
+        } catch (e) { console.error('Barcode error:', e) }
+      }
+    }, 100)
   }
 
   const printTicket = () => {
@@ -653,7 +645,7 @@ export default function GlobalBienes() {
     return (
       <svg viewBox="110 45 220 360" width="100%" height="100%" style={{ display: "block" }}>
         <g transform="translate(225,220) scale(1.2, 1) translate(-225,-220)" fill={fill} stroke={strokeColor} strokeWidth={ghost ? 1.5 : 2.5} strokeLinejoin="round" strokeLinecap="round" opacity={ghost ? 0.4 : 1}>
-          <path d="M221.20,52.53 Q216.66,52.75 214.42,52.88 Q212.18,53.01 209.97,53.20 Q207.76,53.39 205.61,53.67 Q203.45,53.94 201.36,54.35 Q199.26,54.75 197.25,55.32 Q195.23,55.88 193.31,56.64 Q191.38,57.40 189.55,58.38 Q187.73,59.36 186.01,60.58 Q184.29,61.79 182.68,63.20 Q181.06,64.62 179.53,66.20 Q178.01,67.78 176.57,69.49 Q175.12,71.19 173.76,73.00 Q172.39,74.81 171.10,76.67 Q169.80,78.54 168.57,80.43 Q167.33,82.33 166.15,84.22 Q164.97,86.11 163.86,88.01 Q162.74,89.90 161.69,91.80 Q160.64,93.71 159.67,95.63 Q158.70,97.56 157.82,99.51 Q156.94,101.47 156.15,103.46 Q155.36,105.46 154.67,107.51 Q153.99,109.55 153.41,111.66 Q152.84,113.76 152.39,115.93 Q151.93,118.10 151.64,120.29 Q151.35,122.47 151.26,124.61 Q151.18,126.74 151.35,128.75 Q151.51,130.76 151.98,132.59 Q152.45,134.41 153.26,135.97 Q154.08,137.53 155.07,138.83 Q156.06,140.12 156.30,141.36 Q156.54,142.60 155.21,144.05 Q153.87,145.50 152.78,147.37 Q151.69,149.24 151.87,151.43 Q152.05,153.62 152.42,155.75 Q152.80,157.87 152.28,159.55 Q151.76,161.22 150.14,162.47 Q148.51,163.72 146.38,164.90 Q144.26,166.09 142.26,167.59 Q140.26,169.09 139.03,170.98 Q137.79,172.86 137.97,174.56 Q138.14,176.25 139.72,177.05 Q141.30,177.85 143.59,177.35 Q145.88,176.86 148.23,175.93 Q150.59,175.01 152.38,174.81 Q154.17,174.61 154.96,176.00 Q155.75,177.38 156.11,179.57 Q156.47,181.75 156.81,184.02 Q157.16,186.29 157.38,188.58 Q157.60,190.86 157.60,193.11 Q157.59,195.35 157.35,197.54 Q157.11,199.73 156.71,201.87 Q156.32,204.01 155.85,206.11 Q155.39,208.21 154.95,210.28 Q154.51,212.35 154.18,214.40 Q153.85,216.45 153.70,218.49 Q153.56,220.53 153.61,222.56 Q153.66,224.60 153.86,226.64 Q154.06,228.68 154.35,230.74 Q154.64,232.80 154.98,234.87 Q155.32,236.95 155.65,239.06 Q155.99,241.17 156.27,243.30 Q156.56,245.44 156.75,247.60 Q156.95,249.76 157.04,251.95 Q157.13,254.13 157.14,256.33 Q157.15,258.53 157.13,260.73 Q157.12,262.94 157.12,265.14 Q157.11,267.34 157.17,269.52 Q157.23,271.71 157.39,273.87 Q157.55,276.03 157.81,278.17 Q158.07,280.31 158.32,282.45 Q158.56,284.60 158.66,286.77 Q158.76,288.93 158.57,291.16 Q158.39,293.39 157.83,295.68 Q157.28,297.97 156.72,300.14 Q156.15,302.30 156.22,304.04 Q156.29,305.78 157.47,306.86 Q158.65,307.94 159.88,308.96 Q161.11,309.99 161.45,311.67 Q161.78,313.35 162.19,315.66 Q162.60,317.96 163.07,320.39 Q163.54,322.82 163.48,324.70 Q163.42,326.58 162.56,327.66 Q161.71,328.74 160.36,329.45 Q159.01,330.17 157.51,330.99 Q156.01,331.82 154.94,333.17 Q153.88,334.51 153.59,336.43 Q153.30,338.34 153.56,340.57 Q153.83,342.80 154.41,345.09 Q154.99,347.38 155.76,349.59 Q156.53,351.79 157.46,353.90 Q158.40,356.01 159.49,358.00 Q160.58,360.00 161.81,361.87 Q163.04,363.74 164.40,365.48 Q165.77,367.21 167.24,368.80 Q168.72,370.38 170.30,371.80 Q171.88,373.23 173.56,374.49 Q175.23,375.75 177.00,376.87 Q178.76,377.98 180.61,378.96 Q182.45,379.93 184.37,380.77 Q186.29,381.61 188.28,382.33 Q190.26,383.05 192.31,383.65 Q194.35,384.25 196.45,384.74 Q198.54,385.23 200.68,385.63 Q202.82,386.02 205.00,386.32 Q207.18,386.63 209.39,386.85 Q211.60,387.07 213.83,387.21 Q216.06,387.36 218.31,387.44 Q220.55,387.53 222.81,387.55 Q225.06,387.58 227.32,387.55 Q229.58,387.52 231.83,387.44 Q234.08,387.36 236.32,387.22 Q238.55,387.07 240.77,386.85 Q242.98,386.63 245.17,386.33 Q247.35,386.03 249.50,385.64 Q251.65,385.24 253.75,384.75 Q255.85,384.25 257.90,383.65 Q259.95,383.05 261.94,382.33 Q263.92,381.61 265.84,380.76 Q267.76,379.91 269.61,378.92 Q271.45,377.94 273.21,376.81 Q274.97,375.68 276.64,374.40 Q278.30,373.11 279.87,371.66 Q281.44,370.22 282.90,368.60 Q284.36,366.98 285.70,365.21 Q287.04,363.43 288.24,361.53 Q289.44,359.62 290.49,357.61 Q291.54,355.61 292.43,353.52 Q293.31,351.43 294.01,349.30 Q294.71,347.16 295.21,345.00 Q295.71,342.85 296.00,340.69 Q296.29,338.54 296.33,336.43 Q296.37,334.33 295.83,332.66 Q295.28,330.99 293.87,330.01 Q292.45,329.02 290.83,327.60 Q289.21,326.18 287.97,324.16 Q286.72,322.14 286.30,319.99 Q285.87,317.84 286.48,315.89 Q287.09,313.95 288.29,312.16 Q289.50,310.37 290.74,308.63 Q291.98,306.89 292.69,305.07 Q293.40,303.26 293.33,301.31 Q293.26,299.36 292.77,297.30 Q292.27,295.25 291.78,293.14 Q291.29,291.03 291.10,288.90 Q290.91,286.76 290.98,284.61 Q291.05,282.46 291.28,280.30 Q291.52,278.13 291.84,275.95 Q292.16,273.77 292.46,271.57 Q292.76,269.38 292.96,267.17 Q293.15,264.95 293.19,262.73 Q293.24,260.51 293.18,258.29 Q293.12,256.07 293.02,253.86 Q292.93,251.65 292.86,249.47 Q292.80,247.29 292.83,245.14 Q292.86,242.99 293.06,240.90 Q293.26,238.80 293.68,236.76 Q294.11,234.72 294.80,232.75 Q295.49,230.78 296.21,228.83 Q296.93,226.89 297.30,224.90 Q297.67,222.91 297.36,220.82 Q297.05,218.72 296.23,216.56 Q295.42,214.40 294.58,212.24 Q293.73,210.09 293.29,208.03 Q292.85,205.96 292.82,203.94 Q292.79,201.93 292.96,199.87 Q293.13,197.81 293.29,195.61 Q293.44,193.42 293.37,190.99 Q293.29,188.57 293.00,186.01 Q292.71,183.45 292.69,181.23 Q292.66,179.00 293.41,177.61 Q294.17,176.21 295.89,175.84 Q297.61,175.48 299.91,175.78 Q302.20,176.09 304.60,176.65 Q307.00,177.21 308.85,177.27 Q310.70,177.32 311.21,175.94 Q311.73,174.56 310.99,172.65 Q310.26,170.74 308.70,169.17 Q307.14,167.61 305.21,166.25 Q303.29,164.90 301.48,163.54 Q299.66,162.19 298.42,160.62 Q297.18,159.06 296.96,157.09 Q296.74,155.12 297.25,152.87 Q297.76,150.62 297.86,148.60 Q297.97,146.57 296.62,145.25 Q295.27,143.92 293.50,142.99 Q291.73,142.07 291.62,140.94 Q291.51,139.82 293.09,138.92 Q294.67,138.02 296.47,137.01 Q298.27,135.99 298.72,134.17 Q299.17,132.35 299.05,130.23 Q298.93,128.12 298.71,126.00 Q298.48,123.88 298.15,121.75 Q297.82,119.63 297.38,117.51 Q296.95,115.39 296.42,113.28 Q295.89,111.18 295.26,109.09 Q294.64,106.99 293.91,104.92 Q293.19,102.85 292.38,100.81 Q291.57,98.77 290.67,96.76 Q289.76,94.75 288.78,92.77 Q287.79,90.80 286.71,88.87 Q285.64,86.95 284.48,85.07 Q283.33,83.19 282.09,81.37 Q280.86,79.54 279.54,77.78 Q278.23,76.02 276.84,74.32 Q275.45,72.63 273.99,71.01 Q272.52,69.39 270.98,67.86 Q269.45,66.34 267.83,64.92 Q266.22,63.50 264.52,62.21 Q262.83,60.92 261.06,59.77 Q259.29,58.61 257.45,57.62 Q255.60,56.62 253.67,55.80 Q251.74,54.98 249.74,54.34 Q247.73,53.71 245.64,53.28 Q243.55,52.85 241.39,52.60 Q239.23,52.35 237.02,52.25 Q234.81,52.15 232.56,52.16 Q230.30,52.17 228.03,52.25 Q225.76,52.32 223.48,52.43 Z"/>
+          <path d="M221.20,52.53 Q216.66,52.75 214.42,52.88 Q212.18,53.01 209.97,53.20 Q207.76,53.39 205.61,53.67 Q203.45,53.94 201.36,54.35 Q199.26,54.75 197.25,55.32 Q195.23,55.88 193.31,56.64 Q191.38,57.40 189.55,58.38 Q187.73,59.36 186.01,60.58 Q184.29,61.79 182.68,63.20 Q181.06,64.62 179.53,66.20 Q178.01,67.78 176.57,69.49 Q175.12,71.19 173.76,73.00 Q172.39,74.81 171.10,76.67 Q169.80,78.54 168.57,80.43 Q167.33,82.33 166.15,84.22 Q164.97,86.11 163.86,88.01 Q162.74,89.90 161.69,91.80 Q160.64,93.71 159.67,95.63 Q158.70,97.56 157.82,99.51 Q156.94,101.47 156.15,103.46 Q155.36,105.46 154.67,107.51 Q153.99,109.55 153.41,111.66 Q152.84,113.76 152.39,115.93 Q151.93,118.10 151.64,120.29 Q151.35,122.47 151.26,124.61 Q151.18,126.74 151.35,128.75 Q151.51,130.76 151.98,132.59 Q152.45,134.41 153.26,135.97 Q154.08,137.53 155.07,138.83 Q156.06,140.12 156.30,141.36 Q156.54,142.60 155.21,144.05 Q153.87,145.50 152.78,147.37 Q151.69,149.24 151.87,151.43 Q152.05,153.62 152.42,155.75 Q152.80,157.87 152.28,159.55 Q151.76,161.22 150.14,162.47 Q148.51,163.72 146.38,164.90 Q144.26,166.09 142.26,167.59 Q140.26,169.09 139.03,170.98 Q137.79,172.86 137.97,174.56 Q138.14,176.25 139.72,177.05 Q141.30,177.85 143.59,177.35 Q145.88,176.86 148.23,175.93 Q150.59,175.01 152.38,174.81 Q154.17,174.61 154.96,176.00 Q155.75,177.38 156.11,179.57 Q156.47,181.75 156.81,184.02 Q157.16,186.29 157.38,188.58 Q157.60,190.86 157.60,193.11 Q157.59,195.35 157.35,197.54 Q157.11,199.73 156.71,201.87 Q156.32,204.01 155.85,206.11 Q155.39,208.21 154.95,210.28 Q154.51,212.35 154.18,214.40 Q153.85,216.45 153.70,218.49 Q153.56,220.53 153.61,222.56 Q153.66,224.60 153.86,226.64 Q154.06,228.68 154.35,230.74 Q154.64,232.80 154.98,234.87 Q155.32,236.95 155.65,239.06 Q155.99,241.17 156.27,243.30 Q156.56,245.44 156.75,247.60 Q156.95,249.76 157.04,251.95 Q157.13,254.13 157.14,256.33 Q157.15,258.53 157.13,260.73 Q157.12,262.94 157.12,265.14 Q157.11,267.34 157.17,269.52 Q157.23,271.71 157.39,273.87 Q157.55,276.03 157.81,278.17 Q158.07,280.31 158.32,282.45 Q158.56,284.60 158.66,286.77 Q158.76,288.93 158.57,291.16 Q158.39,293.39 157.83,295.68 Q157.28,297.97 156.72,300.14 Q156.15,302.30 156.22,304.04 Q156.29,305.78 157.47,306.86 Q158.65,307.94 159.88,308.96 Q161.11,309.99 161.45,311.67 Q161.78,313.35 162.19,315.66 Q162.60,317.96 163.07,320.39 Q163.54,322.82 163.48,324.70 Q163.42,326.58 162.56,327.66 Q161.71,328.74 160.36,329.45 Q159.01,330.17 157.51,330.99 Q156.01,331.82 154.94,333.17 Q153.88,334.51 153.59,336.43 Q153.30,338.34 153.56,340.57 Q153.83,342.80 154.41,345.09 Q154.99,347.38 155.76,349.59 Q156.53,351.79 157.46,353.90 Q158.40,356.01 159.49,358.00 Q160.58,360.00 161.81,361.87 Q163.04,363.74 164.40,365.48 Q165.77,367.21 167.24,368.80 Q168.72,370.38 170.30,371.80 Q171.88,373.23 173.56,374.49 Q175.23,375.75 177.00,376.87 Q178.76,377.98 180.61,378.96 Q182.45,379.93 184.37,380.77 Q186.29,381.61 188.28,382.33 Q190.26,383.05 192.31,383.65 Q194.35,384.25 196.45,384.74 Q198.54,385.23 200.68,385.63 Q202.82,386.02 205.00,386.32 Q207.18,386.63 209.39,386.85 Q211.60,387.07 213.83,387.21 Q216.06,387.36 218.31,387.44 Q220.55,387.53 222.81,387.55 Q225.06,387.58 227.32,387.55 Q229.58,387.52 231.83,387.44 Q234.08,387.36 236.32,387.22 Q238.55,387.07 240.77,386.85 Q242.98,386.63 245.17,386.33 Q247.35,386.03 249.50,385.64 Q251.65,385.24 253.75,384.75 Q255.85,384.25 257.90,383.65 Q259.95,383.05 261.94,382.33 Q263.92,381.61 265.84,380.76 Q267.76,379.91 269.61,378.92 Q271.45,377.94 273.21,376.81 Q274.97,375.68 276.64,374.40 Q278.30,373.11 279.87,371.66 Q281.44,370.22 282.90,368.60 Q284.36,366.98 285.70,365.21 Q287.04,363.43 288.24,361.53 Q289.44,359.62 290.49,357.61 Q291.54,355.61 292.43,353.52 Q293.31,351.43 294.01,349.30 Q294.71,347.16 295.21,345.00 Q295.71,342.85 296.00,340.69 Q296.29,338.54 296.33,336.43 Q296.37,334.33 295.83,332.66 Q295.28,330.99 293.87,330.01 Q292.45,329.02 290.83,327.60 Q289.21,326.18 287.97,324.16 Q286.72,322.14 286.30,319.99 Q285.87,317.84 286.48,315.89 Q287.09,313.95 288.29,312.16 Q289.50,310.37 290.74,308.63 Q291.98,306.89 292.69,305.07 Q293.40,303.26 293.33,301.31 Q293.26,299.36 292.77,297.30 Q292.27,295.25 291.78,293.14 Q291.29,291.03 291.10,288.90 Q290.91,286.76 290.98,284.61 Q291.05,282.46 291.28,280.30 Q291.52,278.13 291.84,275.95 Q292.16,273.77 292.46,271.57 Q292.76,269.38 292.96,267.17 Q293.15,264.95 293.19,262.73 Q293.24,260.51 293.18,258.29 Q293.12,256.07 293.02,253.86 Q292.93,251.65 292.86,249.47 Q292.80,247.29 292.83,245.14 Q292.86,242.99 293.06,240.90 Q293.26,238.80 293.68,236.76 Q294.11,234.72 294.80,232.75 Q295.49,230.78 296.21,228.83 Q296.93,226.89 297.30,224.90 Q297.67,222.91 297.36,220.82 Q297.05,218.72 296.23,216.56 Q295.42,214.40 294.58,212.24 Q293.73,210.09 293.29,208.03 Q292.85,205.96 292.82,203.94 Q292.79,201.93 292.96,199.87 Q293.13,197.81 293.29,195.61 Q293.44,193.42 293.37,190.99 Q293.29,188.57 293.00,186.01 Q292.71,183.45 292.69,181.23 Q292.66,179.00 293.41,177.61 Q294.17,176.21 295.89,175.84 Q297.61,175.48 299.91,175.78 Q302.20,176.09 304.60,176.65 Q307.00,177.21 308.85,177.27 Q310.70,177.32 311.21,175.94 Q311.73,174.56 310.99,172.65 Q310.26,170.74 308.70,169.17 Q307.14,167.61 305.21,166.25 Q303.29,164.90 301.48,163.54 Q299.66,162.19 298.42,160.62 Q297.18,159.06 296.96,157.09 Q296.74,155.12 297.25,152.87 Q297.76,150.62 297.86,148.60 Q297.97,146.57 296.62,145.25 Q295.27,143.92 293.50,142.99 Q291.73,142.07 291.62,140.94 Q291.51,139.82 293.09,138.92 Q294.67,138.02 296.47,137.01 Q298.27,135.99 298.72,134.17 Q299.17,132.35 299.05,130.23 Q298.93,128.12 298.71,126.00 Q298.48,123.88 298.15,121.75 Q297.82,119.63 297.38,117.51 Q296.95,115.39 296.42,113.28 Q295.89,111.18 295.26,109.09 Q294.64,106.99 293.91,104.92 Q293.19,102.85 292.38,100.81 Q291.57,98.77 290.67,96.76 Q289.76,94.75 288.78,92.77 Q287.79,90.80 286.71,88.87 Q285.64,86.95 284.48,85.07 Q283.33,83.19 282.09,81.37 Q280.86,79.54 279.54,77.78 Q278.23,76.02 276.84,74.32 Q275.45,72.63 273.99,71.01 Q272.52,69.39 270.98,67.86 Q269.45,66.34 267.83,64.92 Q266.22,63.50 264.52,62.21 Q262.83,60.92 261.06,59.77 Q259.29,58.61 257.45,57.62 Q255.60,56.62 253.67,55.80 Q251.74,54.98 249.74,54.34 Q247.73,53.71 245.64,53.28 Q243.55,52.85 241.39,52.60 Q239.23,52.35 237.02,52.25 Q234.81,52.15 232.56,52.16 Q230.30,52.17 228.03,52.25 Q225.76,52.32 223.48,52.43 Z" />
         </g>
       </svg>
     )
@@ -1026,9 +1018,8 @@ export default function GlobalBienes() {
               { key: 'dashboard', label: 'Dashboard', icon: <FiHome size={14} /> },
               { key: 'mapa', label: 'Mapa Parqueo', icon: <FiGrid size={14} /> },
               { key: 'gestion', label: 'Gestión', icon: <FiSettings size={14} /> },
-              { key: 'reservas', label: 'Reservas', icon: <FiClock size={14} /> },
               { key: 'vehiculos', label: 'Vehículos', icon: <FiNavigation2 size={14} /> },
-              { key: 'carritos', label: 'Carritos', icon: <FiTruck size={14} /> },
+              { key: 'carritos', label: 'Préstamos', icon: <FiTruck size={14} /> },
 
             ].map(t => (
               <button key={t.key} onClick={() => setActiveTab(t.key)} style={styles.tab(activeTab === t.key)}>
@@ -1043,7 +1034,7 @@ export default function GlobalBienes() {
               <div style={{ display: "grid", gap: "1rem", marginBottom: "1.5rem" }} className="gb-stats-grid">
                 <StatCard icon={<FiHome />} label="Estacionamientos" value={stats.totalParking} sub={`${stats.disponibleParking} libres · ${stats.ocupadoParking} ocupados`} color={colorSuper} />
                 <StatCard icon={<FiUsers />} label="Capacidad Total" value={stats.capacidadTotal} sub={`${stats.ocupacionActual} vehículos ahora (${stats.capacidadTotal > 0 ? ((stats.ocupacionActual / stats.capacidadTotal) * 100).toFixed(0) : 0}%)`} color="#3b82f6" />
-                <StatCard icon={<FiTruck />} label="Carritos" value={stats.totalCarts} sub={`${stats.cartDisponible} disp · ${stats.cartEnUso} uso · ${stats.cartMant} mant`} color={colorSuper} />
+                <StatCard icon={<FiTruck />} label="Préstamos" value={stats.totalCarts} sub={`${stats.cartDisponible} disp · ${stats.cartEnUso} uso · ${stats.cartMant} mant`} color={colorSuper} />
                 <StatCard icon={<FiNavigation2 />} label="Vehículos Registrados" value={stats.totalVehicles} color="#f59e0b" />
                 <StatCard icon={<FiLogIn />} label="Vehículos Dentro" value={stats.activeEntries.length} sub={`${stats.disponibleParking} spots libres`} color="#10b981" />
               </div>
@@ -1138,7 +1129,7 @@ export default function GlobalBienes() {
                   </div>
                   <div style={styles.card}>
                     <div style={{ padding: "1.25rem", textAlign: "center" }}>
-                      <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>Carritos prestados</div>
+                      <div style={{ fontSize: "0.7rem", fontWeight: 700, color: "#94a3b8", textTransform: "uppercase" }}>Préstamos activos</div>
                       <div style={{ fontSize: "2.5rem", fontWeight: 800, color: "#f59e0b" }}>{dashboard.carritosPrestados ?? activeLoans.length}</div>
                     </div>
                   </div>
@@ -1516,217 +1507,6 @@ export default function GlobalBienes() {
             </div>
           )}
 
-          {/* ===== RESERVAS ===== */}
-          {activeTab === 'reservas' && (
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-              <div style={styles.card}>
-                <div style={{ ...styles.cardHeader, cursor: "pointer" }} onClick={() => setReserveOpen(!reserveOpen)}>
-                  <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "#0f172a", display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                    <FiClock size={14} color="#f59e0b" /> Reservar Estacionamiento
-                  </span>
-                  <span style={{ color: reserveOpen ? "#f59e0b" : "#94a3b8", fontWeight: 700, fontSize: "0.8rem", transition: "transform 0.2s", transform: reserveOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
-                    {reserveOpen ? <FiChevronUp size={16} /> : <FiChevronDown size={16} />}
-                  </span>
-                </div>
-                {reserveOpen && (
-                  <form onSubmit={async (e) => {
-                    e.preventDefault()
-                    if (!reserveForm.placa) return showToast('Selecciona un vehículo', 'error')
-                    if (!reserveForm.idEstacionamiento) return showToast('Selecciona un estacionamiento', 'error')
-                    setSaving(true)
-                    try {
-                      const selected = vehicles.find(v => v.placa === reserveForm.placa)
-                      const owner = vehicleOwnerMap[selected?.id]
-                      const result = await registerVehicleEntry({
-                        placa: reserveForm.placa, metodo: reserveForm.metodo,
-                        ocupante: reserveForm.ocupante,
-                        datosInquilino: reserveForm.ocupante === 'INQUILINO' ? (reserveForm.datosInquilino || owner?.nombre || '') : null,
-                        idEstacionamiento: parseInt(reserveForm.idEstacionamiento)
-                      }, condoId)
-                      if (result?.id) setReservations(prev => {
-                        const filtered = prev.filter(r => r.id !== result.id)
-                        return [...filtered, { id: result.id, horas: reserveForm.horas }]
-                      })
-                      showToast(`Reservado por ${reserveForm.horas}h`)
-                      setReserveForm({ placa: '', metodo: 'MANUAL', ocupante: 'PROPIETARIO', datosInquilino: '', idEstacionamiento: '', horas: 1 })
-                      setReserveFilters({ torre: '', piso: '', aptId: '' })
-                      setReserveTorreText(''); setReservePisoText(''); setReserveAptText(''); setReservePlacaText(''); setReserveParkText('')
-                      loadData(condoId)
-                    } catch (e) { showToast('Error: ' + e.message, 'error') }
-                    finally { setSaving(false) }
-                  }} style={{ padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-                    <div style={{ fontSize: "0.7rem", color: "#64748b" }}>Asigna un estacionamiento a un vehículo por tiempo limitado. Se registrará la entrada y se liberará automáticamente al vencer.</div>
-                    <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar torre</label>
-                    <DataList value={reserveTorreText} onChange={e => { setReserveTorreText(e.target.value); setReserveFilters(f => ({ ...f, torre: e.target.value, piso: '', aptId: '' })) }} style={{ ...styles.select, fontSize: "0.7rem" }}>
-                      <option value="">Torre</option>
-                      {towers.map(t => <option key={t} value={t} />)}
-                    </DataList>
-                    <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar piso</label>
-                    <DataList value={reservePisoText} onChange={e => { setReservePisoText(e.target.value); setReserveFilters(f => ({ ...f, piso: e.target.value, aptId: '' })) }} style={{ ...styles.select, fontSize: "0.7rem" }}>
-                      <option value="">Piso</option>
-                      {floors.map(f => <option key={f} value={f} />)}
-                    </DataList>
-                    <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar departamento</label>
-                    <DataList value={reserveAptText} onChange={e => { setReserveAptText(e.target.value); const apt = apartments.find(a => `N° ${a.numero}` === e.target.value || String(a.numero) === e.target.value); if (apt) { setReserveFilters(f => ({ ...f, aptId: String(apt.id) })); if (apt.nombrePropietario) setReserveForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: apt.nombrePropietario })) } else { setReserveFilters(f => ({ ...f, aptId: '' })); setReserveForm(f => ({ ...f, ocupante: 'PROPIETARIO', datosInquilino: '' })) } }} style={{ ...styles.select, fontSize: "0.7rem" }}>
-                      <option value="">Departamento</option>
-                      {apartments.filter(a =>
-                        (!reserveFilters.torre || a.torreNombre === reserveFilters.torre) &&
-                        (!reserveFilters.piso || String(a.pisoNumero) === reserveFilters.piso)
-                      ).map(a => <option key={a.id} value={`N° ${a.numero}`} />)}
-                    </DataList>
-                    {reserveFilters.aptId && (() => {
-                      const apt = apartments.find(a => String(a.id) === reserveFilters.aptId)
-                      if (!apt) return null
-                      const occupants = []
-                      if (apt.nombrePropietario) occupants.push({ label: `${apt.nombrePropietario} (Dueño)`, nombre: apt.nombrePropietario, tipo: 'PROPIETARIO', dni: '' })
-                      if (apt.inquilinos) apt.inquilinos.forEach(inq => occupants.push({ label: `${inq.nombres} ${inq.apellidos} (Inquilino)`, nombre: `${inq.nombres} ${inq.apellidos}`, tipo: 'INQUILINO', dni: inq.numeroDocumento }))
-                      return occupants.length > 0 ? (
-                        <select style={styles.select} value={reserveForm.datosInquilino} onChange={e => {
-                          const sel = occupants.find(o => o.nombre === e.target.value)
-                          if (sel) setReserveForm(f => ({ ...f, ocupante: sel.tipo, datosInquilino: sel.nombre }))
-                        }}>
-                          <option value="">Seleccionar ocupante de N° {apt.numero}</option>
-                          {occupants.map(o => <option key={o.nombre} value={o.nombre}>{o.label}{o.dni ? `  · DNI: ${o.dni}` : ''}</option>)}
-                        </select>
-                      ) : (
-                        <div style={{ fontSize: "0.75rem", color: "#94a3b8", textAlign: "center", padding: "0.5rem" }}>Sin ocupantes registrados en N° {apt.numero}</div>
-                      )
-                    })()}
-                    <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar vehículo</label>
-                    <DataList value={reservePlacaText} onChange={e => { setReservePlacaText(e.target.value); const v = vehicles.find(x => x.placa === e.target.value); const owner = vehicleOwnerMap[v?.id]; if (owner && !reserveFilters.aptId) { setReserveForm(f => ({ ...f, placa: e.target.value, ocupante: owner.tipo, datosInquilino: owner.nombre })) } else { setReserveForm(f => ({ ...f, placa: e.target.value })) } }} required style={styles.select}>
-                      <option value="">Seleccionar vehículo</option>
-                      {vehicles.filter(v => !v.idEstacionamiento).map(v => (
-                        <option key={v.id} value={v.placa} />
-                      ))}
-                    </DataList>
-                    <div className="gb-form-grid" style={{ display: "grid", gap: "0.75rem" }}>
-                      <div>
-                        <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Método</label>
-                        <select style={styles.select} value={reserveForm.metodo} onChange={e => setReserveForm(f => ({ ...f, metodo: e.target.value }))}>
-                          <option value="OCR">OCR</option>
-                          <option value="MANUAL">Manual</option>
-                        </select>
-                      </div>
-                      <div>
-                        <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Tipo ocupante</label>
-                        <select style={styles.select} value={reserveForm.ocupante} onChange={e => setReserveForm(f => ({ ...f, ocupante: e.target.value }))}>
-                          <option value="PROPIETARIO">Propietario</option>
-                          <option value="INQUILINO">Inquilino</option>
-                        </select>
-                      </div>
-                    </div>
-                    {reserveForm.ocupante === 'INQUILINO' && (
-                      <input style={styles.input} placeholder="Nombre del inquilino" value={reserveForm.datosInquilino} onChange={e => setReserveForm(f => ({ ...f, datosInquilino: e.target.value }))} />
-                    )}
-                    <div className="gb-form-grid" style={{ display: "grid", gap: "0.75rem" }}>
-                      <div>
-                        <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Seleccionar estacionamiento</label>
-                        <DataList value={reserveParkText} onChange={e => { setReserveParkText(e.target.value); const s = parking.filter(p => (p.cantidadActual || 0) < (p.capacidadMaxima ?? 1)).find(p => `#${p.numero || p.id} · ${p.tipoVehiculo || 'Mixto'} (${(p.capacidadMaxima || 1) - (p.cantidadActual || 0)} libres)` === e.target.value); if (s) setReserveForm(f => ({ ...f, idEstacionamiento: String(s.id) })) }} required style={styles.select}>
-                          <option value="">Estacionamiento</option>
-                          {parking.filter(p => (p.cantidadActual || 0) < (p.capacidadMaxima ?? 1)).map(p => (
-                            <option key={p.id} value={`#${p.numero || p.id} · ${p.tipoVehiculo || 'Mixto'} (${(p.capacidadMaxima || 1) - (p.cantidadActual || 0)} libres)`} />
-                          ))}
-                        </DataList>
-                      </div>
-                      <div>
-                        <label style={{ ...styles.label, fontSize: "0.7rem", color: "#475569", textAlign: "left" }}>Horas</label>
-                        <select style={styles.select} value={reserveForm.horas} onChange={e => setReserveForm(f => ({ ...f, horas: Number(e.target.value) }))}>
-                          {[1, 2, 3, 4, 6, 8, 12, 24].map(h => <option key={h} value={h}>{h}h</option>)}
-                        </select>
-                      </div>
-                    </div>
-                    <div style={{ fontSize: "0.7rem", color: "#94a3b8" }}>
-                      <FiClock size={11} style={{ marginRight: "0.25rem" }} />
-                      Expira aprox. {new Date(Date.now() + reserveForm.horas * 3600000).toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                    <button type="submit" disabled={saving || vehicles.length === 0} style={{ ...styles.btnWarning, width: "100%", justifyContent: "center", padding: "0.6rem" }}>
-                      {saving ? '...' : <><FiClock size={14} /> Reservar por {reserveForm.horas}h</>}
-                    </button>
-                  </form>
-                )}
-              </div>
-
-              <div style={styles.card}>
-                <div style={styles.cardHeader}>
-                  <span style={{ fontWeight: 800, fontSize: "0.85rem", color: "#0f172a", display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                    <FiCalendar size={14} color={colorSuper} /> Historial de Reservas ({logs.filter(l => reservations.some(r => r.id === l.id)).length})
-                  </span>
-                  <div style={{ position: "relative" }}>
-                    <FiSearch size={13} style={{ position: "absolute", left: "0.5rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
-                    <input type="text" placeholder="Buscar reserva..." value={reservaSearch} onChange={e => { setReservaSearch(e.target.value); setReservaPage(1) }}
-                      style={{ ...styles.input, padding: "0.35rem 0.5rem 0.35rem 1.6rem", fontSize: "0.75rem", width: "180px" }} />
-                  </div>
-                </div>
-                {(() => {
-                  const reservasFiltradas = logs.filter(l => reservations.some(r => r.id === l.id))
-                    .filter(l => !reservaSearch || l.placa?.toLowerCase().includes(reservaSearch.toLowerCase()) ||
-                      l.ocupante?.toLowerCase().includes(reservaSearch.toLowerCase()) || String(l.id).includes(reservaSearch))
-                  if (reservasFiltradas.length === 0) return (
-                    <div style={{ padding: "2rem", textAlign: "center", color: "#94a3b8", fontSize: "0.85rem" }}>No hay reservas registradas</div>
-                  )
-                  const paged = paginate(reservasFiltradas, reservaPage)
-                  return (<>
-                    <div style={{ overflowX: "auto" }} className="gb-table-wrap">
-                      <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "0.82rem" }}>
-                        <thead>
-                          <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: 700, fontSize: "0.65rem", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
-                            <th style={{ padding: "0.75rem 1rem" }}>Ticket</th>
-                            <th style={{ padding: "0.75rem" }}>Placa</th>
-                            <th style={{ padding: "0.75rem" }}>Vehículo</th>
-                            <th style={{ padding: "0.75rem" }}>Estacionamiento</th>
-                            <th style={{ padding: "0.75rem" }}>Ocupante</th>
-                            <th style={{ padding: "0.75rem" }}>Duración</th>
-                            <th style={{ padding: "0.75rem" }}>Entrada</th>
-                            <th style={{ padding: "0.75rem" }}>Expira</th>
-                            <th style={{ padding: "0.75rem" }}>Salida</th>
-                            <th style={{ padding: "0.75rem" }}>Método</th>
-                            <th style={{ padding: "0.75rem" }}>Ticket</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {paged.map(l => {
-                            const veh = vehicles.find(v => String(v.id) === String(l.idVehiculo))
-                            const spot = parking.find(p => String(p.id) === String(l.idEstacionamiento))
-                            const apt = spot ? apartments.find(a => String(a.id) === String(spot.idApartamento)) : null
-                            const res = reservations.find(r => r.id === l.id)
-                            const horas = res?.horas || 1
-                            const expira = l.fechaEntrada ? new Date(new Date(l.fechaEntrada).getTime() + horas * 3600000) : null
-                            return (
-                              <tr key={l.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
-                                <td style={{ padding: "0.6rem 1rem", fontWeight: 700, fontFamily: "monospace", fontSize: "0.75rem" }}>TKT-{l.id}</td>
-                                <td style={{ padding: "0.6rem", fontWeight: 700, fontFamily: "monospace" }}>{l.placa}</td>
-                                <td style={{ padding: "0.6rem" }}>{veh ? `${veh.marca} ${veh.modelo}` : '—'}</td>
-                                <td style={{ padding: "0.6rem" }}>#{spot?.numero || '—'}{apt ? ` (N° ${apt.numero})` : ''}</td>
-                                <td style={{ padding: "0.6rem" }}>{l.ocupante || '—'}</td>
-                                <td style={{ padding: "0.6rem", fontWeight: 700, color: "#f59e0b" }}>{horas}h</td>
-                                <td style={{ padding: "0.6rem", fontSize: "0.75rem" }}>{formatDate(l.fechaEntrada)}</td>
-                                <td style={{ padding: "0.6rem", fontSize: "0.75rem" }}>
-                                  {l.fechaSalida ? '—' : expira ? (
-                                    <span style={Date.now() > expira.getTime() ? { color: '#ef4444', fontWeight: 600 } : { color: '#10b981', fontWeight: 600 }}>
-                                      {formatDate(expira.toISOString())}{Date.now() > expira.getTime() ? ' (Vencido)' : ''}
-                                    </span>
-                                  ) : '—'}
-                                </td>
-                                <td style={{ padding: "0.6rem", fontSize: "0.75rem" }}>{l.fechaSalida ? formatDate(l.fechaSalida) : <span style={{ color: "#f59e0b", fontWeight: 600 }}>En curso</span>}</td>
-                                <td style={{ padding: "0.6rem" }}>{l.metodo || '—'}</td>
-                                <td style={{ padding: "0.6rem" }}>
-                                  <button onClick={() => openTicket(l)} style={{ background: "none", border: "none", cursor: "pointer", color: colorSuper, fontSize: "0.7rem", fontWeight: 600 }}>
-                                    Ver
-                                  </button>
-                                </td>
-                              </tr>
-                            )
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                    <Pagination arr={reservasFiltradas} page={reservaPage} setPage={setReservaPage} />
-                  </>)
-                })()}
-              </div>
-            </div>
-          )}
-
           {/* ===== VEHÍCULOS ===== */}
           {activeTab === 'vehiculos' && (
             <div style={styles.card}>
@@ -1820,13 +1600,13 @@ export default function GlobalBienes() {
               <div style={styles.cardHeader}>
                 <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                   <FiTruck size={16} color={colorSuper} />
-                  <span style={{ fontWeight: 800, fontSize: "0.9rem", color: "#0f172a" }}>Carritos</span>
+                  <span style={{ fontWeight: 800, fontSize: "0.9rem", color: "#0f172a" }}>Préstamos</span>
                   <span style={{ fontSize: "0.7rem", color: "#94a3b8" }}>({stats.totalCarts})</span>
                 </div>
                 <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
                   <div style={{ position: "relative" }}>
                     <FiSearch size={13} style={{ position: "absolute", left: "0.5rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
-                    <input type="text" placeholder="Buscar carrito..." value={cartSearch} onChange={e => { setCartSearch(e.target.value); setCartPage(1) }}
+                    <input type="text" placeholder="Buscar préstamo..." value={cartSearch} onChange={e => { setCartSearch(e.target.value); setCartPage(1) }}
                       style={{ ...styles.input, padding: "0.35rem 0.5rem 0.35rem 1.6rem", fontSize: "0.75rem", width: "160px" }} />
                   </div>
                   <button onClick={() => setShowModal('createCart')} style={styles.btnPrimary}><FiPlus size={14} /> Agregar</button>
@@ -1869,7 +1649,7 @@ export default function GlobalBienes() {
                             </td>
                           </tr>
                         ))}
-                        {filtered.length === 0 && <tr><td colSpan={3} style={{ padding: "2rem", textAlign: "center", color: "#94a3b8" }}>Sin carritos</td></tr>}
+                        {filtered.length === 0 && <tr><td colSpan={3} style={{ padding: "2rem", textAlign: "center", color: "#94a3b8" }}>Sin préstamos</td></tr>}
                       </tbody>
                     </table>
                   </div>
@@ -2045,46 +1825,41 @@ export default function GlobalBienes() {
       {/* ===== CART TICKET MODAL ===== */}
       {cartTicket && (
         <div style={styles.modalOverlay} onClick={() => setCartTicket(null)}>
-          <div style={styles.modalBox} className="gb-modal-box" onClick={e => e.stopPropagation()}>
-            <div style={{ padding: "1.5rem", textAlign: "center" }}>
-              <div style={{ fontSize: "2rem", color: colorSuper, marginBottom: "0.5rem" }}><FiFileText /></div>
-              <h3 style={{ margin: "0 0 0.25rem", fontSize: "1.1rem", fontWeight: 800, color: "#1e293b" }}>Comprobante de Préstamo</h3>
-              <div style={{ fontSize: "0.75rem", color: "#94a3b8" }}>Préstamo de Carrito  — #{cartTicket.id}</div>
+          <div style={{ ...styles.modalBox, maxWidth: "400px" }} onClick={e => e.stopPropagation()}>
+            <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: 800, color: "#1e293b" }}>Comprobante de Préstamo</h3>
+              <button onClick={() => setCartTicket(null)} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={18} /></button>
             </div>
-            <div style={{ padding: "0 1.5rem 1.5rem", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-              <div className="gb-form-grid" style={{ display: "grid", gap: "0.75rem" }}>
-                <div>
-                  <div style={styles.label}>Carrito</div>
-                  <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#0f172a" }}>{cartTicket.codigoCarrito}</div>
-                </div>
-                <div>
-                  <div style={styles.label}>Fecha de Préstamo</div>
-                  <div style={{ fontSize: "0.85rem", color: "#0f172a" }}>{fmtDate(cartTicket.fechaPrestamo)}</div>
-                </div>
+            <div id="ticket-content" style={{ padding: "1.5rem", textAlign: "center", fontFamily: "'Courier New', monospace" }}>
+              <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#0f172a", marginBottom: "0.25rem" }}>SGC - Préstamo Carrito</div>
+              <div style={{ fontSize: "0.7rem", color: "#64748b", marginBottom: "0.75rem" }}>{condo?.nombre || 'Condominio'}</div>
+              <hr style={{ border: "1px dashed #d1d5db", margin: "0.5rem 0" }} />
+              <div style={{ fontSize: "0.8rem", textAlign: "left", margin: "0.5rem 0" }}>
+                {[
+                  { l: 'Ticket #', v: `CTKT-${cartTicket.id}` },
+                  { l: 'Carrito', v: cartTicket.codigoCarrito },
+                  { l: 'Solicitante', v: cartTicket.nombreSolicitante },
+                  { l: 'DNI', v: cartTicket.dniSolicitante },
+                  { l: 'Departamento', v: `N° ${cartTicket.aptNumero}` },
+                  { l: 'Torre / Piso', v: `${cartTicket.aptTorre}${cartTicket.aptPiso ? ` · Piso ${cartTicket.aptPiso}` : ''}` },
+                  { l: 'Préstamo', v: fmtDate(cartTicket.fechaPrestamo) },
+                  { l: 'Devolución', v: cartTicket.fechaDevolucion ? fmtDate(cartTicket.fechaDevolucion) : 'Pendiente' },
+                ].map((r, i) => (
+                  <div key={i} style={{ display: "flex", justifyContent: "space-between", padding: "0.2rem 0" }}>
+                    <span style={{ color: "#64748b" }}>{r.l}:</span>
+                    <span style={{ fontWeight: 700, color: "#0f172a" }}>{r.v}</span>
+                  </div>
+                ))}
               </div>
-              <div className="gb-form-grid" style={{ display: "grid", gap: "0.75rem" }}>
-                <div>
-                  <div style={styles.label}>Solicitante</div>
-                  <div style={{ fontSize: "0.85rem", color: "#0f172a" }}>{cartTicket.nombreSolicitante}</div>
-                </div>
-                <div>
-                  <div style={styles.label}>DNI</div>
-                  <div style={{ fontSize: "0.85rem", color: "#0f172a" }}>{cartTicket.dniSolicitante}</div>
-                </div>
-              </div>
-              <div className="gb-form-grid" style={{ display: "grid", gap: "0.75rem" }}>
-                <div>
-                  <div style={styles.label}>Departamento</div>
-                  <div style={{ fontSize: "0.85rem", color: "#0f172a" }}>N° {cartTicket.aptNumero}</div>
-                </div>
-                <div>
-                  <div style={styles.label}>Torre / Piso</div>
-                  <div style={{ fontSize: "0.85rem", color: "#0f172a" }}>{cartTicket.aptTorre}{cartTicket.aptPiso ? `  · Piso ${cartTicket.aptPiso}` : ''}</div>
-                </div>
-              </div>
+              <hr style={{ border: "1px dashed #d1d5db", margin: "0.5rem 0" }} />
+              <div style={{ margin: "0.75rem 0" }}><canvas ref={barcodeRef} style={{ maxWidth: "100%" }} /></div>
+              <div style={{ fontSize: "0.65rem", color: "#94a3b8" }}>{condo?.nombre || 'SGC'}  — {new Date().toLocaleDateString('es-PE')}</div>
             </div>
-            <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "center" }}>
-              <button onClick={() => setCartTicket(null)} style={styles.btnSuccess}>Cerrar</button>
+            <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "center", gap: "0.75rem", backgroundColor: "#f8fafc" }}>
+              <button onClick={printTicket} style={{ backgroundColor: colorSuper, color: "#fff", border: "none", padding: "0.5rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                <FiPrinter size={16} /> Imprimir
+              </button>
+              <button onClick={() => setCartTicket(null)} style={{ backgroundColor: "#fff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>Cerrar</button>
             </div>
           </div>
         </div>
