@@ -379,6 +379,17 @@ export async function assignAssetApartment(assetId, idApartamento) {
   });
 }
 
+export async function assignAssetOwner(assetId, idPropietario, condominioId) {
+  const qs = condominioId ? `?condominioId=${condominioId}` : '';
+
+  return safeFetch(`/api/admin/assets/${assetId}/assign-owner${qs}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      idPropietario: Number(idPropietario),
+    }),
+  });
+}
+
 export async function deleteAdminAsset(id, condominioId, type) {
   const params = new URLSearchParams();
   if (type) params.append('type', type);

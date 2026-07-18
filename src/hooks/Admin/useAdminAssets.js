@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getAdminAssets, createAdminAsset, updateAdminAssetStatus } from '../../services/api';
+import { getAdminAssets, createAdminAsset, updateAdminAssetStatus, getAdminUsers, assignAssetOwner, extractItems } from '../../services/api';
 
 export function useAdminAssets() {
   const [estacionamientos, setEstacionamientos] = useState([]);
@@ -16,6 +16,8 @@ export function useAdminAssets() {
 
   const [totalEstacionamientos, setTotalEstacionamientos] = useState(0);
   const [totalCarritos, setTotalCarritos] = useState(0);
+
+  const [propietarios, setPropietarios] = useState([]);
 
   const cargarEstacionamientos = useCallback(async (pagina = 0) => {
     try {
@@ -91,10 +93,31 @@ export function useAdminAssets() {
     }
   };
 
+  const cargarPropietarios = useCallback(async () => {
+    try {
+      const data = await getAdminUsers({ rol: 'PROPIETARIO', activo: true });
+      setPropietarios(extractItems(data));
+    } catch (error) {
+      console.error("Error cargando propietarios:", error);
+    }
+  }, []);
+
+  const asignarDuenio = async (assetId, idPropietario) => {
+    try {
+      // No necesitas condominioId explícito si tu backend usa la sesión
+      await assignAssetOwner(assetId, idPropietario);
+      await cargarEstacionamientos(paginaEstacionamientos);
+    } catch (error) {
+      console.error("Error al asignar dueño:", error);
+      throw error;
+    }
+  };
+
   useEffect(() => {
     cargarEstacionamientos(0);
     cargarCarritos(0);
-  }, [cargarEstacionamientos, cargarCarritos]);
+    cargarPropietarios();
+  }, [cargarEstacionamientos, cargarCarritos, cargarPropietarios]);
 
   return {
     estacionamientos,
@@ -112,6 +135,8 @@ export function useAdminAssets() {
     registrarEstacionamiento,
     registrarCarrito,
     actualizarEstadoCarrito,
-    configurarEstacionamiento
+    configurarEstacionamiento,
+    propietarios,
+    asignarDuenio
   };
 }
