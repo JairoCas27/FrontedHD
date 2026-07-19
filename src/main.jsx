@@ -4,9 +4,14 @@ import './index.css'
 import App from './App.jsx'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import { AuthProvider } from "./context/AuthContext"
+import { CondominioProvider } from "./context/CondominioContext"
 
 createRoot(document.getElementById('root')).render(
-    <AuthProvider>
-      <App />
-    </AuthProvider>
+    <StrictMode>
+        <AuthProvider>
+            <CondominioProvider>
+                <App />
+            </CondominioProvider>
+        </AuthProvider>
+    </StrictMode>
 )

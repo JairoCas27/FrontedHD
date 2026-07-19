@@ -1,11 +1,14 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import { FiPackage, FiRefreshCw, FiX, FiTool, FiAlertTriangle, FiInfo, FiTruck, FiChevronLeft, FiChevronRight, FiSearch, FiSettings, FiPlayCircle, FiCheckCircle, FiUserPlus } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import BadgeEstado from '../../components/BadgeEstado'
 import { useAdminAssets } from '../../hooks/Admin/useAdminAssets'
+import { useAdminApartments } from '../../hooks/Admin/useAdminApartments'
+import { useCondominio } from '../../context/CondominioContext'
 
 export default function Bienes() {
   const colorAdmin = "rgb(52,151,195)"
+  const { idCondominio } = useCondominio()
 
   const {
     estacionamientos,
@@ -27,6 +30,25 @@ export default function Bienes() {
     propietarios,
     asignarDuenio
   } = useAdminAssets()
+
+  const { departamentos } = useAdminApartments(idCondominio)
+
+  const mapaPropietarios = useMemo(() => {
+    // ✅ Validación: Si no hay departamentos, retornar objeto vacío
+    if (!departamentos || departamentos.length === 0) return {}
+
+    return departamentos.reduce((acc, dep) => {
+      // ✅ IMPLEMENTACIÓN 5: Manejo de idPropietario null - asignar "Sin Propietario asignado"
+      // Si idPropietario es null, se asigna el valor por defecto "Sin Propietario asignado"
+      acc[dep.id] = dep.nombrePropietario || "Sin Propietario asignado"
+      return acc
+    }, {})
+  }, [departamentos])
+
+  const obtenerNombrePropietario = (idApartamento) => {
+    if (!idApartamento) return "Sin dueño asignado"
+    return mapaPropietarios[idApartamento] || "Sin dueño asignado"
+  }
 
   const [tabActiva, setTabActiva] = useState('ESTACIONAMIENTO')
   const [showModal, setShowModal] = useState(false)
@@ -316,11 +338,11 @@ export default function Bienes() {
                               <td style={{ padding: "1rem 1.5rem", fontFamily: "monospace", fontWeight: "700", color: "#94a3b8" }}>#{est.id}</td>
                               <td style={{ padding: "1rem", fontWeight: "700", color: "#0f172a" }}>N° {est.numero}</td>
 
-                              {/* MOSTRAR EL DUEÑO */}
+                              {/* CELDA DEL DUEÑO CON NOMBRE DEL PROPIETARIO */}
                               <td style={{ padding: "1rem" }}>
                                 {est?.idApartamento ? (
                                     <span style={{ fontSize: "0.85rem", color: "#1e293b", fontWeight: "600" }}>
-                                      {est.idApartamento}
+                                      {obtenerNombrePropietario(est.idApartamento)}
                                     </span>
                                 ) : (
                                     <span style={{ fontSize: "0.75rem", color: "#94a3b8", fontStyle: "italic" }}>
@@ -348,7 +370,6 @@ export default function Bienes() {
                                 <BadgeEstado estado={est.disponible ? 'Disponible' : 'Mantenimiento'} />
                               </td>
                               <td style={{ padding: "1rem 1.5rem", display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
-
                                 {/* Botón Configurar */}
                                 <button
                                     onClick={() => abrirModalConfig(est)}
