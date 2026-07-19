@@ -62,10 +62,11 @@ export default function Bienes() {
   const [tipoVehiculoForm, setTipoVehiculoForm] = useState('')
   const [capacidadForm, setCapacidadForm] = useState('')
 
-  // ─── NUEVOS ESTADOS PARA ASIGNACIÓN DE DUEÑO ───
   const [showModalAsignar, setShowModalAsignar] = useState(false)
   const [estAsignar, setEstAsignar] = useState(null)
   const [idPropietarioForm, setIdPropietarioForm] = useState('')
+
+  const [busquedaEstacionamiento, setBusquedaEstacionamiento] = useState('')
 
   const estiloInput = {
     width: "100%",
@@ -201,9 +202,18 @@ export default function Bienes() {
   }
 
   const estacionamientosFiltrados = estacionamientos.filter(est => {
-    if (filtroVehiculo === 'TODOS') return true
-    if (filtroVehiculo === 'SIN_ASIGNAR') return !est.tipoVehiculo
-    return est.tipoVehiculo === filtroVehiculo
+    const termino = busquedaEstacionamiento.toLowerCase().trim()
+
+    const coincideTipo = filtroVehiculo === 'TODOS' ? true
+        : filtroVehiculo === 'SIN_ASIGNAR' ? !est.tipoVehiculo
+            : est.tipoVehiculo === filtroVehiculo
+
+    const nombreDuenio = obtenerNombrePropietario(est.idApartamento).toLowerCase()
+
+    const coincideBusqueda = String(est.numero).includes(termino) ||
+        nombreDuenio.includes(termino)
+
+    return coincideTipo && coincideBusqueda
   })
 
   const carritosFiltrados = carritos.filter(car => {
@@ -284,6 +294,18 @@ export default function Bienes() {
         {tabActiva === 'ESTACIONAMIENTO' ? (
             <>
               <div style={{ backgroundColor: "#ffffff", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", marginBottom: "1.5rem", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
+                {/* Campo de búsqueda */}
+                <div style={{ marginBottom: "1rem", maxWidth: "300px", position: "relative" }}>
+                  <FiSearch size={15} style={{ position: "absolute", left: "0.75rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
+                  <input
+                      type="text"
+                      style={{ ...estiloInput, paddingLeft: "2.2rem" }}
+                      placeholder="Buscar por número o nombre de dueño..."
+                      value={busquedaEstacionamiento}
+                      onChange={(e) => setBusquedaEstacionamiento(e.target.value)}
+                  />
+                </div>
+
                 <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
                   <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginRight: "0.25rem" }}>Filtrar por tipo:</span>
                   {[
