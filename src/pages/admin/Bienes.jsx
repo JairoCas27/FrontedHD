@@ -384,13 +384,21 @@ export default function Bienes() {
                                 <button
                                     onClick={() => abrirModalAsignar(est)}
                                     style={{
-                                      padding: "0.35rem 0.65rem", border: "1px solid #10b981",
-                                      backgroundColor: "rgba(16,185,129,0.05)", color: "#10b981",
-                                      borderRadius: "0.5rem", fontSize: "0.75rem", fontWeight: "700",
-                                      cursor: "pointer", display: "flex", alignItems: "center", gap: "0.3rem"
+                                      padding: "0.35rem 0.65rem",
+                                      border: "1px solid #10b981",
+                                      backgroundColor: est.idApartamento ? "rgba(16,185,129,0.1)" : "rgba(16,185,129,0.05)",
+                                      color: "#10b981",
+                                      borderRadius: "0.5rem",
+                                      fontSize: "0.75rem",
+                                      fontWeight: "700",
+                                      cursor: "pointer",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: "0.3rem"
                                     }}
                                 >
-                                  <FiUserPlus size={12} /> Asignar Dueño
+                                  <FiUserPlus size={12} />
+                                  {est.idApartamento ? "Reasignar dueño" : "Asignar dueño"}
                                 </button>
                               </td>
                             </tr>
