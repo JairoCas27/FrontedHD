@@ -141,14 +141,13 @@ export default function Bienes() {
     }
   }
 
-  // ─── FUNCIÓN PARA ABRIR MODAL DE ASIGNACIÓN ───
   const abrirModalAsignar = (est) => {
     setEstAsignar(est)
     setIdPropietarioForm('')
     setShowModalAsignar(true)
   }
 
-  // ─── FUNCIÓN PARA EJECUTAR ASIGNACIÓN CON FEEDBACK MEJORADO ───
+  // FUNCIÓN PARA EJECUTAR ASIGNACIÓN
   const ejecutarAsignacion = async () => {
     if (!idPropietarioForm) {
       mostrarToast("Debes seleccionar un propietario", "error")
@@ -177,7 +176,6 @@ export default function Bienes() {
             "error"
         )
       } else {
-        // Mensaje genérico para otros errores
         mostrarToast(`Error al asignar dueño: ${errorMessage}`, "error")
       }
     }
@@ -305,7 +303,6 @@ export default function Bienes() {
                         <tr style={{ backgroundColor: "#f8fafc", color: "#64748b", fontWeight: "700", fontSize: "11px", textTransform: "uppercase", borderBottom: "1px solid #e2e8f0" }}>
                           <th style={{ padding: "1rem 1.5rem" }}>ID</th>
                           <th style={{ padding: "1rem" }}>Número</th>
-                          {/* NUEVA COLUMNA: DUEÑO */}
                           <th style={{ padding: "1rem" }}>Dueño</th>
                           <th style={{ padding: "1rem" }}>Tipo Vehículo</th>
                           <th style={{ padding: "1rem" }}>Ocupación</th>
@@ -318,14 +315,17 @@ export default function Bienes() {
                             <tr key={est.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
                               <td style={{ padding: "1rem 1.5rem", fontFamily: "monospace", fontWeight: "700", color: "#94a3b8" }}>#{est.id}</td>
                               <td style={{ padding: "1rem", fontWeight: "700", color: "#0f172a" }}>N° {est.numero}</td>
-                              {/* NUEVA CELDA PARA MOSTRAR EL DUEÑO */}
+
+                              {/* MOSTRAR EL DUEÑO */}
                               <td style={{ padding: "1rem" }}>
-                                {est.propietario ? (
+                                {est?.idApartamento ? (
                                     <span style={{ fontSize: "0.85rem", color: "#1e293b", fontWeight: "600" }}>
-                                      {est.propietario.nombres} {est.propietario.apellidos}
+                                      {est.idApartamento}
                                     </span>
                                 ) : (
-                                    <span style={{ fontSize: "0.75rem", color: "#94a3b8", fontStyle: "italic" }}>Sin dueño</span>
+                                    <span style={{ fontSize: "0.75rem", color: "#94a3b8", fontStyle: "italic" }}>
+                                      Sin dueño
+                                    </span>
                                 )}
                               </td>
                               <td style={{ padding: "1rem" }}>
@@ -348,6 +348,7 @@ export default function Bienes() {
                                 <BadgeEstado estado={est.disponible ? 'Disponible' : 'Mantenimiento'} />
                               </td>
                               <td style={{ padding: "1rem 1.5rem", display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
+
                                 {/* Botón Configurar */}
                                 <button
                                     onClick={() => abrirModalConfig(est)}
@@ -361,7 +362,7 @@ export default function Bienes() {
                                   <FiSettings size={12} /> Configurar
                                 </button>
 
-                                {/* NUEVO BOTÓN PARA ASIGNAR DUEÑO */}
+                                {/* BOTÓN PARA ASIGNAR DUEÑO */}
                                 <button
                                     onClick={() => abrirModalAsignar(est)}
                                     style={{
@@ -552,7 +553,7 @@ export default function Bienes() {
             </div>
         )}
 
-        {/* ─── MODAL PARA ASIGNAR DUEÑO CON FEEDBACK MEJORADO ─── */}
+        {/* MODAL PARA ASIGNAR DUEÑO */}
         {showModalAsignar && estAsignar && (
             <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 110, backdropFilter: "blur(4px)" }}>
               <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "400px", padding: "1.5rem", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)" }}>
