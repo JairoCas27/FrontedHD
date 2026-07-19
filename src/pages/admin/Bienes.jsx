@@ -34,12 +34,9 @@ export default function Bienes() {
   const { departamentos } = useAdminApartments(idCondominio)
 
   const mapaPropietarios = useMemo(() => {
-    // ✅ Validación: Si no hay departamentos, retornar objeto vacío
     if (!departamentos || departamentos.length === 0) return {}
 
     return departamentos.reduce((acc, dep) => {
-      // ✅ IMPLEMENTACIÓN 5: Manejo de idPropietario null - asignar "Sin Propietario asignado"
-      // Si idPropietario es null, se asigna el valor por defecto "Sin Propietario asignado"
       acc[dep.id] = dep.nombrePropietario || "Sin Propietario asignado"
       return acc
     }, {})
