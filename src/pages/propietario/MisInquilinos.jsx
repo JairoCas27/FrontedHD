@@ -18,7 +18,9 @@ import Modal from "../../components/common/Modal";
 import FormField from "../../components/common/FormField";
 import { Toast, useToast } from "../../components/common/Toast";
 
+
 // ─── Constantes ───────────────────────────────────────────────────────────────
+
 
 const PAGE = {
   padding: "32px",
@@ -27,11 +29,13 @@ const PAGE = {
   fontFamily: "system-ui, sans-serif",
 };
 
+
 const GRID = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
   gap: "16px",
 };
+
 
 const INITIAL_FORM = {
   nombres:         "",
@@ -40,12 +44,14 @@ const INITIAL_FORM = {
   numeroDocumento: "",
 };
 
+
 const INITIAL_ERRORS = {
   nombres:         "",
   apellidos:       "",
   tipoDocumento:   "",
   numeroDocumento: "",
 };
+
 
 const DOC_OPTIONS = [
   { value: "DNI",       label: "DNI"                 },
@@ -54,7 +60,9 @@ const DOC_OPTIONS = [
   { value: "RUC",       label: "RUC"                  },
 ];
 
+
 // ─── Validación ───────────────────────────────────────────────────────────────
+
 
 const DOC_RULES = {
   DNI:       { pattern: /^\d{8}$/,            hint: "8 dígitos numéricos"              },
@@ -63,11 +71,14 @@ const DOC_RULES = {
   RUC:       { pattern: /^\d{11}$/,            hint: "11 dígitos numéricos"             },
 };
 
+
 const NOMBRE_PATTERN = /^[A-Za-zÁáÉéÍíÓóÚúÑñÜü\s]{2,}$/;
+
 
 function validateForm(form) {
   const errors = { ...INITIAL_ERRORS };
   let valid = true;
+
 
   if (!NOMBRE_PATTERN.test(form.nombres.trim())) {
     errors.nombres = "Solo letras, mínimo 2 caracteres.";
@@ -92,10 +103,13 @@ function validateForm(form) {
     }
   }
 
+
   return { errors, valid };
 }
 
+
 // ─── Sub-componentes utilitarios ──────────────────────────────────────────────
+
 
 function DocHint({ tipoDocumento }) {
   if (!tipoDocumento || !DOC_RULES[tipoDocumento]) return null;
@@ -106,6 +120,7 @@ function DocHint({ tipoDocumento }) {
   );
 }
 
+
 function FieldError({ message }) {
   if (!message) return null;
   return (
@@ -115,11 +130,14 @@ function FieldError({ message }) {
   );
 }
 
+
 // ─── Sub-componente: TenantForm (reutilizado en agregar y editar) ─────────────
+
 
 function TenantForm({ form, errors, onChange }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
         <div>
@@ -146,6 +164,7 @@ function TenantForm({ form, errors, onChange }) {
         </div>
       </div>
 
+
       <div>
         <FormField
           label="Tipo de documento"
@@ -157,6 +176,7 @@ function TenantForm({ form, errors, onChange }) {
         />
         <FieldError message={errors.tipoDocumento} />
       </div>
+
 
       <div>
         <FormField
@@ -177,15 +197,19 @@ function TenantForm({ form, errors, onChange }) {
         <FieldError message={errors.numeroDocumento} />
       </div>
 
+
     </div>
   );
 }
 
+
 // ─── Sub-componente: TenantCard ───────────────────────────────────────────────
+
 
 function TenantCard({ tenant, onDelete, onEdit }) {
   const [hovered, setHovered] = useState(false);
   const initials = `${tenant.nombres?.[0] ?? ""}${tenant.apellidos?.[0] ?? ""}`.toUpperCase();
+
 
   return (
     <div
@@ -258,6 +282,7 @@ function TenantCard({ tenant, onDelete, onEdit }) {
         </div>
       </div>
 
+
       <div>
         <p style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: colors.slate }}>
           {tenant.nombres} {tenant.apellidos}
@@ -266,6 +291,7 @@ function TenantCard({ tenant, onDelete, onEdit }) {
           Inquilino
         </p>
       </div>
+
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
         {[
@@ -299,11 +325,14 @@ function TenantCard({ tenant, onDelete, onEdit }) {
   );
 }
 
+
 // ─── Vista principal ──────────────────────────────────────────────────────────
+
 
 export default function MisInquilinos() {
   const [tenants,      setTenants]      = useState([]);
   const [loading,      setLoading]      = useState(true);
+
 
   // Estado modal agregar
   const [showAdd,      setShowAdd]      = useState(false);
@@ -311,19 +340,24 @@ export default function MisInquilinos() {
   const [addErrors,    setAddErrors]    = useState(INITIAL_ERRORS);
   const [saving,       setSaving]       = useState(false);
 
+
   // Estado modal editar
   const [editTarget,   setEditTarget]   = useState(null);
   const [editForm,     setEditForm]     = useState(INITIAL_FORM);
   const [editErrors,   setEditErrors]   = useState(INITIAL_ERRORS);
   const [updating,     setUpdating]     = useState(false);
 
+
   // Estado eliminar
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleting,     setDeleting]     = useState(false);
 
+
   const { toast, showToast, clearToast } = useToast();
 
+
   // ── Fetch ─────────────────────────────────────────────────────────────────
+
 
   const fetchTenants = () => {
     setLoading(true);
@@ -333,9 +367,12 @@ export default function MisInquilinos() {
       .finally(() => setLoading(false));
   };
 
+
   useEffect(() => { fetchTenants(); }, []);
 
+
   // ── Handlers agregar ──────────────────────────────────────────────────────
+
 
   const handleAddChange = (e) => {
     const { name, value } = e.target;
@@ -348,16 +385,19 @@ export default function MisInquilinos() {
     if (addErrors[name]) setAddErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
+
   const handleCloseAdd = () => {
     setShowAdd(false);
     setAddForm(INITIAL_FORM);
     setAddErrors(INITIAL_ERRORS);
   };
 
+
   const handleAdd = async () => {
     const { errors: newErrors, valid } = validateForm(addForm);
     setAddErrors(newErrors);
     if (!valid) return;
+
 
     try {
       setSaving(true);
@@ -377,7 +417,9 @@ export default function MisInquilinos() {
     }
   };
 
+
   // ── Handlers editar ───────────────────────────────────────────────────────
+
 
   const handleOpenEdit = (tenant) => {
     setEditTarget(tenant);
@@ -390,6 +432,7 @@ export default function MisInquilinos() {
     setEditErrors(INITIAL_ERRORS);
   };
 
+
   const handleEditChange = (e) => {
     const { name, value } = e.target;
     if (name === "tipoDocumento") {
@@ -401,16 +444,19 @@ export default function MisInquilinos() {
     if (editErrors[name]) setEditErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
+
   const handleCloseEdit = () => {
     setEditTarget(null);
     setEditForm(INITIAL_FORM);
     setEditErrors(INITIAL_ERRORS);
   };
 
+
   const handleEdit = async () => {
     const { errors: newErrors, valid } = validateForm(editForm);
     setEditErrors(newErrors);
     if (!valid) return;
+
 
     try {
       setUpdating(true);
@@ -430,7 +476,9 @@ export default function MisInquilinos() {
     }
   };
 
+
   // ── Handler eliminar ──────────────────────────────────────────────────────
+
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -447,7 +495,9 @@ export default function MisInquilinos() {
     }
   };
 
+
   // ── Render ────────────────────────────────────────────────────────────────
+
 
   return (
     <div style={PAGE}>
@@ -460,6 +510,7 @@ export default function MisInquilinos() {
           </ActionButton>
         }
       />
+
 
       {loading ? (
         <Loading />
@@ -487,18 +538,21 @@ export default function MisInquilinos() {
         </div>
       )}
 
+
       {/* ── Modal: Agregar inquilino ── */}
       <Modal open={showAdd} title="Agregar inquilino" onClose={handleCloseAdd}>
         <TenantForm form={addForm} errors={addErrors} onChange={handleAddChange} />
+        {/* 🟢 ORDEN INVERTIDO: Guardar inquilino primero, Cancelar después */}
         <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", paddingTop: "16px" }}>
-          <ActionButton variant="ghost" onClick={handleCloseAdd} disabled={saving}>
-            Cancelar
-          </ActionButton>
           <ActionButton onClick={handleAdd} disabled={saving}>
             {saving ? "Guardando..." : "Guardar inquilino"}
           </ActionButton>
+          <ActionButton variant="ghost" onClick={handleCloseAdd} disabled={saving}>
+            Cancelar
+          </ActionButton>
         </div>
       </Modal>
+
 
       {/* ── Modal: Editar inquilino ── */}
       <Modal
@@ -507,15 +561,17 @@ export default function MisInquilinos() {
         onClose={handleCloseEdit}
       >
         <TenantForm form={editForm} errors={editErrors} onChange={handleEditChange} />
+        {/* 🟢 ORDEN INVERTIDO: Guardar cambios primero, Cancelar después */}
         <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", paddingTop: "16px" }}>
-          <ActionButton variant="ghost" onClick={handleCloseEdit} disabled={updating}>
-            Cancelar
-          </ActionButton>
           <ActionButton onClick={handleEdit} disabled={updating}>
             {updating ? "Guardando..." : "Guardar cambios"}
           </ActionButton>
+          <ActionButton variant="ghost" onClick={handleCloseEdit} disabled={updating}>
+            Cancelar
+          </ActionButton>
         </div>
       </Modal>
+
 
       {/* ── Modal: Confirmar eliminación ── */}
       <ConfirmModal
@@ -530,6 +586,7 @@ export default function MisInquilinos() {
         onCancel={() => setDeleteTarget(null)}
         loading={deleting}
       />
+
 
       <Toast toast={toast} onClose={clearToast} />
       <style>{`

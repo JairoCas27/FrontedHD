@@ -21,7 +21,9 @@ import Modal from "../../components/common/Modal";
 import FormField from "../../components/common/FormField";
 import { Toast, useToast } from "../../components/common/Toast";
 
+
 // ─── Constantes ───────────────────────────────────────────────────────────────
+
 
 const PAGE = {
   padding: "32px",
@@ -30,11 +32,13 @@ const PAGE = {
   fontFamily: "system-ui, sans-serif",
 };
 
+
 const GRID = {
   display: "grid",
   gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
   gap: "16px",
 };
+
 
 const INITIAL_FORM = {
   marca:       "",
@@ -45,12 +49,14 @@ const INITIAL_FORM = {
   inquilinoId: "",
 };
 
+
 const INITIAL_EDIT_FORM = {
   marca:  "",
   modelo: "",
   color:  "",
   placa:  "",
 };
+
 
 const INITIAL_ERRORS = {
   marca:  "",
@@ -60,12 +66,14 @@ const INITIAL_ERRORS = {
   tipo:   "",
 };
 
+
 const INITIAL_EDIT_ERRORS = {
   marca:  "",
   modelo: "",
   color:  "",
   placa:  "",
 };
+
 
 const TIPO_OPTIONS = [
   { value: "AUTO",      label: "Auto"      },
@@ -74,11 +82,14 @@ const TIPO_OPTIONS = [
   { value: "OTRO",      label: "Otro"      },
 ];
 
+
 // ─── Validación y normalización ───────────────────────────────────────────────
+
 
 const PLACA_PATTERN  = /^[A-Z]{3}-\d{3}$|^[A-Z]\d[A-Z]-\d{3}$/;
 const NOMBRE_PATTERN = /^[A-Za-zÁáÉéÍíÓóÚúÑñÜü0-9\s\-\.]{2,}$/;
 const COLOR_PATTERN  = /^[A-Za-zÁáÉéÍíÓóÚúÑñÜü\s]{3,}$/;
+
 
 function capitalize(str) {
   return str
@@ -87,6 +98,7 @@ function capitalize(str) {
     .replace(/(?:^|\s)\S/g, (l) => l.toUpperCase());
 }
 
+
 function normalizePlaca(raw) {
   const clean = raw.toUpperCase().replace(/\s/g, "");
   if (clean.includes("-")) return clean;
@@ -94,9 +106,11 @@ function normalizePlaca(raw) {
   return clean;
 }
 
+
 function validateAddForm(form) {
   const errors = { ...INITIAL_ERRORS };
   let valid = true;
+
 
   if (!NOMBRE_PATTERN.test(form.marca.trim())) {
     errors.marca = "Solo letras, números y espacios. Mínimo 2 caracteres.";
@@ -119,12 +133,15 @@ function validateAddForm(form) {
     valid = false;
   }
 
+
   return { errors, valid };
 }
+
 
 function validateEditForm(form) {
   const errors = { ...INITIAL_EDIT_ERRORS };
   let valid = true;
+
 
   if (!NOMBRE_PATTERN.test(form.marca.trim())) {
     errors.marca = "Solo letras, números y espacios. Mínimo 2 caracteres.";
@@ -143,10 +160,13 @@ function validateEditForm(form) {
     valid = false;
   }
 
+
   return { errors, valid };
 }
 
+
 // ─── Helpers de estacionamiento ───────────────────────────────────────────────
+
 
 // Cuántos vehículos (sin contar el actual) están asignados a un spot
 function countAssigned(vehicles, spotId, currentVehicleId) {
@@ -155,6 +175,7 @@ function countAssigned(vehicles, spotId, currentVehicleId) {
   ).length;
 }
 
+
 // Vehículos asignados a un spot (sin contar el actual)
 function getOcupantes(vehicles, spotId, currentVehicleId) {
   return vehicles.filter(
@@ -162,7 +183,9 @@ function getOcupantes(vehicles, spotId, currentVehicleId) {
   );
 }
 
+
 // ─── Sub-componente: FieldError ───────────────────────────────────────────────
+
 
 function FieldError({ message }) {
   if (!message) return null;
@@ -173,21 +196,27 @@ function FieldError({ message }) {
   );
 }
 
+
 // ─── Sub-componente: ParkingModal ─────────────────────────────────────────────
+
 
 function ParkingModal({ open, vehicle, spots, vehicles, onClose, onSave, saving }) {
   const [selected, setSelected] = useState(vehicle?.idEstacionamiento ?? null);
+
 
   useEffect(() => {
     setSelected(vehicle?.idEstacionamiento ?? null);
   }, [vehicle]);
 
+
   if (!open || !vehicle) return null;
+
 
   const hasParking    = !!vehicle.idEstacionamiento;
   const selectedSpot  = spots.find((s) => s.id === selected) ?? null;
   const ocupantes     = selectedSpot ? getOcupantes(vehicles, selectedSpot.id, vehicle.id) : [];
   const willReplace   = selectedSpot && ocupantes.length >= selectedSpot.capacidadMaxima;
+
 
   return (
     <Modal
@@ -196,6 +225,7 @@ function ParkingModal({ open, vehicle, spots, vehicles, onClose, onSave, saving 
       onClose={onClose}
     >
       <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+
 
         {/* Info del vehículo */}
         <div
@@ -217,6 +247,7 @@ function ParkingModal({ open, vehicle, spots, vehicles, onClose, onSave, saving 
           </span>
         </div>
 
+
         {/* Lista de spots */}
         {spots.length === 0 ? (
           <p style={{ fontSize: "14px", color: colors.slateLight, textAlign: "center", padding: "16px 0" }}>
@@ -231,6 +262,7 @@ function ParkingModal({ open, vehicle, spots, vehicles, onClose, onSave, saving 
               const lleno         = assigned >= spot.capacidadMaxima;
               const tipoDistinto  = spot.tipoVehiculo !== vehicle.tipo;
               const disabled      = lleno && !isActual;
+
 
               return (
                 <button
@@ -277,6 +309,7 @@ function ParkingModal({ open, vehicle, spots, vehicles, onClose, onSave, saving 
                     </div>
                   </div>
 
+
                   <span
                     style={{
                       fontSize: "11px",
@@ -298,6 +331,7 @@ function ParkingModal({ open, vehicle, spots, vehicles, onClose, onSave, saving 
             })}
           </div>
         )}
+
 
         {/* Advertencia de reemplazo */}
         {willReplace && (
@@ -329,6 +363,7 @@ function ParkingModal({ open, vehicle, spots, vehicles, onClose, onSave, saving 
           </div>
         )}
 
+
         {/* Desasignar */}
         {hasParking && (
           <button
@@ -354,10 +389,9 @@ function ParkingModal({ open, vehicle, spots, vehicles, onClose, onSave, saving 
           </button>
         )}
 
+
+        {/* 🟢 ORDEN INVERTIDO: Confirmación primero, Cancelar después */}
         <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", paddingTop: "4px" }}>
-          <ActionButton variant="ghost" onClick={onClose} disabled={saving}>
-            Cancelar
-          </ActionButton>
           <ActionButton
             variant={willReplace ? "danger" : "primary"}
             onClick={() => onSave(vehicle.id, selected, vehicles, spots)}
@@ -369,18 +403,25 @@ function ParkingModal({ open, vehicle, spots, vehicles, onClose, onSave, saving 
                 ? "Confirmar reemplazo"
                 : "Guardar"}
           </ActionButton>
+          <ActionButton variant="ghost" onClick={onClose} disabled={saving}>
+            Cancelar
+          </ActionButton>
         </div>
+
 
       </div>
     </Modal>
   );
 }
 
+
 // ─── Sub-componente: VehicleCard ──────────────────────────────────────────────
+
 
 function VehicleCard({ vehicle, onDelete, onParking, onEdit, spots }) {
   const [hovered, setHovered] = useState(false);
   const spot = spots.find((s) => s.id === vehicle.idEstacionamiento);
+
 
   return (
     <div
@@ -466,6 +507,7 @@ function VehicleCard({ vehicle, onDelete, onParking, onEdit, spots }) {
         </div>
       </div>
 
+
       <div>
         <p style={{ margin: 0, fontSize: "17px", fontWeight: 700, color: colors.slate }}>
           {vehicle.marca} {vehicle.modelo}
@@ -474,6 +516,7 @@ function VehicleCard({ vehicle, onDelete, onParking, onEdit, spots }) {
           {vehicle.tipo}
         </p>
       </div>
+
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
         {[
@@ -493,6 +536,7 @@ function VehicleCard({ vehicle, onDelete, onParking, onEdit, spots }) {
           </div>
         ))}
       </div>
+
 
       <div>
         {vehicle.idEstacionamiento ? (
@@ -534,7 +578,9 @@ function VehicleCard({ vehicle, onDelete, onParking, onEdit, spots }) {
   );
 }
 
+
 // ─── Sub-componente: campos comunes de formulario ─────────────────────────────
+
 
 function VehicleFields({ form, errors, onChange }) {
   return (
@@ -549,6 +595,7 @@ function VehicleFields({ form, errors, onChange }) {
           <FieldError message={errors.modelo} />
         </div>
       </div>
+
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
         <div>
@@ -567,7 +614,9 @@ function VehicleFields({ form, errors, onChange }) {
   );
 }
 
+
 // ─── Vista principal ──────────────────────────────────────────────────────────
+
 
 export default function MisVehiculos() {
   const [vehicles,      setVehicles]      = useState([]);
@@ -575,24 +624,30 @@ export default function MisVehiculos() {
   const [spots,         setSpots]         = useState([]);
   const [loading,       setLoading]       = useState(true);
 
+
   const [showAdd,       setShowAdd]       = useState(false);
   const [addForm,       setAddForm]       = useState(INITIAL_FORM);
   const [addErrors,     setAddErrors]     = useState(INITIAL_ERRORS);
   const [saving,        setSaving]        = useState(false);
+
 
   const [editTarget,    setEditTarget]    = useState(null);
   const [editForm,      setEditForm]      = useState(INITIAL_EDIT_FORM);
   const [editErrors,    setEditErrors]    = useState(INITIAL_EDIT_ERRORS);
   const [updating,      setUpdating]      = useState(false);
 
+
   const [deleteTarget,  setDeleteTarget]  = useState(null);
   const [deleting,      setDeleting]      = useState(false);
   const [parkingTarget, setParkingTarget] = useState(null);
   const [savingParking, setSavingParking] = useState(false);
 
+
   const { toast, showToast, clearToast } = useToast();
 
+
   // ── Fetch paralelo ────────────────────────────────────────────────────────
+
 
   const fetchAll = useCallback(() => {
     setLoading(true);
@@ -610,9 +665,12 @@ export default function MisVehiculos() {
       .finally(() => setLoading(false));
   }, []);
 
+
   useEffect(() => { fetchAll(); }, [fetchAll]);
 
+
   // ── Handlers agregar ──────────────────────────────────────────────────────
+
 
   const handleAddChange = (e) => {
     const { name, value } = e.target;
@@ -620,11 +678,13 @@ export default function MisVehiculos() {
     if (addErrors[name]) setAddErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
+
   const handleCloseAdd = () => {
     setShowAdd(false);
     setAddForm(INITIAL_FORM);
     setAddErrors(INITIAL_ERRORS);
   };
+
 
   const handleAdd = async () => {
     const normalized = {
@@ -636,9 +696,11 @@ export default function MisVehiculos() {
     };
     setAddForm(normalized);
 
+
     const { errors: newErrors, valid } = validateAddForm(normalized);
     setAddErrors(newErrors);
     if (!valid) return;
+
 
     try {
       setSaving(true);
@@ -660,7 +722,9 @@ export default function MisVehiculos() {
     }
   };
 
+
   // ── Handlers editar ───────────────────────────────────────────────────────
+
 
   const handleOpenEdit = (vehicle) => {
     setEditTarget(vehicle);
@@ -673,17 +737,20 @@ export default function MisVehiculos() {
     setEditErrors(INITIAL_EDIT_ERRORS);
   };
 
+
   const handleEditChange = (e) => {
     const { name, value } = e.target;
     setEditForm((prev) => ({ ...prev, [name]: value }));
     if (editErrors[name]) setEditErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
+
   const handleCloseEdit = () => {
     setEditTarget(null);
     setEditForm(INITIAL_EDIT_FORM);
     setEditErrors(INITIAL_EDIT_ERRORS);
   };
+
 
   const handleEdit = async () => {
     const normalized = {
@@ -694,9 +761,11 @@ export default function MisVehiculos() {
     };
     setEditForm(normalized);
 
+
     const { errors: newErrors, valid } = validateEditForm(normalized);
     setEditErrors(newErrors);
     if (!valid) return;
+
 
     try {
       setUpdating(true);
@@ -711,7 +780,9 @@ export default function MisVehiculos() {
     }
   };
 
+
   // ── Handler eliminar ──────────────────────────────────────────────────────
+
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
@@ -728,11 +799,14 @@ export default function MisVehiculos() {
     }
   };
 
+
   // ── Handler estacionamiento con lógica de reemplazo ───────────────────────
+
 
   const handleSaveParking = async (vehicleId, idEstacionamiento, allVehicles, allSpots) => {
     try {
       setSavingParking(true);
+
 
       if (idEstacionamiento !== null) {
         const spot = allSpots.find((s) => s.id === idEstacionamiento);
@@ -748,6 +822,7 @@ export default function MisVehiculos() {
         }
       }
 
+
       await assignHomeownerVehicleParking(vehicleId, idEstacionamiento ?? null);
       showToast(
         idEstacionamiento ? "Estacionamiento asignado" : "Estacionamiento desasignado",
@@ -762,14 +837,18 @@ export default function MisVehiculos() {
     }
   };
 
+
   // ── Opciones inquilinos ───────────────────────────────────────────────────
+
 
   const tenantOptions = tenants.map((t) => ({
     value: String(t.id),
     label: `${t.nombres} ${t.apellidos}`,
   }));
 
+
   // ── Render ────────────────────────────────────────────────────────────────
+
 
   return (
     <div style={PAGE}>
@@ -782,6 +861,7 @@ export default function MisVehiculos() {
           </ActionButton>
         }
       />
+
 
       {loading ? (
         <Loading />
@@ -811,10 +891,12 @@ export default function MisVehiculos() {
         </div>
       )}
 
+
       {/* ── Modal: Agregar vehículo ── */}
       <Modal open={showAdd} title="Agregar vehículo" onClose={handleCloseAdd}>
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <VehicleFields form={addForm} errors={addErrors} onChange={handleAddChange} />
+
 
           <div>
             <FormField
@@ -827,6 +909,7 @@ export default function MisVehiculos() {
             />
             <FieldError message={addErrors.tipo} />
           </div>
+
 
           {tenantOptions.length > 0 && (
             <div>
@@ -843,16 +926,19 @@ export default function MisVehiculos() {
             </div>
           )}
 
+
+          {/* 🟢 ORDEN INVERTIDO: Guardar primero, Cancelar después */}
           <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", paddingTop: "4px" }}>
-            <ActionButton variant="ghost" onClick={handleCloseAdd} disabled={saving}>
-              Cancelar
-            </ActionButton>
             <ActionButton onClick={handleAdd} disabled={saving}>
               {saving ? "Guardando..." : "Guardar vehículo"}
+            </ActionButton>
+            <ActionButton variant="ghost" onClick={handleCloseAdd} disabled={saving}>
+              Cancelar
             </ActionButton>
           </div>
         </div>
       </Modal>
+
 
       {/* ── Modal: Editar vehículo ── */}
       <Modal
@@ -862,6 +948,7 @@ export default function MisVehiculos() {
       >
         <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
           <VehicleFields form={editForm} errors={editErrors} onChange={handleEditChange} />
+
 
           {editTarget && (
             <div
@@ -881,16 +968,19 @@ export default function MisVehiculos() {
             </div>
           )}
 
+
+          {/* 🟢 ORDEN INVERTIDO: Guardar cambios primero, Cancelar después */}
           <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end", paddingTop: "4px" }}>
-            <ActionButton variant="ghost" onClick={handleCloseEdit} disabled={updating}>
-              Cancelar
-            </ActionButton>
             <ActionButton onClick={handleEdit} disabled={updating}>
               {updating ? "Guardando..." : "Guardar cambios"}
+            </ActionButton>
+            <ActionButton variant="ghost" onClick={handleCloseEdit} disabled={updating}>
+              Cancelar
             </ActionButton>
           </div>
         </div>
       </Modal>
+
 
       {/* ── Modal: Estacionamiento ── */}
       <ParkingModal
@@ -902,6 +992,7 @@ export default function MisVehiculos() {
         onSave={handleSaveParking}
         saving={savingParking}
       />
+
 
       {/* ── Modal: Confirmar eliminación ── */}
       <ConfirmModal
@@ -916,6 +1007,7 @@ export default function MisVehiculos() {
         onCancel={() => setDeleteTarget(null)}
         loading={deleting}
       />
+
 
       <Toast toast={toast} onClose={clearToast} />
       <style>{`
