@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { FiGitCommit, FiTrash2, FiFolder, FiX, FiInfo, FiPlus, FiLoader, FiAlertCircle } from "react-icons/fi"
+import { FiGitCommit, FiTrash2, FiFolder, FiX, FiInfo, FiPlus, FiLoader, FiAlertCircle, FiAlertTriangle } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import { useAdminStructure } from '../../hooks/Admin/useAdminStructure'
+
 
 export default function Estructura() {
   const colorAdmin = "rgb(52,151,195)"
   const { estructura, loading, insertarNodo, eliminarNodo, agregarDepartamento, } = useAdminStructure()
+
 
   const [showModal, setShowModal] = useState(false)
   const [showApartmentModal, setShowApartmentModal] = useState(false)
@@ -21,9 +23,15 @@ export default function Estructura() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [departamentosExistentes, setDepartamentosExistentes] = useState([])
 
+
+  // 🟢 ESTADO NUEVO: Modal de confirmación custom para eliminar nodos (reemplaza window.confirm)
+  const [confirmDeleteModal, setConfirmDeleteModal] = useState({ visible: false, id: null, tipo: '', nombre: '' })
+
+
   const listaTorres = Array.isArray(estructura)
       ? estructura
       : (estructura?.torres || [])
+
 
   // Obtener todos los pisos disponibles
   const todosLosPisos = useMemo(() => {
@@ -37,6 +45,7 @@ export default function Estructura() {
     );
   }, [listaTorres]);
 
+
   // Actualizar departamentos existentes cuando cambia el piso seleccionado
   useEffect(() => {
     if (nuevoDepartamento.idPiso) {
@@ -49,22 +58,27 @@ export default function Estructura() {
     }
   }, [nuevoDepartamento.idPiso, todosLosPisos]);
 
+
   const handleAddNode = async (e) => {
     e.preventDefault()
     if (!nuevoNodo.nombre.trim()) return
 
+
     setIsSubmitting(true)
     setErrorMessage('')
+
 
     try {
       let nombreTorreSeleccionada = null;
       let numeroPisoDetectado = null;
+
 
       if (nuevoNodo.padreId) {
         const torreEncontrada = listaTorres.find(t => String(t.id) === String(nuevoNodo.padreId));
         if (torreEncontrada) {
           nombreTorreSeleccionada = torreEncontrada.nombre;
         }
+
 
         const digitos = nuevoNodo.nombre.match(/\d+/);
         if (digitos) {
@@ -74,6 +88,7 @@ export default function Estructura() {
         }
       }
 
+
       const payload = {
         tipo: nuevoNodo.padreId ? "PISO" : "TORRE",
         nombre: nuevoNodo.nombre.trim(),
@@ -82,12 +97,15 @@ export default function Estructura() {
         numero: numeroPisoDetectado
       };
 
+
       await insertarNodo(payload);
       setShowModal(false);
       setNuevoNodo({ nombre: '', padreId: '' });
       setSuccessMessage(`${payload.tipo} creada correctamente`);
 
+
       setTimeout(() => setSuccessMessage(''), 3000);
+
 
     } catch (error) {
       console.error("Error al insertar el nodo estructural:", error)
@@ -97,13 +115,16 @@ export default function Estructura() {
     }
   }
 
+
   const handleAddApartment = async (e) => {
     e.preventDefault()
     if (isSubmitting) return;
 
+
     setIsSubmitting(true)
     setErrorMessage('')
     setSuccessMessage('')
+
 
     if (!nuevoDepartamento.numero || !nuevoDepartamento.idPiso) {
       setErrorMessage('Por favor completa todos los campos obligatorios')
@@ -111,10 +132,12 @@ export default function Estructura() {
       return
     }
 
+
     // Validación local de duplicados
     const numeroExistente = departamentosExistentes.some(
         d => d.numero === parseInt(nuevoDepartamento.numero)
     );
+
 
     if (numeroExistente) {
       setErrorMessage(`El departamento ${nuevoDepartamento.numero} ya existe en este piso.`);
@@ -122,16 +145,20 @@ export default function Estructura() {
       return;
     }
 
+
     try {
       // Encontrar el piso seleccionado
       const pisoSeleccionado = todosLosPisos.find(p => p.id === parseInt(nuevoDepartamento.idPiso));
+
 
       if (!pisoSeleccionado) {
         throw new Error('Piso no encontrado');
       }
 
+
       // Llamada SIMPLIFICADA al hook - pasamos los datos y el piso encontrado
       await agregarDepartamento(nuevoDepartamento, pisoSeleccionado);
+
 
       setSuccessMessage(`Departamento ${nuevoDepartamento.numero} creado exitosamente`)
       setShowApartmentModal(false)
@@ -142,7 +169,9 @@ export default function Estructura() {
         tieneEstacionamiento: false
       })
 
+
       setTimeout(() => setSuccessMessage(''), 3000)
+
 
     } catch (error) {
       console.error("Error al agregar departamento:", error)
@@ -152,21 +181,34 @@ export default function Estructura() {
     }
   }
 
-  const handleDeleteNode = async (id) => {
-    if (!window.confirm("¿Seguro que deseas eliminar este nodo de la estructura arquitectónica?")) return
+
+  // 🟢 MODIFICADO: Ya no usa window.confirm, ahora abre el Modal custom de confirmación
+  const handleDeleteNode = (id, tipo = 'Torre', nombre = '') => {
+    setConfirmDeleteModal({ visible: true, id, tipo, nombre })
+  }
+
+
+  // 🟢 FUNCIÓN NUEVA: Ejecuta la eliminación tras confirmar en el Modal custom
+  const ejecutarEliminarNodo = async () => {
+    const { id } = confirmDeleteModal
+    if (!id) return
+
 
     setIsSubmitting(true)
     try {
       await eliminarNodo(id)
+      setConfirmDeleteModal({ visible: false, id: null, tipo: '', nombre: '' })
       setSuccessMessage('Nodo eliminado correctamente')
       setTimeout(() => setSuccessMessage(''), 3000)
     } catch (error) {
       console.error("Error al eliminar el nodo:", error)
+      setConfirmDeleteModal({ visible: false, id: null, tipo: '', nombre: '' })
       setErrorMessage(`${error.message || 'No se pudo eliminar el nodo.'}`)
     } finally {
       setIsSubmitting(false)
     }
   }
+
 
   const estiloInput = {
     width: "100%",
@@ -179,6 +221,7 @@ export default function Estructura() {
     outline: "none"
   }
 
+
   const estiloLabel = {
     display: "block",
     fontSize: "0.75rem",
@@ -188,8 +231,10 @@ export default function Estructura() {
     textTransform: "uppercase"
   }
 
+
   return (
       <div className="estructura-container" style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
+
 
         {/* Mensajes de éxito/error */}
         {successMessage && (
@@ -205,6 +250,7 @@ export default function Estructura() {
               {successMessage}
             </div>
         )}
+
 
         {errorMessage && (
             <div style={{
@@ -224,6 +270,7 @@ export default function Estructura() {
             </div>
         )}
 
+
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem", gap: '1rem' }}>
           <EncabezadoTabla
               titulo="Estructura del Condominio"
@@ -233,7 +280,9 @@ export default function Estructura() {
               onBotonClick={() => setShowModal(true)}
           />
 
+
         </div>
+
 
         {loading ? (
             <div style={{ textAlign: "center", padding: "4rem", color: "#64748b", fontWeight: "600" }}>
@@ -244,6 +293,7 @@ export default function Estructura() {
               {listaTorres.map((torre) => (
                   <div key={torre.id} className="torre-card" style={{ backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "1rem", padding: "1.5rem", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.01)" }}>
 
+
                     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderBottom: "1px solid #f1f5f9", paddingBottom: "1rem", marginBottom: "1rem" }}>
                       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
                         <FiFolder size={20} style={{ color: colorAdmin }} />
@@ -253,7 +303,7 @@ export default function Estructura() {
                   </span>
                       </div>
                       <button
-                          onClick={() => handleDeleteNode(torre.id)}
+                          onClick={() => handleDeleteNode(torre.id, 'Torre', torre.nombre)}
                           style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", padding: "0.25rem" }}
                           title="Eliminar Torre"
                           disabled={isSubmitting}
@@ -261,6 +311,7 @@ export default function Estructura() {
                         <FiTrash2 size={16} />
                       </button>
                     </div>
+
 
                     <div style={{ display: "flex", flexDirection: "column", gap: "1rem", paddingLeft: "1.25rem", borderLeft: "2px dashed #cbd5e1" }}>
                       {torre.pisos?.map((piso) => (
@@ -273,6 +324,7 @@ export default function Estructura() {
                           {piso.apartamentos?.length || 0} dptos
                         </span>
                               </div>
+
 
 
                               <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -300,8 +352,9 @@ export default function Estructura() {
                                   Agregar Dpto
                                 </button>
 
+
                                 <button
-                                    onClick={() => handleDeleteNode(piso.id)}
+                                    onClick={() => handleDeleteNode(piso.id, 'Piso', piso.nombre || `Piso ${piso.numero}`)}
                                     style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer" }}
                                     title="Eliminar Nivel"
                                     disabled={isSubmitting}
@@ -310,6 +363,7 @@ export default function Estructura() {
                                 </button>
                               </div>
                             </div>
+
 
                             <div style={{ display: "flex", flexWrap: "wrap", gap: "0.4rem", paddingLeft: "0.5rem" }}>
                               {piso.apartamentos && piso.apartamentos.length > 0 ? (
@@ -346,8 +400,10 @@ export default function Estructura() {
                       ))}
                     </div>
 
+
                   </div>
               ))}
+
 
               {listaTorres.length === 0 && (
                   <div style={{ padding: "3rem", textAlign: "center", backgroundColor: "#ffffff", borderRadius: "1rem", border: "1px solid #e2e8f0", color: "#94a3b8" }}>
@@ -356,6 +412,7 @@ export default function Estructura() {
               )}
             </div>
         )}
+
 
         {/* Modal para Torres/Pisos */}
         {showModal && (
@@ -371,6 +428,7 @@ export default function Estructura() {
                     <FiX size={18} />
                   </button>
                 </div>
+
 
                 <form onSubmit={handleAddNode}>
                   <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
@@ -389,6 +447,7 @@ export default function Estructura() {
                       </select>
                     </div>
 
+
                     <div>
                       <label style={estiloLabel}>Nombre del Nodo</label>
                       <input
@@ -401,6 +460,7 @@ export default function Estructura() {
                           disabled={isSubmitting}
                       />
 
+
                       <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", padding: "0.6rem 0.75rem", borderRadius: "0.375rem", marginTop: "0.6rem" }}>
                         <FiInfo size={14} style={{ color: "#16a34a", flexShrink: 0 }} />
                         <span style={{ fontSize: "0.75rem", color: "#166534", fontWeight: "600", lineHeight: "1.3" }}>
@@ -412,25 +472,9 @@ export default function Estructura() {
                     </div>
                   </div>
 
+
+                  {/* 🟢 ORDEN INVERTIDO: Insertar Nodo primero, Cancelar después */}
                   <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: "0.75rem", backgroundColor: "#f8fafc" }}>
-                    <button
-                        type="button"
-                        onClick={() => setShowModal(false)}
-                        style={{
-                          backgroundColor: "#ffffff",
-                          border: "1px solid #cbd5e1",
-                          color: "#475569",
-                          padding: "0.5rem 1rem",
-                          borderRadius: "0.5rem",
-                          fontSize: "0.85rem",
-                          fontWeight: "600",
-                          cursor: "pointer",
-                          opacity: isSubmitting ? 0.5 : 1
-                        }}
-                        disabled={isSubmitting}
-                    >
-                      Cancelar
-                    </button>
                     <button
                         type="submit"
                         style={{
@@ -452,17 +496,38 @@ export default function Estructura() {
                       {isSubmitting && <FiLoader size={16} style={{ animation: "spin 1s linear infinite" }} />}
                       Insertar Nodo
                     </button>
+                    <button
+                        type="button"
+                        onClick={() => setShowModal(false)}
+                        style={{
+                          backgroundColor: "#ffffff",
+                          border: "1px solid #cbd5e1",
+                          color: "#475569",
+                          padding: "0.5rem 1rem",
+                          borderRadius: "0.5rem",
+                          fontSize: "0.85rem",
+                          fontWeight: "600",
+                          cursor: "pointer",
+                          opacity: isSubmitting ? 0.5 : 1
+                        }}
+                        disabled={isSubmitting}
+                    >
+                      Cancelar
+                    </button>
                   </div>
                 </form>
+
 
               </div>
             </div>
         )}
 
+
         {/* Modal para Departamentos */}
         {showApartmentModal && (
             <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)", padding: "1rem" }}>
               <div className="modal-content" style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "480px", maxHeight: "90vh", overflowY: "auto", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.08)", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+
 
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: "800", color: "#1e293b" }}>
@@ -478,8 +543,10 @@ export default function Estructura() {
                   </button>
                 </div>
 
+
                 <form onSubmit={handleAddApartment}>
                   <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+
 
                     <div>
                       <label style={estiloLabel}>Número de Departamento *</label>
@@ -495,6 +562,7 @@ export default function Estructura() {
                       />
                     </div>
 
+
                     <div>
                       <label style={estiloLabel}>Metraje (m²)</label>
                       <input
@@ -508,6 +576,7 @@ export default function Estructura() {
                           disabled={isSubmitting}
                       />
                     </div>
+
 
                     <div>
                       <label style={estiloLabel}>Ubicación (Piso) *</label>
@@ -535,6 +604,7 @@ export default function Estructura() {
                       )}
                     </div>
 
+
                     <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
                       <input
                           type="checkbox"
@@ -549,6 +619,7 @@ export default function Estructura() {
                       </label>
                     </div>
 
+
                     {/* Mostrar departamentos existentes en el piso */}
                     {nuevoDepartamento.idPiso && departamentosExistentes.length > 0 && (
                         <div style={{
@@ -562,6 +633,7 @@ export default function Estructura() {
                         </div>
                     )}
 
+
                     <div style={{ display: "flex", gap: "0.4rem", alignItems: "center", backgroundColor: "#f0fdf4", border: "1px solid #bbf7d0", padding: "0.6rem 0.75rem", borderRadius: "0.375rem" }}>
                       <FiInfo size={14} style={{ color: "#16a34a", flexShrink: 0 }} />
                       <span style={{ fontSize: "0.75rem", color: "#166534", fontWeight: "600", lineHeight: "1.3" }}>
@@ -570,25 +642,9 @@ export default function Estructura() {
                     </div>
                   </div>
 
+
+                  {/* 🟢 ORDEN INVERTIDO: Crear Departamento primero, Cancelar después */}
                   <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: "0.75rem", backgroundColor: "#f8fafc" }}>
-                    <button
-                        type="button"
-                        onClick={() => setShowApartmentModal(false)}
-                        style={{
-                          backgroundColor: "#ffffff",
-                          border: "1px solid #cbd5e1",
-                          color: "#475569",
-                          padding: "0.5rem 1rem",
-                          borderRadius: "0.5rem",
-                          fontSize: "0.85rem",
-                          fontWeight: "600",
-                          cursor: "pointer",
-                          opacity: isSubmitting ? 0.5 : 1
-                        }}
-                        disabled={isSubmitting}
-                    >
-                      Cancelar
-                    </button>
                     <button
                         type="submit"
                         style={{
@@ -610,12 +666,85 @@ export default function Estructura() {
                       {isSubmitting && <FiLoader size={16} style={{ animation: "spin 1s linear infinite" }} />}
                       Crear Departamento
                     </button>
+                    <button
+                        type="button"
+                        onClick={() => setShowApartmentModal(false)}
+                        style={{
+                          backgroundColor: "#ffffff",
+                          border: "1px solid #cbd5e1",
+                          color: "#475569",
+                          padding: "0.5rem 1rem",
+                          borderRadius: "0.5rem",
+                          fontSize: "0.85rem",
+                          fontWeight: "600",
+                          cursor: "pointer",
+                          opacity: isSubmitting ? 0.5 : 1
+                        }}
+                        disabled={isSubmitting}
+                    >
+                      Cancelar
+                    </button>
                   </div>
                 </form>
+
 
               </div>
             </div>
         )}
+
+
+        {/* 🟢 MODAL NUEVO: Confirmación custom de eliminación (reemplaza window.confirm) */}
+        {confirmDeleteModal.visible && (
+            <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 110, backdropFilter: "blur(4px)", padding: "1rem" }}>
+              <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "400px", border: "1px solid #e2e8f0", overflow: "hidden", padding: "1.5rem", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)" }}>
+                <div style={{ display: "flex", gap: "0.75rem", alignItems: "flex-start" }}>
+                  <div style={{
+                    backgroundColor: "rgba(239, 68, 68, 0.1)",
+                    color: "#ef4444",
+                    padding: "0.5rem", borderRadius: "0.5rem", display: "flex"
+                  }}>
+                    <FiAlertTriangle size={22} />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <h4 style={{ margin: "0 0 0.5rem 0", fontWeight: "800", color: "#1e293b", fontSize: "1rem" }}>
+                      Confirmar Eliminación
+                    </h4>
+                    <p style={{ margin: 0, fontSize: "0.85rem", color: "#64748b", lineHeight: "1.4" }}>
+                      ¿Estás seguro de que deseas eliminar {confirmDeleteModal.tipo?.toLowerCase()} "{confirmDeleteModal.nombre}" de la estructura arquitectónica? Esta acción no se puede revertir.
+                    </p>
+                  </div>
+                </div>
+
+
+                {/* 🟢 ORDEN: Confirmar primero, Cancelar después */}
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "1.5rem" }}>
+                  <button
+                      onClick={ejecutarEliminarNodo}
+                      disabled={isSubmitting}
+                      style={{
+                        padding: "0.45rem 1.25rem",
+                        background: "#ef4444",
+                        color: "#fff", border: "none", borderRadius: "0.5rem", fontWeight: "700", fontSize: "0.8rem",
+                        cursor: isSubmitting ? "not-allowed" : "pointer",
+                        opacity: isSubmitting ? 0.6 : 1,
+                        display: "flex", alignItems: "center", gap: "0.4rem"
+                      }}
+                  >
+                    {isSubmitting && <FiLoader size={14} style={{ animation: "spin 1s linear infinite" }} />}
+                    Sí, Eliminar
+                  </button>
+                  <button
+                      onClick={() => setConfirmDeleteModal({ visible: false, id: null, tipo: '', nombre: '' })}
+                      disabled={isSubmitting}
+                      style={{ padding: "0.45rem 1rem", border: "1px solid #cbd5e1", background: "#fff", borderRadius: "0.5rem", cursor: isSubmitting ? "not-allowed" : "pointer", color: "#475569", fontWeight: "700", fontSize: "0.8rem", opacity: isSubmitting ? 0.5 : 1 }}
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+        )}
+
 
         {/* Estilos para la animación */}
         <style>{`

@@ -1,14 +1,16 @@
 import React, { useState, useMemo } from 'react'
-import { FiPackage, FiRefreshCw, FiX, FiTool, FiAlertTriangle, FiInfo, FiTruck, FiChevronLeft, FiChevronRight, FiSearch, FiSettings, FiPlayCircle, FiCheckCircle, FiUserPlus } from "react-icons/fi"
+import { FiPackage, FiRefreshCw, FiX, FiTool, FiAlertTriangle, FiInfo, FiTruck, FiChevronLeft, FiChevronRight, FiSearch, FiSettings, FiPlayCircle, FiCheckCircle, FiUserPlus, FiUserCheck } from "react-icons/fi"
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import BadgeEstado from '../../components/BadgeEstado'
 import { useAdminAssets } from '../../hooks/Admin/useAdminAssets'
 import { useAdminApartments } from '../../hooks/Admin/useAdminApartments'
 import { useCondominio } from '../../context/CondominioContext'
 
+
 export default function Bienes() {
   const colorAdmin = "rgb(52,151,195)"
   const { idCondominio } = useCondominio()
+
 
   const {
     estacionamientos,
@@ -31,10 +33,13 @@ export default function Bienes() {
     asignarDuenio
   } = useAdminAssets()
 
+
   const { departamentos } = useAdminApartments(idCondominio)
+
 
   const mapaPropietarios = useMemo(() => {
     if (!departamentos || departamentos.length === 0) return {}
+
 
     return departamentos.reduce((acc, dep) => {
       acc[dep.id] = dep.nombrePropietario || "Sin Propietario asignado"
@@ -42,18 +47,22 @@ export default function Bienes() {
     }, {})
   }, [departamentos])
 
+
   const obtenerNombrePropietario = (idApartamento) => {
     if (!idApartamento) return "Sin dueño asignado"
     return mapaPropietarios[idApartamento] || "Sin dueño asignado"
   }
+
 
   const [tabActiva, setTabActiva] = useState('ESTACIONAMIENTO')
   const [showModal, setShowModal] = useState(false)
   const [numeroForm, setNumeroForm] = useState('')
   const [codigoForm, setCodigoForm] = useState('')
 
+
   const [filtroVehiculo, setFiltroVehiculo] = useState('TODOS')
   const [busquedaCarrito, setBusquedaCarrito] = useState('')
+
 
   const [toast, setToast] = useState({ visible: false, mensaje: '', tipo: 'success' })
   const [confirmModal, setConfirmModal] = useState({ visible: false, id: null, etiqueta: '', estadoDestino: '' })
@@ -62,11 +71,18 @@ export default function Bienes() {
   const [tipoVehiculoForm, setTipoVehiculoForm] = useState('')
   const [capacidadForm, setCapacidadForm] = useState('')
 
+
   const [showModalAsignar, setShowModalAsignar] = useState(false)
   const [estAsignar, setEstAsignar] = useState(null)
   const [idPropietarioForm, setIdPropietarioForm] = useState('')
 
+  // 🟢 ESTADOS NUEVOS: Búsqueda de propietario tipo "buscar y seleccionar" en el modal de asignación
+  const [busquedaPropietarioAsignar, setBusquedaPropietarioAsignar] = useState('')
+  const [mostrarListaPropietariosAsignar, setMostrarListaPropietariosAsignar] = useState(false)
+
+
   const [busquedaEstacionamiento, setBusquedaEstacionamiento] = useState('')
+
 
   const estiloInput = {
     width: "100%",
@@ -80,6 +96,7 @@ export default function Bienes() {
     outline: "none"
   }
 
+
   const estiloLabel = {
     display: "block",
     fontSize: "0.75rem",
@@ -90,10 +107,12 @@ export default function Bienes() {
     letterSpacing: "0.025em"
   }
 
+
   const mostrarToast = (mensaje, tipo = 'success') => {
     setToast({ visible: true, mensaje, tipo })
     setTimeout(() => setToast({ visible: false, mensaje: '', tipo: 'success' }), 3000)
   }
+
 
   const handleSaveAsset = async (e) => {
     e.preventDefault()
@@ -116,9 +135,11 @@ export default function Bienes() {
     }
   }
 
+
   const abrirConfirmCarrito = (car, estadoDestino) => {
     setConfirmModal({ visible: true, id: car.id, etiqueta: car.codigo, estadoDestino })
   }
+
 
   const ejecutarCambioEstadoCarrito = async () => {
     try {
@@ -131,12 +152,14 @@ export default function Bienes() {
     }
   }
 
+
   const abrirModalConfig = (est) => {
     setEstConfig(est)
     setTipoVehiculoForm(est.tipoVehiculo || '')
     setCapacidadForm(est.capacidadMaxima || '')
     setShowModalConfig(true)
   }
+
 
   const guardarConfigEstacionamiento = async (e) => {
     e.preventDefault()
@@ -150,6 +173,7 @@ export default function Bienes() {
     }
   }
 
+
   const reiniciarConfigEstacionamiento = async () => {
     try {
       await configurarEstacionamiento(estConfig.id, null, null)
@@ -161,11 +185,49 @@ export default function Bienes() {
     }
   }
 
+
+  // 🟢 MODIFICADO: Al abrir el modal, también se inicializa el buscador de propietario
   const abrirModalAsignar = (est) => {
     setEstAsignar(est)
     setIdPropietarioForm('')
+    setBusquedaPropietarioAsignar('')
+    setMostrarListaPropietariosAsignar(false)
     setShowModalAsignar(true)
   }
+
+
+  // 🟢 FUNCIÓN NUEVA: Filtra propietarios por nombre, apellido o ID según lo escrito en el buscador
+  const propietariosFiltrados = useMemo(() => {
+    const termino = busquedaPropietarioAsignar.toLowerCase().trim()
+    if (!termino) return propietarios || []
+    return (propietarios || []).filter(p => {
+      const nombreCompleto = `${p.nombres} ${p.apellidos}`.toLowerCase()
+      return nombreCompleto.includes(termino) || p.id?.toString().includes(termino)
+    })
+  }, [propietarios, busquedaPropietarioAsignar])
+
+
+  // 🟢 FUNCIÓN NUEVA: Propietario actualmente seleccionado, para mostrar confirmación visual
+  const propietarioSeleccionadoAsignar = useMemo(() => {
+    return (propietarios || []).find(p => p.id?.toString() === idPropietarioForm?.toString())
+  }, [propietarios, idPropietarioForm])
+
+
+  // 🟢 FUNCIÓN NUEVA: Selecciona un propietario de la lista desplegable
+  const handleSeleccionarPropietarioAsignar = (propietario) => {
+    setIdPropietarioForm(propietario.id)
+    setBusquedaPropietarioAsignar(`${propietario.nombres} ${propietario.apellidos}`)
+    setMostrarListaPropietariosAsignar(false)
+  }
+
+
+  // 🟢 FUNCIÓN NUEVA: Limpia la selección actual del propietario
+  const handleLimpiarSeleccionAsignar = () => {
+    setIdPropietarioForm('')
+    setBusquedaPropietarioAsignar('')
+    setMostrarListaPropietariosAsignar(false)
+  }
+
 
   // FUNCIÓN PARA EJECUTAR ASIGNACIÓN
   const ejecutarAsignacion = async () => {
@@ -182,8 +244,10 @@ export default function Bienes() {
     } catch (error) {
       console.error("Error al asignar dueño:", error)
 
+
       // Verificar si el error contiene el mensaje específico de ApartamentoException
       const errorMessage = error.message || ''
+
 
       // Detectar si el error está relacionado con que el propietario no tiene apartamento
       if (errorMessage.includes('apartamento') ||
@@ -201,20 +265,26 @@ export default function Bienes() {
     }
   }
 
+
   const estacionamientosFiltrados = estacionamientos.filter(est => {
     const termino = busquedaEstacionamiento.toLowerCase().trim()
+
 
     const coincideTipo = filtroVehiculo === 'TODOS' ? true
         : filtroVehiculo === 'SIN_ASIGNAR' ? !est.tipoVehiculo
             : est.tipoVehiculo === filtroVehiculo
 
+
     const nombreDuenio = obtenerNombrePropietario(est.idApartamento).toLowerCase()
+
 
     const coincideBusqueda = String(est.numero).includes(termino) ||
         nombreDuenio.includes(termino)
 
+
     return coincideTipo && coincideBusqueda
   })
+
 
   const carritosFiltrados = carritos.filter(car => {
     const termino = busquedaCarrito.toLowerCase().trim()
@@ -223,6 +293,7 @@ export default function Bienes() {
     const id = String(car.id)
     return codigo.includes(termino) || id.includes(termino)
   })
+
 
   const renderPaginacion = (paginaActual, totalPaginas, onCambiar) => (
       <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "0.75rem", padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9" }}>
@@ -244,8 +315,10 @@ export default function Bienes() {
       </div>
   )
 
+
   return (
       <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left", position: "relative" }}>
+
 
         {toast.visible && (
             <div style={{
@@ -258,6 +331,7 @@ export default function Bienes() {
             </div>
         )}
 
+
         <EncabezadoTabla
             titulo="Bienes y Activos"
             subtitulo="Inventariado y control de estado técnico de estacionamientos y carritos del condominio"
@@ -265,6 +339,7 @@ export default function Bienes() {
             accentColor={colorAdmin}
             onBotonClick={() => setShowModal(true)}
         />
+
 
         <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", backgroundColor: "#ffffff", padding: "0.4rem", borderRadius: "0.75rem", border: "1px solid #e2e8f0", width: "fit-content" }}>
           <button
@@ -291,6 +366,7 @@ export default function Bienes() {
           </button>
         </div>
 
+
         {tabActiva === 'ESTACIONAMIENTO' ? (
             <>
               <div style={{ backgroundColor: "#ffffff", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", marginBottom: "1.5rem", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
@@ -305,6 +381,7 @@ export default function Bienes() {
                       onChange={(e) => setBusquedaEstacionamiento(e.target.value)}
                   />
                 </div>
+
 
                 <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", flexWrap: "wrap" }}>
                   <span style={{ fontSize: "0.75rem", fontWeight: "700", color: "#94a3b8", textTransform: "uppercase", marginRight: "0.25rem" }}>Filtrar por tipo:</span>
@@ -334,6 +411,7 @@ export default function Bienes() {
                 </div>
               </div>
 
+
               {loadingEstacionamientos ? (
                   <div style={{ textAlign: "center", padding: "4rem", color: "#64748b", fontWeight: "600" }}>Sincronizando.</div>
               ) : (
@@ -356,6 +434,7 @@ export default function Bienes() {
                             <tr key={est.id} style={{ borderBottom: "1px solid #f1f5f9" }}>
                               <td style={{ padding: "1rem 1.5rem", fontFamily: "monospace", fontWeight: "700", color: "#94a3b8" }}>#{est.id}</td>
                               <td style={{ padding: "1rem", fontWeight: "700", color: "#0f172a" }}>N° {est.numero}</td>
+
 
                               {/* CELDA DEL DUEÑO CON NOMBRE DEL PROPIETARIO */}
                               <td style={{ padding: "1rem" }}>
@@ -401,6 +480,7 @@ export default function Bienes() {
                                 >
                                   <FiSettings size={12} /> Configurar
                                 </button>
+
 
                                 {/* BOTÓN PARA ASIGNAR DUEÑO */}
                                 <button
@@ -456,6 +536,7 @@ export default function Bienes() {
                   </small>
                 </div>
               </div>
+
 
               {loadingCarritos ? (
                   <div style={{ textAlign: "center", padding: "4rem", color: "#64748b", fontWeight: "600" }}>Sincronizando.</div>
@@ -536,6 +617,8 @@ export default function Bienes() {
             </>
         )}
 
+
+        {/* 🟢 ORDEN INVERTIDO: Sí, Confirmar primero, Cancelar después */}
         {confirmModal.visible && (
             <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 110, backdropFilter: "blur(4px)" }}>
               <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "400px", border: "1px solid #e2e8f0", overflow: "hidden", padding: "1.5rem", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)" }}>
@@ -552,21 +635,22 @@ export default function Bienes() {
                 </div>
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "1.5rem" }}>
                   <button
-                      onClick={() => setConfirmModal({ visible: false, id: null, etiqueta: '', estadoDestino: '' })}
-                      style={{ padding: "0.45rem 1rem", border: "1px solid #cbd5e1", background: "#fff", borderRadius: "0.5rem", cursor: "pointer", color: "#475569", fontWeight: "700", fontSize: "0.8rem" }}
-                  >
-                    Cancelar
-                  </button>
-                  <button
                       onClick={ejecutarCambioEstadoCarrito}
                       style={{ padding: "0.45rem 1.25rem", background: colorAdmin, color: "#fff", border: "none", borderRadius: "0.5rem", fontWeight: "700", fontSize: "0.8rem", cursor: "pointer" }}
                   >
                     Sí, Confirmar
                   </button>
+                  <button
+                      onClick={() => setConfirmModal({ visible: false, id: null, etiqueta: '', estadoDestino: '' })}
+                      style={{ padding: "0.45rem 1rem", border: "1px solid #cbd5e1", background: "#fff", borderRadius: "0.5rem", cursor: "pointer", color: "#475569", fontWeight: "700", fontSize: "0.8rem" }}
+                  >
+                    Cancelar
+                  </button>
                 </div>
               </div>
             </div>
         )}
+
 
         {showModalConfig && estConfig && (
             <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 110, backdropFilter: "blur(4px)" }}>
@@ -575,6 +659,7 @@ export default function Bienes() {
                   <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: "800", color: "#1e293b" }}>Configurar Estacionamiento N° {estConfig.numero}</h3>
                   <button onClick={() => setShowModalConfig(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={18} /></button>
                 </div>
+
 
                 <form onSubmit={guardarConfigEstacionamiento}>
                   <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
@@ -592,6 +677,7 @@ export default function Bienes() {
                     </div>
                   </div>
 
+
                   <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", gap: "0.75rem", backgroundColor: "#f8fafc" }}>
                     <button type="button" onClick={reiniciarConfigEstacionamiento} style={{ backgroundColor: "#ffffff", border: "1px solid #ef4444", color: "#ef4444", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "700", cursor: "pointer" }}>Reiniciar Configuración</button>
                     <button type="submit" style={{ backgroundColor: colorAdmin, border: "none", color: "#ffffff", padding: "0.5rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "700", cursor: "pointer" }}>Guardar</button>
@@ -601,10 +687,12 @@ export default function Bienes() {
             </div>
         )}
 
+
         {/* MODAL PARA ASIGNAR DUEÑO */}
+        {/* 🟢 MODIFICADO: Ahora tiene buscador con lista desplegable filtrable en vez de un <select> simple */}
         {showModalAsignar && estAsignar && (
             <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 110, backdropFilter: "blur(4px)" }}>
-              <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "400px", padding: "1.5rem", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)" }}>
+              <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "420px", padding: "1.5rem", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)" }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
                   <h3 style={{ margin: 0, fontSize: "1rem", fontWeight: "800", color: "#1e293b" }}>
                     Asignar dueño a Estacionamiento N° {estAsignar.numero}
@@ -614,41 +702,117 @@ export default function Bienes() {
                   </button>
                 </div>
 
-                <label style={estiloLabel}>Seleccionar Propietario</label>
-                <select
-                    style={estiloInput}
-                    value={idPropietarioForm}
-                    onChange={(e) => setIdPropietarioForm(e.target.value)}
-                >
-                  <option value="">Seleccione...</option>
-                  {propietarios.map(p => (
-                      <option key={p.id} value={p.id}>
-                        {p.nombres} {p.apellidos}
-                      </option>
-                  ))}
-                </select>
+
+                <label style={estiloLabel}>Buscar Propietario</label>
+                <div style={{ position: "relative" }}>
+                  <div style={{ position: "relative" }}>
+                    <FiSearch size={16} style={{ position: "absolute", left: "0.75rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8" }} />
+                    <input
+                        type="text"
+                        style={{ ...estiloInput, paddingLeft: "2.25rem", paddingRight: busquedaPropietarioAsignar ? "2.25rem" : "0.75rem" }}
+                        placeholder="Escribe un nombre, apellido o ID..."
+                        value={busquedaPropietarioAsignar}
+                        onChange={(e) => {
+                          setBusquedaPropietarioAsignar(e.target.value)
+                          setMostrarListaPropietariosAsignar(true)
+                          setIdPropietarioForm('')
+                        }}
+                        onFocus={() => setMostrarListaPropietariosAsignar(true)}
+                    />
+                    {busquedaPropietarioAsignar && (
+                        <button
+                            onClick={handleLimpiarSeleccionAsignar}
+                            style={{ position: "absolute", right: "0.6rem", top: "50%", transform: "translateY(-50%)", background: "none", border: "none", cursor: "pointer", color: "#94a3b8", display: "flex" }}
+                        >
+                          <FiX size={16} />
+                        </button>
+                    )}
+                  </div>
+
+
+                  {mostrarListaPropietariosAsignar && (
+                      <div style={{ position: "absolute", top: "calc(100% + 6px)", left: 0, right: 0, backgroundColor: "#ffffff", border: "1px solid #e2e8f0", borderRadius: "0.75rem", boxShadow: "0 12px 24px -6px rgba(0,0,0,0.15)", maxHeight: "230px", overflowY: "auto", zIndex: 10, padding: "0.4rem" }}>
+                        {propietariosFiltrados.length === 0 ? (
+                            <div style={{ padding: "1rem", fontSize: "0.85rem", color: "#94a3b8", textAlign: "center" }}>No se encontraron coincidencias</div>
+                        ) : (
+                            propietariosFiltrados.map(p => {
+                              const iniciales = `${p.nombres?.charAt(0) || ''}${p.apellidos?.charAt(0) || ''}`.toUpperCase()
+                              const seleccionado = p.id?.toString() === idPropietarioForm?.toString()
+                              return (
+                                  <div
+                                      key={p.id}
+                                      onClick={() => handleSeleccionarPropietarioAsignar(p)}
+                                      style={{
+                                        display: "flex", alignItems: "center", gap: "0.6rem", padding: "0.55rem 0.6rem", cursor: "pointer",
+                                        borderRadius: "0.5rem", backgroundColor: seleccionado ? "rgba(52,151,195,0.08)" : "transparent"
+                                      }}
+                                      onMouseEnter={(e) => { if (!seleccionado) e.currentTarget.style.backgroundColor = "#f8fafc" }}
+                                      onMouseLeave={(e) => { if (!seleccionado) e.currentTarget.style.backgroundColor = "transparent" }}
+                                  >
+                                    <div style={{ width: "30px", height: "30px", borderRadius: "50%", backgroundColor: colorAdmin, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "0.7rem", fontWeight: "700", flexShrink: 0 }}>
+                                      {iniciales}
+                                    </div>
+                                    <div style={{ display: "flex", flexDirection: "column", overflow: "hidden" }}>
+                                      <span style={{ fontSize: "0.85rem", fontWeight: "700", color: "#1e293b", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{p.nombres} {p.apellidos}</span>
+                                      <span style={{ fontSize: "0.7rem", color: "#94a3b8", fontWeight: "600" }}>ID: {p.id}</span>
+                                    </div>
+                                  </div>
+                              )
+                            })
+                        )}
+                      </div>
+                  )}
+                </div>
+
+
+                {propietarioSeleccionadoAsignar && (
+                    <div style={{ marginTop: "0.85rem", display: "flex", alignItems: "center", gap: "0.6rem", padding: "0.65rem 0.85rem", backgroundColor: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)", borderRadius: "0.65rem" }}>
+                      <div style={{ backgroundColor: "#10b981", borderRadius: "50%", padding: "0.3rem", display: "flex" }}>
+                        <FiUserCheck size={12} color="#ffffff" />
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column" }}>
+                        <span style={{ fontSize: "0.85rem", fontWeight: "700", color: "#065f46" }}>{propietarioSeleccionadoAsignar.nombres} {propietarioSeleccionadoAsignar.apellidos}</span>
+                        <span style={{ fontSize: "0.7rem", color: "#10b981", fontWeight: "600" }}>Seleccionado para asignación</span>
+                      </div>
+                    </div>
+                )}
+
 
                 <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "1.5rem" }}>
+                  <button
+                      onClick={ejecutarAsignacion}
+                      disabled={!idPropietarioForm}
+                      style={{
+                        padding: "0.5rem 1rem",
+                        backgroundColor: colorAdmin,
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "0.5rem",
+                        cursor: !idPropietarioForm ? "not-allowed" : "pointer",
+                        opacity: !idPropietarioForm ? 0.6 : 1,
+                        fontWeight: "600",
+                        fontSize: "0.85rem"
+                      }}
+                  >
+                    Confirmar Asignación
+                  </button>
                   <button
                       onClick={() => setShowModalAsignar(false)}
                       style={{ padding: "0.5rem 1rem", border: "1px solid #cbd5e1", borderRadius: "0.5rem", cursor: "pointer", backgroundColor: "#fff", color: "#475569", fontWeight: "600", fontSize: "0.85rem" }}
                   >
                     Cancelar
                   </button>
-                  <button
-                      onClick={ejecutarAsignacion}
-                      style={{ padding: "0.5rem 1rem", backgroundColor: colorAdmin, color: "#fff", border: "none", borderRadius: "0.5rem", cursor: "pointer", fontWeight: "600", fontSize: "0.85rem" }}
-                  >
-                    Confirmar Asignación
-                  </button>
                 </div>
               </div>
             </div>
         )}
 
+
+        {/* 🟢 ORDEN INVERTIDO: Guardar e Inventariar primero, Cancelar después */}
         {showModal && (
             <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" }}>
               <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", width: "100%", maxWidth: "440px", boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.08)", border: "1px solid #e2e8f0", overflow: "hidden" }}>
+
 
                 <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                   <h3 style={{ margin: 0, fontSize: "1.05rem", fontWeight: "800", color: "#1e293b" }}>
@@ -656,6 +820,7 @@ export default function Bienes() {
                   </h3>
                   <button onClick={() => setShowModal(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={18} /></button>
                 </div>
+
 
                 <form onSubmit={handleSaveAsset}>
                   <div style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1.25rem" }}>
@@ -672,15 +837,18 @@ export default function Bienes() {
                     )}
                   </div>
 
+
                   <div style={{ padding: "1rem 1.5rem", borderTop: "1px solid #f1f5f9", display: "flex", justifyContent: "flex-end", gap: "0.75rem", backgroundColor: "#f8fafc" }}>
-                    <button type="button" onClick={() => setShowModal(false)} style={{ backgroundColor: "#ffffff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Cancelar</button>
                     <button type="submit" style={{ backgroundColor: colorAdmin, border: "none", color: "#ffffff", padding: "0.5rem 1.25rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Guardar e Inventariar</button>
+                    <button type="button" onClick={() => setShowModal(false)} style={{ backgroundColor: "#ffffff", border: "1px solid #cbd5e1", color: "#475569", padding: "0.5rem 1rem", borderRadius: "0.5rem", fontSize: "0.85rem", fontWeight: "600", cursor: "pointer" }}>Cancelar</button>
                   </div>
                 </form>
+
 
               </div>
             </div>
         )}
+
 
       </div>
   )

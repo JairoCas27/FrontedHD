@@ -3,10 +3,12 @@ import { FiEdit2, FiTrash2, FiX, FiCheckCircle, FiUserX, FiRefreshCw, FiAlertTri
 import EncabezadoTabla from '../../components/EncabezadoTabla'
 import { useAdminUsers } from '../../hooks/Admin/useAdminUsers'
 
+
 export default function Usuarios() {
   const colorAdmin = "rgb(52,151,195)"
   
   const { usuarios, loading, registrarUsuario, modificarUsuario, cambiarEstadoUsuario } = useAdminUsers()
+
 
   const [busqueda, setBusqueda] = useState('')
   const [filtroRol, setFiltroRol] = useState('todos')
@@ -18,6 +20,7 @@ export default function Usuarios() {
   const [toast, setToast] = useState({ visible: false, mensaje: '', tipo: 'success' })
   const [confirmModal, setConfirmModal] = useState({ visible: false, usuarioId: null, proximoEstado: null, nombreUsuario: '', esReactivacion: false })
 
+
   const [editandoId, setEditandoId] = useState(null)
   const [formUsuario, setFormUsuario] = useState({
     nombres: '',
@@ -28,9 +31,11 @@ export default function Usuarios() {
     rol: 'PROPIETARIO' 
   })
 
+
   const usuariosFiltrados = (usuarios || []).filter(u => {
     const coincideEstado = verInactivos ? u.activo === false : (u.activo !== false)
     if (!coincideEstado) return false
+
 
     if (filtroRol !== 'todos' && u.rol !== filtroRol) return false
     
@@ -46,6 +51,7 @@ export default function Usuarios() {
     return true
   })
 
+
   // 🟢 FUNCIÓN AUXILIAR: Disparar notificaciones Toast temporales
   const mostrarToast = (mensaje, tipo = 'success') => {
     setToast({ visible: true, mensaje, tipo })
@@ -53,6 +59,24 @@ export default function Usuarios() {
       setToast({ visible: false, mensaje: '', tipo: 'success' })
     }, 3000)
   }
+
+
+  // 🟢 FUNCIÓN NUEVA: Extrae solo los dígitos, quitando el prefijo +51 si ya viene incluido
+  const limpiarTelefono = (valor) => {
+    if (!valor) return ''
+    const soloDigitos = valor.toString().replace(/\D/g, '')
+    return soloDigitos.startsWith('51') && soloDigitos.length > 9
+      ? soloDigitos.slice(2)
+      : soloDigitos
+  }
+
+
+  // 🟢 FUNCIÓN NUEVA: Maneja el input del teléfono, limitando a 9 dígitos numéricos
+  const handleTelefonoChange = (e) => {
+    const valor = e.target.value.replace(/\D/g, '').slice(0, 9)
+    setFormUsuario({ ...formUsuario, telefono: valor })
+  }
+
 
   const handleOpenModal = (usuario = null) => {
     setErrorServidor('')
@@ -62,7 +86,7 @@ export default function Usuarios() {
         nombres: usuario.nombres || '',
         apellidos: usuario.apellidos || '',
         correo: usuario.correo || '',
-        telefono: usuario.telefono || '',
+        telefono: limpiarTelefono(usuario.telefono),
         contrasena: '', 
         rol: usuario.rol || 'PROPIETARIO'
       })
@@ -73,15 +97,25 @@ export default function Usuarios() {
     setShowModal(true)
   }
 
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     setErrorServidor('')
+
+    // 🟢 VALIDACIÓN NUEVA: El teléfono debe tener exactamente 9 dígitos antes de agregar el prefijo
+    if (formUsuario.telefono.trim().length !== 9) {
+      setErrorServidor('El número de teléfono debe contener exactamente 9 dígitos.')
+      return
+    }
+
+    const telefonoConPrefijo = `+51${formUsuario.telefono.trim()}`
+
     try {
       if (editandoId) {
         const putPayload = {
           nombres: formUsuario.nombres.trim(),
           apellidos: formUsuario.apellidos.trim(),
-          telefono: formUsuario.telefono.trim()
+          telefono: telefonoConPrefijo
         }
         await modificarUsuario(editandoId, putPayload)
         mostrarToast("¡Perfil residencial actualizado con éxito!")
@@ -90,7 +124,7 @@ export default function Usuarios() {
           nombres: formUsuario.nombres.trim(),
           apellidos: formUsuario.apellidos.trim(),
           correo: formUsuario.correo.trim(),
-          telefono: formUsuario.telefono.trim(),
+          telefono: telefonoConPrefijo,
           contrasena: formUsuario.contrasena,
           rol: formUsuario.rol
         }
@@ -102,6 +136,7 @@ export default function Usuarios() {
       setErrorServidor(error.message || 'Hubo un problema al procesar la solicitud en el servidor.')
     }
   }
+
 
   // 🟢 PROCESAR CAMBIO DE ESTADO DESDE EL MODAL CUSTOM
   const ejecutarCambioEstado = async () => {
@@ -115,6 +150,7 @@ export default function Usuarios() {
     }
   }
 
+
   const estiloInput = {
     width: "100%",
     padding: "0.65rem 0.75rem",
@@ -126,6 +162,7 @@ export default function Usuarios() {
     outline: "none"
   }
 
+
   const estiloLabel = {
     display: "block",
     fontSize: "11px",
@@ -134,6 +171,7 @@ export default function Usuarios() {
     marginBottom: "0.25rem",
     textTransform: "uppercase"
   }
+
 
   const estiloPestana = (activo) => ({
     padding: "0.5rem 1rem",
@@ -151,8 +189,10 @@ export default function Usuarios() {
     transition: "all 0.2s"
   })
 
+
   return (
     <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left", position: "relative" }}>
+
 
       {/* 🟢 TOAST NOTIFICATION COMPONENT */}
       {toast.visible && (
@@ -167,6 +207,7 @@ export default function Usuarios() {
         </div>
       )}
 
+
       <EncabezadoTabla
         titulo="Control de Usuarios"
         subtitulo="Gestión de cuentas residenciales, asignación de credenciales y privilegios del sistema"
@@ -174,6 +215,7 @@ export default function Usuarios() {
         accentColor={colorAdmin}
         onBotonClick={() => handleOpenModal()}
       />
+
 
       <div style={{ display: "flex", backgroundColor: "#e2e8f0", padding: "0.25rem", borderRadius: "0.5rem", width: "fit-content", marginBottom: "1rem" }}>
         <button style={estiloPestana(!verInactivos)} onClick={() => setVerInactivos(false)}>
@@ -183,6 +225,7 @@ export default function Usuarios() {
           <FiUserX size={14} /> Cuentas Suspendidas
         </button>
       </div>
+
 
       <div style={{ backgroundColor: "#ffffff", padding: "1.25rem", borderRadius: "1rem", border: "1px solid #e2e8f0", marginBottom: "2rem", boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
         <div style={{ display: "flex", gap: "1rem", alignItems: "center", flexWrap: "wrap" }}>
@@ -196,6 +239,7 @@ export default function Usuarios() {
             />
           </div>
 
+
           <div style={{ width: "240px" }}>
             <select style={estiloInput} value={filtroRol} onChange={(e) => setFiltroRol(e.target.value)}>
               <option value="todos">Todos los Roles</option>
@@ -208,6 +252,7 @@ export default function Usuarios() {
           </small>
         </div>
       </div>
+
 
       {loading ? (
         <div style={{ textAlign: "center", padding: "3rem", color: "#64748b", fontWeight: "600" }}>
@@ -311,6 +356,7 @@ export default function Usuarios() {
         </div>
       )}
 
+
       {/* 🟢 CUSTOM DIALOG MODAL: Reemplazo elegante de window.confirm */}
       {confirmModal.visible && (
         <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.4)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 110, backdropFilter: "blur(4px)" }}>
@@ -334,13 +380,8 @@ export default function Usuarios() {
                 </p>
               </div>
             </div>
+            {/* 🟢 ORDEN INVERTIDO: Acción principal primero, Cancelar después */}
             <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "1.5rem" }}>
-              <button 
-                onClick={() => setConfirmModal({ visible: false, usuarioId: null, proximoEstado: null, nombreUsuario: '', esReactivacion: false })}
-                style={{ padding: "0.45rem 1rem", border: "1px solid #cbd5e1", background: "#fff", borderRadius: "0.5rem", cursor: "pointer", color: "#475569", fontWeight: "700", fontSize: "0.8rem" }}
-              >
-                Cancelar
-              </button>
               <button 
                 onClick={ejecutarCambioEstado}
                 style={{ 
@@ -351,10 +392,17 @@ export default function Usuarios() {
               >
                 {confirmModal.esReactivacion ? "Sí, Activar" : "Sí, Suspender"}
               </button>
+              <button 
+                onClick={() => setConfirmModal({ visible: false, usuarioId: null, proximoEstado: null, nombreUsuario: '', esReactivacion: false })}
+                style={{ padding: "0.45rem 1rem", border: "1px solid #cbd5e1", background: "#fff", borderRadius: "0.5rem", cursor: "pointer", color: "#475569", fontWeight: "700", fontSize: "0.8rem" }}
+              >
+                Cancelar
+              </button>
             </div>
           </div>
         </div>
       )}
+
 
       {showModal && (
         <div style={{ position: "fixed", inset: 0, backgroundColor: "rgba(15,23,42,0.3)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, backdropFilter: "blur(4px)" }}>
@@ -364,6 +412,7 @@ export default function Usuarios() {
               <button onClick={() => setShowModal(false)} style={{ background: "none", border: "none", cursor: "pointer", color: "#94a3b8" }}><FiX size={18} /></button>
             </div>
 
+
             <form onSubmit={handleSubmit} style={{ padding: "1.5rem", display: "flex", flexDirection: "column", gap: "1rem" }}>
               
               {errorServidor && (
@@ -371,6 +420,7 @@ export default function Usuarios() {
                   ⚠️ {errorServidor}
                 </div>
               )}
+
 
               <div style={{ display: "flex", gap: "1rem" }}>
                 <div style={{ flex: 1 }}>
@@ -383,10 +433,39 @@ export default function Usuarios() {
                 </div>
               </div>
 
+
+              {/* 🟢 CAMPO MODIFICADO: Prefijo +51 fijo + máximo 9 dígitos numéricos */}
               <div>
                 <label style={estiloLabel}>Teléfono</label>
-                <input type="text" style={estiloInput} value={formUsuario.telefono} onChange={e => setFormUsuario({ ...formUsuario, telefono: e.target.value })} required />
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <span style={{
+                    padding: "0.65rem 0.75rem",
+                    borderRadius: "0.5rem",
+                    border: "1px solid #cbd5e1",
+                    backgroundColor: "#f1f5f9",
+                    color: "#475569",
+                    fontWeight: "700",
+                    fontSize: "0.9rem",
+                    flexShrink: 0
+                  }}>
+                    +51
+                  </span>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    style={estiloInput}
+                    placeholder="987654321"
+                    value={formUsuario.telefono}
+                    onChange={handleTelefonoChange}
+                    maxLength={9}
+                    required
+                  />
+                </div>
+                <small style={{ fontSize: "0.7rem", color: "#94a3b8", marginTop: "0.25rem", display: "block" }}>
+                  Ingresa exactamente 9 dígitos ({formUsuario.telefono.length}/9)
+                </small>
               </div>
+
 
               <div>
                 <label style={estiloLabel}>Correo Electrónico</label>
@@ -405,12 +484,14 @@ export default function Usuarios() {
                 />
               </div>
 
+
               {!editandoId && (
                 <div>
                   <label style={estiloLabel}>Contraseña Inicial</label>
                   <input type="password" style={estiloInput} placeholder="Mínimo 6 caracteres" value={formUsuario.contrasena} onChange={e => setFormUsuario({ ...formUsuario, contrasena: e.target.value })} required />
                 </div>
               )}
+
 
               <div>
                 <label style={estiloLabel}>Rol asignado (Database Enum)</label>
@@ -430,9 +511,11 @@ export default function Usuarios() {
                 </select>
               </div>
 
+
+              {/* 🟢 ORDEN INVERTIDO: Guardar Cambios primero, Cancelar después */}
               <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem", marginTop: "0.5rem" }}>
-                <button type="button" onClick={() => setShowModal(false)} style={{ padding: "0.5rem 1rem", border: "1px solid #cbd5e1", background: "#fff", borderRadius: "0.5rem", cursor: "pointer", color: "#475569", fontWeight: "600" }}>Cancelar</button>
                 <button type="submit" style={{ padding: "0.5rem 1.25rem", background: colorAdmin, color: "#fff", border: "none", borderRadius: "0.5rem", fontWeight: "600", cursor: "pointer" }}>Guardar Cambios</button>
+                <button type="button" onClick={() => setShowModal(false)} style={{ padding: "0.5rem 1rem", border: "1px solid #cbd5e1", background: "#fff", borderRadius: "0.5rem", cursor: "pointer", color: "#475569", fontWeight: "600" }}>Cancelar</button>
               </div>
             </form>
           </div>
