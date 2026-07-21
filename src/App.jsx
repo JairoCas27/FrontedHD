@@ -76,6 +76,7 @@ function App() {
 
         <Route element={<LoginLayout />}>
           <Route path="/login" element={<Login />} />
+          <Route path="/reset-password" element={<Login />} />
         </Route>
 
         <Route element={<AppLayout Sidebar={SidebarAdmin} allowedRole="admin" />}>
