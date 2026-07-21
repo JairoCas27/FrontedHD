@@ -1,28 +1,37 @@
 import { useState } from "react"
 import { forgotPasswordApi, resetPasswordApi } from "../services/api"
 
+
 function ForgotPasswordModal({ open, onClose, resetToken = null }) {
   const [correo, setCorreo] = useState("")
   const [nuevaContrasena, setNuevaContrasena] = useState("")
   const [confirmar, setConfirmar] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
   const [sent, setSent] = useState(false)
   const [success, setSuccess] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
+
   const isResetMode = !!resetToken
 
+
   if (!open) return null
+
 
   const handleClose = () => {
     setCorreo("")
     setNuevaContrasena("")
     setConfirmar("")
+    setShowPassword(false)
+    setShowConfirm(false)
     setSent(false)
     setSuccess(false)
     setError("")
     onClose()
   }
+
 
   const handleForgot = async (e) => {
     e.preventDefault()
@@ -37,6 +46,7 @@ function ForgotPasswordModal({ open, onClose, resetToken = null }) {
       setLoading(false)
     }
   }
+
 
   const handleReset = async (e) => {
     e.preventDefault()
@@ -60,11 +70,13 @@ function ForgotPasswordModal({ open, onClose, resetToken = null }) {
     }
   }
 
+
   const inputStyle = {
-    width: "100%", padding: "14px", borderRadius: "14px",
+    width: "100%", padding: "14px", paddingRight: "44px", borderRadius: "14px",
     border: "1px solid #e2e8f0", outline: "none", fontSize: "0.95rem",
     background: "#f8fafc", boxSizing: "border-box", transition: "all .25s ease",
   }
+
 
   const focusStyle = (e) => {
     e.target.style.border = "1px solid rgb(52,151,195)"
@@ -72,11 +84,13 @@ function ForgotPasswordModal({ open, onClose, resetToken = null }) {
     e.target.style.background = "#ffffff"
   }
 
+
   const blurStyle = (e) => {
     e.target.style.border = "1px solid #e2e8f0"
     e.target.style.boxShadow = "none"
     e.target.style.background = "#f8fafc"
   }
+
 
   const btnStyle = (disabled) => ({
     width: "100%", padding: "14px", borderRadius: "14px", border: "none",
@@ -87,9 +101,9 @@ function ForgotPasswordModal({ open, onClose, resetToken = null }) {
     transition: "all 0.25s ease",
   })
 
+
   return (
     <div
-      onClick={handleClose}
       style={{
         position: "fixed", inset: 0, background: "rgba(2,6,23,0.65)",
         display: "flex", alignItems: "center", justifyContent: "center",
@@ -114,44 +128,63 @@ function ForgotPasswordModal({ open, onClose, resetToken = null }) {
               Elige una contraseña segura para tu cuenta.
             </p>
 
+
             {!success ? (
               <form onSubmit={handleReset} style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#334155", display: "block", marginBottom: "6px" }}>
                     Nueva contraseña
                   </label>
-                  <input
-                    type="password"
-                    value={nuevaContrasena}
-                    onChange={(e) => setNuevaContrasena(e.target.value)}
-                    placeholder="Mínimo 6 caracteres"
-                    required
-                    style={inputStyle}
-                    onFocus={focusStyle}
-                    onBlur={blurStyle}
-                  />
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      value={nuevaContrasena}
+                      onChange={(e) => setNuevaContrasena(e.target.value)}
+                      placeholder="Mínimo 6 caracteres"
+                      required
+                      style={inputStyle}
+                      onFocus={focusStyle}
+                      onBlur={blurStyle}
+                    />
+                    <span
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", cursor: "pointer", color: "#94a3b8" }}
+                    >
+                      <i className={`bi ${showPassword ? "bi-eye-slash" : "bi-eye"}`} />
+                    </span>
+                  </div>
                 </div>
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#334155", display: "block", marginBottom: "6px" }}>
                     Confirmar contraseña
                   </label>
-                  <input
-                    type="password"
-                    value={confirmar}
-                    onChange={(e) => setConfirmar(e.target.value)}
-                    placeholder="Repite tu contraseña"
-                    required
-                    style={inputStyle}
-                    onFocus={focusStyle}
-                    onBlur={blurStyle}
-                  />
+                  <div style={{ position: "relative" }}>
+                    <input
+                      type={showConfirm ? "text" : "password"}
+                      value={confirmar}
+                      onChange={(e) => setConfirmar(e.target.value)}
+                      placeholder="Repite tu contraseña"
+                      required
+                      style={inputStyle}
+                      onFocus={focusStyle}
+                      onBlur={blurStyle}
+                    />
+                    <span
+                      onClick={() => setShowConfirm(!showConfirm)}
+                      style={{ position: "absolute", right: "14px", top: "50%", transform: "translateY(-50%)", cursor: "pointer", color: "#94a3b8" }}
+                    >
+                      <i className={`bi ${showConfirm ? "bi-eye-slash" : "bi-eye"}`} />
+                    </span>
+                  </div>
                 </div>
+
 
                 {error && (
                   <p style={{ color: "#ef4444", fontSize: "0.85rem", fontWeight: 600, margin: 0 }}>
                     {error}
                   </p>
                 )}
+
 
                 <button
                   type="submit"
@@ -188,6 +221,7 @@ function ForgotPasswordModal({ open, onClose, resetToken = null }) {
               Ingresa tu correo registrado y te enviaremos un enlace seguro para restablecer tu contraseña.
             </p>
 
+
             {!sent ? (
               <form onSubmit={handleForgot}>
                 <div style={{ marginBottom: "18px" }}>
@@ -200,17 +234,19 @@ function ForgotPasswordModal({ open, onClose, resetToken = null }) {
                     onChange={(e) => setCorreo(e.target.value)}
                     placeholder="ejemplo@correo.com"
                     required
-                    style={inputStyle}
+                    style={{ ...inputStyle, paddingRight: "14px" }}
                     onFocus={focusStyle}
                     onBlur={blurStyle}
                   />
                 </div>
+
 
                 {error && (
                   <p style={{ color: "#ef4444", fontSize: "0.85rem", fontWeight: 600, marginBottom: "12px" }}>
                     {error}
                   </p>
                 )}
+
 
                 <button
                   type="submit"
@@ -240,6 +276,7 @@ function ForgotPasswordModal({ open, onClose, resetToken = null }) {
           </>
         )}
 
+
         <button
           onClick={handleClose}
           style={{
@@ -253,6 +290,7 @@ function ForgotPasswordModal({ open, onClose, resetToken = null }) {
           Cerrar
         </button>
 
+
         <style>{`
           @keyframes fadeBg { from { opacity: 0; } to { opacity: 1; } }
           @keyframes modalPop { from { opacity: 0; transform: translateY(18px) scale(0.96); } to { opacity: 1; transform: translateY(0) scale(1); } }
@@ -262,5 +300,6 @@ function ForgotPasswordModal({ open, onClose, resetToken = null }) {
     </div>
   )
 }
+
 
 export default ForgotPasswordModal
