@@ -35,7 +35,7 @@ function AuthLeft({ phase, ease, accentColor, heroTitle, heroTitleAccent, heroDe
         <h1 style={{ fontWeight: 800, fontSize: "clamp(1.6rem, 2.8vw, 3.2rem)", color: "#fff", lineHeight: 1.15, marginBottom: "0px" }}>
           {heroTitle}
         </h1>
-        <h1 style={{ fontWeight: 800, fontSize: "clamp(1.6rem, 2.8vw, 3.2rem)", color: accentColor, lineHeight: 1.15, marginBottom: "clamp(10px, 1.5vw, 20px)" }}>
+        <h1 style={{ fontWeight: 800, fontSize: "clamp(1.6rem, 2.8vw, 3.2rem)", color: "#fff", lineHeight: 1.15, marginBottom: "clamp(10px, 1.5vw, 20px)" }}>
           {heroTitleAccent}
         </h1>
         <p style={{ color: "#ffffff", fontSize: "clamp(0.8rem, 1vw, 1.15rem)", lineHeight: 1.85, margin: "0 auto" }}>

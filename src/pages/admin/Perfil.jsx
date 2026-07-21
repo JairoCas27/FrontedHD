@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { FiHome, FiMapPin, FiSave, FiLock, FiGlobe, FiCheckCircle } from "react-icons/fi"
-import { useAdminSettings } from '../../hooks/Admin/useAdminSettings' 
+import { useAdminSettings } from '../../hooks/Admin/useAdminSettings'
 
 export default function Perfil() {
   const colorAdmin = "rgb(52,151,195)"
@@ -88,7 +88,7 @@ export default function Perfil() {
 
   return (
     <div style={{ padding: "2rem", backgroundColor: "#f8fafc", minHeight: "100vh", width: "100%", boxSizing: "border-box", textAlign: "left" }}>
-      
+
       {/* 1. Cabecera */}
       <div style={{ marginBottom: "2rem" }}>
         <h1 style={{ fontSize: "1.6rem", fontWeight: 800, color: "#1e293b", margin: 0 }}>Mi Perfil</h1>
@@ -113,7 +113,7 @@ export default function Perfil() {
 
       {/* 3. Cuadrícula Asimétrica */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: "1.5rem", width: "100%" }}>
-        
+
         {/* Columna Izquierda: Datos del Condominio */}
         <div style={{ flex: 1, minWidth: "300px", backgroundColor: "#ffffff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)" }}>
           <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: "0.5rem", color: "#1e293b", fontWeight: "700" }}>
@@ -127,7 +127,12 @@ export default function Perfil() {
             </div>
             <div>
               <label style={estiloLabel}><FiMapPin size={12} /> Dirección Física</label>
-              <input type="text" style={estiloInput} defaultValue={condoInfo.direccion || ''} onChange={(e) => handleFieldChange('direccion', e.target.value)} required />
+              <textarea
+                style={{ ...estiloInput, resize: "vertical", minHeight: "70px", fontFamily: "inherit" }}
+                defaultValue={condoInfo.direccion || ''}
+                onChange={(e) => handleFieldChange('direccion', e.target.value)}
+                required
+              />
             </div>
             <div>
               <label style={estiloLabel}><FiGlobe size={12} /> Ciudad / Distrito</label>
@@ -151,7 +156,7 @@ export default function Perfil() {
 
         {/* Columna Derecha: Seguridad y Sesión */}
         <div style={{ flex: 1, minWidth: "300px", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-          
+
           {/* Formulario de Contraseña */}
           <div style={{ backgroundColor: "#ffffff", borderRadius: "1rem", border: "1px solid #e2e8f0", overflow: "hidden", boxShadow: "0 4px 6px -1px rgba(0,0,0,0.02)" }}>
             <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid #f1f5f9", display: "flex", alignItems: "center", gap: "0.5rem", color: "#1e293b", fontWeight: "700" }}>
